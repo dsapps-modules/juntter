@@ -13,8 +13,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// Página principal
 Route::get('/', function () {
-    $data = ['nome' => 'João', 'idade' => 30, 'cidade' => 'São Paulo'];
-    return view('templates/sample-template', ['data' => $data]);
-});
+    return view('checkout');
+})->name('checkout');
+
+// Páginas de autenticação
+Route::get('/login', function () {
+    return view('auth.login');
+})->name('login');
+
+Route::get('/forgot-password', function () {
+    return view('auth.forgot-password');
+})->name('password.request');
 

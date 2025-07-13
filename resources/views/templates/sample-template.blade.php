@@ -1,50 +1,36 @@
 @extends('templates.base-template')
 
-
 @push('styles')
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">    
+    <link rel="stylesheet" href="{{ asset('css/juntter-styles.css') }}">
     <style>
         a.nostyle:link, a.nostyle:visited {
             text-decoration: inherit;
             color: inherit;
             cursor: auto;
         }
+        body {
+            background: var(--light-gray);
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
     </style>
-
 @endpush
 
-
-
 @section('header')
-    <body class="hold-transition layout-top-nav">
-        <div class="wrapper">
-            
-		</div>
-
 @endsection
-
-
 
 @section('content')
-			<div class="content-wrapper">
-				<div class="content-header">
-					@yield('breadcrumb')
-				</div>
-
-                {{ $data['nome'] ?? 'Default Name'}}
-
-				<div class="{{$page_width ?? 'container'}}">
-					@yield('page')
-				</div>
-			</div>
-
-		</div>
-
+    @yield('page')
 @endsection
 
-
+@section('search')
+@endsection
 
 @push('scripts')
     <script>

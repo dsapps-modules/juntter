@@ -5,7 +5,5 @@
         <script src="{{ asset('adminlte/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
         <script src="{{ asset('adminlte/plugins/moment/moment.min.js') }}"></script>
         <script src="{{ asset('adminlte/dist/js/adminlte.js') }}"></script>
-        <script src="{{ asset('js/util.js') }}"></script>
+        <script src="{{ asset('js/app.js') }}"></script>
         @stack('scripts')
-
-    </body>
