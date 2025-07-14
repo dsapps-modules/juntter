@@ -1,9 +1,6 @@
-@extends('templates.base-template')
+@extends('templates.sample-template')
 
-@section('header')
-@endsection
-
-@section('content')
+@section('page')
 <div class="loading-overlay" id="loading">
     <div class="loading-spinner"></div>
 </div>
@@ -106,22 +103,14 @@
         </div>
     </div>
 </div>
-@endsection
-
-@push('styles')
-<style>
-    body {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--dark-color) 100%);
-        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-        min-height: 100vh;
-        overflow-x: hidden;
-    }
-</style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-<link rel="stylesheet" href="{{ asset('css/juntter-styles.css') }}">
-@endpush
+@endsection 
 
 @push('scripts')
-<!-- JavaScript unificado já carregado via app.js -->
-@endpush 
+<script>
+    $(document).ready(function() {
+        $('body').addClass('auth-page');
+     
+    });
+  
+</script>
+@endpush

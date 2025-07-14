@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'nivel_acesso',
     ];
 
     /**
@@ -42,4 +43,60 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Verifica se o usuário é super admin
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->nivel_acesso === 'super_admin';
+    }
+
+    /**
+     * Verifica se o usuário é admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->nivel_acesso === 'admin';
+    }
+
+    /**
+     * Verifica se o usuário é vendedor
+     */
+    public function isVendedor(): bool
+    {
+        return $this->nivel_acesso === 'vendedor';
+    }
+
+    /**
+     * Verifica se o usuário é comprador
+     */
+    public function isComprador(): bool
+    {
+        return $this->nivel_acesso === 'comprador';
+    }
+
+    /**
+     * Verifica se o usuário tem nível super admin ou admin
+     */
+    public function isSuperAdminOrAdmin(): bool
+    {
+        return in_array($this->nivel_acesso, ['super_admin', 'admin']);
+    }
+
+    /**
+     * Verifica se o usuário tem nível super admin, admin ou vendedor
+     */
+    public function isSuperAdminOrAdminOrVendedor(): bool
+    {
+        return in_array($this->nivel_acesso, ['super_admin', 'admin', 'vendedor']);
+    }
+
+    /**
+     * Verifica se o usuário tem nível super admin, admin, vendedor ou comprador
+     */
+    public function isSuperAdminOrAdminOrVendedorOrComprador(): bool
+    {
+        return in_array($this->nivel_acesso, ['super_admin', 'admin', 'vendedor', 'comprador']);
+    }
 }

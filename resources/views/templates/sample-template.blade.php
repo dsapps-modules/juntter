@@ -14,10 +14,18 @@
             cursor: auto;
         }
         body {
-            background: var(--light-gray);
             font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
             line-height: 1.6;
             overflow-x: hidden;
+        }
+        /* Background padrão para páginas que não são de auth */
+        body:not(.auth-page) {
+            background: var(--light-gray);
+        }
+        /* Background gradiente para páginas de auth */
+        body.auth-page {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--dark-color) 100%);
+            min-height: 100vh;
         }
     </style>
 @endpush

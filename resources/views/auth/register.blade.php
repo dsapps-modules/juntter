@@ -1,6 +1,7 @@
 @extends('templates.sample-template')
 
 @section('page')
+
 <div class="loading-overlay" id="loading">
     <div class="loading-spinner"></div>
 </div>
@@ -22,7 +23,7 @@
                 <li class="nav-item"><a href="{{ route('checkout') }}#como-funciona" class="nav-link">Como Funciona</a></li>
                 <li class="nav-item"><a href="{{ route('checkout') }}#depoimentos" class="nav-link">Depoimentos</a></li>
                 <li class="nav-item"><a href="{{ route('checkout') }}#faq" class="nav-link">FAQ</a></li>
-                <li class="nav-item"><a href="{{ route('register') }}" class="btn btn-warning ml-2 px-4">Criar Conta</a></li>
+                <li class="nav-item"><a href="{{ route('login') }}" class="btn btn-warning ml-2 px-4">Login</a></li>
             </ul>
         </div>
     </div>
@@ -32,20 +33,25 @@
     <div class="login-card animate__animated animate__fadeInUp">
         <div class="login-header">
             <div class="login-logo">
-                <i class="fas fa-user"></i>
+                <i class="fas fa-user-plus"></i>
             </div>
-            <h1 class="login-title">Bem-vindo de volta!</h1>
-            <p class="login-subtitle">Acesse sua conta para continuar vendendo</p>
+            <h1 class="login-title">Criar Conta</h1>
+            <p class="login-subtitle">Cadastre-se para acessar sua área de comprador</p>
         </div>
 
-        <div id="loginAlert" class="alert" style="display: none;"></div>
-
-        <form id="loginForm" method="POST" action="{{ route('login.post') }}">
+        <form id="registerForm" method="POST" action="{{ route('register.post') }}">
             @csrf
             <div class="form-group">
-                <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                       id="email" name="email" placeholder="Digite seu e-mail" 
-                       value="{{ old('email') }}" required>
+                <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" placeholder="Nome completo" value="{{ old('name') }}" required autofocus>
+                <i class="fas fa-user input-icon"></i>
+                @error('name')
+                    <span class="invalid-feedback" role="alert">
+                        <strong>{{ $message }}</strong>
+                    </span>
+                @enderror
+            </div>
+            <div class="form-group">
+                <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" placeholder="E-mail" value="{{ old('email') }}" required>
                 <i class="fas fa-envelope input-icon"></i>
                 @error('email')
                     <span class="invalid-feedback" role="alert">
@@ -53,10 +59,8 @@
                     </span>
                 @enderror
             </div>
-
             <div class="form-group">
-                <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                       id="password" name="password" placeholder="Digite sua senha" required>
+                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="Senha" required>
                 <i class="fas fa-lock input-icon"></i>
                 <button type="button" class="password-toggle" onclick="togglePassword()">
                     <i class="fas fa-eye" id="passwordIcon"></i>
@@ -67,45 +71,35 @@
                     </span>
                 @enderror
             </div>
-
-            <div class="remember-me">
-                <label class="custom-checkbox">
-                    <input type="checkbox" id="remember" name="remember" {{ old('remember') ? 'checked' : '' }}>
-                    <span class="checkmark"></span>
-                </label>
-                <span>Lembrar-me</span>
+            <div class="form-group">
+                <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" placeholder="Confirme a senha" required>
+                <i class="fas fa-lock input-icon"></i>
+                <button type="button" class="password-toggle" onclick="togglePasswordConfirmation()">
+                    <i class="fas fa-eye" id="passwordConfirmationIcon"></i>
+                </button>
+                <div id="password-match-message" class="mt-2" style="display: none;"></div>
             </div>
-
-            <button type="submit" class="btn btn-login" id="loginBtn">
-                <span id="loginBtnText">Entrar</span>
+            <button type="submit" class="btn btn-login" id="registerBtn">
+                <span id="registerBtnText">Cadastrar</span>
             </button>
         </form>
 
         <div class="form-links">
-            <a href="{{ route('password.request') }}" class="forgot-link">
-                <i class="fas fa-key mr-1"></i>Esqueceu a senha?
-            </a>
-            <br>
-            <a href="{{ route('register') }}" class="back-link">
-                <i class="fas fa-user-plus mr-1"></i>Criar conta
+            <a href="{{ route('login') }}" class="back-link">
+                <i class="fas fa-arrow-left mr-1"></i>Já tem conta? Entrar
             </a>
             <br>
             <a href="{{ route('checkout') }}" class="back-link">
-                <i class="fas fa-arrow-left mr-1"></i>Voltar ao início
+                <i class="fas fa-home mr-1"></i>Voltar ao início
             </a>
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+
 
 @push('scripts')
-<script> 
-    $(document).ready(function() {
-        $('body').addClass('auth-page');
-    });
- 
-</script>
+    <script src="{{ asset('js/cadastro.js') }}"></script>
 
-
-
-@endpush
+@endpush 
