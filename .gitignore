@@ -5,6 +5,7 @@
 /public/storage
 /storage/*.key
 /vendor
+.env.dusk.local
 .env
 .env.backup
 .env.production

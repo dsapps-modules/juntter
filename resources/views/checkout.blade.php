@@ -6,27 +6,6 @@
         <div class="loading-spinner"></div>
     </div>
 
-<nav class="main-header navbar navbar-expand-lg navbar-light">
-    <div class="container">
-        <a href="{{ route('checkout') }}" class="navbar-brand">
-            <img src="{{ asset('logo/JUNTTER-MODELO-1-SF.webp') }}" alt="Juntter" class="brand-image" style="height:36px;">
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a href="#beneficios" class="nav-link">Benefícios</a></li>
-                <li class="nav-item"><a href="#precos" class="nav-link">Preços</a></li>
-                <li class="nav-item"><a href="#como-funciona" class="nav-link">Como Funciona</a></li>
-                <li class="nav-item"><a href="#depoimentos" class="nav-link">Depoimentos</a></li>
-                <li class="nav-item"><a href="#faq" class="nav-link">FAQ</a></li>
-                <li class="nav-item"><a href="{{ route('login') }}" class="btn btn-warning ml-2 px-4">Login</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
 <section class="hero-section">
     <div class="particles-container" id="particles"></div>
     <div class="container">
@@ -39,7 +18,7 @@
                 Crie links de pagamento profissionais, receba via PIX, cartão ou boleto. 
                 Venda online com segurança e receba na hora.
             </p>
-            <a href="{{ route('login') }}" class="btn-hero animate__animated animate__fadeInUp animate__delay-2s">
+            <a href="{{ route('register') }}" class="btn-hero animate__animated animate__fadeInUp animate__delay-2s">
                 <i class="fas fa-link mr-2"></i>Criar Meu Checkout
             </a>
         </div>
@@ -157,7 +136,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Checkout básico</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte por email</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block">Começar Grátis</a>
+                    <a id="starter" href="{{ route('register') }}" class="btn btn-outline-warning btn-block">Começar Grátis</a>
                 </div>
             </div>
             <div class="col-lg-4 mb-4">
@@ -173,7 +152,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte prioritário</li>
                         <li><i class="fas fa-check text-success mr-2"></i>API básica</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-warning btn-block">Escolher Pro</a>
+                    <a id="pro" href="{{ route('register') }}" class="btn btn-warning btn-block">Escolher Pro</a>
                 </div>
             </div>
             <div class="col-lg-4 mb-4">
@@ -189,7 +168,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>White label</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Consultoria</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block">Falar com Vendas</a>
+                    <a id="enterprise" href="{{ route('register') }}" class="btn btn-outline-warning btn-block">Falar com Vendas</a>
                 </div>
             </div>
         </div>
@@ -327,7 +306,7 @@
             <p class="fade-in-up" style="font-size: 1.3rem; margin-bottom: 40px; opacity: 0.9;">
                 Crie sua conta gratuita e comece a receber pagamentos online hoje mesmo
             </p>
-                <a href="{{ route('login') }}" class="btn-hero fade-in-up">
+                <a id="comecar-agora" href="{{ route('register') }}" class="btn-hero fade-in-up">
                 <i class="fas fa-rocket mr-2"></i>Começar Agora - É Grátis
             </a>
         </div>

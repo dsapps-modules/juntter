@@ -232,6 +232,7 @@ body.layout-top-nav .content-wrapper {
 
 .form-control.is-invalid + .input-icon {
     color: #dc3545;
+    top: 25%;
 }
 
 .password-toggle {

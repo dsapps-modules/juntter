@@ -1,56 +1,48 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+
 
 // Página principal (pública)
 Route::get('/', function () {
     return view('checkout');
 })->name('checkout');
 
-// Rotas de autenticação
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-// Rotas de cadastro
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register'])->name('register.post');
-
 // Página de acesso não autorizado
-Route::get('/unauthorized', [AuthController::class, 'unauthorized'])->name('unauthorized');
+Route::get('/unauthorized', function () {
+    return view('auth.unauthorized');
+})->name('unauthorized');
 
-// Página de recuperação de senha
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
-})->name('password.request');
+// Dashboard padrão do Breeze (será substituído pelos dashboards específicos)
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 // Rotas protegidas por nível de acesso
-Route::middleware(['auth', 'nivel.acesso:super_admin'])->group(function () {
-    Route::get('/superadmin/dashboard', [DashboardController::class, 'superAdminDashboard'])->name('super_admin.dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/superadmin/dashboard', [DashboardController::class, 'superAdminDashboard'])
+        ->middleware('nivel.acesso:super_admin')
+        ->name('super_admin.dashboard');
+    Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])
+        ->middleware('nivel.acesso:admin')
+        ->name('admin.dashboard');
+    Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])
+        ->middleware('nivel.acesso:vendedor')
+        ->name('vendedor.dashboard');
+    Route::get('/comprador/dashboard', [DashboardController::class, 'compradorDashboard'])
+        ->middleware('nivel.acesso:comprador')
+        ->name('comprador.dashboard');
 });
 
-Route::middleware(['auth', 'nivel.acesso:admin'])->group(function () {
-    Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])->name('admin.dashboard');
+// Rotas de perfil do Breeze
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'nivel.acesso:vendedor'])->group(function () {
-    Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
-});
-
-Route::middleware(['auth', 'nivel.acesso:comprador'])->group(function () {
-    Route::get('/comprador/dashboard', [DashboardController::class, 'compradorDashboard'])->name('comprador.dashboard');
-});
-
+// Rotas de autenticação do Breeze
+require __DIR__.'/auth.php';

@@ -7,27 +7,6 @@
 
 <div class="particles-container" id="particles"></div>
 
-<nav class="main-header navbar navbar-expand-lg navbar-light">
-    <div class="container">
-        <a href="{{ route('checkout') }}" class="navbar-brand">
-            <img src="{{ asset('logo/JUNTTER-MODELO-1-SF.webp') }}" alt="Juntter" class="brand-image" style="height:36px;">
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a href="{{ route('checkout') }}#beneficios" class="nav-link">Benefícios</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#precos" class="nav-link">Preços</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#como-funciona" class="nav-link">Como Funciona</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#depoimentos" class="nav-link">Depoimentos</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#faq" class="nav-link">FAQ</a></li>
-                <li class="nav-item"><a href="{{ route('register') }}" class="btn btn-warning ml-2 px-4">Criar Conta</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
 <div class="login-container">
     <div class="login-card animate__animated animate__fadeInUp">
         <div class="login-header">
@@ -40,32 +19,36 @@
 
         <div id="loginAlert" class="alert" style="display: none;"></div>
 
-        <form id="loginForm" method="POST" action="{{ route('login.post') }}">
+        <!-- Session Status -->
+        <x-auth-session-status :status="session('status')" />
+
+        <!-- Success Message -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle mr-2"></i>
+                {{ session('success') }}
+                
+            </div>
+        @endif
+
+        <form id="loginForm" method="POST" action="{{ route('login') }}">
             @csrf
             <div class="form-group">
                 <input type="email" class="form-control @error('email') is-invalid @enderror" 
                        id="email" name="email" placeholder="Digite seu e-mail" 
-                       value="{{ old('email') }}" required>
+                       value="{{ old('email') }}" required autocomplete="username">
                 <i class="fas fa-envelope input-icon"></i>
-                @error('email')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+                <x-input-error :messages="$errors->get('email')" />
             </div>
 
             <div class="form-group">
                 <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                       id="password" name="password" placeholder="Digite sua senha" required>
+                       id="password" name="password" placeholder="Digite sua senha" required autocomplete="current-password">
                 <i class="fas fa-lock input-icon"></i>
                 <button type="button" class="password-toggle" onclick="togglePassword()">
                     <i class="fas fa-eye" id="passwordIcon"></i>
                 </button>
-                @error('password')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
+                <x-input-error :messages="$errors->get('password')" />
             </div>
 
             <div class="remember-me">
@@ -82,12 +65,14 @@
         </form>
 
         <div class="form-links">
+            @if (Route::has('register'))
+                <a href="{{ route('register') }}" class="back-link">
+                    <i class="fas fa-user-plus mr-1"></i>Cadastre-se
+                </a>
+            @endif
+            <br>
             <a href="{{ route('password.request') }}" class="forgot-link">
                 <i class="fas fa-key mr-1"></i>Esqueceu a senha?
-            </a>
-            <br>
-            <a href="{{ route('register') }}" class="back-link">
-                <i class="fas fa-user-plus mr-1"></i>Criar conta
             </a>
             <br>
             <a href="{{ route('checkout') }}" class="back-link">
@@ -105,7 +90,4 @@
     });
  
 </script>
-
-
-
 @endpush

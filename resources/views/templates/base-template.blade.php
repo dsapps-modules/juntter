@@ -4,11 +4,12 @@
 
 <body class="hold-transition layout-top-nav">
     <div class="wrapper">
+        <x-navbar />
         @yield('header')
         @yield('content')
         @yield('search')
     </div>
-    @include('templates.footer')
+    <x-footer />
     @include('templates.rodape')
 </body>
 </html>

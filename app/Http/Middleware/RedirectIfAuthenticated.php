@@ -21,7 +21,21 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                return redirect(RouteServiceProvider::HOME);
+                $user = Auth::guard($guard)->user();
+                
+                // Redireciona baseado no nível de acesso
+                switch ($user->nivel_acesso) {
+                    case 'super_admin':
+                        return redirect()->route('super_admin.dashboard');
+                    case 'admin':
+                        return redirect()->route('admin.dashboard');
+                    case 'vendedor':
+                        return redirect()->route('vendedor.dashboard');
+                    case 'comprador':
+                        return redirect()->route('comprador.dashboard');
+                    default:
+                        return redirect(RouteServiceProvider::HOME);
+                }
             }
         }
 

@@ -7,27 +7,6 @@
 
 <div class="particles-container" id="particles"></div>
 
-<nav class="main-header navbar navbar-expand-lg navbar-light">
-    <div class="container">
-        <a href="{{ route('checkout') }}" class="navbar-brand">
-            <img src="{{ asset('logo/JUNTTER-MODELO-1-SF.webp') }}" alt="Juntter" class="brand-image" style="height:36px;">
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a href="{{ route('checkout') }}#beneficios" class="nav-link">Benefícios</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#precos" class="nav-link">Preços</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#como-funciona" class="nav-link">Como Funciona</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#depoimentos" class="nav-link">Depoimentos</a></li>
-                <li class="nav-item"><a href="{{ route('checkout') }}#faq" class="nav-link">FAQ</a></li>
-                <li class="nav-item"><a href="{{ route('login') }}" class="btn btn-warning ml-2 px-4">Login</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
 <div class="recovery-container">
     <div class="recovery-card animate__animated animate__fadeInUp">
         <!-- Initial Form State -->
@@ -42,11 +21,8 @@
 
             <div id="recoveryAlert" class="alert" style="display: none;"></div>
 
-            @if (session('status'))
-                <div class="alert alert-success" role="alert">
-                    {{ session('status') }}
-                </div>
-            @endif
+            <!-- Session Status -->
+            <x-auth-session-status :status="session('status')" />
 
             <form id="recoveryForm" method="POST" action="{{ route('password.email') }}">
                 @csrf
@@ -55,11 +31,7 @@
                            id="email" name="email" placeholder="Digite seu e-mail cadastrado" 
                            value="{{ old('email') }}" required>
                     <i class="fas fa-envelope input-icon"></i>
-                    @error('email')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
+                    <x-input-error :messages="$errors->get('email')" />
                 </div>
 
                 <button type="submit" class="btn btn-recovery" id="recoveryBtn">
