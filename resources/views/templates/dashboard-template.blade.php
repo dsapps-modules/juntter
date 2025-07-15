@@ -76,7 +76,7 @@
                     
                     <form method="POST" action="{{ route('logout') }}" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn logout-btn">
+                        <button id="logoutBtn" type="submit" class="btn logout-btn">
                             <i class="fas fa-sign-out-alt me-2"></i>
                             Sair
                         </button>

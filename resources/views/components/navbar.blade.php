@@ -1,6 +1,6 @@
 <nav class="main-header navbar navbar-expand-lg navbar-light">
     <div class="container">
-        <a href="{{ route('checkout') }}" class="navbar-brand">
+        <a id="logo-navbar" href="{{ route('checkout') }}" class="navbar-brand">
             <img src="{{ asset('logo/JUNTTER-MODELO-1-SF.webp') }}" alt="Juntter" class="brand-image" style="height:36px;">
         </a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
