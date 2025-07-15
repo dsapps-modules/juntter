@@ -16,10 +16,7 @@ Route::get('/unauthorized', function () {
     return view('auth.unauthorized');
 })->name('unauthorized');
 
-// Dashboard padrão do Breeze (será substituído pelos dashboards específicos)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
 
 // Rotas protegidas por nível de acesso
 Route::middleware(['auth', 'verified'])->group(function () {
