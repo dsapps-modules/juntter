@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="{{ asset('css/juntter-styles.css') }}">
     
     <style>
-        .dashboard-navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            .dashboard-navbar {
+                background: linear-gradient(135deg,var(--primary-color) 0%, var(--secondary-color) 100%);
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         

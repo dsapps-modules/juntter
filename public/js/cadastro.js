@@ -2,9 +2,7 @@
 $(document).ready(function() {
     // Adiciona classe auth-page ao body
     $('body').addClass('auth-page');
-    
-    // Garante que a página começa no topo
-    $(window).scrollTop(0);
+  
     
     // Função para verificar se as senhas coincidem
     function checkPasswordMatch() {

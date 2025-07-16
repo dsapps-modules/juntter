@@ -34,20 +34,24 @@
         <form id="loginForm" method="POST" action="{{ route('login') }}">
             @csrf
             <div class="form-group">
-                <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                       id="email" name="email" placeholder="Digite seu e-mail" 
-                       value="{{ old('email') }}" required autocomplete="username">
-                <i class="fas fa-envelope input-icon"></i>
+                <div class="input-wrapper">
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                           id="email" name="email" placeholder="Digite seu e-mail" 
+                           value="{{ old('email') }}" required autocomplete="username">
+                    <i class="fas fa-envelope input-icon"></i>
+                </div>
                 <x-input-error :messages="$errors->get('email')" />
             </div>
 
             <div class="form-group">
-                <input type="password" class="form-control @error('password') is-invalid @enderror" 
-                       id="password" name="password" placeholder="Digite sua senha" required autocomplete="current-password">
-                <i class="fas fa-lock input-icon"></i>
-                <button type="button" class="password-toggle" onclick="togglePassword()">
-                    <i class="fas fa-eye" id="passwordIcon"></i>
-                </button>
+                <div class="input-wrapper">
+                    <input type="password" class="form-control @error('password') is-invalid @enderror" 
+                           id="password" name="password" placeholder="Digite sua senha" required autocomplete="current-password">
+                    <i class="fas fa-lock input-icon"></i>
+                    <button type="button" class="password-toggle" onclick="togglePassword()">
+                        <i class="fas fa-eye" id="passwordIcon"></i>
+                    </button>
+                </div>
                 <x-input-error :messages="$errors->get('password')" />
             </div>
 

@@ -27,10 +27,12 @@
             <form id="recoveryForm" method="POST" action="{{ route('password.email') }}">
                 @csrf
                 <div class="form-group">
-                    <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                           id="email" name="email" placeholder="Digite seu e-mail cadastrado" 
-                           value="{{ old('email') }}" required>
-                    <i class="fas fa-envelope input-icon"></i>
+                    <div class="input-wrapper">
+                        <input type="email" class="form-control @error('email') is-invalid @enderror" 
+                               id="email" name="email" placeholder="Digite seu e-mail cadastrado" 
+                               value="{{ old('email') }}" required>
+                        <i class="fas fa-envelope input-icon"></i>
+                    </div>
                     <x-input-error :messages="$errors->get('email')" />
                 </div>
 
