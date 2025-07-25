@@ -745,6 +745,10 @@ body.layout-top-nav .content-wrapper {
     transition: all 0.4s ease;
     position: relative;
     height: 100%;
+    min-height: 650px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .pricing-card.popular {
@@ -776,6 +780,226 @@ body.layout-top-nav .content-wrapper {
     font-weight: 900;
     color: var(--primary-color);
     margin: 20px 0;
+}
+
+/* Estilos para planos com seletor dinâmico */
+.plan-badge {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: var(--dark-color);
+    padding: 6px 16px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.plan-badge.customized {
+    background: var(--dark-color);
+    color: var(--primary-color);
+}
+
+.pricing-card {
+    position: relative;
+    padding-top: 50px;
+}
+
+.plan-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.rate-toggle {
+    margin-bottom: 15px;
+}
+
+.rate-toggle span {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.payment-selector {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.payment-selector:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+.price-display {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.price-display .price {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.price-display-dual {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+    gap: 10px;
+}
+
+.price-item {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.price-item:first-child {
+    border-color: var(--primary-color);
+    background: rgba(255, 193, 7, 0.1);
+}
+
+.price-value {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--primary-color);
+    margin-bottom: 3px;
+}
+
+.price-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #666;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.rate-selector {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.rate-selector span {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+/* Garante altura uniforme dos cards */
+.pricing-card .pricing-rates {
+    flex-grow: 1;
+}
+
+.pricing-card ul {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.pricing-card .btn {
+    margin-top: auto;
+}
+
+.price-variable {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #6c757d;
+}
+
+.additional-info {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.additional-info p {
+    font-size: 0.85rem;
+    color: #666;
+    margin: 0;
+}
+
+.fixed-rates {
+    border-top: 1px solid #e9ecef;
+    padding-top: 15px;
+    margin-bottom: 20px;
+}
+
+.fixed-rates .rate-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.fixed-rates .rate-item:last-child {
+    border-bottom: none;
+}
+
+.fixed-rates .rate-item i {
+    color: var(--primary-color);
+    width: 20px;
+}
+
+.fixed-rates .rate-item span {
+    flex: 1;
+    margin-left: 10px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.fixed-rates .rate-item strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.custom-features {
+    padding-top: 20px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.feature-item i {
+    color: var(--primary-color);
+    margin-right: 10px;
+    width: 16px;
+}
+
+.feature-item span {
+    font-size: 0.85rem;
+    color: #666;
+    line-height: 1.3;
+}
+
+.btn-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.btn-link:hover {
+    color: var(--dark-color);
+    text-decoration: underline;
 }
 
 /* FAQ Section */
