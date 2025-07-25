@@ -16,7 +16,7 @@
             </h1>
             <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-1s">
                 Crie links de pagamento profissionais, receba via PIX, cartão ou boleto. 
-                Venda online com segurança e receba na hora.
+                Venda online com segurança e receba em até 1 dia útil.
             </p>
             <a href="{{ route('register') }}" class="btn-hero animate__animated animate__fadeInUp animate__delay-2s">
                 <i class="fas fa-link mr-2"></i>Criar Meu Checkout
@@ -71,13 +71,13 @@
                 </div>
             </div>
             <div class="col-lg-4 mb-4">
-                <div class="benefit-card fade-in-up">
-                    <div class="benefit-icon">
-                        <i class="fas fa-qrcode"></i>
+                                    <div class="benefit-card fade-in-up">
+                        <div class="benefit-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <h4>PIX</h4>
+                        <p>Receba pagamentos via PIX em 1 dia útil. QR Code automático e chave PIX integrada para máxima praticidade.</p>
                     </div>
-                    <h4>PIX Instantâneo</h4>
-                    <p>Receba pagamentos via PIX na hora. QR Code automático e chave PIX integrada para máxima praticidade.</p>
-                </div>
             </div>
             <div class="col-lg-4 mb-4">
                 <div class="benefit-card fade-in-up">
@@ -199,13 +199,13 @@
                 </div>
             </div>
             <div class="col-lg-4 mb-4">
-                <div class="benefit-card fade-in-up">
-                    <div class="benefit-icon">
-                        <i class="fas fa-money-bill-wave"></i>
+                                    <div class="benefit-card fade-in-up">
+                        <div class="benefit-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <h4>3. Receba</h4>
+                        <p>PIX e cartão em 1 dia útil. Acompanhe todas as vendas em tempo real no seu dashboard.</p>
                     </div>
-                    <h4>3. Receba</h4>
-                    <p>PIX na hora, cartão em 1 dia útil. Acompanhe todas as vendas em tempo real no seu dashboard.</p>
-                </div>
             </div>
         </div>
     </div>
@@ -230,7 +230,7 @@
             <div class="col-lg-6 mb-4">
                 <div class="testimonial-card fade-in-up">
                     <p class="testimonial-text">
-                        Integrei a API do Juntter no meu e-commerce e automatizei tudo. Checkout personalizado, PIX instantâneo e relatórios detalhados. Perfeito!
+                        Integrei a API do Juntter no meu e-commerce e automatizei tudo. Checkout personalizado, PIX em 1 dia útil e relatórios detalhados. Perfeito!
                     </p>
                     <div class="testimonial-author">
                         <strong>Carlos Mendes</strong><br>
@@ -271,7 +271,7 @@
                         Quanto tempo demora para receber? <i class="fas fa-chevron-down float-right"></i>
                     </button>
                     <div class="faq-answer">
-                        <p>PIX: instantâneo! Cartão de crédito: 1 dia útil. Boleto: 2 dias úteis após compensação. Tudo automatizado em sua conta.</p>
+                        <p>PIX e cartão em 1 dia útil. Boleto: 2 dias úteis após compensação. Tudo automatizado em sua conta.</p>
                     </div>
                 </div>
 
