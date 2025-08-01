@@ -135,10 +135,7 @@
                 });
             });
             
-            // Debug inicial
-            console.log('Bootstrap loaded:', typeof bootstrap !== 'undefined');
-            console.log('jQuery loaded:', typeof $ !== 'undefined');
-            console.log('DataTables loaded:', typeof $.fn.DataTable !== 'undefined');
+            
         });
     </script>
     

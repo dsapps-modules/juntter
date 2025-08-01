@@ -128,7 +128,7 @@
 <div class="modal fade" id="modalCobranca" tabindex="-1" aria-labelledby="modalCobrancaLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header border-0 pb-0">
+            <div class="modal-header">
                 <h5 class="modal-title fw-bold" id="modalCobrancaLabel">Cobrança única</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -292,7 +292,7 @@
                     </div>
                 </form>
             </div>
-            <div class="modal-footer border-0 pt-0">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
                 <button type="button" class="btn btn-primary">
                     <i class="fas fa-save me-2"></i>
@@ -307,133 +307,5 @@
 
 
 @section('scripts')
-<script>
-$(document).ready(function() {
-    // Inicializar DataTable AdminLTE com design Juntter
-    if ($.fn.DataTable) {
-        $('#cobrancasTable').DataTable({
-            language: {
-                "sEmptyTable": "Nenhum registro encontrado",
-                "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                "sLengthMenu": "_MENU_ resultados por página",
-                "sLoadingRecords": "Carregando...",
-                "sProcessing": "Processando...",
-                "sZeroRecords": "Nenhum registro encontrado",
-                "sSearch": "Pesquisar:",
-                "oPaginate": {
-                    "sNext": "Próximo",
-                    "sPrevious": "Anterior",
-                    "sFirst": "Primeiro",
-                    "sLast": "Último"
-                }
-            },
-            responsive: true,
-            pageLength: 10,
-            lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-            dom: 'Bfrtip',
-            buttons: [
-                {
-                    extend: 'copy',
-                    className: 'btn btn-secondary btn-sm',
-                    text: '<i class="fas fa-copy"></i> Copiar'
-                },
-                {
-                    extend: 'excel',
-                    className: 'btn btn-success btn-sm',
-                    text: '<i class="fas fa-file-excel"></i> Excel'
-                },
-                {
-                    extend: 'csv',
-                    className: 'btn btn-info btn-sm',
-                    text: '<i class="fas fa-file-csv"></i> CSV'
-                },
-                {
-                    extend: 'pdf',
-                    className: 'btn btn-danger btn-sm',
-                    text: '<i class="fas fa-file-pdf"></i> PDF'
-                },
-                {
-                    extend: 'print',
-                    className: 'btn btn-warning btn-sm',
-                    text: '<i class="fas fa-print"></i> Imprimir'
-                }
-            ],
-            columnDefs: [
-                {
-                    targets: -1,
-                    orderable: false
-                }
-            ]
-        });
-        console.log('DataTable AdminLTE inicializado!');
-    } else {
-        console.error('DataTable AdminLTE não disponível!');
-    }
-    
-    // Estilizar select2 se disponível
-    if ($.fn.select2) {
-        $('#selectCliente').select2({
-            placeholder: 'Selecione o Cliente',
-            allowClear: true,
-            dropdownParent: $('#modalCobranca')
-        });
-    }
-    
-    // Máscara para valores monetários
-    $('[placeholder="0,00"]').on('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        value = (value/100).toFixed(2) + '';
-        value = value.replace(".", ",");
-        value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
-        value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
-        this.value = 'R$ ' + value;
-    });
-    
-    // Resetar modal ao fechar
-    $('#modalCobranca').on('hidden.bs.modal', function() {
-        $('#formCobranca')[0].reset();
-        if ($.fn.select2) {
-            $('#selectCliente').val(null).trigger('change');
-        }
-    });
-    
-    // Modal - garantir que funcione
-    $('[data-bs-toggle="modal"]').on('click', function(e) {
-        e.preventDefault();
-        var targetModal = $(this).attr('data-bs-target');
-        $(targetModal).modal('show');
-        console.log('Modal aberto via jQuery!');
-    });
-
-    // Funcionalidade dos tabs do modal
-    $('.payment-tab').on('click', function(e) {
-        e.preventDefault();
-        
-        // Remover active de todos
-        $('.payment-tab').removeClass('active');
-        $('.tab-pane').removeClass('show active');
-        
-        // Adicionar active no clicado
-        $(this).addClass('active');
-        
-        // Mostrar conteúdo correspondente
-        var target = $(this).attr('data-bs-target');
-        $(target).addClass('show active');
-        
-        console.log('Tab ativado:', target);
-    });
-
-    // Eventos do modal
-    $('#modalCobranca').on('show.bs.modal', function () {
-        console.log('Modal abrindo...');
-        // Reset para primeira aba quando abrir
-        $('.payment-tab').removeClass('active');
-        $('.tab-pane').removeClass('show active');
-        $('#link-tab').addClass('active');
-        $('#link-content').addClass('show active');
-    });
-});
-</script>
+<!-- Scripts consolidados no dashboard.js -->
 @endsection
