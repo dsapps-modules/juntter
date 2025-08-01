@@ -3,23 +3,6 @@
 @section('title', 'Pagar Conta')
 
 @section('content')
-<!-- Breadcrumb -->
-<div class="row mb-4">
-    <div class="col-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb bg-transparent p-0 mb-0">
-                <li class="breadcrumb-item">
-                    <a href="{{ route('dashboard') }}" class="text-primary text-decoration-none">Juntter</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="#" class="text-primary text-decoration-none">Cobrança</a>
-                </li>
-                <li class="breadcrumb-item active" aria-current="page">Pagar Conta</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
 <!-- Primeira Seção: Informe a linha digitável -->
 <div class="row mb-4">
     <div class="col-12">

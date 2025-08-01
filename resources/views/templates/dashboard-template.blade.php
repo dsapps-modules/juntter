@@ -94,6 +94,9 @@
     <!-- Main Content -->
     <div class="dashboard-content" >
         <div class="container">
+            <!-- Breadcrumb -->
+            <x-breadcrumb-component />
+            
             @yield('content')
         </div>
     </div>

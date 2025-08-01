@@ -5,23 +5,6 @@
 
 
 @section('content')
-<!-- Breadcrumb -->
-<div class="row mb-4">
-    <div class="col-12">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb bg-transparent p-0 mb-0">
-                <li class="breadcrumb-item">
-                    <a href="{{ route('dashboard') }}" class="text-primary text-decoration-none">Juntter</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="#" class="text-primary text-decoration-none">Cobrança</a>
-                </li>
-                <li class="breadcrumb-item active" aria-current="page">Cobrança Única</li>
-            </ol>
-        </nav>
-    </div>
-</div>
-
 <!-- Alert -->
 <div class="row mb-4">
     <div class="col-12">
