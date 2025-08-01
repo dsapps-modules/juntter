@@ -20,6 +20,32 @@ class RouteServiceProvider extends ServiceProvider
     public const HOME = '/dashboard';
 
     /**
+     * Get the dashboard route based on user role
+     */
+    public static function home(): string
+    {
+        if (!auth()->check()) {
+            return '/login';
+        }
+
+        $user = auth()->user();
+        
+        // Redireciona baseado no nível de acesso (mesma lógica do RedirectIfAuthenticated)
+        switch ($user->nivel_acesso) {
+            case 'super_admin':
+                return '/superadmin/dashboard';
+            case 'admin':
+                return '/admin/dashboard';
+            case 'vendedor':
+                return '/vendedor/dashboard';
+            case 'comprador':
+                return '/comprador/dashboard';
+            default:
+                return '/comprador/dashboard';
+        }
+    }
+
+    /**
      * Define your route model bindings, pattern filters, and other route configuration.
      */
     public function boot(): void

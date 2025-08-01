@@ -2,7 +2,13 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
+
+// Rota dashboard dinâmica
+Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
+    return redirect(RouteServiceProvider::home());
+})->name('dashboard');
 
 
 
