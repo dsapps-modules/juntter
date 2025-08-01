@@ -1,5 +1,7 @@
 /* Juntter Dashboard Styles */
 
+
+
 /* Navbar */
 .dashboard-navbar {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
@@ -496,5 +498,520 @@
 
     .dashboard-navbar {
         padding: 8px 0;
+    }
+}
+
+/* Estilos do Modal de Cobrança */
+.payment-tabs .nav-tabs {
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.payment-tabs .nav-link {
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.payment-tabs .nav-link:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.payment-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+/* Tabela personalizada */
+.table th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 1rem 0.75rem;
+}
+
+.table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.02);
+}
+
+/* Cards do modal */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px 12px 0 0;
+}
+
+/* Estilo dos forms */
+.form-label.fw-bold {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+/* Inputs e textareas gerais */
+.form-control {
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    transition: all 0.15s ease-in-out;
+    border-radius: 8px;
+    padding: 0.65rem 0.875rem;
+    color: #495057 !important;
+}
+
+.form-control:hover {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: #495057 !important;
+}
+
+.form-control:focus {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+    color: #495057 !important;
+}
+
+/* DataTables Juntter Style */
+.dataTables_wrapper {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+/* Corrigir hover nos elementos DataTables */
+.dataTables_wrapper * {
+    box-sizing: border-box;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    margin: 0.5rem 0;
+}
+
+.dataTables_wrapper .dt-buttons {
+    margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dt-buttons .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.dataTables_filter input {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    margin-left: 0.5rem;
+    background: #f8f9fa;
+    transition: all 0.15s ease-in-out;
+    box-shadow: none;
+}
+
+.dataTables_filter input:hover {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dataTables_filter input:focus {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+/* Label do filtro */
+.dataTables_filter label {
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dataTables_length select {
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+    margin: 0 0.5rem;
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 0.875rem;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.dataTables_length select:hover {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dataTables_length select:focus {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+/* Estilizar dropdown options */
+.dataTables_length select option {
+    background: white;
+    color: #495057;
+    padding: 0.5rem;
+    border: none;
+}
+
+.dataTables_length select option:hover,
+.dataTables_length select option:checked {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+}
+
+/* Label do DataTables */
+.dataTables_length label {
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dataTables_info {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+
+.dataTables_paginate {
+    margin-top: 1rem;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 0.375rem 0.75rem;
+    margin: 0 0.125rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: #fff;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background: var(--primary-color);
+    color: var(--dark-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.dataTables_paginate .paginate_button.current {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    color: var(--dark-color) !important;
+    border-color: var(--primary-color) !important;
+    font-weight: 600 !important;
+}
+
+/* Sobrescrever cores padrão do DataTables */
+.dataTables_paginate .paginate_button.current:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    color: var(--dark-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Tabela Personalizada */
+#cobrancasTable {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    margin: 0;
+}
+
+/* Header da tabela personalizado */
+.table-header-juntter {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.table-header-juntter th {
+    color: var(--dark-color) !important;
+    font-weight: 600 !important;
+    border: none;
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    text-transform: uppercase;
+    font-size: 0.775rem;
+    letter-spacing: 0.5px;
+}
+
+#cobrancasTable tbody td {
+    border-top: 1px solid #e9ecef;
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+}
+
+#cobrancasTable tbody tr:hover {
+    background-color: rgba(255, 193, 7, 0.05);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+/* Badges melhorados */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #212529;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #dc3545, #e83e8c);
+    color: white;
+}
+
+/* Melhorias para a página de cobrança */
+.table-responsive {
+    border-radius: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+/* Tabs do modal melhorados */
+.payment-tabs .nav-tabs {
+    border: none;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 15px;
+    padding: 8px;
+    margin-bottom: 0;
+}
+
+.payment-tabs .nav-link {
+    border: none;
+    border-radius: 10px;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 12px 20px;
+    margin: 0 4px;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.payment-tabs .nav-link:hover {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--dark-color);
+}
+
+.payment-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.payment-tabs .nav-link.active:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+/* Card da tabela com espaçamento */
+.card {
+    margin: 1.5rem 0;
+}
+
+.card-body {
+    padding: 2rem !important;
+}
+
+/* Botão Novo Pagamento Único */
+.btn-novo-pagamento {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-novo-pagamento:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    color: var(--dark-color);
+}
+
+.btn-novo-pagamento:focus {
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    color: var(--dark-color);
+}
+
+/* Personalização de todos os selects na página */
+select.form-select,
+select.form-control,
+.dataTables_length select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23999' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 14px 10px;
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    transition: all 0.15s ease-in-out;
+    box-shadow: none;
+    outline: none;
+    border-radius: 8px;
+    padding: 0.65rem 2.5rem 0.65rem 0.875rem;
+}
+
+/* Selects do modal com design especial */
+.modal select.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 14px 10px;
+    padding-right: 3rem;
+}
+
+.modal select.form-select:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffc107' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+}
+
+select.form-select:hover,
+select.form-control:hover,
+.dataTables_length select:hover {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+}
+
+select.form-select:focus,
+select.form-control:focus,
+.dataTables_length select:focus {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+/* Selects específicos do modal - Design moderno */
+.modal .form-select,
+.modal .form-control {
+    border: 1px solid #e9ecef;
+    background-color: white;
+    color: #495057 !important;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.modal .form-select:hover,
+.modal .form-control:hover {
+    background-color: white;
+    border-color: #d0d7de;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+    color: #495057 !important;
+}
+
+.modal .form-select:focus,
+.modal .form-control:focus {
+    background-color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.25);
+    transform: translateY(-1px);
+    outline: none;
+    color: #495057 !important;
+}
+
+/* Textarea específico */
+.modal textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Options dos selects no modal */
+.modal .form-select option {
+    background: white !important;
+    color: #495057 !important;
+    padding: 0.75rem;
+}
+
+.modal .form-select option:hover,
+.modal .form-select option:checked,
+.modal .form-select option:selected {
+    background: #f8f9fa !important;
+    color: #495057 !important;
+}
+
+/* Labels do modal */
+.modal .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Inputs de data */
+.modal input[type="date"].form-control {
+    color: #495057;
+}
+
+.modal input[type="date"].form-control::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.modal input[type="date"].form-control::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Espaçamento geral da página */
+.container-fluid {
+    padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 0 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
     }
 }

@@ -38,6 +38,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/comprador/dashboard', [DashboardController::class, 'compradorDashboard'])
         ->middleware('nivel.acesso:comprador')
         ->name('comprador.dashboard');
+
+    // Rotas de Cobrança (acessível para super_admin, admin e vendedor - NÃO para comprador)
+    Route::middleware('nivel.acesso:vendedor')->group(function () {
+        Route::get('/cobranca', function () {
+            return view('cobranca.index');
+        })->name('cobranca.index');
+        
+        Route::get('/cobranca/recorrente', function () {
+            return view('cobranca.recorrente');
+        })->name('cobranca.recorrente');
+        
+        Route::get('/cobranca/planos', function () {
+            return view('cobranca.planos');
+        })->name('cobranca.planos');
+    });
 });
 
 // Rotas de perfil do Breeze

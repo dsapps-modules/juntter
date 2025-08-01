@@ -17,6 +17,11 @@
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
     <link rel="stylesheet" href="{{ asset('adminlte/dist/css/adminlte.min.css') }}">
     
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-responsive/css/responsive.bootstrap4.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/juntter-styles.css') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard-styles.css') }}">
@@ -45,13 +50,17 @@
                         </button>
                         <ul class="dropdown-menu dropdown-menu-modern" aria-labelledby="cobrancaDropdown">
                             <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
+                            
+                            @if(Auth::user()->isSuperAdminOrAdminOrVendedor())
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>
+                            <li><a class="dropdown-item" href="{{ route('cobranca.index') }}"><i class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
+                            <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li>
+                            <li><a class="dropdown-item" href="{{ route('cobranca.planos') }}"><i class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="#"><i class="fas fa-paper-plane me-2"></i>Enviar Pix</a></li>
                             <li><a class="dropdown-item" href="#"><i class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li>
+                            @endif
+                            
                             <li><a class="dropdown-item" href="#"><i class="fas fa-wallet me-2"></i>Saldo e Extrato</a></li>
                         </ul>
                     </div>
@@ -99,6 +108,20 @@
     <script src="{{ asset('adminlte/dist/js/adminlte.js') }}"></script>
     <script src="{{ asset('js/app.js') }}"></script>
     
+    <!-- DataTables Scripts -->
+    <script src="{{ asset('adminlte/plugins/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-responsive/js/responsive.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-buttons/js/buttons.bootstrap4.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/jszip/jszip.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/pdfmake/pdfmake.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/pdfmake/vfs_fonts.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-buttons/js/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-buttons/js/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('adminlte/plugins/datatables-buttons/js/buttons.colVis.min.js') }}"></script>
+    
     <!-- Dashboard Scripts -->
     <script src="{{ asset('js/dashboard.js') }}"></script>
     
@@ -111,6 +134,11 @@
                     boundary: 'viewport'
                 });
             });
+            
+            // Debug inicial
+            console.log('Bootstrap loaded:', typeof bootstrap !== 'undefined');
+            console.log('jQuery loaded:', typeof $ !== 'undefined');
+            console.log('DataTables loaded:', typeof $.fn.DataTable !== 'undefined');
         });
     </script>
     
