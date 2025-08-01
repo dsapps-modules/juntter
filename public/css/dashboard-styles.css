@@ -6,7 +6,7 @@
 .dashboard-navbar {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
     box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    padding: 12px 0;
+    padding: 8px 0;
     border-bottom: 1px solid rgba(0,0,0,0.1);
     position: relative;
     z-index: 1030;
@@ -27,13 +27,14 @@
 .logo-img {
     transition: all 0.3s ease;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+    height: 36px;
 }
 
 /* Menu Item */
 .menu-item {
     color: var(--dark-color) !important;
     font-weight: 600;
-    padding: 12px 24px !important;
+    padding: 8px 20px !important;
     border-radius: 25px;
     background: rgba(0,0,0,0.1);
     transition: all 0.3s ease;
@@ -41,6 +42,7 @@
     border: 1px solid rgba(0,0,0,0.15) !important;
     position: relative;
     z-index: 1031;
+    font-size: 0.9rem;
 }
 
 .menu-item.btn {
@@ -56,11 +58,11 @@
 }
 
 .menu-item span {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .menu-item i {
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 
 /* Dashboard Content */
@@ -78,7 +80,7 @@
 .navbar-toggler {
     border: 1px solid rgba(0,0,0,0.2);
     background: rgba(0,0,0,0.1);
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 8px;
     position: relative;
     z-index: 1031;
@@ -90,6 +92,8 @@
 
 .navbar-toggler-icon {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    width: 1.2em;
+    height: 1.2em;
 }
 
 /* User Info */
@@ -97,36 +101,25 @@
     display: flex;
     align-items: center;
     background: rgba(0,0,0,0.1);
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 20px;
-    border: 1px solid rgba(0,0,0,0.15);
     transition: all 0.3s ease;
-    position: relative;
-    z-index: 1031;
+    border: 1px solid rgba(0,0,0,0.15);
 }
 
 .user-info-container:hover {
     background: rgba(0,0,0,0.15);
     transform: translateY(-1px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
 
 .user-avatar {
-    margin-right: 12px;
+    margin-right: 8px;
 }
 
 .user-avatar i {
-    font-size: 2rem;
-    color: var(--primary-color);
-    background: var(--dark-color);
-    border-radius: 50%;
-    padding: 8px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    font-size: 1.2rem;
+    color: var(--dark-color);
 }
 
 .user-details {
@@ -136,16 +129,16 @@
 }
 
 .user-name {
-    color: var(--dark-color);
+    font-size: 0.85rem;
     font-weight: 600;
-    font-size: 0.9rem;
+    color: var(--dark-color);
 }
 
 .user-role {
-    color: var(--dark-color);
     font-size: 0.75rem;
-    text-transform: capitalize;
-    opacity: 0.8;
+    color: rgba(0,0,0,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Logout Button */
@@ -153,24 +146,19 @@
     background: rgba(220, 53, 69, 0.8);
     border: 1px solid rgba(220, 53, 69, 0.6);
     color: white;
-    padding: 10px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 20px;
     transition: all 0.3s ease;
-    position: relative;
-    z-index: 1031;
+    font-size: 0.9rem;
+    margin-left: 10px;
 }
 
 .logout-btn:hover {
     background: rgba(220, 53, 69, 1);
     border-color: rgba(220, 53, 69, 0.8);
     color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
 }
 
 .logout-btn i {
@@ -474,6 +462,32 @@
     }
 
     /* Navbar Mobile */
+    .navbar-collapse {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        margin-top: 10px;
+        padding: 15px;
+    }
+
+    .navbar-nav {
+        width: 100%;
+    }
+
+    .navbar-nav .dropdown {
+        width: 100%;
+    }
+
+    .navbar-nav .dropdown-menu {
+        position: static !important;
+        float: none;
+        width: 100%;
+        margin-top: 10px;
+        border: none;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+    }
+
     .user-info-container {
         flex-direction: column;
         text-align: center;
@@ -494,10 +508,25 @@
         padding: 10px 20px !important;
         margin: 5px 0;
         text-align: center;
+        width: 100%;
     }
 
     .dashboard-navbar {
         padding: 8px 0;
+    }
+
+    /* Garantir que o toggler funcione */
+    .navbar-toggler {
+        display: block !important;
+        border: 1px solid rgba(0,0,0,0.2);
+        background: rgba(0,0,0,0.1);
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.2rem rgba(255,193,7,0.25);
+        outline: none;
     }
 }
 

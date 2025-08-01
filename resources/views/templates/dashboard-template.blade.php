@@ -138,6 +138,30 @@
                 });
             });
             
+            // Garantir que o navbar mobile funcione
+            $('.navbar-toggler').on('click', function(e) {
+                e.preventDefault();
+                var target = $(this).data('bs-target');
+                $(target).toggleClass('show');
+                
+                // Adicionar/remover aria-expanded
+                var isExpanded = $(target).hasClass('show');
+                $(this).attr('aria-expanded', isExpanded);
+            });
+            
+            // Fechar navbar mobile quando clicar em um link
+            $('.navbar-nav .dropdown-item').on('click', function() {
+                $('.navbar-collapse').removeClass('show');
+                $('.navbar-toggler').attr('aria-expanded', 'false');
+            });
+            
+            // Fechar navbar mobile quando clicar fora
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.navbar').length) {
+                    $('.navbar-collapse').removeClass('show');
+                    $('.navbar-toggler').attr('aria-expanded', 'false');
+                }
+            });
             
         });
     </script>
