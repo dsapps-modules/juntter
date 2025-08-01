@@ -344,13 +344,39 @@ function initModals() {
     }
     
     // Máscara para valores monetários
-    $('[placeholder="0,00"], #valorParcela, #valorPlano, #precoBoleto, #precoCredito, #valorTransferir, #valorTransferirAgencia').on('input', function() {
+    $('[placeholder="0,00"], #valorParcela, #valorPlano, #precoBoleto, #precoCredito, #valorTransferir, #valorTransferirAgencia, #valorMinimo, #valorPagar, #valorMaximo, #taxaConta').on('input', function() {
         let value = this.value.replace(/\D/g, '');
         value = (value/100).toFixed(2) + '';
         value = value.replace(".", ",");
         value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
         value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
         this.value = 'R$ ' + value;
+    });
+    
+    // Máscara para datas (dd/mm/aaaa) - apenas para campos de texto
+    $('#dataVencimento').on('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.substring(0, 2) + '/' + value.substring(2);
+        }
+        if (value.length >= 5) {
+            value = value.substring(0, 5) + '/' + value.substring(5, 9);
+        }
+        this.value = value;
+    });
+    
+    // Funcionalidade para mostrar/ocultar senha
+    $('.fa-eye').on('click', function() {
+        var input = $(this).siblings('input');
+        var type = input.attr('type');
+        
+        if (type === 'password') {
+            input.attr('type', 'text');
+            $(this).removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            input.attr('type', 'password');
+            $(this).removeClass('fa-eye-slash').addClass('fa-eye');
+        }
     });
     
     // Resetar modais ao fechar
@@ -449,6 +475,82 @@ function initModals() {
         $('.tab-pane').removeClass('show active');
         $('#chave-tab').addClass('active');
         $('#chave-content').addClass('show active');
+    });
+    
+    // Funcionalidades específicas para Pagar Contas
+    $('#linhaDigitavel').on('input', function() {
+        // Validar linha digitável (47 ou 48 dígitos)
+        let value = this.value.replace(/\D/g, '');
+        if (value.length > 48) {
+            this.value = value.substring(0, 48);
+        }
+    });
+    
+    // Botão Enviar (Pagar Contas)
+    $('#btnEnviarLinha').on('click', function(e) {
+        e.preventDefault();
+        var linhaDigitavel = $('#linhaDigitavel').val();
+        
+        if (!linhaDigitavel) {
+            alert('Por favor, informe a linha digitável.');
+            return;
+        }
+        
+        // Simular processamento
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processando...');
+        
+        setTimeout(function() {
+            $('#btnEnviarLinha').prop('disabled', false).html('<i class="fas fa-check me-2"></i>Enviar');
+            alert('Linha digitável processada com sucesso!');
+        }, 2000);
+    });
+    
+    // Botão Solicitar pagamento (Pagar Contas)
+    $('#btnSolicitarPagamento').on('click', function(e) {
+        e.preventDefault();
+        
+        // Validar campos obrigatórios
+        var assinatura = $('#assinaturaEletronica').val();
+        var codigoWhatsApp = $('#codigoWhatsApp').val();
+        
+        if (!assinatura) {
+            alert('Por favor, informe a assinatura eletrônica.');
+            return;
+        }
+        
+        if (!codigoWhatsApp) {
+            alert('Por favor, informe o código enviado por WhatsApp.');
+            return;
+        }
+        
+        // Simular processamento
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processando...');
+        
+        setTimeout(function() {
+            $('#btnSolicitarPagamento').prop('disabled', false).html('<i class="fas fa-file-alt me-2"></i>Solicitar pagamento');
+            alert('Pagamento solicitado com sucesso!');
+        }, 2000);
+    });
+    
+    // Botão Buscar (Saldo e Extrato)
+    $('#btnBuscarExtrato').on('click', function(e) {
+        e.preventDefault();
+        
+        var dataInicio = $('#dataInicio').val();
+        var dataTermino = $('#dataTermino').val();
+        
+        if (!dataInicio || !dataTermino) {
+            alert('Por favor, informe o período de início e término.');
+            return;
+        }
+        
+        // Simular busca
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Buscando...');
+        
+        setTimeout(function() {
+            $('#btnBuscarExtrato').prop('disabled', false).html('<i class="fas fa-search me-2"></i>Buscar');
+            alert('Extrato filtrado com sucesso!');
+        }, 1500);
     });
 }
 

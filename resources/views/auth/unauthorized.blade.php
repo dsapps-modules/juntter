@@ -24,17 +24,33 @@
         @endif
 
         <div class="unauthorized-content">
-            <p>O nível de acesso da sua conta não permite visualizar este conteúdo.</p>
-            <p>Entre em contato com o administrador do sistema para solicitar as permissões necessárias.</p>
+            @auth
+                <p>O nível de acesso da sua conta (<strong>{{ ucfirst(Auth::user()->nivel_acesso) }}</strong>) não permite visualizar este conteúdo.</p>
+                <p>Esta funcionalidade está disponível apenas para administradores e vendedores. Entre em contato com o administrador do sistema para solicitar as permissões necessárias.</p>
+            @else
+                <p>O nível de acesso da sua conta não permite visualizar este conteúdo.</p>
+                <p>Entre em contato com o administrador do sistema para solicitar as permissões necessárias.</p>
+            @endauth
         </div>
 
         <div class="unauthorized-actions">
-            <a href="{{ route('checkout') }}" class="btn btn-primary">
-                <i class="fas fa-home mr-1"></i>Voltar ao Início
-            </a>
-            <a href="{{ route('login') }}" class="btn btn-secondary">
-                <i class="fas fa-sign-in-alt mr-1"></i>Fazer Login
-            </a>
+            @auth
+                <a href="{{ route('dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-tachometer-alt mr-1"></i>Voltar ao Dashboard
+                </a>
+                @if(Auth::user()->nivel_acesso === 'comprador')
+                <a href="#" class="btn btn-secondary">
+                    <i class="fas fa-shopping-cart mr-1"></i>Área do Comprador
+                </a>
+                @endif
+            @else
+                <a href="{{ route('checkout') }}" class="btn btn-primary">
+                    <i class="fas fa-home mr-1"></i>Voltar ao Início
+                </a>
+                <a href="{{ route('login') }}" class="btn btn-secondary">
+                    <i class="fas fa-sign-in-alt mr-1"></i>Fazer Login
+                </a>
+            @endauth
         </div>
     </div>
 </div>
