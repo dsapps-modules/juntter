@@ -1,0 +1,500 @@
+/* Juntter Dashboard Styles */
+
+/* Navbar */
+.dashboard-navbar {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1030;
+}
+
+/* Logo */
+.navbar-brand {
+    padding: 0;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.logo-img {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+}
+
+/* Menu Item */
+.menu-item {
+    color: var(--dark-color) !important;
+    font-weight: 600;
+    padding: 12px 24px !important;
+    border-radius: 25px;
+    background: rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.15) !important;
+    position: relative;
+    z-index: 1031;
+}
+
+.menu-item.btn {
+    border: 1px solid rgba(0,0,0,0.15) !important;
+}
+
+.menu-item:hover {
+    background: rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    color: var(--dark-color) !important;
+    border-color: rgba(0,0,0,0.2);
+}
+
+.menu-item span {
+    font-size: 0.95rem;
+}
+
+.menu-item i {
+    font-size: 1rem;
+}
+
+/* Dashboard Content */
+.dashboard-content {
+    min-height: calc(100vh - 80px);
+    padding: 20px 0;
+    background-color: #f8f9fa;
+}
+
+.dashboard-content .container {
+    padding: 0 15px;
+}
+
+/* Mobile Menu Toggle */
+.navbar-toggler {
+    border: 1px solid rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.1);
+    padding: 8px 12px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1031;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255,193,7,0.25);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* User Info */
+.user-info-container {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.1);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1031;
+}
+
+.user-info-container:hover {
+    background: rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.user-avatar {
+    margin-right: 12px;
+}
+
+.user-avatar i {
+    font-size: 2rem;
+    color: var(--primary-color);
+    background: var(--dark-color);
+    border-radius: 50%;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-name {
+    color: var(--dark-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.user-role {
+    color: var(--dark-color);
+    font-size: 0.75rem;
+    text-transform: capitalize;
+    opacity: 0.8;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: rgba(220, 53, 69, 0.8);
+    border: 1px solid rgba(220, 53, 69, 0.6);
+    color: white;
+    padding: 10px;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1031;
+}
+
+.logout-btn:hover {
+    background: rgba(220, 53, 69, 1);
+    border-color: rgba(220, 53, 69, 0.8);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
+}
+
+.logout-btn i {
+    font-size: 0.9rem;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* Modern Dropdown Styles */
+.dropdown-menu-modern {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+    padding: 15px 0 !important;
+    margin-top: 8px !important;
+    min-width: 250px !important;
+    z-index: 1032 !important;
+    position: absolute !important;
+    transform: none !important;
+}
+
+.dropdown-menu-modern.show {
+    display: block !important;
+}
+
+/* Force dropdown visibility */
+.dropdown.show .dropdown-menu-modern {
+    display: block !important;
+}
+
+.dropdown-menu-modern .dropdown-item {
+    padding: 12px 25px;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    margin: 2px 10px;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.dropdown-menu-modern .dropdown-item:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(255, 207, 0, 0.3);
+}
+
+.dropdown-menu-modern .dropdown-item i {
+    color: var(--primary-color);
+    width: 20px;
+}
+
+.dropdown-menu-modern .dropdown-item:hover i {
+    color: var(--dark-color);
+}
+
+.dropdown-divider {
+    border-color: rgba(0, 0, 0, 0.1);
+    margin: 10px 15px;
+}
+
+/* Dashboard Styles */
+.dashboard-title {
+    color: var(--dark-color);
+    font-size: 2rem;
+}
+
+/* Saldo Cards */
+.saldo-card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 120px;
+}
+
+.saldo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.saldo-content {
+    flex: 1;
+}
+
+.saldo-valor {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--dark-color);
+    margin-bottom: 8px;
+}
+
+.saldo-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.saldo-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-left: 20px;
+}
+
+.saldo-disponivel .saldo-icon {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.saldo-transito .saldo-icon {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+}
+
+.saldo-bloqueado .saldo-icon {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.saldo-bloqueado-boleto .saldo-icon {
+    background: linear-gradient(135deg, #fd7e14, #e55353);
+    color: white;
+}
+
+/* Analytics Card */
+.analytics-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: none;
+}
+
+.analytics-tabs {
+    display: flex;
+    background: #f8f9fa;
+    padding: 5px;
+    margin: 20px 20px 0 20px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--dark-color);
+}
+
+.tab-btn.active:hover {
+    /* Manter estilo do active mesmo no hover */
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 30px;
+}
+
+.metric-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 25px;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark-color);
+    margin-bottom: 10px;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.metric-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.metric-icon-red {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.metric-icon-blue {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.metric-icon-teal {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.metric-icon-cyan {
+    background: linear-gradient(135deg, #20c997, #17a085);
+}
+
+.metric-icon-green {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analytics-tabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .tab-btn {
+        text-align: center;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .saldo-card {
+        padding: 20px;
+        min-height: 100px;
+    }
+
+    .saldo-valor {
+        font-size: 1.5rem;
+    }
+
+    .saldo-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+        margin-left: 15px;
+    }
+
+    /* Navbar Mobile */
+    .user-info-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .user-avatar {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+
+    .logout-btn {
+        margin-top: 10px;
+    }
+
+    .menu-item {
+        padding: 10px 20px !important;
+        margin: 5px 0;
+        text-align: center;
+    }
+
+    .dashboard-navbar {
+        padding: 8px 0;
+    }
+}
