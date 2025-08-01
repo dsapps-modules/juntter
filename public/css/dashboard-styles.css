@@ -1071,3 +1071,33 @@ select.form-control:focus,
     border-color: #545b62;
     color: white;
 }
+
+/* Tabs do modal (Pix) */
+.pix-tab {
+    color: #6c757d;
+    border: none;
+    border-radius: 0;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.pix-tab:hover {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.pix-tab.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+    font-weight: 600;
+}
+
+.pix-tab.active:hover {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}

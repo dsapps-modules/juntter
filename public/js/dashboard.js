@@ -193,6 +193,126 @@ function initDataTables() {
                 ]
             });
         }
+        
+        // DataTable para Planos de Cobrança
+        if ($('#planosTable').length) {
+            $('#planosTable').DataTable({
+                language: {
+                    "sEmptyTable": "Nenhum registro encontrado",
+                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                    "sLengthMenu": "_MENU_ resultados por página",
+                    "sLoadingRecords": "Carregando...",
+                    "sProcessing": "Processando...",
+                    "sZeroRecords": "Nenhum registro encontrado",
+                    "sSearch": "Pesquisar:",
+                    "oPaginate": {
+                        "sNext": "Próximo",
+                        "sPrevious": "Anterior",
+                        "sFirst": "Primeiro",
+                        "sLast": "Último"
+                    }
+                },
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'copy',
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fas fa-copy"></i> Copiar'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fas fa-file-excel"></i> Excel'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-info btn-sm',
+                        text: '<i class="fas fa-file-csv"></i> CSV'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fas fa-file-pdf"></i> PDF'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-warning btn-sm',
+                        text: '<i class="fas fa-print"></i> Imprimir'
+                    }
+                ],
+                columnDefs: [
+                    {
+                        targets: -1,
+                        orderable: false
+                    }
+                ]
+            });
+        }
+        
+        // DataTable para Enviar Pix
+        if ($('#pixTable').length) {
+            $('#pixTable').DataTable({
+                language: {
+                    "sEmptyTable": "Nenhum registro encontrado",
+                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                    "sLengthMenu": "_MENU_ resultados por página",
+                    "sLoadingRecords": "Carregando...",
+                    "sProcessing": "Processando...",
+                    "sZeroRecords": "Nenhum registro encontrado",
+                    "sSearch": "Pesquisar:",
+                    "oPaginate": {
+                        "sNext": "Próximo",
+                        "sPrevious": "Anterior",
+                        "sFirst": "Primeiro",
+                        "sLast": "Último"
+                    }
+                },
+                responsive: true,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'copy',
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fas fa-copy"></i> Copiar'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fas fa-file-excel"></i> Excel'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-info btn-sm',
+                        text: '<i class="fas fa-file-csv"></i> CSV'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fas fa-file-pdf"></i> PDF'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-warning btn-sm',
+                        text: '<i class="fas fa-print"></i> Imprimir'
+                    }
+                ],
+                columnDefs: [
+                    {
+                        targets: -1,
+                        orderable: false
+                    }
+                ]
+            });
+        }
     } else {
         console.error('DataTable AdminLTE não disponível!');
     }
@@ -224,7 +344,7 @@ function initModals() {
     }
     
     // Máscara para valores monetários
-    $('[placeholder="0,00"], #valorParcela').on('input', function() {
+    $('[placeholder="0,00"], #valorParcela, #valorPlano, #precoBoleto, #precoCredito, #valorTransferir, #valorTransferirAgencia').on('input', function() {
         let value = this.value.replace(/\D/g, '');
         value = (value/100).toFixed(2) + '';
         value = value.replace(".", ",");
@@ -246,6 +366,16 @@ function initModals() {
         if ($.fn.select2) {
             $('#clienteRecorrente').val(null).trigger('change');
         }
+    });
+    
+    $('#modalPlano').on('hidden.bs.modal', function() {
+        $('#formPlano')[0].reset();
+    });
+    
+    $('#modalPix').on('hidden.bs.modal', function() {
+        $('#formPixChave')[0].reset();
+        $('#formPixAgencia')[0].reset();
+        $('#formPixCopia')[0].reset();
     });
     
     // Modal - garantir que funcione
@@ -287,6 +417,22 @@ function initModals() {
         $(target).addClass('show active');
     });
     
+    // Funcionalidade dos tabs do modal (Pix)
+    $('.pix-tab').on('click', function(e) {
+        e.preventDefault();
+        
+        // Remover active de todos
+        $('.pix-tab').removeClass('active');
+        $('.tab-pane').removeClass('show active');
+        
+        // Adicionar active no clicado
+        $(this).addClass('active');
+        
+        // Mostrar conteúdo correspondente
+        var target = $(this).attr('data-bs-target');
+        $(target).addClass('show active');
+    });
+    
     // Eventos do modal (Cobrança Única)
     $('#modalCobranca').on('show.bs.modal', function () {
         // Reset para primeira aba quando abrir
@@ -294,6 +440,15 @@ function initModals() {
         $('.tab-pane').removeClass('show active');
         $('#link-tab').addClass('active');
         $('#link-content').addClass('show active');
+    });
+    
+    // Eventos do modal (Pix)
+    $('#modalPix').on('show.bs.modal', function () {
+        // Reset para primeira aba quando abrir
+        $('.pix-tab').removeClass('active');
+        $('.tab-pane').removeClass('show active');
+        $('#chave-tab').addClass('active');
+        $('#chave-content').addClass('show active');
     });
 }
 

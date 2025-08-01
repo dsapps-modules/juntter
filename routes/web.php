@@ -41,18 +41,30 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rotas de Cobrança (acessível para super_admin, admin e vendedor - NÃO para comprador)
     Route::middleware('nivel.acesso:vendedor')->group(function () {
-        Route::get('/cobranca', function () {
-            return view('cobranca.index');
-        })->name('cobranca.index');
-        
-        Route::get('/cobranca/recorrente', function () {
-            return view('cobranca.recorrente');
-        })->name('cobranca.recorrente');
-        
-        Route::get('/cobranca/planos', function () {
-            return view('cobranca.planos');
-        })->name('cobranca.planos');
-    });
+    Route::get('/cobranca', function () {
+        return view('cobranca.index');
+    })->name('cobranca.index');
+    
+    Route::get('/cobranca/recorrente', function () {
+        return view('cobranca.recorrente');
+    })->name('cobranca.recorrente');
+    
+    Route::get('/cobranca/planos', function () {
+        return view('cobranca.planos');
+    })->name('cobranca.planos');
+    
+    Route::get('/cobranca/pix', function () {
+        return view('cobranca.pix');
+    })->name('cobranca.pix');
+
+    Route::get('/cobranca/pagarcontas', function () {
+        return view('cobranca.pagarcontas');
+    })->name('cobranca.pagarcontas');
+
+    Route::get('/cobranca/saldoextrato', function () {
+        return view('cobranca.saldoextrato');
+    })->name('cobranca.saldoextrato');
+});
 });
 
 // Rotas de perfil do Breeze
