@@ -47,6 +47,21 @@ class TransacaoService
         
         return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
     }
+    public function lancamentosFuturosDiarios(array $filtros = [])
+    {
+        // Separa extra_headers dos filtros normais
+        $extra_headers = $filtros['extra_headers'] ?? [];
+        unset($filtros['extra_headers']);
+        
 
+        
+        $query_params = http_build_query($filtros);
+        $endpoint = "marketplace/transactions/future_releases_daily";
+        if ($query_params) {
+            $endpoint .= "?" . $query_params;
+        }
+        
+        return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
+    }
    
 }

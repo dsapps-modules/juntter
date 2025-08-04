@@ -218,7 +218,31 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('total', $response);
     }
 
-   
+    /** @test */
+    public function lancamentos_futuros_diarios()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        $filtros = [
+            'filters' => json_encode([
+                'gateway_authorization' => 'PAYTIME',
+                'date' => '2025-09-03'
+            ]),
+            'extra_headers' => [
+                'establishment_id' => '155102'
+            ]
+        ];
+
+        $response = $service->lancamentosFuturosDiarios($filtros);
+
+        dump('RESPOSTA LANÇAMENTOS FUTUROS DIÁRIOS:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertArrayHasKey('total', $response);
+        $this->assertArrayHasKey('page', $response);
+        $this->assertArrayHasKey('perPage', $response);
+    }
     
 
 } 
