@@ -15,12 +15,12 @@ class TransacaoService
 
     public function listarTransacoes(array $filtros = [])
     {
-        return $this->apiClient->get("/v1/transaction?" . http_build_query($filtros));
+        return $this->apiClient->get("marketplace/transactions?" . http_build_query($filtros));
     }
 
     public function detalhesTransacao(string $codigo)
     {
-        return $this->apiClient->get("/v1/transaction/{$codigo}");
+        return $this->apiClient->get("marketplace/transactions/{$codigo}");
     }
 
 }
