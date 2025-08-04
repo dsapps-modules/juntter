@@ -14,8 +14,10 @@ class ApiClientServiceTest extends TestCase
         $this->withoutExceptionHandling();
 
         $client = new ApiClientService();
-        $response = $client->get('establishment');
+        $response = $client->get('marketplace/establishments');
 
         $this->assertIsArray($response);
+        echo "\n\nResponse from API:\n";
+        echo json_encode($response, JSON_PRETTY_PRINT);
     }
 }
