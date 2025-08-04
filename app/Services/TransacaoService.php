@@ -27,4 +27,9 @@ class TransacaoService
     {
         return $this->apiClient->post("marketplace/transactions/simulate", $dados);
     }
+
+    public function aplicarSplit(string $idTransacao, array $dados)
+    {
+        return $this->apiClient->post("marketplace/transactions/{$idTransacao}/split", $dados);
+    }
 }

@@ -116,4 +116,83 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('pix', $response['simulation']);
     }
 
+    /** @test */
+    public function aplicar_split_transacao()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        // Primeiro lista as transações para pegar um ID real
+        $filtros = [
+            'perPage' => 1,
+            'page' => 1
+        ];
+
+        $listaTransacoes = $service->listarTransacoes($filtros);
+        
+        $this->assertIsArray($listaTransacoes);
+        $this->assertArrayHasKey('data', $listaTransacoes);
+        $this->assertNotEmpty($listaTransacoes['data']);
+
+        // Pega o ID da primeira transação encontrada
+        $idTransacao = $listaTransacoes['data'][0]['_id'];
+
+        $dadosSplit = [
+            "title" => "Comissão EC Secundário",
+            "division" => "PERCENTAGE",
+            "establishments" => [
+                [
+                    "id" => 155161, // Estabelecimento diferente
+                    "value" => 30
+                ]
+            ]
+        ];
+
+        $response = $service->aplicarSplit($idTransacao, $dadosSplit);
+
+        dump('RESPOSTA SPLIT:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('message', $response);
+        $this->assertEquals('Processo de Split iniciado', $response['message']);
+    }
+
+    /** @test */
+    public function aplicar_split_transacao_valor_fixo()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        // Primeiro lista as transações para pegar um ID real
+        $filtros = [
+            'perPage' => 1,
+            'page' => 1
+        ];
+
+        $listaTransacoes = $service->listarTransacoes($filtros);
+        
+        $this->assertIsArray($listaTransacoes);
+        $this->assertArrayHasKey('data', $listaTransacoes);
+        $this->assertNotEmpty($listaTransacoes['data']);
+
+        // Pega o ID da primeira transação encontrada
+        $idTransacao = $listaTransacoes['data'][0]['_id'];
+
+        $dadosSplit = [
+            "title" => "Comissão Valor Fixo",
+            "division" => "CURRENCY",
+            "establishments" => [
+                [
+                    "id" => 155161, // Estabelecimento diferente
+                    "value" => 1500 // R$ 15,00 em centavos
+                ]
+            ]
+        ];
+
+        $response = $service->aplicarSplit($idTransacao, $dadosSplit);
+
+        dump('RESPOSTA SPLIT VALOR FIXO:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('message', $response);
+        $this->assertEquals('Processo de Split iniciado', $response['message']);
+    }
 } 
