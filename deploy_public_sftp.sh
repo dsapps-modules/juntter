@@ -2,7 +2,7 @@
 
 # CONFIGURAÇÕES
 HOSTINGER_USER="u709248946"
-HOSTINGER_HOST="82.25.67.28"  # ou IP do servidor
+HOSTINGER_HOST="juntter.com.br"  # ou IP do servidor
 REMOTE_DIR="public_html/checkout"
 LOCAL_DIR="public"
 

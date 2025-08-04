@@ -15,11 +15,11 @@ class CreditoService
 
     public function criarTransacaoCredito(array $dados)
     {
-        return $this->apiClient->post("/v1/marketplace/transactions", $dados);
+        return $this->apiClient->post("marketplace/transactions", $dados);
     }
 
     public function estornarTransacao(string $id, array $dados)
     {
-        return $this->apiClient->post("/v1/marketplace/transactions/{$id}/reversal", $dados);
+        return $this->apiClient->post("marketplace/transactions/{$id}/reversal", $dados);
     }
 }
