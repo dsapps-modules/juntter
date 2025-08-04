@@ -87,4 +87,33 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('_id', $response);
         $this->assertEquals($codigoTransacao, $response['_id']);
     }
+
+    /** @test */
+    public function simular_transacao_credito()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        $dados = [
+            "amount" => 5000, // R$ 50,00
+            "flag_id" => 1, // MASTERCARD
+            "gateway_id" => 4, // SUBPAYTIME
+            "modality" => "ONLINE",
+            "interest" => "ESTABLISHMENT",
+            "extra_headers" => [
+                "establishment_id" => "155102"
+            ]
+        ];
+
+        $response = $service->simularTransacao($dados);
+
+        dump('RESPOSTA SIMULAÇÃO:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('amount', $response);
+        $this->assertArrayHasKey('simulation', $response);
+        $this->assertArrayHasKey('credit', $response['simulation']);
+        $this->assertArrayHasKey('debit', $response['simulation']);
+        $this->assertArrayHasKey('pix', $response['simulation']);
+    }
+
 } 

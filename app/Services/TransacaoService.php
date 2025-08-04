@@ -23,4 +23,8 @@ class TransacaoService
         return $this->apiClient->get("marketplace/transactions/{$codigo}");
     }
 
+    public function simularTransacao(array $dados)
+    {
+        return $this->apiClient->post("marketplace/transactions/simulate", $dados);
+    }
 }
