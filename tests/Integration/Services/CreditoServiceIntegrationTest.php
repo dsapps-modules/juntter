@@ -6,6 +6,9 @@ use Tests\TestCase;
 use App\Services\CreditoService;
 use App\Services\ApiClientService;
 
+// teste individual do serviço CreditoService 
+// php artisan test tests/Integration/Services/CreditoServiceIntegrationTest.php
+
 class CreditoServiceIntegrationTest extends TestCase
 {
     protected $apiClient;
@@ -17,15 +20,16 @@ class CreditoServiceIntegrationTest extends TestCase
     }
 
     /** @test */
-    public function criar_transacao_credito_real()
+    public function criar_transacao_credito()
     {
+        // $this->markTestSkipped('This test is skipped because it requires a real API call.');
         $service = new CreditoService($this->apiClient);
 
         $dados = [
             "payment_type" => "CREDIT",
-            "amount" => 8005,
-            "installments" => 1,
+            "amount" => 15000, // R$ 150,00
             "interest" => "CLIENT",
+            "installments" => 3,
             "client" => [
                 "first_name" => "João",
                 "last_name" => "da Silva",
@@ -51,33 +55,41 @@ class CreditoServiceIntegrationTest extends TestCase
                 "expiration_year" => 2026,
                 "security_code" => "123"
             ],
-            "session_id" => "IdGeradoSDK"
+            "session_id" => "IdGeradoSDK",
+            "extra_headers" => [
+                "establishment_id" => "155102"
+            ]
         ];
 
         $response = $service->criarTransacaoCredito($dados);
-
-        dump($response);
+        
+        dump('RESPOSTA CRIAÇÃO CRÉDITO:', $response);
+        
         $this->assertIsArray($response);
-        $this->assertArrayHasKey('transaction_id', $response);
+        $this->assertArrayHasKey('_id', $response);
 
-        return $response['transaction_id'];
+        return $response['_id'];
     }
 
-    /**
-     * @depends criar_transacao_credito_real
+    /** @test
+     * @depends criar_transacao_credito
      */
-    public function estornar_transacao_credito_real(string $id)
+    public function estornar_transacao_credito(string $id)
     {
         $service = new CreditoService($this->apiClient);
-
-        $dados = [
-            "transaction_amount" => 1000.00,
-            "transaction_type" => "credit"
+        
+        $dadosEstorno = [
+            "use_account" => true,
+       
         ];
 
-        $response = $service->estornarTransacao($id, $dados);
+        $response = $service->estornarTransacao($id, $dadosEstorno);
 
-        dump($response);
+        dump('RESPOSTA ESTORNO:', $response);
+
         $this->assertIsArray($response);
+        $this->assertArrayHasKey('_id', $response);
     }
+
+
 }
