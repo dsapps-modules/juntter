@@ -1,0 +1,1132 @@
+/* Juntter Dashboard Styles */
+
+
+
+/* Navbar */
+.dashboard-navbar {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 1030;
+}
+
+/* Logo */
+.navbar-brand {
+    padding: 0;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 2;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+}
+
+.logo-img {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+    height: 36px;
+}
+
+/* Menu Item */
+.menu-item {
+    color: var(--dark-color) !important;
+    font-weight: 600;
+    padding: 8px 20px !important;
+    border-radius: 25px;
+    background: rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border: 1px solid rgba(0,0,0,0.15) !important;
+    position: relative;
+    z-index: 1031;
+    font-size: 0.9rem;
+}
+
+.menu-item.btn {
+    border: 1px solid rgba(0,0,0,0.15) !important;
+}
+
+.menu-item:hover {
+    background: rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    color: var(--dark-color) !important;
+    border-color: rgba(0,0,0,0.2);
+}
+
+.menu-item span {
+    font-size: 0.9rem;
+}
+
+.menu-item i {
+    font-size: 0.9rem;
+}
+
+/* Dashboard Content */
+.dashboard-content {
+    min-height: calc(100vh - 80px);
+    padding: 20px 0;
+    background-color: #f8f9fa;
+}
+
+.dashboard-content .container {
+    padding: 0 15px;
+}
+
+/* Mobile Menu Toggle */
+.navbar-toggler {
+    border: 1px solid rgba(0,0,0,0.2);
+    background: rgba(0,0,0,0.1);
+    padding: 6px 10px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 1031;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255,193,7,0.25);
+}
+
+.navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    width: 1.2em;
+    height: 1.2em;
+}
+
+/* User Info */
+.user-info-container {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.1);
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.15);
+}
+
+.user-info-container:hover {
+    background: rgba(0,0,0,0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.user-avatar {
+    margin-right: 8px;
+}
+
+.user-avatar i {
+    font-size: 1.2rem;
+    color: var(--dark-color);
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: rgba(0,0,0,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: rgba(220, 53, 69, 0.8);
+    border: 1px solid rgba(220, 53, 69, 0.6);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    margin-left: 10px;
+}
+
+.logout-btn:hover {
+    background: rgba(220, 53, 69, 1);
+    border-color: rgba(220, 53, 69, 0.8);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+.logout-btn i {
+    font-size: 0.9rem;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* Modern Dropdown Styles */
+.dropdown-menu-modern {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15) !important;
+    padding: 15px 0 !important;
+    margin-top: 8px !important;
+    min-width: 250px !important;
+    z-index: 1032 !important;
+    position: absolute !important;
+    transform: none !important;
+}
+
+.dropdown-menu-modern.show {
+    display: block !important;
+}
+
+/* Force dropdown visibility */
+.dropdown.show .dropdown-menu-modern {
+    display: block !important;
+}
+
+.dropdown-menu-modern .dropdown-item {
+    padding: 12px 25px;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    margin: 2px 10px;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.dropdown-menu-modern .dropdown-item:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    transform: translateX(5px);
+    box-shadow: 0 4px 15px rgba(255, 207, 0, 0.3);
+}
+
+.dropdown-menu-modern .dropdown-item i {
+    color: var(--primary-color);
+    width: 20px;
+}
+
+.dropdown-menu-modern .dropdown-item:hover i {
+    color: var(--dark-color);
+}
+
+.dropdown-divider {
+    border-color: rgba(0, 0, 0, 0.1);
+    margin: 10px 15px;
+}
+
+/* Dashboard Styles */
+.dashboard-title {
+    color: var(--dark-color);
+    font-size: 2rem;
+}
+
+/* Saldo Cards */
+.saldo-card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 120px;
+}
+
+.saldo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.saldo-content {
+    flex: 1;
+}
+
+.saldo-valor {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--dark-color);
+    margin-bottom: 8px;
+}
+
+.saldo-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.saldo-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-left: 20px;
+}
+
+.saldo-disponivel .saldo-icon {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.saldo-transito .saldo-icon {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+}
+
+.saldo-bloqueado .saldo-icon {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.saldo-bloqueado-boleto .saldo-icon {
+    background: linear-gradient(135deg, #fd7e14, #e55353);
+    color: white;
+}
+
+/* Analytics Card */
+.analytics-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    border: none;
+}
+
+.analytics-tabs {
+    display: flex;
+    background: #f8f9fa;
+    padding: 5px;
+    margin: 20px 20px 0 20px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.tab-btn:hover:not(.active) {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--dark-color);
+}
+
+.tab-btn.active:hover {
+    /* Manter estilo do active mesmo no hover */
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+/* Metrics Grid */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 30px;
+}
+
+.metric-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 25px;
+    position: relative;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--dark-color);
+    margin-bottom: 10px;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.metric-icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.metric-icon-red {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.metric-icon-blue {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.metric-icon-teal {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.metric-icon-cyan {
+    background: linear-gradient(135deg, #20c997, #17a085);
+}
+
+.metric-icon-green {
+    background: linear-gradient(135deg, #28a745, #1e7e34);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analytics-tabs {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .tab-btn {
+        text-align: center;
+    }
+
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .saldo-card {
+        padding: 20px;
+        min-height: 100px;
+    }
+
+    .saldo-valor {
+        font-size: 1.5rem;
+    }
+
+    .saldo-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+        margin-left: 15px;
+    }
+
+    /* Navbar Mobile */
+    .navbar-collapse {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border-radius: 0 0 15px 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        margin-top: 10px;
+        padding: 15px;
+    }
+
+    .navbar-nav {
+        width: 100%;
+    }
+
+    .navbar-nav .dropdown {
+        width: 100%;
+    }
+
+    .navbar-nav .dropdown-menu {
+        position: static !important;
+        float: none;
+        width: 100%;
+        margin-top: 10px;
+        border: none;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .user-info-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .user-avatar {
+        margin-right: 0;
+        margin-bottom: 8px;
+    }
+
+    .logout-btn {
+        margin-top: 10px;
+    }
+
+    .menu-item {
+        padding: 10px 20px !important;
+        margin: 5px 0;
+        text-align: center;
+        width: 100%;
+    }
+
+    .dashboard-navbar {
+        padding: 8px 0;
+    }
+
+    /* Garantir que o toggler funcione */
+    .navbar-toggler {
+        display: block !important;
+        border: 1px solid rgba(0,0,0,0.2);
+        background: rgba(0,0,0,0.1);
+        padding: 8px 12px;
+        border-radius: 8px;
+    }
+
+    .navbar-toggler:focus {
+        box-shadow: 0 0 0 0.2rem rgba(255,193,7,0.25);
+        outline: none;
+    }
+}
+
+/* Estilos do Modal de Cobrança */
+.payment-tabs .nav-tabs {
+    border-bottom: 2px solid #f8f9fa;
+}
+
+.payment-tabs .nav-link {
+    border: none;
+    background: transparent;
+    color: #6c757d;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.payment-tabs .nav-link:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+}
+
+.payment-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    border-bottom: 3px solid var(--primary-color);
+}
+
+/* Tabela personalizada */
+.table th {
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 1rem 0.75rem;
+}
+
+.table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.02);
+}
+
+/* Cards do modal */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 12px 12px 0 0;
+}
+
+/* Estilo dos forms */
+.form-label.fw-bold {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+/* Inputs e textareas gerais */
+.form-control {
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    transition: all 0.15s ease-in-out;
+    border-radius: 8px;
+    padding: 0.65rem 0.875rem;
+    color: #495057 !important;
+}
+
+.form-control:hover {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    color: #495057 !important;
+}
+
+.form-control:focus {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+    color: #495057 !important;
+}
+
+/* DataTables Juntter Style */
+.dataTables_wrapper {
+    font-family: 'Source Sans Pro', sans-serif;
+}
+
+/* Corrigir hover nos elementos DataTables */
+.dataTables_wrapper * {
+    box-sizing: border-box;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    margin: 0.5rem 0;
+}
+
+.dataTables_wrapper .dt-buttons {
+    margin-bottom: 1rem;
+}
+
+.dataTables_wrapper .dt-buttons .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.dataTables_filter input {
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    margin-left: 0.5rem;
+    background: #f8f9fa;
+    transition: all 0.15s ease-in-out;
+    box-shadow: none;
+}
+
+.dataTables_filter input:hover {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dataTables_filter input:focus {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+/* Label do filtro */
+.dataTables_filter label {
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dataTables_length select {
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 0.375rem 1.75rem 0.375rem 0.75rem;
+    margin: 0 0.5rem;
+    background: #f8f9fa;
+    color: #495057;
+    font-size: 0.875rem;
+    transition: all 0.15s ease-in-out;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+.dataTables_length select:hover {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dataTables_length select:focus {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+/* Estilizar dropdown options */
+.dataTables_length select option {
+    background: white;
+    color: #495057;
+    padding: 0.5rem;
+    border: none;
+}
+
+.dataTables_length select option:hover,
+.dataTables_length select option:checked {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+}
+
+/* Label do DataTables */
+.dataTables_length label {
+    color: #6c757d;
+    font-weight: 500;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dataTables_info {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 1rem;
+}
+
+.dataTables_paginate {
+    margin-top: 1rem;
+}
+
+.dataTables_paginate .paginate_button {
+    padding: 0.375rem 0.75rem;
+    margin: 0 0.125rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: #fff;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background: var(--primary-color);
+    color: var(--dark-color);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.dataTables_paginate .paginate_button.current {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    color: var(--dark-color) !important;
+    border-color: var(--primary-color) !important;
+    font-weight: 600 !important;
+}
+
+/* Sobrescrever cores padrão do DataTables */
+.dataTables_paginate .paginate_button.current:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    color: var(--dark-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Tabela Personalizada */
+#cobrancasTable {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+    margin: 0;
+}
+
+/* Header da tabela personalizado */
+.table-header-juntter {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+}
+
+.table-header-juntter th {
+    color: var(--dark-color) !important;
+    font-weight: 600 !important;
+    border: none;
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    text-transform: uppercase;
+    font-size: 0.775rem;
+    letter-spacing: 0.5px;
+}
+
+#cobrancasTable tbody td {
+    border-top: 1px solid #e9ecef;
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+}
+
+#cobrancasTable tbody tr:hover {
+    background-color: rgba(255, 193, 7, 0.05);
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+/* Badges melhorados */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #212529;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #dc3545, #e83e8c);
+    color: white;
+}
+
+/* Melhorias para a página de cobrança */
+.table-responsive {
+    border-radius: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+/* Tabs do modal melhorados */
+.payment-tabs .nav-tabs {
+    border: none;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 15px;
+    padding: 8px;
+    margin-bottom: 0;
+}
+
+.payment-tabs .nav-link {
+    border: none;
+    border-radius: 10px;
+    color: #6c757d;
+    font-weight: 500;
+    padding: 12px 20px;
+    margin: 0 4px;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.payment-tabs .nav-link:hover {
+    background: rgba(255, 193, 7, 0.1);
+    color: var(--dark-color);
+}
+
+.payment-tabs .nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+.payment-tabs .nav-link.active:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+}
+
+/* Card da tabela com espaçamento */
+.card {
+    margin: 1.5rem 0;
+}
+
+.card-body {
+    padding: 2rem !important;
+}
+
+/* Botão Novo Pagamento Único */
+.btn-novo-pagamento {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--dark-color);
+    border: none;
+    border-radius: 50px;
+    padding: 12px 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-novo-pagamento:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    color: var(--dark-color);
+}
+
+.btn-novo-pagamento:focus {
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    color: var(--dark-color);
+}
+
+/* Personalização de todos os selects na página */
+select.form-select,
+select.form-control,
+.dataTables_length select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23999' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 14px 10px;
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
+    transition: all 0.15s ease-in-out;
+    box-shadow: none;
+    outline: none;
+    border-radius: 8px;
+    padding: 0.65rem 2.5rem 0.65rem 0.875rem;
+}
+
+/* Selects do modal com design especial */
+.modal select.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 14px 10px;
+    padding-right: 3rem;
+}
+
+.modal select.form-select:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffc107' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+}
+
+select.form-select:hover,
+select.form-control:hover,
+.dataTables_length select:hover {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+}
+
+select.form-select:focus,
+select.form-control:focus,
+.dataTables_length select:focus {
+    background-color: white;
+    border-color: #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+}
+
+/* Selects específicos do modal - Design moderno */
+.modal .form-select,
+.modal .form-control {
+    border: 1px solid #e9ecef;
+    background-color: white;
+    color: #495057 !important;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.modal .form-select:hover,
+.modal .form-control:hover {
+    background-color: white;
+    border-color: #d0d7de;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+    color: #495057 !important;
+}
+
+.modal .form-select:focus,
+.modal .form-control:focus {
+    background-color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.25);
+    transform: translateY(-1px);
+    outline: none;
+    color: #495057 !important;
+}
+
+/* Textarea específico */
+.modal textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Options dos selects no modal */
+.modal .form-select option {
+    background: white !important;
+    color: #495057 !important;
+    padding: 0.75rem;
+}
+
+.modal .form-select option:hover,
+.modal .form-select option:checked,
+.modal .form-select option:selected {
+    background: #f8f9fa !important;
+    color: #495057 !important;
+}
+
+/* Labels do modal */
+.modal .form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Inputs de data */
+.modal input[type="date"].form-control {
+    color: #495057;
+}
+
+.modal input[type="date"].form-control::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.modal input[type="date"].form-control::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}
+
+/* Espaçamento geral da página */
+.container-fluid {
+    padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 0 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem !important;
+    }
+}
+
+/* Garantir que o botão X do modal apareça */
+.modal-header .btn-close {
+    position: absolute !important;
+    right: 1.5rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 1050 !important;
+    opacity: 1 !important;
+    background: none !important;
+    border: none !important;
+    font-size: 1.5rem !important;
+    color: #6c757d !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.modal-header .btn-close:hover {
+    color: #dc3545 !important;
+}
+
+.modal-header .btn-close::before {
+    content: "×" !important;
+    font-weight: bold !important;
+    font-size: 2rem !important;
+    line-height: 1 !important;
+    display: block !important;
+}
+
+/* Garantir que o modal header tenha posição relativa */
+.modal-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Garantir que o botão Fechar funcione */
+.modal-footer .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+.modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+    color: white;
+}
+
+/* Tabs do modal (Pix) */
+.pix-tab {
+    color: #6c757d;
+    border: none;
+    border-radius: 0;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.pix-tab:hover {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.pix-tab.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+    font-weight: 600;
+}
+
+.pix-tab.active:hover {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 2px solid var(--primary-color);
+}

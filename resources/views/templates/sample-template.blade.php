@@ -28,7 +28,7 @@
 
     /* Background gradiente para páginas de auth */
     body.auth-page {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--dark-color) 100%);
+        background: linear-gradient(135deg, var(--dark-color) 0%, var(--secondary-color) 70%, var(--primary-color) 100%);
         min-height: 100vh;
         scroll-behavior: smooth;
     }
