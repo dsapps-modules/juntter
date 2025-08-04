@@ -45,12 +45,23 @@ class ApiClientService
                 'integration-key' => config('services.paytime.integration_key'),
             ];
 
+            // Trata extra_headers para POST requests (json)
             if (isset($options['json']['extra_headers'])) {
                 foreach ($options['json']['extra_headers'] as $key => $value) {
                     $headers[$key] = $value;
                 }
             }
+            
+            // Trata extra_headers para GET requests (query)
+            if (isset($options['query']['extra_headers'])) {
+                foreach ($options['query']['extra_headers'] as $key => $value) {
+                    $headers[$key] = $value;
+                }
+            }
 
+
+            // dump('URL sendo chamada: ' . "{$this->baseUrl}/{$endpoint}");
+            
             $response = Http::withHeaders($headers)
                 ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
 
