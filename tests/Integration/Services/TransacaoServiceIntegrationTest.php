@@ -195,4 +195,30 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('message', $response);
         $this->assertEquals('Processo de Split iniciado', $response['message']);
     }
+
+    /** @test */
+    public function lancamentos_futuros()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        $filtros = [
+            'extra_headers' => [
+                'establishment_id' => '155102'
+            ]
+        ];
+
+        $response = $service->lancamentosFuturos($filtros);
+
+        dump('RESPOSTA LANÇAMENTOS FUTUROS:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('calendar', $response);
+        $this->assertArrayHasKey('thirtyDays', $response);
+        $this->assertArrayHasKey('months', $response);
+        $this->assertArrayHasKey('total', $response);
+    }
+
+   
+    
+
 } 

@@ -32,4 +32,21 @@ class TransacaoService
     {
         return $this->apiClient->post("marketplace/transactions/{$idTransacao}/split", $dados);
     }
+
+    public function lancamentosFuturos(array $filtros = [])
+    {
+        // Separa extra_headers dos filtros normais
+        $extra_headers = $filtros['extra_headers'] ?? [];
+        unset($filtros['extra_headers']);
+        
+        $query_params = http_build_query($filtros);
+        $endpoint = "marketplace/transactions/future_releases";
+        if ($query_params) {
+            $endpoint .= "?" . $query_params;
+        }
+        
+        return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
+    }
+
+   
 }
