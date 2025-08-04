@@ -33,16 +33,23 @@ class ApiClientService
 
     private function request(string $method, string $endpoint, array $options): array
     {
+
         $attempts = 0;
 
         do {
             $token = $this->getToken();
 
             $headers = [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
                 'Authorization' => "Bearer {$token}",
+                'x-token' => config('services.paytime.x_token'),
+                'integration-key' => config('services.paytime.integration_key'),
             ];
+
+            if (isset($options['json']['extra_headers'])) {
+                foreach ($options['json']['extra_headers'] as $key => $value) {
+                    $headers[$key] = $value;
+                }
+            }
 
             $response = Http::withHeaders($headers)
                 ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
@@ -64,8 +71,7 @@ class ApiClientService
         $token = ApiToken::where('key', 'paytime_token')->get()[0] ?? null;
 
         if ($token && now()->diffInMinutes($token['updated_at']) < 30) {
-            echo "\n\nToken reutilizado com sucesso!\n";
-            return $token->access_token;
+            return $token['access_token'];
         }
 
         return $this->refreshToken();
@@ -91,7 +97,7 @@ class ApiClientService
             throw new Exception('Falha ao renovar token: ' . $response->body());
         }
 
-        echo "\n\nToken renovado com sucesso!\n";
+        // echo "\n\nToken renovado com sucesso!\n";
         $accessToken = $response->json()['token'];
 
         try{
