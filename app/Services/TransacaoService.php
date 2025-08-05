@@ -38,6 +38,11 @@ class TransacaoService
         return $this->apiClient->get("marketplace/transactions/{$idTransacao}/split");
     }
 
+    public function cancelarSplitTransacao(string $idTransacao)
+    {
+        return $this->apiClient->delete("marketplace/transactions/{$idTransacao}/split");
+    }
+
     public function lancamentosFuturos(array $filtros = [])
     {
         // Separa extra_headers dos filtros normais

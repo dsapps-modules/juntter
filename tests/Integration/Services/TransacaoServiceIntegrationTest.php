@@ -283,6 +283,35 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertIsArray($response['establishments']);
         $this->assertIsArray($response['history']);
     }
+
+    /** @test */
+    public function cancelar_split_transacao()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        // Primeiro lista as transações para pegar um ID real
+        $filtros = [
+            'perPage' => 1,
+            'page' => 1
+        ];
+
+        $listaTransacoes = $service->listarTransacoes($filtros);
+        
+        $this->assertIsArray($listaTransacoes);
+        $this->assertArrayHasKey('data', $listaTransacoes);
+        $this->assertNotEmpty($listaTransacoes['data']);
+
+        // Pega o ID da primeira transação encontrada
+        $idTransacao = $listaTransacoes['data'][0]['_id'];
+
+        $response = $service->cancelarSplitTransacao($idTransacao);
+
+        dump('RESPOSTA CANCELAR SPLIT:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('message', $response);
+        $this->assertEquals('Processo de cancelamento de Split iniciado.', $response['message']);
+    }
     
 
 } 
