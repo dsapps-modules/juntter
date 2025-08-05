@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EstabelecimentoController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -64,7 +65,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cobranca/saldoextrato', function () {
         return view('cobranca.saldoextrato');
     })->name('cobranca.saldoextrato');
+    
+
 });
+});
+
+// Rotas de Estabelecimentos (apenas admin e super admin)
+Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function () {
+    Route::get('/estabelecimentos/{id}', [EstabelecimentoController::class, 'show'])
+        ->name('estabelecimentos.show');
+    
+    Route::get('/estabelecimentos/{id}/edit', [EstabelecimentoController::class, 'edit'])
+        ->name('estabelecimentos.edit');
+    
+    Route::put('/estabelecimentos/{id}', [EstabelecimentoController::class, 'update'])
+        ->name('estabelecimentos.update');
 });
 
 // Rotas de perfil do Breeze
