@@ -380,6 +380,8 @@ function initDataTables() {
     }
 }
 
+
+
 /**
  * Inicializar funcionalidades dos modais
  */

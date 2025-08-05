@@ -31,18 +31,18 @@
                            <table id="estabelecimentos-table" class="table table-hover table-striped">
                                <thead>
                                    <tr class="table-header-juntter">
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Documento</th>
-                                <th>Email</th>
-                                <th>Telefone</th>
-                                <th>Cidade/UF</th>
-                                <th>Status</th>
-                                <th>Risco</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                                                       <tbody>
+                                       <th>ID</th>
+                                       <th>Nome</th>
+                                       <th>Documento</th>
+                                       <th>Email</th>
+                                       <th>Telefone</th>
+                                       <th>Cidade/UF</th>
+                                       <th>Status</th>
+                                       <th>Risco</th>
+                                       <th>Ações</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
                                    @foreach($estabelecimentos['data'] ?? [] as $estabelecimento)
                                        <tr>
                                            <td><strong>{{ $estabelecimento['id'] ?? 'N/A' }}</strong></td>
@@ -88,20 +88,19 @@
                                            </td>
                                            <td>
                                                <div class="btn-group" role="group">
-                                                   <button class="btn btn-sm btn-outline-info" title="Visualizar">
+                                                   <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" 
+                                                      class="btn btn-sm btn-outline-info" title="Visualizar">
                                                        <i class="fas fa-eye"></i>
-                                                   </button>
-                                                   <button class="btn btn-sm btn-outline-warning" title="Editar">
+                                                   </a>
+                                                   <a href="{{ route('estabelecimentos.edit', $estabelecimento['id']) }}" 
+                                                      class="btn btn-sm btn-outline-warning" title="Editar">
                                                        <i class="fas fa-edit"></i>
-                                                   </button>
-                                                   <button class="btn btn-sm btn-outline-danger" title="Excluir">
-                                                       <i class="fas fa-trash"></i>
-                                                   </button>
+                                                   </a>
                                                </div>
                                            </td>
                                        </tr>
                                    @endforeach
-                        </tbody>
+                               </tbody>
                     </table>
                                        </div>
                    </div>
