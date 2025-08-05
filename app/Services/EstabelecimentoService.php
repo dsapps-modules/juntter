@@ -28,9 +28,9 @@ class EstabelecimentoService
         return $this->apiClient->post("marketplace/establishments", $dados);
     }
 
-    public function atualizarEstabelecimento(string $is, array $dados)
+    public function atualizarEstabelecimento(string $id, array $dados)
     {
-        return $this->apiClient->put("marketplace/establishments/{$is}", $dados);
+        return $this->apiClient->put("marketplace/establishments/{$id}", $dados);
     }
 
 }
