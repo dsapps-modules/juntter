@@ -313,6 +313,68 @@ function initDataTables() {
                 ]
             });
         }
+        
+        // DataTable para Estabelecimentos
+        if ($('#estabelecimentos-table').length) {
+            $('#estabelecimentos-table').DataTable({
+                language: {
+                    "sEmptyTable": "Nenhum registro encontrado",
+                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+                    "sLengthMenu": "_MENU_ resultados por página",
+                    "sLoadingRecords": "Carregando...",
+                    "sProcessing": "Processando...",
+                    "sZeroRecords": "Nenhum registro encontrado",
+                    "sSearch": "Pesquisar:",
+                    "oPaginate": {
+                        "sNext": "Próximo",
+                        "sPrevious": "Anterior",
+                        "sFirst": "Primeiro",
+                        "sLast": "Último"
+                    }
+                },
+                responsive: false,
+                pageLength: 10,
+                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'copy',
+                        className: 'btn btn-secondary btn-sm',
+                        text: '<i class="fas fa-copy"></i> Copiar'
+                    },
+                    {
+                        extend: 'excel',
+                        className: 'btn btn-success btn-sm',
+                        text: '<i class="fas fa-file-excel"></i> Excel'
+                    },
+                    {
+                        extend: 'csv',
+                        className: 'btn btn-info btn-sm',
+                        text: '<i class="fas fa-file-csv"></i> CSV'
+                    },
+                    {
+                        extend: 'pdf',
+                        className: 'btn btn-danger btn-sm',
+                        text: '<i class="fas fa-file-pdf"></i> PDF'
+                    },
+                    {
+                        extend: 'print',
+                        className: 'btn btn-warning btn-sm',
+                        text: '<i class="fas fa-print"></i> Imprimir'
+                    }
+                ],
+                columnDefs: [
+                    {
+                        targets: -1,
+                        orderable: false,
+                        responsivePriority: 1,
+                        className: 'text-center'
+                    }
+                ]
+            });
+        }
     } else {
         console.error('DataTable AdminLTE não disponível!');
     }
