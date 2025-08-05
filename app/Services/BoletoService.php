@@ -27,4 +27,9 @@ class BoletoService
     {
         return $this->apiClient->get("marketplace/billets/{$id}");
     }
+
+    public function recargaViaBoleto(array $dados)
+    {
+        return $this->apiClient->post("marketplace/billets/recharge", $dados);
+    }
 }

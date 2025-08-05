@@ -125,4 +125,30 @@ class BoletoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('amount', $consultaResponse);
         $this->assertArrayHasKey('client', $consultaResponse);
     }
+
+    /** @test */
+    public function recarga_via_boleto()
+    {
+        $service = new BoletoService($this->apiClient);
+
+        $dados = [
+            "amount" => 10000, // R$ 100,00
+            "extra_headers" => [
+                "establishment_id" => "155102"
+            ]
+        ];
+
+        $response = $service->recargaViaBoleto($dados);
+
+        dump('RESPOSTA RECARGA VIA BOLETO:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('_id', $response);
+        $this->assertArrayHasKey('type', $response);
+        $this->assertEquals('BILLET', $response['type']);
+        $this->assertArrayHasKey('amount', $response);
+        $this->assertEquals(10000, $response['amount']);
+        $this->assertArrayHasKey('status', $response);
+        $this->assertArrayHasKey('expiration_at', $response);
+    }
 }
