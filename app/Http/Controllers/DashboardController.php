@@ -3,9 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Services\EstabelecimentoService;
 
 class DashboardController extends Controller
 {
+    protected $estabelecimentoService;
+
+    public function __construct(EstabelecimentoService $estabelecimentoService)
+    {
+        $this->estabelecimentoService = $estabelecimentoService;
+    }
+
     /**
      * Dashboard do Super Administrador
      */
@@ -63,7 +71,7 @@ class DashboardController extends Controller
     /**
      * Dashboard do Administrador
      */
-    public function adminDashboard()
+    public function adminDashboard(Request $request)
     {
         $saldos = [
             'disponivel' => 'R$ 8.750,00',
@@ -111,7 +119,14 @@ class DashboardController extends Controller
             ]
         ];
 
-        return view('dashboard.admin', compact('saldos', 'metricas'));
+        // Buscar estabelecimentos (sem filtros - DataTables fará o filtro)
+        try {
+            $estabelecimentos = $this->estabelecimentoService->listarEstabelecimentos();
+        } catch (\Exception $e) {
+            $estabelecimentos = [];
+        }
+
+        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos'));
     }
 
     /**
