@@ -22,4 +22,9 @@ class LiquidacaoService
     {
         return $this->apiClient->get("marketplace/liquidations/extract?" . http_build_query($filtros));
     }
+
+    public function exibirTransferencia(string $liquidationId, string $paymentId)
+    {
+        return $this->apiClient->get("marketplace/liquidations/{$liquidationId}/payments/{$paymentId}/transfer");
+    }
 } 

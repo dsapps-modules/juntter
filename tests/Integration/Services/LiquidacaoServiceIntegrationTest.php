@@ -115,4 +115,78 @@ class LiquidacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('data', $response);
         $this->assertIsArray($response['data']);
     }
+
+    /** @test */
+    public function listar_liquidacoes_para_obter_ids()
+    {
+        $service = new LiquidacaoService($this->apiClient);
+
+        $filtros = [
+            'perPage' => 1,
+            'page' => 1
+        ];
+
+        $response = $service->listarLiquidacoes($filtros);
+
+        dump('RESPOSTA PARA OBTER IDS:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data']);
+
+        // Retorna o primeiro ID de liquidação encontrado
+        if (!empty($response['data'])) {
+            $liquidation = $response['data'][0];
+            $ids = [
+                'liquidation_id' => $liquidation['_id'],
+                'payment_id' => $liquidation['payments'][0]['_id'] ?? null
+            ];
+            dump('IDS ENCONTRADOS:', $ids);
+            return $ids;
+        }
+
+        // Se não encontrar dados, retorna null
+        $ids = [
+            'liquidation_id' => null,
+            'payment_id' => null
+        ];
+        dump('NENHUM ID ENCONTRADO:', $ids);
+        return $ids;
+    }
+
+    /** @test
+     * @depends listar_liquidacoes_para_obter_ids
+     */
+    public function exibir_transferencia(array $ids)
+    {
+        $service = new LiquidacaoService($this->apiClient);
+
+        dump('IDS RECEBIDOS NO TESTE:', $ids);
+
+        $liquidationId = $ids['liquidation_id'];
+        $paymentId = $ids['payment_id'];
+
+        // Se não temos IDs válidos, pula o teste
+        if (!$liquidationId || !$paymentId) {
+            $this->markTestSkipped('Nenhum liquidation_id ou payment_id válido encontrado para testar transferência');
+            return;
+        }
+
+        $response = $service->exibirTransferencia($liquidationId, $paymentId);
+
+        dump('RESPOSTA EXIBIR TRANSFERÊNCIA:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('_id', $response);
+        $this->assertArrayHasKey('type', $response);
+        $this->assertArrayHasKey('status', $response);
+        $this->assertArrayHasKey('amount', $response);
+        $this->assertArrayHasKey('expected_at', $response);
+        $this->assertArrayHasKey('gateway_key', $response);
+        $this->assertArrayHasKey('liquidation_id', $response);
+        $this->assertArrayHasKey('payer', $response);
+        $this->assertArrayHasKey('recipient', $response);
+        $this->assertArrayHasKey('history', $response);
+        $this->assertIsArray($response['history']);
+    }
 } 
