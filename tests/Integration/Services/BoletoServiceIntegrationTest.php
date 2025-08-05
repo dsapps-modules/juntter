@@ -80,7 +80,49 @@ class BoletoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('status', $response);
         $this->assertArrayHasKey('expiration_at', $response);
         $this->assertArrayHasKey('client', $response);
+
+        return $response['_id'];
     }
 
+    /** @test */
+    public function listar_boletos()
+    {
+        $service = new BoletoService($this->apiClient);
 
+        $filtros = [
+            'perPage' => 10,
+            'page' => 1
+        ];
+
+        $response = $service->listarBoletos($filtros);
+
+        dump('RESPOSTA LISTAR BOLETOS:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('total', $response);
+        $this->assertArrayHasKey('page', $response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data']);
+    }
+
+    /** @test
+     * @depends gerar_boleto
+     */
+    public function consultar_boleto_especifico(string $boletoId)
+    {
+        $service = new BoletoService($this->apiClient);
+
+        $consultaResponse = $service->consultarBoleto($boletoId);
+
+        dump('RESPOSTA CONSULTA BOLETO ESPECÍFICO:', $consultaResponse);
+
+        $this->assertIsArray($consultaResponse);
+        $this->assertArrayHasKey('_id', $consultaResponse);
+        $this->assertEquals($boletoId, $consultaResponse['_id']);
+        $this->assertArrayHasKey('type', $consultaResponse);
+        $this->assertEquals('BILLET', $consultaResponse['type']);
+        $this->assertArrayHasKey('status', $consultaResponse);
+        $this->assertArrayHasKey('amount', $consultaResponse);
+        $this->assertArrayHasKey('client', $consultaResponse);
+    }
 }

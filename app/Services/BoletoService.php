@@ -17,4 +17,14 @@ class BoletoService
     {
         return $this->apiClient->post("marketplace/billets", $dados);
     }
+
+    public function listarBoletos(array $filtros = [])
+    {
+        return $this->apiClient->get("marketplace/billets?" . http_build_query($filtros));
+    }
+
+    public function consultarBoleto(string $id)
+    {
+        return $this->apiClient->get("marketplace/billets/{$id}");
+    }
 }
