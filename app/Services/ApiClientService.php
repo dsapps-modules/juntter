@@ -26,9 +26,9 @@ class ApiClientService
         return $this->request('POST', $endpoint, ['json' => $payload]);
     }
 
-    public function put(string $endpoint, array $params = []): array
+    public function put(string $endpoint, array $payload = []): array
     {
-        return $this->request('PUT', $endpoint, ['query' => $params]);
+        return $this->request('PUT', $endpoint, ['json' => $payload]);
     }
 
     public function delete(string $endpoint): array
