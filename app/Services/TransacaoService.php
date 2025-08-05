@@ -33,6 +33,11 @@ class TransacaoService
         return $this->apiClient->post("marketplace/transactions/{$idTransacao}/split", $dados);
     }
 
+    public function consultarSplitTransacao(string $idTransacao)
+    {
+        return $this->apiClient->get("marketplace/transactions/{$idTransacao}/split");
+    }
+
     public function lancamentosFuturos(array $filtros = [])
     {
         // Separa extra_headers dos filtros normais
@@ -63,5 +68,7 @@ class TransacaoService
         
         return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
     }
+
+ 
    
 }

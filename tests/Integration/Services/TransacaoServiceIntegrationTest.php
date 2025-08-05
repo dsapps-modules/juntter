@@ -243,6 +243,46 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('page', $response);
         $this->assertArrayHasKey('perPage', $response);
     }
+
+    /** @test */
+    public function consultar_split_transacao()
+    {
+        $service = new TransacaoService($this->apiClient);
+
+        // Primeiro lista as transações para pegar um ID real
+        $filtros = [
+            'perPage' => 1,
+            'page' => 1
+        ];
+
+        $listaTransacoes = $service->listarTransacoes($filtros);
+        
+        $this->assertIsArray($listaTransacoes);
+        $this->assertArrayHasKey('data', $listaTransacoes);
+        $this->assertNotEmpty($listaTransacoes['data']);
+
+        // Pega o ID da primeira transação encontrada
+        $idTransacao = $listaTransacoes['data'][0]['_id'];
+
+        $response = $service->consultarSplitTransacao($idTransacao);
+
+        dump('RESPOSTA CONSULTAR SPLIT:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('_id', $response);
+        $this->assertArrayHasKey('transaction_id', $response);
+        $this->assertArrayHasKey('status', $response);
+        $this->assertArrayHasKey('establishment', $response);
+        $this->assertArrayHasKey('original_amount', $response);
+        $this->assertArrayHasKey('channel', $response);
+        $this->assertArrayHasKey('modality', $response);
+        $this->assertArrayHasKey('division', $response);
+        $this->assertArrayHasKey('establishments', $response);
+        $this->assertArrayHasKey('history', $response);
+        $this->assertArrayHasKey('created_at', $response);
+        $this->assertIsArray($response['establishments']);
+        $this->assertIsArray($response['history']);
+    }
     
 
 } 
