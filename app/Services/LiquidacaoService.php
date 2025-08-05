@@ -15,6 +15,11 @@ class LiquidacaoService
 
     public function listarLiquidacoes(array $filtros = [])
     {
+        return $this->apiClient->get("marketplace/liquidations?" . http_build_query($filtros));
+    }
+
+    public function listarLiquidacoesSumarizadas(array $filtros = [])
+    {
         return $this->apiClient->get("marketplace/liquidations/extract?" . http_build_query($filtros));
     }
 } 

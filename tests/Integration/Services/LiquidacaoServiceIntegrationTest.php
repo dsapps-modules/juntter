@@ -66,4 +66,53 @@ class LiquidacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('data', $response);
         $this->assertIsArray($response['data']);
     }
+
+    /** @test */
+    public function listar_liquidacoes_sumarizadas()
+    {
+        $service = new LiquidacaoService($this->apiClient);
+
+        $filtros = [
+            'perPage' => 10,
+            'page' => 1
+        ];
+
+        $response = $service->listarLiquidacoesSumarizadas($filtros);
+
+        dump('RESPOSTA LISTAR LIQUIDAÇÕES SUMARIZADAS:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('meta', $response);
+        $this->assertArrayHasKey('total', $response);
+        $this->assertArrayHasKey('page', $response);
+        $this->assertArrayHasKey('perPage', $response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data']);
+    }
+
+    /** @test */
+    public function listar_liquidacoes_sumarizadas_com_filtros()
+    {
+        $service = new LiquidacaoService($this->apiClient);
+
+        $filtros = [
+            'perPage' => 5,
+            'page' => 1,
+            'filters' => json_encode(['status' => 'PAID']),
+            'sorters' => json_encode([
+                ['column' => 'liquidation', 'direction' => 'DESC']
+            ])
+        ];
+
+        $response = $service->listarLiquidacoesSumarizadas($filtros);
+
+        dump('RESPOSTA LISTAR LIQUIDAÇÕES SUMARIZADAS COM FILTROS:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('total', $response);
+        $this->assertArrayHasKey('page', $response);
+        $this->assertArrayHasKey('perPage', $response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data']);
+    }
 } 
