@@ -31,6 +31,11 @@ class ApiClientService
         return $this->request('PUT', $endpoint, ['query' => $params]);
     }
 
+    public function delete(string $endpoint): array
+    {
+        return $this->request('DELETE', $endpoint, []);
+    }
+
     private function request(string $method, string $endpoint, array $options): array
     {
 
