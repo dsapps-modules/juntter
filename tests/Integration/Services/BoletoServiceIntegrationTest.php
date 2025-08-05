@@ -151,4 +151,26 @@ class BoletoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('status', $response);
         $this->assertArrayHasKey('expiration_at', $response);
     }
+
+    /** @test
+     * @depends gerar_boleto
+     */
+    public function deletar_boleto(string $boletoId)
+    {
+        $service = new BoletoService($this->apiClient);
+
+        $response = $service->deletarBoleto($boletoId);
+
+        dump('RESPOSTA DELETAR BOLETO:', $response);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('_id', $response);
+        $this->assertEquals($boletoId, $response['_id']);
+        $this->assertArrayHasKey('type', $response);
+        $this->assertEquals('BILLET', $response['type']);
+        $this->assertArrayHasKey('status', $response);
+        $this->assertEquals('CANCELED', $response['status']);
+        $this->assertArrayHasKey('amount', $response);
+        $this->assertArrayHasKey('client', $response);
+    }
 }

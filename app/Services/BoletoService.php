@@ -32,4 +32,9 @@ class BoletoService
     {
         return $this->apiClient->post("marketplace/billets/recharge", $dados);
     }
+
+    public function deletarBoleto(string $id)
+    {
+        return $this->apiClient->delete("marketplace/billets/{$id}");
+    }
 }
