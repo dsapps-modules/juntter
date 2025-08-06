@@ -42,6 +42,16 @@ class SplitPreService
     }
 
     /**
+     * Atualiza uma regra de split pré
+     */
+    public function atualizarRegraSplitPre(string $establishmentId, string $splitId, array $dados): array
+    {
+        $endpoint = "marketplace/establishments/{$establishmentId}/split-pre/{$splitId}";
+        
+        return $this->apiClient->put($endpoint, $dados);
+    }
+
+    /**
      * Deleta uma regra de split pré
      */
     public function deletarRegraSplitPre(string $establishmentId, string $splitId): array

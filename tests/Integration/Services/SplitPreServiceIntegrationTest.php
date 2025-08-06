@@ -88,6 +88,40 @@ class SplitPreServiceIntegrationTest extends TestCase
      * @test
      * @depends criar_regra_split_pre
      */
+    public function atualizar_regra_split_pre(int $splitId)
+    {
+        $service = new SplitPreService($this->apiClient);
+
+        $establishmentId = '155102';
+        
+        $dados = [
+            'title' => 'Comissão Sandbox Atualizada ' . time(),
+            'modality' => 'CREDIT',
+            'channel' => 'ONLINE',
+            'division' => 'PERCENTAGE',
+            'active' => true,
+            'installment' => 3,
+            'establishments' => [
+                [
+                    'id' => 155161,
+                    'active' => true,
+                    'value' => 25
+                ]
+            ]
+        ];
+
+        $response = $service->atualizarRegraSplitPre($establishmentId, $splitId, $dados);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('id', $response);
+        $this->assertArrayHasKey('title', $response);
+        $this->assertArrayHasKey('establishments', $response);
+    }
+
+    /**
+     * @test
+     * @depends criar_regra_split_pre
+     */
     public function deletar_regra_split_pre(int $splitId)
     {
         $service = new SplitPreService($this->apiClient);
