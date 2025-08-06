@@ -479,7 +479,7 @@
     }
 
     .navbar-nav .dropdown-menu {
-        position: static !important;
+        position: absolute !important;
         float: none;
         width: 100%;
         margin-top: 10px;
@@ -527,6 +527,15 @@
     .navbar-toggler:focus {
         box-shadow: 0 0 0 0.2rem rgba(255,193,7,0.25);
         outline: none;
+    }
+    
+    /* Garantir que dropdowns funcionem no mobile */
+    .dropdown.show .dropdown-menu {
+        display: block !important;
+    }
+    
+    .dropdown-menu {
+        display: none;
     }
 }
 

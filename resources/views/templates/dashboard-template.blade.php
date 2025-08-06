@@ -36,7 +36,7 @@
             </a>
             
             <!-- Mobile menu button -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
@@ -44,7 +44,7 @@
                 <!-- Navigation Menu -->
                 <div class="navbar-nav mx-auto">
                     <div class="dropdown">
-                        <button class="nav-link dropdown-toggle menu-item btn" type="button" id="cobrancaDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="nav-link dropdown-toggle menu-item btn" type="button" id="cobrancaDropdown" data-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-credit-card me-2"></i>
                             <span>Cobrança</span>
                         </button>
@@ -128,43 +128,7 @@
     <!-- Dashboard Scripts -->
     <script src="{{ asset('js/dashboard.js') }}"></script>
     
-    <script>
-        // Garantir que dropdowns funcionem
-        $(document).ready(function() {
-            // Inicializar dropdowns do Bootstrap
-            $('.dropdown-toggle').each(function() {
-                new bootstrap.Dropdown(this, {
-                    boundary: 'viewport'
-                });
-            });
-            
-            // Garantir que o navbar mobile funcione
-            $('.navbar-toggler').on('click', function(e) {
-                e.preventDefault();
-                var target = $(this).data('bs-target');
-                $(target).toggleClass('show');
-                
-                // Adicionar/remover aria-expanded
-                var isExpanded = $(target).hasClass('show');
-                $(this).attr('aria-expanded', isExpanded);
-            });
-            
-            // Fechar navbar mobile quando clicar em um link
-            $('.navbar-nav .dropdown-item').on('click', function() {
-                $('.navbar-collapse').removeClass('show');
-                $('.navbar-toggler').attr('aria-expanded', 'false');
-            });
-            
-            // Fechar navbar mobile quando clicar fora
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('.navbar').length) {
-                    $('.navbar-collapse').removeClass('show');
-                    $('.navbar-toggler').attr('aria-expanded', 'false');
-                }
-            });
-            
-        });
-    </script>
+    
     
     @yield('scripts')
 </body>
