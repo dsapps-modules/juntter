@@ -30,4 +30,14 @@ class SplitPreService
         
         return $this->apiClient->get($endpoint);
     }
+
+    /**
+     * Consulta uma regra específica de split pré
+     */
+    public function consultarRegraSplitPre(string $establishmentId, string $splitId): array
+    {
+        $endpoint = "marketplace/establishments/{$establishmentId}/split-pre/{$splitId}";
+        
+        return $this->apiClient->get($endpoint);
+    }
 } 

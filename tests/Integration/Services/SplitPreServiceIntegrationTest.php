@@ -28,11 +28,11 @@ class SplitPreServiceIntegrationTest extends TestCase
         
         $dados = [
             'title' => 'Comissão Sandbox Teste ' . time(),
-            'modality' => 'CREDIT',
-            'channel' => 'ONLINE',
+            'modality' => 'ALL',
+            'channel' => 'TAP',
             'division' => 'PERCENTAGE',
             'active' => true,
-            'installment' => 3,
+            'installment' => 1,
             'establishments' => [
                 [
                     'id' => 155161,
@@ -44,9 +44,13 @@ class SplitPreServiceIntegrationTest extends TestCase
 
         $response = $service->criarRegraSplitPre($establishmentId, $dados);
 
+        dump($response);
+
         $this->assertIsArray($response);
         $this->assertArrayHasKey('id', $response);
         $this->assertArrayHasKey('title', $response);
+
+        return $response['id'];
     }
 
     /** @test */
@@ -62,5 +66,23 @@ class SplitPreServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('total', $response);
         $this->assertArrayHasKey('data', $response);
         $this->assertIsArray($response['data']);
+    }
+
+    /**
+     * @test
+     * @depends criar_regra_split_pre
+     */
+    public function consultar_regra_split_pre_especifica(int $splitId)
+    {
+        $service = new SplitPreService($this->apiClient);
+
+        $establishmentId = '155102';
+        
+        $response = $service->consultarRegraSplitPre($establishmentId, $splitId);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('id', $response);
+        $this->assertArrayHasKey('title', $response);
+        $this->assertArrayHasKey('establishments', $response);
     }
 } 
