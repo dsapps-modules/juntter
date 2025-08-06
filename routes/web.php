@@ -80,6 +80,15 @@ Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function ()
     
     Route::put('/estabelecimentos/{id}', [EstabelecimentoController::class, 'update'])
         ->name('estabelecimentos.update');
+    
+    // Rotas para gerenciamento de Split Pré
+    Route::post('/estabelecimentos/{id}/split-pre', [EstabelecimentoController::class, 'criarRegraSplit'])
+        ->name('estabelecimentos.split-pre.store');
+    Route::get('/estabelecimentos/{id}/split-pre/{splitId}', [EstabelecimentoController::class, 'consultarRegraSplit'])
+        ->name('estabelecimentos.split-pre.show');
+    Route::delete('/estabelecimentos/{id}/split-pre/{splitId}', [EstabelecimentoController::class, 'deletarRegraSplit'])
+        ->name('estabelecimentos.split-pre.destroy');
+ 
 });
 
 // Rotas de perfil do Breeze
