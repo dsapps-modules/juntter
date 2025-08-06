@@ -212,7 +212,7 @@
                         <div class="info-card bg-light rounded-3 p-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold mb-0 text-primary">
-                                    <i class="fas fa-share-alt me-2"></i>Regras de Split Pré
+                                    <i class="fas fa-share-alt me-2"></i>Regras de Split 
                                 </h6>
                                 <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNovaRegra">
                                     <i class="fas fa-plus me-2"></i>Nova Regra
