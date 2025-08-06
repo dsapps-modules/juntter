@@ -6,7 +6,7 @@
 <!-- Breadcrumb -->
 <x-breadcrumb 
     :items="[
-        ['label' => 'Estabelecimentos', 'icon' => 'fas fa-building', 'url' => route('admin.dashboard')],
+        ['label' => 'Estabelecimentos', 'icon' => 'fas fa-building', 'url' => route('estabelecimentos.show', $estabelecimento['id'])],
         ['label' => 'Editar', 'icon' => 'fas fa-edit', 'url' => '#']
     ]"
 />
