@@ -3,17 +3,13 @@
 @section('title', 'Detalhes da Regra de Split')
 
 @section('breadcrumb')
-<x-breadcrumb :items="[
-    [
-        'label' => 'Estabelecimento',
-        'url' => route('estabelecimentos.show', $estabelecimento['id']),
-        'icon' => 'fas fa-building'
-    ],
-    [
-        'label' => 'Regra de Split',
-        'icon' => 'fas fa-share-alt'
-    ]
-]" />
+<x-breadcrumb 
+    :items="[
+        ['label' => 'Estabelecimentos', 'icon' => 'fas fa-building', 'url' => route('admin.dashboard')],
+        ['label' => 'Detalhes', 'icon' => 'fas fa-eye', 'url' => route('estabelecimentos.show', $estabelecimento['id'])],
+        ['label' => 'Regra de Split', 'icon' => 'fas fa-share-alt', 'url' => '#']
+    ]"
+/>
 @endsection
 
 @section('content')

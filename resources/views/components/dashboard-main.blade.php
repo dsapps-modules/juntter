@@ -1,3 +1,8 @@
+@props(['title' => 'Dashboard', 'saldos' => [], 'metricas' => [], 'breadcrumbItems' => []])
+
+<!-- Breadcrumb -->
+<x-breadcrumb :items="$breadcrumbItems" />
+
 <!-- Dashboard Title -->
 <div class="row mb-4">
     <div class="col-12">

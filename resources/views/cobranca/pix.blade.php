@@ -3,6 +3,14 @@
 @section('title', 'Enviar Pix')
 
 @section('content')
+<!-- Breadcrumb -->
+<x-breadcrumb 
+    :items="[
+        ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')],
+        ['label' => 'PIX', 'icon' => 'fas fa-qrcode', 'url' => '#']
+    ]"
+/>
+
 <!-- Alert -->
 <div class="row mb-4">
     <div class="col-12">

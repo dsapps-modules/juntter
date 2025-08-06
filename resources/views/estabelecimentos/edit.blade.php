@@ -3,6 +3,14 @@
 @section('title', 'Editar Estabelecimento')
 
 @section('content')
+<!-- Breadcrumb -->
+<x-breadcrumb 
+    :items="[
+        ['label' => 'Estabelecimentos', 'icon' => 'fas fa-building', 'url' => route('admin.dashboard')],
+        ['label' => 'Editar', 'icon' => 'fas fa-edit', 'url' => '#']
+    ]"
+/>
+
 <div class="row">
     <div class="col-12">
         <div class="card border-0 shadow-lg rounded-4">

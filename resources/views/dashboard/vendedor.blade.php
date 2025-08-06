@@ -7,5 +7,8 @@
     :title="'Dashboard Vendedor'"
     :saldos="$saldos"
     :metricas="$metricas"
+    :breadcrumbItems="[
+        ['label' => 'Vendas', 'icon' => 'fas fa-chart-line', 'url' => '#']
+    ]"
 />
 @endsection

@@ -3,6 +3,14 @@
 @section('title', 'Pagar Conta')
 
 @section('content')
+<!-- Breadcrumb -->
+<x-breadcrumb 
+    :items="[
+        ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')],
+        ['label' => 'Pagar Contas', 'icon' => 'fas fa-file-invoice-dollar', 'url' => '#']
+    ]"
+/>
+
 <!-- Primeira Seção: Informe a linha digitável -->
 <div class="row mb-4">
     <div class="col-12">

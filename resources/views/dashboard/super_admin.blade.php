@@ -7,5 +7,8 @@
     :title="'Dashboard Super Admin'"
     :saldos="$saldos"
     :metricas="$metricas"
+    :breadcrumbItems="[
+        ['label' => 'Super Administração', 'icon' => 'fas fa-shield-alt', 'url' => '#']
+    ]"
 />
 @endsection

@@ -7,5 +7,8 @@
     :title="'Dashboard Comprador'"
     :saldos="$saldos"
     :metricas="$metricas"
+    :breadcrumbItems="[
+        ['label' => 'Compras', 'icon' => 'fas fa-shopping-cart', 'url' => '#']
+    ]"
 />
 @endsection

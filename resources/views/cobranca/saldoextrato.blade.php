@@ -3,6 +3,14 @@
 @section('title', 'Saldo e Extrato')
 
 @section('content')
+<!-- Breadcrumb -->
+<x-breadcrumb 
+    :items="[
+        ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')],
+        ['label' => 'Saldo e Extrato', 'icon' => 'fas fa-chart-bar', 'url' => '#']
+    ]"
+/>
+
 <!-- Seção Extrato -->
 <div class="row mb-4">
     <div class="col-12">

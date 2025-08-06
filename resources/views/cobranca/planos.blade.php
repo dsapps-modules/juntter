@@ -3,6 +3,14 @@
 @section('title', 'Planos de Cobrança')
 
 @section('content')
+<!-- Breadcrumb -->
+<x-breadcrumb 
+    :items="[
+        ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')],
+        ['label' => 'Planos', 'icon' => 'fas fa-list-alt', 'url' => '#']
+    ]"
+/>
+
 <!-- Alert -->
 <div class="row mb-4">
     <div class="col-12">

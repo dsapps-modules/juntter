@@ -7,6 +7,9 @@
     :title="'Dashboard Admin'"
     :saldos="$saldos"
     :metricas="$metricas"
+    :breadcrumbItems="[
+        ['label' => 'Administração', 'icon' => 'fas fa-cogs', 'url' => '#']
+    ]"
 />
 
        <!-- Seção de Estabelecimentos -->
