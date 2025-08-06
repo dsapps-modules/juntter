@@ -28,11 +28,11 @@ class SplitPreServiceIntegrationTest extends TestCase
         
         $dados = [
             'title' => 'Comissão Sandbox Teste ' . time(),
-            'modality' => 'ALL',
-            'channel' => 'TAP',
+            'modality' => 'CREDIT',
+            'channel' => 'SMART',
             'division' => 'PERCENTAGE',
             'active' => true,
-            'installment' => 1,
+            'installment' => 3,
             'establishments' => [
                 [
                     'id' => 155161,
@@ -43,8 +43,6 @@ class SplitPreServiceIntegrationTest extends TestCase
         ];
 
         $response = $service->criarRegraSplitPre($establishmentId, $dados);
-
-        dump($response);
 
         $this->assertIsArray($response);
         $this->assertArrayHasKey('id', $response);
@@ -85,4 +83,21 @@ class SplitPreServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('title', $response);
         $this->assertArrayHasKey('establishments', $response);
     }
+
+    /**
+     * @test
+     * @depends criar_regra_split_pre
+     */
+    public function deletar_regra_split_pre(int $splitId)
+    {
+        $service = new SplitPreService($this->apiClient);
+
+        $establishmentId = '155102';
+        
+        $response = $service->deletarRegraSplitPre($establishmentId, $splitId);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('message', $response);
+    }
+
 } 

@@ -40,4 +40,14 @@ class SplitPreService
         
         return $this->apiClient->get($endpoint);
     }
+
+    /**
+     * Deleta uma regra de split pré
+     */
+    public function deletarRegraSplitPre(string $establishmentId, string $splitId): array
+    {
+        $endpoint = "marketplace/establishments/{$establishmentId}/split-pre/{$splitId}";
+        
+        return $this->apiClient->delete($endpoint);
+    }
 } 
