@@ -27,12 +27,12 @@ class SplitPreServiceIntegrationTest extends TestCase
         $establishmentId = '155102';
         
         $dados = [
-            'title' => 'Comissão Sandbox Atualizado',
-            'modality' => 'PIX',
-            'channel' => 'ALL',
+            'title' => 'Comissão Sandbox Teste ' . time(),
+            'modality' => 'CREDIT',
+            'channel' => 'ONLINE',
             'division' => 'PERCENTAGE',
             'active' => true,
-            'installment' => 2,
+            'installment' => 3,
             'establishments' => [
                 [
                     'id' => 155161,
@@ -47,5 +47,20 @@ class SplitPreServiceIntegrationTest extends TestCase
         $this->assertIsArray($response);
         $this->assertArrayHasKey('id', $response);
         $this->assertArrayHasKey('title', $response);
+    }
+
+    /** @test */
+    public function listar_regras_split_pre()
+    {
+        $service = new SplitPreService($this->apiClient);
+
+        $establishmentId = '155102';
+        
+        $response = $service->listarRegrasSplitPre($establishmentId);
+
+        $this->assertIsArray($response);
+        $this->assertArrayHasKey('total', $response);
+        $this->assertArrayHasKey('data', $response);
+        $this->assertIsArray($response['data']);
     }
 } 

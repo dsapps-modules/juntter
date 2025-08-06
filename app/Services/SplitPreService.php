@@ -20,4 +20,14 @@ class SplitPreService
         
         return $this->apiClient->post($endpoint, $dados);
     }
+
+    /**
+     * Lista todas as regras de split pré de um estabelecimento
+     */
+    public function listarRegrasSplitPre(string $establishmentId): array
+    {
+        $endpoint = "marketplace/establishments/{$establishmentId}/split-pre";
+        
+        return $this->apiClient->get($endpoint);
+    }
 } 
