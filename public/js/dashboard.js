@@ -70,311 +70,137 @@ function initCounters() {
 }
 
 /**
+ * Configuração padrão do DataTable para o projeto Juntter
+ */
+function getJuntterDataTableConfig(columnDefs = [], options = {}) {
+    return {
+        language: {
+            "sEmptyTable": "Nenhum registro encontrado",
+            "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
+            "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
+            "sInfoFiltered": "(Filtrados de _MAX_ registros)",
+            "sLengthMenu": "_MENU_ resultados por página",
+            "sLoadingRecords": "Carregando...",
+            "sProcessing": "Processando...",
+            "sZeroRecords": "Nenhum registro encontrado",
+            "sSearch": "Pesquisar:",
+            "oPaginate": {
+                "sNext": "Próximo",
+                "sPrevious": "Anterior",
+                "sFirst": "Primeiro",
+                "sLast": "Último"
+            }
+        },
+        responsive: options.responsive !== undefined ? options.responsive : true,
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
+        dom: 'Bfrtip',
+        buttons: [
+            {
+                extend: 'copy',
+                className: 'btn btn-secondary btn-sm',
+                text: '<i class="fas fa-copy"></i> Copiar'
+            },
+            {
+                extend: 'excel',
+                className: 'btn btn-success btn-sm',
+                text: '<i class="fas fa-file-excel"></i> Excel'
+            },
+            {
+                extend: 'csv',
+                className: 'btn btn-info btn-sm',
+                text: '<i class="fas fa-file-csv"></i> CSV'
+            },
+            {
+                extend: 'pdf',
+                className: 'btn btn-danger btn-sm',
+                text: '<i class="fas fa-file-pdf"></i> PDF'
+            },
+            {
+                extend: 'print',
+                className: 'btn btn-warning btn-sm',
+                text: '<i class="fas fa-print"></i> Imprimir'
+            }
+        ],
+        columnDefs: columnDefs,
+        ...options
+    };
+}
+
+/**
+ * Função segura para inicializar DataTables
+ */
+function initDataTableSafely(tableSelector, columnDefs = [], options = {}) {
+    try {
+        var table = $(tableSelector);
+        if (table.length) {
+            table.DataTable(getJuntterDataTableConfig(columnDefs, options));
+            return true;
+        }
+    } catch (error) {
+        console.error('Erro ao inicializar DataTable ' + tableSelector + ':', error);
+    }
+    return false;
+}
+
+/**
  * Inicializar DataTables com design Juntter
  */
 function initDataTables() {
     if ($.fn.DataTable) {
         // DataTable para Cobrança Única
-        if ($('#cobrancasTable').length) {
-            $('#cobrancasTable').DataTable({
-                language: {
-                    "sEmptyTable": "Nenhum registro encontrado",
-                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                    "sLengthMenu": "_MENU_ resultados por página",
-                    "sLoadingRecords": "Carregando...",
-                    "sProcessing": "Processando...",
-                    "sZeroRecords": "Nenhum registro encontrado",
-                    "sSearch": "Pesquisar:",
-                    "oPaginate": {
-                        "sNext": "Próximo",
-                        "sPrevious": "Anterior",
-                        "sFirst": "Primeiro",
-                        "sLast": "Último"
-                    }
-                },
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fas fa-copy"></i> Copiar'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fas fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm',
-                        text: '<i class="fas fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fas fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-warning btn-sm',
-                        text: '<i class="fas fa-print"></i> Imprimir'
-                    }
-                ],
-                columnDefs: [
-                    {
-                        targets: -1,
-                        orderable: false
-                    }
-                ]
-            });
-        }
+        initDataTableSafely('#cobrancasTable', [
+            {
+                targets: -1,
+                orderable: false
+            }
+        ]);
         
         // DataTable para Cobrança Recorrente
-        if ($('#cobrancasRecorrentesTable').length) {
-            $('#cobrancasRecorrentesTable').DataTable({
-                language: {
-                    "sEmptyTable": "Nenhum registro encontrado",
-                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                    "sLengthMenu": "_MENU_ resultados por página",
-                    "sLoadingRecords": "Carregando...",
-                    "sProcessing": "Processando...",
-                    "sZeroRecords": "Nenhum registro encontrado",
-                    "sSearch": "Pesquisar:",
-                    "oPaginate": {
-                        "sNext": "Próximo",
-                        "sPrevious": "Anterior",
-                        "sFirst": "Primeiro",
-                        "sLast": "Último"
-                    }
-                },
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fas fa-copy"></i> Copiar'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fas fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm',
-                        text: '<i class="fas fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fas fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-warning btn-sm',
-                        text: '<i class="fas fa-print"></i> Imprimir'
-                    }
-                ],
-                columnDefs: [
-                    {
-                        targets: -1,
-                        orderable: false
-                    }
-                ]
-            });
-        }
+        initDataTableSafely('#cobrancasRecorrentesTable', [
+            {
+                targets: -1,
+                orderable: false
+            }
+        ]);
+        
+        // DataTable para Regras de Split Pré
+        initDataTableSafely('#regrasSplitTable', [
+            {
+                targets: -1,
+                orderable: false,
+                responsivePriority: 1,
+                className: 'text-center'
+            }
+        ]);
         
         // DataTable para Planos de Cobrança
-        if ($('#planosTable').length) {
-            $('#planosTable').DataTable({
-                language: {
-                    "sEmptyTable": "Nenhum registro encontrado",
-                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                    "sLengthMenu": "_MENU_ resultados por página",
-                    "sLoadingRecords": "Carregando...",
-                    "sProcessing": "Processando...",
-                    "sZeroRecords": "Nenhum registro encontrado",
-                    "sSearch": "Pesquisar:",
-                    "oPaginate": {
-                        "sNext": "Próximo",
-                        "sPrevious": "Anterior",
-                        "sFirst": "Primeiro",
-                        "sLast": "Último"
-                    }
-                },
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fas fa-copy"></i> Copiar'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fas fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm',
-                        text: '<i class="fas fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fas fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-warning btn-sm',
-                        text: '<i class="fas fa-print"></i> Imprimir'
-                    }
-                ],
-                columnDefs: [
-                    {
-                        targets: -1,
-                        orderable: false
-                    }
-                ]
-            });
-        }
+        initDataTableSafely('#planosTable', [
+            {
+                targets: -1,
+                orderable: false
+            }
+        ]);
         
         // DataTable para Enviar Pix
-        if ($('#pixTable').length) {
-            $('#pixTable').DataTable({
-                language: {
-                    "sEmptyTable": "Nenhum registro encontrado",
-                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                    "sLengthMenu": "_MENU_ resultados por página",
-                    "sLoadingRecords": "Carregando...",
-                    "sProcessing": "Processando...",
-                    "sZeroRecords": "Nenhum registro encontrado",
-                    "sSearch": "Pesquisar:",
-                    "oPaginate": {
-                        "sNext": "Próximo",
-                        "sPrevious": "Anterior",
-                        "sFirst": "Primeiro",
-                        "sLast": "Último"
-                    }
-                },
-                responsive: true,
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fas fa-copy"></i> Copiar'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fas fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm',
-                        text: '<i class="fas fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fas fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-warning btn-sm',
-                        text: '<i class="fas fa-print"></i> Imprimir'
-                    }
-                ],
-                columnDefs: [
-                    {
-                        targets: -1,
-                        orderable: false
-                    }
-                ]
-            });
-        }
+        initDataTableSafely('#pixTable', [
+            {
+                targets: -1,
+                orderable: false
+            }
+        ]);
         
         // DataTable para Estabelecimentos
-        if ($('#estabelecimentos-table').length) {
-            $('#estabelecimentos-table').DataTable({
-                language: {
-                    "sEmptyTable": "Nenhum registro encontrado",
-                    "sInfo": "Mostrando de _START_ até _END_ de _TOTAL_ registros",
-                    "sInfoEmpty": "Mostrando 0 até 0 de 0 registros",
-                    "sInfoFiltered": "(Filtrados de _MAX_ registros)",
-                    "sLengthMenu": "_MENU_ resultados por página",
-                    "sLoadingRecords": "Carregando...",
-                    "sProcessing": "Processando...",
-                    "sZeroRecords": "Nenhum registro encontrado",
-                    "sSearch": "Pesquisar:",
-                    "oPaginate": {
-                        "sNext": "Próximo",
-                        "sPrevious": "Anterior",
-                        "sFirst": "Primeiro",
-                        "sLast": "Último"
-                    }
-                },
-                responsive: false,
-                pageLength: 10,
-                lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
-                dom: 'Bfrtip',
-                buttons: [
-                    {
-                        extend: 'copy',
-                        className: 'btn btn-secondary btn-sm',
-                        text: '<i class="fas fa-copy"></i> Copiar'
-                    },
-                    {
-                        extend: 'excel',
-                        className: 'btn btn-success btn-sm',
-                        text: '<i class="fas fa-file-excel"></i> Excel'
-                    },
-                    {
-                        extend: 'csv',
-                        className: 'btn btn-info btn-sm',
-                        text: '<i class="fas fa-file-csv"></i> CSV'
-                    },
-                    {
-                        extend: 'pdf',
-                        className: 'btn btn-danger btn-sm',
-                        text: '<i class="fas fa-file-pdf"></i> PDF'
-                    },
-                    {
-                        extend: 'print',
-                        className: 'btn btn-warning btn-sm',
-                        text: '<i class="fas fa-print"></i> Imprimir'
-                    }
-                ],
-                columnDefs: [
-                    {
-                        targets: -1,
-                        orderable: false,
-                        responsivePriority: 1,
-                        className: 'text-center'
-                    }
-                ]
-            });
-        }
+        initDataTableSafely('#estabelecimentos-table', [
+            {
+                targets: -1,
+                orderable: false,
+                responsivePriority: 1,
+                className: 'text-center'
+            }
+        ], {
+            responsive: false
+        });
     } else {
         console.error('DataTable AdminLTE não disponível!');
     }
