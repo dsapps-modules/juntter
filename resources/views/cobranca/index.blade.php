@@ -55,57 +55,80 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><strong>João Silva</strong></td>
-                                <td><span class="text-muted">123.456.789-00</span></td>
-                                <td><strong class="text-success">R$ 150,00</strong></td>
-                                <td><span class="text-muted">15/12/2024</span></td>
-                                <td><span class="badge badge-success">Pago</span></td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-outline-info" title="Visualizar">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Maria Santos</strong></td>
-                                <td><span class="text-muted">987.654.321-00</span></td>
-                                <td><strong class="text-warning">R$ 300,00</strong></td>
-                                <td><span class="text-muted">12/12/2024</span></td>
-                                <td><span class="badge badge-warning">Pendente</span></td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-outline-info" title="Visualizar">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Pedro Oliveira</strong></td>
-                                <td><span class="text-muted">456.789.123-00</span></td>
-                                <td><strong class="text-danger">R$ 220,00</strong></td>
-                                <td><span class="text-muted">10/12/2024</span></td>
-                                <td><span class="badge badge-danger">Vencido</span></td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <button class="btn btn-sm btn-outline-info" title="Visualizar">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            @if(isset($transacoes) && isset($transacoes['data']) && count($transacoes['data']) > 0)
+                                @foreach($transacoes['data'] as $transacao)
+                                    <tr>
+                                        <td>
+                                            <strong>
+                                                @if(isset($transacao['customer']))
+                                                    {{ $transacao['customer']['first_name'] ?? '' }} {{ $transacao['customer']['last_name'] ?? '' }}
+                                                @else
+                                                    Cliente não informado
+                                                @endif
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">
+                                                @if(isset($transacao['customer']))
+                                                    {{ $transacao['customer']['document'] ?? 'N/A' }}
+                                                @else
+                                                    N/A
+                                                @endif
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">
+                                                R$ {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">
+                                                {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('d/m/Y') }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if(isset($transacao['status']))
+                                                @if($transacao['status'] === 'PAID')
+                                                    <span class="badge badge-success">Pago</span>
+                                                @elseif($transacao['status'] === 'PENDING')
+                                                    <span class="badge badge-warning">Pendente</span>
+                                                @elseif($transacao['status'] === 'FAILED')
+                                                    <span class="badge badge-danger">Falhou</span>
+                                                @elseif($transacao['status'] === 'CANCELED')
+                                                    <span class="badge badge-secondary">Cancelado</span>
+                                                @elseif($transacao['status'] === 'REFUNDED')
+                                                    <span class="badge badge-info">Estornado</span>
+                                                @else
+                                                    <span class="badge badge-secondary">{{ $transacao['status'] }}</span>
+                                                @endif
+                                            @else
+                                                <span class="badge badge-secondary">Desconhecido</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-outline-info" title="Visualizar" 
+                                                        onclick="visualizarTransacao('{{ $transacao['_id'] }}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                @if(($transacao['status'] ?? '') === 'PENDING')
+                                                    <button class="btn btn-sm btn-outline-warning" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">
+                                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                                        <br>
+                                        Nenhuma transação encontrada
+                                    </td>
+                                </tr>
+                            @endif
                         </tbody>
                     </table>
                 </div>
