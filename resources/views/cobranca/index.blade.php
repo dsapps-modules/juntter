@@ -2,8 +2,6 @@
 
 @section('title', 'Cobrança Única')
 
-
-
 @section('content')
 <!-- Breadcrumb -->
 <x-breadcrumb 
@@ -11,7 +9,9 @@
         ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => '#']
     ]"
 />
-
+@if(session('pix_data'))
+    <div id="pix-data" data-pix-data="{{ json_encode(session('pix_data')) }}" style="display: none;"></div>
+@endif
 <!-- Alert -->
 <div class="row mb-4">
     <div class="col-12">
@@ -60,19 +60,25 @@
                                     <tr>
                                         <td>
                                             <strong>
-                                                @if(isset($transacao['customer']))
-                                                    {{ $transacao['customer']['first_name'] ?? '' }} {{ $transacao['customer']['last_name'] ?? '' }}
+                                                @if(isset($transacao['customer']) && !empty($transacao['customer']['first_name']))
+                                                    {{ $transacao['customer']['first_name'] }} {{ $transacao['customer']['last_name'] ?? '' }}
                                                 @else
-                                                    Cliente não informado
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        Clique em "Ver detalhes" para ver dados do cliente
+                                                    </span>
                                                 @endif
                                             </strong>
                                         </td>
                                         <td>
                                             <span class="text-muted">
-                                                @if(isset($transacao['customer']))
-                                                    {{ $transacao['customer']['document'] ?? 'N/A' }}
+                                                @if(isset($transacao['customer']) && !empty($transacao['customer']['document']))
+                                                    {{ $transacao['customer']['document'] }}
                                                 @else
-                                                    N/A
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        Ver detalhes
+                                                    </span>
                                                 @endif
                                             </span>
                                         </td>
@@ -104,21 +110,21 @@
                                             @else
                                                 <span class="badge badge-secondary">Desconhecido</span>
                                             @endif
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
                                                 <button class="btn btn-sm btn-outline-info" title="Visualizar" 
                                                         onclick="visualizarTransacao('{{ $transacao['_id'] }}')">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                                 @if(($transacao['status'] ?? '') === 'PENDING')
-                                                    <button class="btn btn-sm btn-outline-warning" title="Editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
+                                        <button class="btn btn-sm btn-outline-warning" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
                                                 @endif
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    </div>
+                                </td>
+                            </tr>
                                 @endforeach
                             @else
                                 <tr>
@@ -126,8 +132,8 @@
                                         <i class="fas fa-inbox fa-2x mb-2"></i>
                                         <br>
                                         Nenhuma transação encontrada
-                                    </td>
-                                </tr>
+                                </td>
+                            </tr>
                             @endif
                         </tbody>
                     </table>
@@ -146,36 +152,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="formCobranca">
-                    <!-- Buscar cliente -->
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Buscar cliente</label>
-                        <select class="form-select" id="selectCliente">
-                            <option value="">Selecione o Cliente</option>
-                            <option value="1">João da Silva - 123.456.789-00</option>
-                            <option value="2">Maria Santos - 987.654.321-00</option>
-                        </select>
-                    </div>
-
-                    <div class="row">
-                        <!-- Valor da venda -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Valor da venda</label>
-                            <input type="text" class="form-control" id="valorVenda" placeholder="0,00">
-                        </div>
-                        <!-- Vencimento -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Vencimento (cobrar em)</label>
-                            <input type="date" class="form-control" id="vencimento">
-                        </div>
-                    </div>
-
                     <!-- Abas de pagamento -->
                     <div class="payment-tabs mb-4">
                         <ul class="nav nav-tabs border-0" id="paymentTabs" role="tablist">
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active payment-tab" id="link-tab" data-bs-toggle="tab" data-bs-target="#link-content" type="button" role="tab">
-                                    Link de Pagamento
+                                PIX
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -185,136 +167,714 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link payment-tab" id="boleto-tab" data-bs-toggle="tab" data-bs-target="#boleto-content" type="button" role="tab">
-                                    Boleto / Pix
+                                Boleto Bancário
                                 </button>
                             </li>
                         </ul>
 
                         <div class="tab-content mt-4" id="paymentTabsContent">
-                            <!-- Aba Link de Pagamento -->
+                        <!-- Aba Link de Pagamento (PIX) -->
                             <div class="tab-pane fade show active" id="link-content" role="tabpanel">
+                            <form action="{{ route('cobranca.transacao.pix') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="payment_type" value="PIX">
+                                
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Valor de cada transação</label>
-                                        <input type="text" class="form-control" placeholder="0,00">
+                                        <label class="form-label fw-bold">
+                                            Valor da transação <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" name="amount" class="form-control" placeholder="0,00" required>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Vencimento da 1ª transação(cobrar em)</label>
-                                        <input type="date" class="form-control">
+                                        <label class="form-label fw-bold">
+                                            Quem paga as taxas <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="interest" class="form-select" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="CLIENT">Cliente</option>
+                                            <option value="ESTABLISHMENT">Estabelecimento</option>
+                                        </select>
                                     </div>
                                 </div>
+
+                                <!-- Dados do Cliente (OPCIONAL) -->
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            DADOS DO CLIENTE <span class="text-muted">(OPCIONAL)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Nome do cliente</label>
+                                                <input type="text" name="client[first_name]" class="form-control" placeholder="Nome completo">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Sobrenome</label>
+                                                <input type="text" name="client[last_name]" class="form-control" placeholder="Sobrenome">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">CPF/CNPJ</label>
+                                                <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Telefone</label>
+                                                <input type="text" name="client[phone]" class="form-control" placeholder="(00) 00000-0000">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">Email</label>
+                                            <input type="email" name="client[email]" class="form-control" placeholder="email@exemplo.com">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Informações Adicionais (OPCIONAL) -->
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            INFORMAÇÕES ADICIONAIS <span class="text-muted">(OPCIONAL)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Chave da informação</label>
+                                                <input type="text" name="info_additional[0][key]" class="form-control" placeholder="Ex: origin_system">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Valor da informação</label>
+                                                <input type="text" name="info_additional[0][value]" class="form-control" placeholder="Ex: ERP12345">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Criar Transação PIX
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Aba Cartão de Crédito -->
+                        <div class="tab-pane fade" id="cartao-content" role="tabpanel">
+                            <form action="{{ route('cobranca.transacao.credito') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="payment_type" value="CREDIT">
+                                <input type="hidden" name="session_id" id="sessionIdAntifraude" value="session_{{ uniqid() }}">
+                                
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Núm. parcelas</label>
-                                        <select class="form-select">
-                                            <option>Indeterminado</option>
+                                        <label class="form-label fw-bold">
+                                            Valor da transação <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" name="amount" class="form-control" placeholder="0,00" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">
+                                            Número de parcelas <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="installments" class="form-select" required>
+                                            <option value="">Selecione...</option>
                                             <option value="1">1x</option>
                                             <option value="2">2x</option>
                                             <option value="3">3x</option>
+                                            <option value="4">4x</option>
+                                            <option value="5">5x</option>
+                                            <option value="6">6x</option>
+                                            <option value="7">7x</option>
+                                            <option value="8">8x</option>
+                                            <option value="9">9x</option>
+                                            <option value="10">10x</option>
+                                            <option value="11">11x</option>
+                                            <option value="12">12x</option>
                                         </select>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Periodicidade</label>
-                                        <select class="form-select">
-                                            <option>Mensal</option>
-                                            <option>Semanal</option>
-                                            <option>Quinzenal</option>
+                                        <label class="form-label fw-bold">
+                                            Quem paga as taxas <span class="text-danger">*</span>
+                                        </label>
+                                        <select name="interest" class="form-select" required>
+                                            <option value="">Selecione...</option>
+                                            <option value="CLIENT">Cliente</option>
+                                            <option value="ESTABLISHMENT">Estabelecimento</option>
                                         </select>
+                                    </div>
+                                </div>
+
+                                <!-- Dados do Cliente (OBRIGATÓRIO) -->
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            DADOS DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Nome <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[first_name]" class="form-control" placeholder="Nome completo" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Sobrenome</label>
+                                                <input type="text" name="client[last_name]" class="form-control" placeholder="Sobrenome">
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    CPF/CNPJ <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Telefone <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[phone]" class="form-control" placeholder="(00) 00000-0000" required>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label fw-bold">Informações adicionais</label>
-                                    <textarea class="form-control" rows="3" placeholder="Digite informações adicionais..."></textarea>
+                                            <label class="form-label fw-bold">
+                                                Email <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="email" name="client[email]" class="form-control" placeholder="email@exemplo.com" required>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <!-- Aba Cartão de Crédito -->
-                            <div class="tab-pane fade" id="cartao-content" role="tabpanel">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Nome do titular</label>
-                                        <input type="text" class="form-control" placeholder="Nome completo">
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Número do cartão</label>
-                                        <input type="text" class="form-control" placeholder="0000 0000 0000 0000">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label fw-bold">Validade</label>
-                                        <input type="text" class="form-control" placeholder="MM/AAAA">
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label fw-bold">Código de segurança</label>
-                                        <input type="text" class="form-control" placeholder="000">
-                                    </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label class="form-label fw-bold">Núm. parcelas</label>
-                                        <select class="form-select">
-                                            <option>Indeterminado</option>
-                                            <option value="1">1x</option>
-                                            <option value="2">2x</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Aba Boleto/Pix -->
-                            <div class="tab-pane fade" id="boleto-content" role="tabpanel">
+                                <!-- Endereço do Cliente (OBRIGATÓRIO) -->
                                 <div class="card bg-light border-0 mb-4">
                                     <div class="card-body">
-                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">MULTAS E JUROS</h6>
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            ENDEREÇO DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-8 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Rua <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][street]" class="form-control" placeholder="Nome da rua" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Número <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][number]" class="form-control" placeholder="123" required>
+                                            </div>
+                                        </div>
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-bold">Multas por atraso(%)</label>
-                                                <input type="text" class="form-control" placeholder="0,00">
+                                                <label class="form-label fw-bold">Complemento</label>
+                                                <input type="text" name="client[address][complement]" class="form-control" placeholder="Apto 101">
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-bold">Juros ao mês(%)</label>
-                                                <input type="text" class="form-control" placeholder="0,00">
+                                                <label class="form-label fw-bold">
+                                                    Bairro <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][neighborhood]" class="form-control" placeholder="Centro" required>
                                             </div>
                                             <div class="col-md-4 mb-3">
-                                                <label class="form-label fw-bold">Prazo máximo para emissão 2ª via</label>
-                                                <select class="form-select">
-                                                    <option>Selecione...</option>
-                                                    <option value="30">30 dias</option>
-                                                    <option value="60">60 dias</option>
-                                                    <option value="90">90 dias</option>
+                                                <label class="form-label fw-bold">
+                                                    CEP <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][zip_code]" class="form-control" placeholder="00000-000" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-8 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Cidade <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][city]" class="form-control" placeholder="Nome da cidade" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Estado <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="client[address][state]" class="form-select" required>
+                                                    <option value="">Selecione...</option>
+                                                    <option value="AC">Acre</option>
+                                                    <option value="AL">Alagoas</option>
+                                                    <option value="AP">Amapá</option>
+                                                    <option value="AM">Amazonas</option>
+                                                    <option value="BA">Bahia</option>
+                                                    <option value="CE">Ceará</option>
+                                                    <option value="DF">Distrito Federal</option>
+                                                    <option value="ES">Espírito Santo</option>
+                                                    <option value="GO">Goiás</option>
+                                                    <option value="MA">Maranhão</option>
+                                                    <option value="MT">Mato Grosso</option>
+                                                    <option value="MS">Mato Grosso do Sul</option>
+                                                    <option value="MG">Minas Gerais</option>
+                                                    <option value="PA">Pará</option>
+                                                    <option value="PB">Paraíba</option>
+                                                    <option value="PR">Paraná</option>
+                                                    <option value="PE">Pernambuco</option>
+                                                    <option value="PI">Piauí</option>
+                                                    <option value="RJ">Rio de Janeiro</option>
+                                                    <option value="RN">Rio Grande do Norte</option>
+                                                    <option value="RS">Rio Grande do Sul</option>
+                                                    <option value="RO">Rondônia</option>
+                                                    <option value="RR">Roraima</option>
+                                                    <option value="SC">Santa Catarina</option>
+                                                    <option value="SP">São Paulo</option>
+                                                    <option value="SE">Sergipe</option>
+                                                    <option value="TO">Tocantins</option>
                                                 </select>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="card bg-light border-0">
+                                <!-- Dados do Cartão (OBRIGATÓRIO) -->
+                                <div class="card bg-light border-0 mb-4">
                                     <div class="card-body">
-                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">INFORMAÇÕES ADICIONAIS</h6>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">Observações do boleto</label>
-                                            <textarea class="form-control" rows="3" placeholder="Digite as observações..."></textarea>
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            DADOS DO CARTÃO <span class="text-danger">(OBRIGATÓRIO)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Nome do titular <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="card[holder_name]" class="form-control" placeholder="Nome completo" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">CPF/CNPJ do titular</label>
+                                                <input type="text" name="card[holder_document]" class="form-control" placeholder="000.000.000-00">
+                                            </div>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold">Descrição do produto/serviço vendido</label>
-                                            <textarea class="form-control" rows="3" placeholder="Descreva o produto ou serviço..."></textarea>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Número do cartão <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="card[card_number]" class="form-control" placeholder="0000 0000 0000 0000" required>
+                                            </div>
+                                            <div class="col-md-2 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Mês <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="card[expiration_month]" class="form-select" required>
+                                                    <option value="">MM</option>
+                                                    <option value="1">01</option>
+                                                    <option value="2">02</option>
+                                                    <option value="3">03</option>
+                                                    <option value="4">04</option>
+                                                    <option value="5">05</option>
+                                                    <option value="6">06</option>
+                                                    <option value="7">07</option>
+                                                    <option value="8">08</option>
+                                                    <option value="9">09</option>
+                                                    <option value="10">10</option>
+                                                    <option value="11">11</option>
+                                                    <option value="12">12</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Ano <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="card[expiration_year]" class="form-select" required>
+                                                    <option value="">AAAA</option>
+                                                    <option value="2024">2024</option>
+                                                    <option value="2025">2025</option>
+                                                    <option value="2026">2026</option>
+                                                    <option value="2027">2027</option>
+                                                    <option value="2028">2028</option>
+                                                    <option value="2029">2029</option>
+                                                    <option value="2030">2030</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    CVV <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="card[security_code]" class="form-control" placeholder="000" required>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Criar Transação de Crédito
+                                    </button>
+                                </div>
+                            </form>
                             </div>
+
+                        <!-- Aba Boleto/Pix -->
+                        <div class="tab-pane fade" id="boleto-content" role="tabpanel">
+                            <form action="{{ route('cobranca.boleto.criar') }}" method="POST">
+                                @csrf
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">
+                                            Valor do boleto <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" name="amount" class="form-control" placeholder="0,00" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">
+                                            Data de vencimento <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="date" name="expiration" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Data limite para pagamento</label>
+                                        <input type="date" name="payment_limit_date" class="form-control">
+                                        <small class="text-muted">Opcional - Data limite após o vencimento</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">É para recarga?</label>
+                                        <select name="recharge" class="form-select">
+                                            <option value="0">Não</option>
+                                            <option value="1">Sim</option>
+                                        </select>
+                                        <small class="text-muted">Opcional - Para carteiras digitais</small>
+                                    </div>
+                                </div>
+
+                                <!-- Dados do Cliente (OBRIGATÓRIO) -->
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            DADOS DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Nome <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[first_name]" class="form-control" placeholder="Nome completo" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Sobrenome <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[last_name]" class="form-control" placeholder="Sobrenome" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    CPF/CNPJ <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Email <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="email" name="client[email]" class="form-control" placeholder="email@exemplo.com" required>
+                                            </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                                <!-- Endereço do Cliente (OBRIGATÓRIO) -->
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            ENDEREÇO DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-8 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Rua <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][street]" class="form-control" placeholder="Nome da rua" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Número <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][number]" class="form-control" placeholder="123" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">Complemento</label>
+                                                <input type="text" name="client[address][complement]" class="form-control" placeholder="Apto 101">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Bairro <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][neighborhood]" class="form-control" placeholder="Centro" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    CEP <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][zip_code]" class="form-control" placeholder="00000-000" required>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-8 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Cidade <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="client[address][city]" class="form-control" placeholder="Nome da cidade" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Estado <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="client[address][state]" class="form-select" required>
+                                                    <option value="">Selecione...</option>
+                                                    <option value="AC">Acre</option>
+                                                    <option value="AL">Alagoas</option>
+                                                    <option value="AP">Amapá</option>
+                                                    <option value="AM">Amazonas</option>
+                                                    <option value="BA">Bahia</option>
+                                                    <option value="CE">Ceará</option>
+                                                    <option value="DF">Distrito Federal</option>
+                                                    <option value="ES">Espírito Santo</option>
+                                                    <option value="GO">Goiás</option>
+                                                    <option value="MA">Maranhão</option>
+                                                    <option value="MT">Mato Grosso</option>
+                                                    <option value="MS">Mato Grosso do Sul</option>
+                                                    <option value="MG">Minas Gerais</option>
+                                                    <option value="PA">Pará</option>
+                                                    <option value="PB">Paraíba</option>
+                                                    <option value="PR">Paraná</option>
+                                                    <option value="PE">Pernambuco</option>
+                                                    <option value="PI">Piauí</option>
+                                                    <option value="RJ">Rio de Janeiro</option>
+                                                    <option value="RN">Rio Grande do Norte</option>
+                                                    <option value="RS">Rio Grande do Sul</option>
+                                                    <option value="RO">Rondônia</option>
+                                                    <option value="RR">Roraima</option>
+                                                    <option value="SC">Santa Catarina</option>
+                                                    <option value="SP">São Paulo</option>
+                                                    <option value="SE">Sergipe</option>
+                                                    <option value="TO">Tocantins</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Instruções do Boleto (OBRIGATÓRIO) -->
+                                <div class="card bg-light border-0 mb-4">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-uppercase small text-muted mb-3">
+                                            INSTRUÇÕES DO BOLETO <span class="text-danger">(OBRIGATÓRIO)</span>
+                                        </h6>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    É carnê? <span class="text-danger">*</span>
+                                                </label>
+                                                <select name="instruction[booklet]" class="form-select" required>
+                                                    <option value="0">Não</option>
+                                                    <option value="1">Sim</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-bold">Descrição</label>
+                                                <input type="text" name="instruction[description]" class="form-control" placeholder="Descrição do boleto">
+                                                <small class="text-muted">Opcional - Descrição exibida no boleto</small>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Multa por atraso (%) <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="instruction[late_fee][amount]" class="form-control" placeholder="0,00" step="0.01" required>
+                                                <input type="hidden" name="instruction[late_fee][mode]" value="PERCENTAGE">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Juros ao mês (%) <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="instruction[interest][amount]" class="form-control" placeholder="0,00" step="0.01" required>
+                                                <input type="hidden" name="instruction[interest][mode]" value="MONTHLY_PERCENTAGE">
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label fw-bold">
+                                                    Desconto (%) <span class="text-danger">*</span>
+                                                </label>
+                                                <input type="text" name="instruction[discount][amount]" class="form-control" placeholder="0,00" step="0.01" required>
+                                                <input type="hidden" name="instruction[discount][mode]" value="PERCENTAGE">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-bold">
+                                                Data limite para desconto <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="date" name="instruction[discount][limit_date]" class="form-control" required>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        Criar Boleto
+                                    </button>
+                            </div>
+                            </form>
                         </div>
                     </div>
-                </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary">
-                    <i class="fas fa-save me-2"></i>
-                    Salvar
-                </button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Modal QR Code PIX -->
+<div class="modal fade" id="modalQrCodePix" tabindex="-1" aria-labelledby="modalQrCodePixLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalQrCodePixLabel">Pagamento PIX</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 text-center">
+                        <h6 class="fw-bold mb-3">QR Code</h6>
+                        <div id="qrcode-container" class="mb-3">
+                            <!-- QR Code será inserido aqui via JavaScript -->
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="downloadQrCode()">
+                            <i class="fas fa-download me-2"></i>
+                            Baixar QR Code
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold mb-3">Copia e Cola</h6>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Código PIX</label>
+                            <div class="input-group">
+                                <input type="text" id="pix-code" class="form-control" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyPixCode()">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Como pagar:</strong><br>
+                            1. Abra o app do seu banco<br>
+                            2. Escolha "PIX" ou "Pagar"<br>
+                            3. Escaneie o QR Code ou cole o código
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closePixModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
+
+@push('scripts')
+<script>
+// Verificar se há dados PIX para mostrar
+document.addEventListener('DOMContentLoaded', function() {
+    const pixDataElement = document.getElementById('pix-data');
+    if (pixDataElement && pixDataElement.dataset.pixData) {
+        const pixData = JSON.parse(pixDataElement.dataset.pixData);
+        showPixModal(pixData);
+    }
+});
+
+function showPixModal(pixData) {
+    console.log('Dados PIX recebidos:', pixData);
+    
+    // Buscar QR Code em base64
+    let qrCodeBase64 = '';
+    if (pixData.qr_code && pixData.qr_code.qrcode) {
+        qrCodeBase64 = pixData.qr_code.qrcode;
+    } else if (pixData.qr_code && typeof pixData.qr_code === 'string' && pixData.qr_code.startsWith('data:image')) {
+        qrCodeBase64 = pixData.qr_code;
+    }
+    
+    // Buscar código PIX
+    let pixCode = '';
+    if (pixData.qr_code && pixData.qr_code.emv) {
+        pixCode = pixData.qr_code.emv;
+    } else if (pixData.transacao && pixData.transacao.emv) {
+        pixCode = pixData.transacao.emv;
+    }
+    
+    console.log('QR Code base64 encontrado:', qrCodeBase64 ? 'Sim' : 'Não');
+    console.log('Código PIX encontrado:', pixCode);
+    
+    if (qrCodeBase64) {
+        // Mostrar imagem base64 diretamente
+        const qrContainer = document.getElementById('qrcode-container');
+        qrContainer.innerHTML = `<img src="${qrCodeBase64}" alt="QR Code PIX" class="img-fluid" style="max-width: 200px;">`;
+        
+        // Preencher código PIX se disponível
+        if (pixCode) {
+            document.getElementById('pix-code').value = pixCode;
+        }
+        
+        // Mostrar modal
+        $('#modalQrCodePix').modal('show');
+    } else {
+        console.error('QR Code base64 não encontrado nos dados:', pixData);
+        alert('Erro: QR Code não encontrado');
+    }
+}
+
+function copyPixCode() {
+    const pixCode = document.getElementById('pix-code');
+    pixCode.select();
+    pixCode.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    
+    // Mostrar feedback
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    button.classList.remove('btn-outline-secondary');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-outline-secondary');
+    }, 2000);
+}
+
+function downloadQrCode() {
+    const img = document.querySelector('#qrcode-container img');
+    if (img) {
+        const link = document.createElement('a');
+        link.download = 'qrcode-pix.png';
+        link.href = img.src;
+        link.click();
+    }
+}
+
+function closePixModal() {
+    $('#modalQrCodePix').modal('hide');
+}
+</script>
+@endpush
+
+
 
 
