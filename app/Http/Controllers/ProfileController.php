@@ -6,18 +6,23 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Validation\Rules;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Display the user's profile form in dashboard style.
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
+        $user = $request->user();
+        
+        // Todos os usuários logados usam o template do dashboard
+        return view('profile.dashboard.edit', [
+            'user' => $user,
         ]);
     }
 
@@ -57,4 +62,6 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+
 }
