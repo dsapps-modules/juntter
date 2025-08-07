@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EstabelecimentoController;
+use App\Http\Controllers\CobrancaController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -42,9 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Rotas de Cobrança (acessível para super_admin, admin e vendedor - NÃO para comprador)
     Route::middleware('nivel.acesso:vendedor')->group(function () {
-    Route::get('/cobranca', function () {
-        return view('cobranca.index');
-    })->name('cobranca.index');
+    Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
     
     Route::get('/cobranca/recorrente', function () {
         return view('cobranca.recorrente');
