@@ -828,6 +828,9 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 
 /* Tabela Personalizada */
 #cobrancasTable,
+#cobrancasRecorrentesTable,
+#pixTable,
+#planosTable,
 #estabelecimentos-table {
     border-radius: 1rem;
     overflow: hidden;
@@ -853,6 +856,9 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 }
 
 #cobrancasTable tbody td,
+#cobrancasRecorrentesTable tbody td,
+#pixTable tbody td,
+#planosTable tbody td,
 #estabelecimentos-table tbody td {
     border-top: 1px solid #e9ecef;
     padding: 0.5rem 0.5rem;
@@ -861,6 +867,9 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 }
 
 #cobrancasTable tbody tr:hover,
+#cobrancasRecorrentesTable tbody tr:hover,
+#pixTable tbody tr:hover,
+#planosTable tbody tr:hover,
 #estabelecimentos-table tbody tr:hover {
     background-color: rgba(255, 193, 7, 0.05);
     transform: translateY(-1px);
