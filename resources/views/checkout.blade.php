@@ -177,7 +177,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte por email</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Relatórios básicos</li>
                     </ul>
-                    <a href="{{ route('register') }}" class="btn btn-outline-warning btn-block">Começar Grátis</a>
+                    <a href="{{ route('register') }}" class="btn btn-outline-warning btn-block">Escolher Mais</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
