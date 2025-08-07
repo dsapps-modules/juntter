@@ -68,23 +68,31 @@
 
                 <!-- User Menu -->
                 <div class="navbar-nav ms-auto">
-                    <div class="d-flex align-items-center">
-                        <div class="user-info-container me-3">
-                            <div class="user-avatar">
-                                <i class="fas fa-user-circle"></i>
+                    <div class="dropdown">
+                        <button class="nav-link dropdown-toggle menu-item btn d-flex align-items-center" type="button" id="userDropdown" data-toggle="dropdown" aria-expanded="false">
+                            <div class="user-info-container me-2">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                </div>
+                                <div class="user-details">
+                                    <span class="user-name">{{ Auth::user()->name }}</span>
+                                    <span class="user-role">{{ ucfirst(Auth::user()->nivel_acesso) }}</span>
+                                </div>
                             </div>
-                            <div class="user-details">
-                                <span class="user-name">{{ Auth::user()->name }}</span>
-                                <span class="user-role">{{ ucfirst(Auth::user()->role) }}</span>
-                            </div>
-                        </div>
-                        
-                        <form method="POST" action="{{ route('logout') }}" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn logout-btn" title="Sair">
-                                <i class="fas fa-sign-out-alt"></i>
-                            </button>
-                        </form>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-modern dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>Editar Perfil</a></li>
+                            <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-key me-2"></i>Alterar Senha</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="{{ route('logout') }}" class="d-inline w-100">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Sair
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -130,7 +138,7 @@
     
     
     
-    @yield('scripts')
+    @stack('scripts')
 </body>
 </html>
 

@@ -576,8 +576,6 @@
 
  </style>
  
-@section('scripts')
-<!-- Scripts consolidados no dashboard.js -->
-@endsection
+
 
 @endsection
