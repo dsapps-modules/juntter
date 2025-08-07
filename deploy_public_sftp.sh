@@ -1,4 +1,7 @@
 #!/bin/bash
+# note que este comando só foi criado por que a hostinger impede a execução de scripts ssh no diretório 
+# root_public_html e o deploy do checkout é feito para o diretório root/juntter_checkout
+# rodar no git bash ./deploy_public_sftp.sh
 
 # CONFIGURAÇÕES
 HOSTINGER_USER="u709248946"
