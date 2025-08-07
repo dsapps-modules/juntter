@@ -317,4 +317,26 @@ class CobrancaController extends Controller
                 ->with('error', 'Erro ao obter QR Code PIX: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Detalhes da transação
+     */
+    public function detalhesTransacao($id)
+    {
+        try {
+            // Buscar detalhes da transação específica
+            $transacao = $this->transacaoService->detalhesTransacao($id);
+
+            if (!$transacao) {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Transação não encontrada.');
+            }
+
+            return view('cobranca.detalhes', compact('transacao'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar detalhes da transação: ' . $e->getMessage());
+            return redirect()->route('cobranca.index')
+                ->with('error', 'Erro ao buscar detalhes da transação: ' . $e->getMessage());
+        }
+    }
 }
