@@ -74,7 +74,7 @@ class DashboardController extends Controller
     public function adminDashboard(Request $request)
     {
         $saldos = [
-            'disponivel' => 'R$ 8.750,00',
+            'disponivel' => 'R$ 123.456,78',
             'transito' => 'R$ 1.200,00',
             'bloqueado_cartao' => 'R$ 450,00',
             'bloqueado_boleto' => 'R$ 800,00'
