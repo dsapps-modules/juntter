@@ -23,7 +23,6 @@
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-buttons/css/buttons.bootstrap4.min.css') }}">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ asset('css/juntter-styles.css') }}">
     <link rel="stylesheet" href="{{ asset('css/dashboard-styles.css') }}">
 </head>
 <body>

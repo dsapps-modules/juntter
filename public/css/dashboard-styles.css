@@ -1,6 +1,12 @@
 /* Juntter Dashboard Styles */
 
-
+:root {
+    --dashboard-text-color: #6c757d;
+    --dashboard-value-color: #6c757d;
+    --primary-color: #FFCF00;
+    --secondary-color: #ffb800;
+    --dark-color: #000000;
+}
 
 /* Navbar */
 .dashboard-navbar {
@@ -70,10 +76,27 @@
     min-height: calc(100vh - 80px);
     padding: 20px 0;
     background-color: #f8f9fa;
+    color: var(--dashboard-text-color);
 }
 
 .dashboard-content .container {
     padding: 0 15px;
+}
+
+/* Aplicar cor padrão apenas em strongs de tabelas */
+.dashboard-content table strong,
+.dashboard-content .table strong {
+    color: var(--dashboard-text-color);
+}
+
+/* Aplicar cor padrão em títulos */
+.dashboard-content h1,
+.dashboard-content h2,
+.dashboard-content h3,
+.dashboard-content h4,
+.dashboard-content h5,
+.dashboard-content h6 {
+    color: var(--dashboard-text-color);
 }
 
 /* Mobile Menu Toggle */
@@ -228,6 +251,19 @@
     color: var(--dark-color);
 }
 
+/* Melhorar espaçamento de ícones em títulos e textos */
+h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
+.fw-bold i, .fw-semibold i {
+    margin-right: 8px !important;
+}
+
+/* Espaçamento específico para ícones em títulos de seção */
+.card-body h5 i,
+.card-body h4 i,
+.card-body h3 i {
+    margin-right: 6px !important;
+}
+
 .dropdown-divider {
     border-color: rgba(0, 0, 0, 0.1);
     margin: 10px 15px;
@@ -267,7 +303,7 @@
 .saldo-valor {
     font-size: 1.4rem;
     font-weight: 800;
-    color: var(--dark-color);
+    color: var(--dashboard-value-color);
     margin-bottom: 8px;
     white-space: nowrap;
     overflow: hidden;
@@ -387,7 +423,7 @@
 .metric-value {
     font-size: 1.6rem;
     font-weight: 800;
-    color: var(--dark-color);
+    color: var(--dashboard-value-color);
     margin-bottom: 10px;
     white-space: nowrap;
     overflow: hidden;

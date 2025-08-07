@@ -530,7 +530,8 @@
     }
 
     .info-item strong {
-        color: #495057;
+       
+        color: var(--dashboard-text-color);
         font-size: 0.95rem;
     }
 

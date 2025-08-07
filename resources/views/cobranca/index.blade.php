@@ -59,7 +59,7 @@
                                 <td><strong>João Silva</strong></td>
                                 <td><span class="text-muted">123.456.789-00</span></td>
                                 <td><strong class="text-success">R$ 150,00</strong></td>
-                                <td>15/12/2024</td>
+                                <td><span class="text-muted">15/12/2024</span></td>
                                 <td><span class="badge badge-success">Pago</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -76,7 +76,7 @@
                                 <td><strong>Maria Santos</strong></td>
                                 <td><span class="text-muted">987.654.321-00</span></td>
                                 <td><strong class="text-warning">R$ 300,00</strong></td>
-                                <td>12/12/2024</td>
+                                <td><span class="text-muted">12/12/2024</span></td>
                                 <td><span class="badge badge-warning">Pendente</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -93,7 +93,7 @@
                                 <td><strong>Pedro Oliveira</strong></td>
                                 <td><span class="text-muted">456.789.123-00</span></td>
                                 <td><strong class="text-danger">R$ 220,00</strong></td>
-                                <td>10/12/2024</td>
+                                <td><span class="text-muted">10/12/2024</span></td>
                                 <td><span class="badge badge-danger">Vencido</span></td>
                                 <td>
                                     <div class="btn-group" role="group">

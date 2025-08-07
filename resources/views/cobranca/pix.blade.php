@@ -56,7 +56,7 @@
                             <tr>
                                 <td><strong>João Silva</strong></td>
                                 <td><strong class="text-success">R$ 150,00</strong></td>
-                                <td>15/12/2024</td>
+                                <td><span class="text-muted">15/12/2024</span></td>
                                 <td><span class="badge badge-success">Enviado</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -72,7 +72,7 @@
                             <tr>
                                 <td><strong>Maria Santos</strong></td>
                                 <td><strong class="text-warning">R$ 300,00</strong></td>
-                                <td>12/12/2024</td>
+                                <td><span class="text-muted">12/12/2024</span></td>
                                 <td><span class="badge badge-warning">Pendente</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -88,7 +88,7 @@
                             <tr>
                                 <td><strong>Pedro Oliveira</strong></td>
                                 <td><strong class="text-danger">R$ 220,00</strong></td>
-                                <td>10/12/2024</td>
+                                <td><span class="text-muted">10/12/2024</span></td>
                                 <td><span class="badge badge-danger">Falhou</span></td>
                                 <td>
                                     <div class="btn-group" role="group">

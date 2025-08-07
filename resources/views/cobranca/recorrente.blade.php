@@ -60,7 +60,7 @@
                                 <td><strong class="text-success">R$ 150,00</strong></td>
                                 <td><span class="badge badge-info">Mensal</span></td>
                                 <td><span class="text-muted">12x</span></td>
-                                <td>15/01/2024</td>
+                                <td><span class="text-muted">15/01/2024</span></td>
                                 <td><span class="badge badge-success">Ativo</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -78,7 +78,7 @@
                                 <td><strong class="text-warning">R$ 200,00</strong></td>
                                 <td><span class="badge badge-info">Mensal</span></td>
                                 <td><span class="text-muted">6x</span></td>
-                                <td>20/01/2024</td>
+                                <td><span class="text-muted">20/01/2024</span></td>
                                 <td><span class="badge badge-warning">Pendente</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
@@ -96,7 +96,7 @@
                                 <td><strong class="text-danger">R$ 300,00</strong></td>
                                 <td><span class="badge badge-info">Trimestral</span></td>
                                 <td><span class="text-muted">4x</span></td>
-                                <td>10/02/2024</td>
+                                <td><span class="text-muted">10/02/2024</span></td>
                                 <td><span class="badge badge-danger">Cancelado</span></td>
                                 <td>
                                     <div class="btn-group" role="group">
