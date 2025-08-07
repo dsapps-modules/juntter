@@ -96,6 +96,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Rota para view de alterar senha no dashboard
+    Route::get('/profile/password', function() {
+        return view('profile.dashboard.password');
+    })->name('profile.password');
 });
 
 // Rotas de autenticação do Breeze
