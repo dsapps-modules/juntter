@@ -65,6 +65,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('cobranca.saldoextrato');
     })->name('cobranca.saldoextrato');
     
+    // Rotas de API para transações
+    Route::post('/cobranca/transacao/credito', [CobrancaController::class, 'criarTransacaoCredito'])->name('cobranca.transacao.credito');
+    Route::post('/cobranca/transacao/pix', [CobrancaController::class, 'criarTransacaoPix'])->name('cobranca.transacao.pix');
+    Route::post('/cobranca/boleto', [CobrancaController::class, 'criarBoleto'])->name('cobranca.boleto.criar');
+    Route::post('/cobranca/simular', [CobrancaController::class, 'simularTransacao'])->name('cobranca.transacao.simular');
+    Route::get('/cobranca/transacao/{id}', [CobrancaController::class, 'detalhesTransacao'])->name('cobranca.transacao.detalhes');
+    Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
+    Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
 
 });
 });
