@@ -4,12 +4,7 @@
 
 @section('content')
 <!-- Breadcrumb -->
-<x-breadcrumb 
-    :items="[
-        ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')],
-        ['label' => 'Detalhes da Transação', 'icon' => 'fas fa-eye', 'url' => '#']
-    ]"
-/>
+<x-breadcrumb :items="$breadcrumbItems" />
 
 <div class="row">
     <div class="col-12">
@@ -33,9 +28,15 @@
                         <p class="text-muted mb-0">Detalhes completos da transação</p>
                     </div>
                     <div>
-                        <a href="{{ route('cobranca.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Voltar
-                        </a>
+                        @if(request('from') == 'saldoextrato')
+                            <a href="{{ route('cobranca.saldoextrato') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar ao Saldo e Extrato
+                            </a>
+                        @else
+                            <a href="{{ route('cobranca.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                            </a>
+                        @endif
                     </div>
                 </div>
 
