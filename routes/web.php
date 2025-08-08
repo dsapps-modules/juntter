@@ -61,9 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('cobranca.pagarcontas');
     })->name('cobranca.pagarcontas');
 
-    Route::get('/cobranca/saldoextrato', function () {
-        return view('cobranca.saldoextrato');
-    })->name('cobranca.saldoextrato');
+    Route::get('/cobranca/saldoextrato', [CobrancaController::class, 'saldoExtrato'])->name('cobranca.saldoextrato');
     
     // Rotas de API para transações
     Route::post('/cobranca/transacao/credito', [CobrancaController::class, 'criarTransacaoCredito'])->name('cobranca.transacao.credito');
