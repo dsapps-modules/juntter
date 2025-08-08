@@ -46,9 +46,10 @@
                     <table id="cobrancasTable" class="table table-hover table-striped">
                         <thead>
                             <tr class="table-header-juntter">
-                                <th>Cliente</th>
-                                <th>Documento</th>
+                                <th>ID</th>
+                                <th>Tipo</th>
                                 <th>Valor</th>
+                                <th>Gateway</th>
                                 <th>Data</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -59,81 +60,115 @@
                                 @foreach($transacoes['data'] as $transacao)
                                     <tr>
                                         <td>
-                                            <strong>
-                                                @if(isset($transacao['customer']) && !empty($transacao['customer']['first_name']))
-                                                    {{ $transacao['customer']['first_name'] }} {{ $transacao['customer']['last_name'] ?? '' }}
-                                                @else
-                                                    <span class="text-muted">
-                                                        <i class="fas fa-info-circle me-1"></i>
-                                                        Clique em "Ver detalhes" para ver dados do cliente
+                                            <small class="text-muted font-monospace">
+                                                {{ substr($transacao['_id'] ?? 'N/A', 0, 8) }}...
+                                            </small>
+                                        </td>
+                                        <td>
+                                            @if(isset($transacao['type']))
+                                                @if($transacao['type'] === 'PIX')
+                                                    <span class="badge badge-info">
+                                                        <i class="fas fa-qrcode me-1"></i>PIX
                                                     </span>
+                                                @elseif($transacao['type'] === 'CREDIT')
+                                                    <span class="badge badge-primary">
+                                                        <i class="fas fa-credit-card me-1"></i>Crédito
+                                                        @if(isset($transacao['installments']) && $transacao['installments'] > 1)
+                                                            <small>({{ $transacao['installments'] }}x)</small>
+                                                        @endif
+                                                    </span>
+                                                @elseif($transacao['type'] === 'DEBIT')
+                                                    <span class="badge badge-success">
+                                                        <i class="fas fa-credit-card me-1"></i>Débito
+                                                    </span>
+                                                @else
+                                                    <span class="badge badge-secondary">{{ $transacao['type'] }}</span>
                                                 @endif
-                                            </strong>
+                                            @else
+                                                <span class="badge badge-secondary">N/A</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong class="text-success">
+                                                    R$ {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}
+                                                </strong>
+                                                @if(isset($transacao['fees']) && $transacao['fees'] > 0)
+                                                    <br><small class="text-muted">Taxa: R$ {{ number_format($transacao['fees'] / 100, 2, ',', '.') }}</small>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if(isset($transacao['gateway_authorization']))
+                                                <span class="badge badge-outline-secondary">
+                                                    {{ $transacao['gateway_authorization'] }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <span class="text-muted">
-                                                @if(isset($transacao['customer']) && !empty($transacao['customer']['document']))
-                                                    {{ $transacao['customer']['document'] }}
-                                                @else
-                                                    <span class="text-muted">
-                                                        <i class="fas fa-info-circle me-1"></i>
-                                                        Ver detalhes
-                                                    </span>
-                                                @endif
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <strong class="text-success">
-                                                R$ {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}
-                                            </strong>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">
-                                                {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('d/m/Y') }}
+                                                {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('d/m/Y H:i') }}
                                             </span>
                                         </td>
                                         <td>
                                             @if(isset($transacao['status']))
                                                 @if($transacao['status'] === 'PAID')
-                                                    <span class="badge badge-success">Pago</span>
+                                                    <span class="badge badge-success">
+                                                        <i class="fas fa-check me-1"></i>Pago
+                                                    </span>
                                                 @elseif($transacao['status'] === 'PENDING')
-                                                    <span class="badge badge-warning">Pendente</span>
+                                                    <span class="badge badge-warning">
+                                                        <i class="fas fa-clock me-1"></i>Pendente
+                                                    </span>
                                                 @elseif($transacao['status'] === 'FAILED')
-                                                    <span class="badge badge-danger">Falhou</span>
+                                                    <span class="badge badge-danger">
+                                                        <i class="fas fa-times me-1"></i>Falhou
+                                                    </span>
                                                 @elseif($transacao['status'] === 'CANCELED')
-                                                    <span class="badge badge-secondary">Cancelado</span>
+                                                    <span class="badge badge-secondary">
+                                                        <i class="fas fa-ban me-1"></i>Cancelado
+                                                    </span>
                                                 @elseif($transacao['status'] === 'REFUNDED')
-                                                    <span class="badge badge-info">Estornado</span>
+                                                    <span class="badge badge-info">
+                                                        <i class="fas fa-undo me-1"></i>Estornado
+                                                    </span>
+                                                @elseif($transacao['status'] === 'APPROVED')
+                                                    <span class="badge badge-success">
+                                                        <i class="fas fa-check-circle me-1"></i>Aprovado
+                                                    </span>
                                                 @else
                                                     <span class="badge badge-secondary">{{ $transacao['status'] }}</span>
                                                 @endif
                                             @else
                                                 <span class="badge badge-secondary">Desconhecido</span>
                                             @endif
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                                <button class="btn btn-sm btn-outline-info" title="Visualizar" 
-                                                        onclick="visualizarTransacao('{{ $transacao['_id'] }}')">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ route('cobranca.transacao.detalhes', $transacao['_id']) }}" 
+                                                   class="btn btn-sm btn-outline-info" title="Ver detalhes">
+                                                    <i class="fas fa-eye"></i>
+                                                    Ver detalhes
+                                                </a>
                                                 @if(($transacao['status'] ?? '') === 'PENDING')
-                                        <button class="btn btn-sm btn-outline-warning" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                                    <button class="btn btn-sm btn-outline-warning" title="Editar">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
                                                 @endif
-                                    </div>
-                                </td>
-                            </tr>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @endforeach
                             @else
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">
+                                    <td colspan="7" class="text-center text-muted">
                                         <i class="fas fa-inbox fa-2x mb-2"></i>
                                         <br>
                                         Nenhuma transação encontrada
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
                             @endif
                         </tbody>
                     </table>

@@ -36,11 +36,16 @@ class CobrancaController extends Controller
         try {
             // Buscar todas as transações do estabelecimento atual
             $filtros = [
-                'perPage' => 100, // Trazer mais registros para o DataTable
-                'page' => 1
+                'perPage' => 1000, // Buscar o máximo possível
+                'page' => 1,
+               
             ];
 
             $transacoes = $this->transacaoService->listarTransacoes($filtros);
+
+          
+
+          
 
             return view('cobranca.index', compact('transacoes'));
         } catch (\Exception $e) {
@@ -106,7 +111,7 @@ class CobrancaController extends Controller
                 'establishment_id' => '155102'
             ];
             
-            // Pegar session_id do campo hidden (fake para testes)
+           
             $sessionId = $request->input('session_id', 'session_' . uniqid());
             $dados['session_id'] = $sessionId;
 

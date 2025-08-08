@@ -154,7 +154,9 @@ function initDataTables() {
                 targets: -1,
                 orderable: false
             }
-        ]);
+        ], {
+            order: [[4, 'desc']] // Ordenar pela coluna 4 (Data) de forma decrescente
+        });
         
         // DataTable para Cobrança Recorrente
         initDataTableSafely('#cobrancasRecorrentesTable', [
