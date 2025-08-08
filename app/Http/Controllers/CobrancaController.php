@@ -337,11 +337,59 @@ class CobrancaController extends Controller
                     ->with('error', 'Transação não encontrada.');
             }
 
+
+
             return view('cobranca.detalhes', compact('transacao'));
         } catch (\Exception $e) {
             Log::error('Erro ao buscar detalhes da transação: ' . $e->getMessage());
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao buscar detalhes da transação: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Estornar transação
+     */
+    public function estornarTransacao($id)
+    {
+        try {
+            // Buscar detalhes da transação para verificar se pode ser estornada
+            $transacao = $this->transacaoService->detalhesTransacao($id);
+
+            if (!$transacao) {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Transação não encontrada.');
+            }
+
+            // Verificar se a transação pode ser estornada/cancelada
+            if (!in_array($transacao['status'] ?? '', ['PAID', 'APPROVED', 'PENDING'])) {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Apenas transações pagas, aprovadas ou pendentes podem ser estornadas/canceladas.');
+            }
+
+            // Verificar se já foi estornada
+            if (($transacao['status'] ?? '') === 'REFUNDED') {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Esta transação já foi estornada.');
+            }
+
+            // Chamar serviço para estornar a transação
+            $resultado = $this->transacaoService->estornarTransacao($id);
+
+            if ($resultado && isset($resultado['status'])) {
+                $valorFormatado = number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.');
+                $acao = ($transacao['status'] ?? '') === 'PENDING' ? 'cancelada' : 'estornada';
+                
+                return redirect()->route('cobranca.index')
+                    ->with('success', "Transação de R$ {$valorFormatado} {$acao} com sucesso!");
+            } else {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Erro ao processar transação. Tente novamente.');
+            }
+        } catch (\Exception $e) {
+            Log::error('Erro ao estornar transação: ' . $e->getMessage());
+            return redirect()->route('cobranca.index')
+                ->with('error', 'Erro ao estornar transação: ' . $e->getMessage());
         }
     }
 }

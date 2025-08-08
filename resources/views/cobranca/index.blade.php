@@ -40,6 +40,18 @@
 <div class="row">
     <div class="col-12">
         <div class="card border-0 shadow-lg rounded-4">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <div class="text-center">
+                    <h5 class="card-title fw-bold mb-2">
+                        <i class="fas fa-credit-card me-2 text-primary"></i>
+                        Histórico de Transações
+                    </h5>
+                    <p class="text-muted mb-0 small">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Clique em "Ver Detalhes" para ver informações completas do cliente e da transação
+                    </p>
+                </div>
+            </div>
             <div class="card-body p-4">
                 <!-- Tabela Juntter Style -->
                 <div class="table-responsive">
@@ -96,8 +108,8 @@
                                                 @if(isset($transacao['fees']) && $transacao['fees'] > 0)
                                                     <br><small class="text-muted">Taxa: R$ {{ number_format($transacao['fees'] / 100, 2, ',', '.') }}</small>
                                                 @endif
-                                            </div>
-                                        </td>
+                                    </div>
+                                </td>
                                         <td>
                                             @if(isset($transacao['gateway_authorization']))
                                                 <span class="badge badge-outline-secondary">
@@ -109,7 +121,7 @@
                                         </td>
                                         <td>
                                             <span class="text-muted">
-                                                {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('d/m/Y H:i') }}
+                                                {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
                                             </span>
                                         </td>
                                         <td>
@@ -145,21 +157,41 @@
                                                 <span class="badge badge-secondary">Desconhecido</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
+                                <td>
+                                    <div class="btn-group" role="group">
                                                 <a href="{{ route('cobranca.transacao.detalhes', $transacao['_id']) }}" 
                                                    class="btn btn-sm btn-outline-info" title="Ver detalhes">
-                                                    <i class="fas fa-eye"></i>
+                                            <i class="fas fa-eye"></i>
                                                     Ver detalhes
                                                 </a>
-                                                @if(($transacao['status'] ?? '') === 'PENDING')
-                                                    <button class="btn btn-sm btn-outline-warning" title="Editar">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
+                                                @if(($transacao['status'] ?? '') === 'PAID' || ($transacao['status'] ?? '') === 'APPROVED')
+                                                    <form action="{{ route('cobranca.transacao.estornar', $transacao['_id']) }}" method="POST" style="display: inline;">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                                onclick="return confirm('Tem certeza que deseja estornar esta transação de R$ {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}?')"
+                                                                title="Estornar transação">
+                                                            <i class="fas fa-undo"></i>
+                                                            Estornar
+                                        </button>
+                                                    </form>
+                                                                                                @elseif(($transacao['status'] ?? '') === 'PENDING')
+                                                    <form action="{{ route('cobranca.transacao.estornar', $transacao['_id']) }}" method="POST" style="display: inline;">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning" 
+                                                                onclick="return confirm('Tem certeza que deseja cancelar esta transação de R$ {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}?')"
+                                                                title="Cancelar transação">
+                                                            <i class="fas fa-ban"></i>
+                                                            Cancelar
+                                                        </button>
+                                                    </form>
+                                                @elseif(($transacao['status'] ?? '') === 'REFUNDED')
+                                                    <span class="badge badge-info">
+                                                        <i class="fas fa-undo me-1"></i>Estornada
+                                                    </span>
                                                 @endif
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    </div>
+                                </td>
+                            </tr>
                                 @endforeach
                             @else
                                 <tr>
@@ -167,8 +199,8 @@
                                         <i class="fas fa-inbox fa-2x mb-2"></i>
                                         <br>
                                         Nenhuma transação encontrada
-                                    </td>
-                                </tr>
+                                </td>
+                            </tr>
                             @endif
                         </tbody>
                     </table>
@@ -907,6 +939,8 @@ function downloadQrCode() {
 function closePixModal() {
     $('#modalQrCodePix').modal('hide');
 }
+
+
 </script>
 @endpush
 

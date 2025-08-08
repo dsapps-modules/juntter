@@ -131,8 +131,9 @@
                             </div>
                             <div class="status-item mb-3">
                                 <small class="text-muted d-block">Data de Criação</small>
-                                <strong>{{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('d/m/Y H:i:s') }}</strong>
+                                <strong>{{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i:s') }}</strong>
                             </div>
+
                             @if(isset($transacao['installments']) && $transacao['installments'] > 1)
                             <div class="status-item mb-3">
                                 <small class="text-muted d-block">Parcelas</small>

@@ -74,6 +74,12 @@ class TransacaoService
         return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
     }
 
- 
-   
+    public function estornarTransacao(string $id)
+    {
+        $dados = [
+            'use_account' => true
+        ];
+        
+        return $this->apiClient->post("marketplace/transactions/{$id}/reversal", $dados);
+    }
 }
