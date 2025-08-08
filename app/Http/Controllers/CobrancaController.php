@@ -337,9 +337,18 @@ class CobrancaController extends Controller
                     ->with('error', 'Transação não encontrada.');
             }
 
+            // Preparar breadcrumb dinâmico
+            $breadcrumbItems = [
+                ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')]
+            ];
+            
+            if(request('from') == 'saldoextrato') {
+                $breadcrumbItems[] = ['label' => 'Saldo e Extrato', 'icon' => 'fas fa-chart-bar', 'url' => route('cobranca.saldoextrato')];
+            }
+            
+            $breadcrumbItems[] = ['label' => 'Detalhes da Transação', 'icon' => 'fas fa-eye', 'url' => '#'];
 
-
-            return view('cobranca.detalhes', compact('transacao'));
+            return view('cobranca.detalhes', compact('transacao', 'breadcrumbItems'));
         } catch (\Exception $e) {
             Log::error('Erro ao buscar detalhes da transação: ' . $e->getMessage());
             return redirect()->route('cobranca.index')
@@ -390,6 +399,84 @@ class CobrancaController extends Controller
             Log::error('Erro ao estornar transação: ' . $e->getMessage());
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao estornar transação: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Saldo e Extrato
+     */
+    public function saldoExtrato(Request $request)
+    {
+        try {
+            // Preparar filtros para lançamentos futuros (saldo - apenas headers obrigatórios)
+            $filtrosSaldo = [
+                'extra_headers' => [
+                    'establishment_id' => '155102'
+                ]
+            ];
+
+            // Buscar lançamentos futuros (saldo) - sem filtros, apenas headers obrigatórios
+            $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
+
+            // Preparar filtros para extrato detalhado
+            $filtrosExtrato = [
+                'extra_headers' => [
+                    'establishment_id' => '155102'
+                ]
+            ];
+
+            // Filtros para extrato detalhado (campos obrigatórios da API)
+            $filtrosExtratoData = [];
+            
+            // Gateway é obrigatório - se não foi especificado, usa PAYTIME como padrão
+            $filtrosExtratoData['gateway_authorization'] = $request->gateway_authorization ?? 'PAYTIME';
+            
+            // Data de liberação (date) - se especificada
+            if ($request->filled('data_inicio')) {
+                $filtrosExtratoData['date'] = $request->data_inicio;
+            } else {
+                $filtrosExtratoData['date'] = date('Y-m-d');
+            }
+
+
+
+            // Sempre adiciona filters pois os campos são obrigatórios para extrato
+            $filtrosExtrato['filters'] = json_encode($filtrosExtratoData);
+
+            // Adicionar busca livre
+            if ($request->filled('search')) {
+                $filtrosExtrato['search'] = $request->search;
+            }
+
+            // Adicionar paginação
+            if ($request->filled('page')) {
+                $filtrosExtrato['page'] = $request->page;
+            }
+
+            if ($request->filled('perPage')) {
+                $filtrosExtrato['perPage'] = $request->perPage;
+            }
+
+            // Buscar lançamentos futuros diários (extrato detalhado)
+            $extrato = $this->transacaoService->lancamentosFuturosDiarios($filtrosExtrato);
+
+            // Preparar dados para a view
+            $dados = [
+                'saldo' => $saldo,
+                'extrato' => $extrato,
+                'filtros' => [
+                    'gateway_authorization' => $request->gateway_authorization,
+                    'data_inicio' => $request->data_inicio,
+                    'search' => $request->search,
+                    'page' => $request->page ?? 1,
+                    'perPage' => $request->perPage ?? 20
+                ]
+            ];
+
+            return view('cobranca.saldoextrato', $dados);
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar saldo e extrato: ' . $e->getMessage());
+            return view('cobranca.saldoextrato')->with('error', 'Erro ao carregar saldo e extrato: ' . $e->getMessage());
         }
     }
 }
