@@ -11,7 +11,7 @@
     ]"
 />
 
-<!-- Seção Extrato -->
+<!-- Seção Saldo -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-lg rounded-4">
@@ -23,8 +23,8 @@
                     <div class="col-md-3 mb-3">
                         <div class="saldo-card saldo-disponivel">
                             <div class="saldo-content">
-                                <div class="saldo-valor">R$ 180,50</div>
-                                <div class="saldo-label">Saldo disponível</div>
+                                <div class="saldo-valor">R$ {{ number_format(($saldo['total']['amount'] ?? 0) / 100, 2, ',', '.') }}</div>
+                                <div class="saldo-label">Total em lançamentos futuros</div>
                             </div>
                             <div class="saldo-icon">
                                 <i class="fas fa-wallet"></i>
@@ -35,11 +35,11 @@
                     <div class="col-md-3 mb-3">
                         <div class="saldo-card saldo-bloqueado-boleto">
                             <div class="saldo-content">
-                                <div class="saldo-valor">R$ 00,00</div>
-                                <div class="saldo-label">Saldo bloqueado boleto</div>
+                                <div class="saldo-valor">R$ {{ number_format(($saldo['thirtyDays']['amount'] ?? 0) / 100, 2, ',', '.') }}</div>
+                                <div class="saldo-label">Próximos 30 dias</div>
                             </div>
                             <div class="saldo-icon">
-                                <i class="fas fa-file-invoice"></i>
+                                <i class="fas fa-calendar"></i>
                             </div>
                         </div>
                     </div>
@@ -47,11 +47,11 @@
                     <div class="col-md-3 mb-3">
                         <div class="saldo-card saldo-bloqueado">
                             <div class="saldo-content">
-                                <div class="saldo-valor">R$ 50,50</div>
-                                <div class="saldo-label">Saldo bloqueado cartão</div>
+                                <div class="saldo-valor">R$ {{ number_format(($saldo['sevenDays']['amount'] ?? 0) / 100, 2, ',', '.') }}</div>
+                                <div class="saldo-label">Próximos 7 dias</div>
                             </div>
                             <div class="saldo-icon">
-                                <i class="fas fa-credit-card"></i>
+                                <i class="fas fa-calendar-week"></i>
                             </div>
                         </div>
                     </div>
@@ -59,11 +59,11 @@
                     <div class="col-md-3 mb-3">
                         <div class="saldo-card saldo-transito">
                             <div class="saldo-content">
-                                <div class="saldo-valor">R$ 00,00</div>
-                                <div class="saldo-label">Saldo em trânsito</div>
+                                <div class="saldo-valor">{{ count($saldo['calendar'] ?? []) }}</div>
+                                <div class="saldo-label">Datas de lançamento</div>
                             </div>
                             <div class="saldo-icon">
-                                <i class="fas fa-clock"></i>
+                                <i class="fas fa-calendar-alt"></i>
                             </div>
                         </div>
                     </div>
@@ -73,41 +73,219 @@
     </div>
 </div>
 
-<!-- Seção Filtrar por período -->
+<!-- Seção Dados Consolidados -->
 <div class="row mb-4">
     <div class="col-12">
         <div class="card border-0 shadow-lg rounded-4">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-chart-line me-2 text-primary"></i>
+                    Dados Consolidados
+                </h5>
+            </div>
             <div class="card-body p-4">
-                <h5 class="fw-bold mb-4">Filtrar por período:</h5>
-                
-                <div class="row align-items-end">
-                    <div class="col-md-4 mb-3">
-                        <label for="dataInicio" class="form-label fw-bold">início:</label>
-                        <div class="input-group">
-                            <input type="date" class="form-control" id="dataInicio">
-                            <span class="input-group-text bg-white border-start-0">
-                                <i class="fas fa-calendar text-muted"></i>
-                            </span>
+                <!-- Projeção por Mês -->
+                @if(isset($saldo['months']) && count($saldo['months']) > 0)
+                    <div>
+                        <h6 class="fw-bold mb-3">Projeção por Mês</h6>
+                        <div class="row">
+                            @foreach($saldo['months'] as $mes)
+                                <div class="col-md-2 mb-2">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <small class="text-muted d-block">{{ date('M/Y', mktime(0, 0, 0, $mes['month'], 1, $mes['year'])) }}</small>
+                                        <strong class="text-primary">R$ {{ number_format($mes['amount'] / 100, 2, ',', '.') }}</strong>
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
-                    
-                    <div class="col-md-4 mb-3">
-                        <label for="dataTermino" class="form-label fw-bold">Término:</label>
-                        <div class="input-group">
-                            <input type="date" class="form-control" id="dataTermino">
-                            <span class="input-group-text bg-white border-start-0">
-                                <i class="fas fa-calendar text-muted"></i>
-                            </span>
-                        </div>
+                @else
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle text-muted fa-2x mb-3"></i>
+                        <p class="text-muted mb-0">Nenhuma projeção mensal disponível.</p>
                     </div>
-                    
-                    <div class="col-md-4 mb-3">
-                        <button class="btn btn-warning text-white w-100" id="btnBuscarExtrato">
-                            <i class="fas fa-search me-2"></i>
-                            Buscar
-                        </button>
-                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção Extrato Detalhado -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg rounded-4">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fas fa-list me-2 text-primary"></i>
+                        Extrato Detalhado
+                        @if(isset($filtros['data_inicio']))
+                            - {{ \Carbon\Carbon::parse($filtros['data_inicio'])->format('d/m/Y') }}
+                        @else
+                            - Hoje
+                        @endif
+                    </h5>
+                    <span class="badge bg-primary">{{ count($extrato['data'] ?? []) }} transações</span>
                 </div>
+            </div>
+            <div class="card-body p-4">
+                <!-- Filtros dentro do extrato -->
+                <div class="mb-4">
+                    <form method="GET" action="{{ route('cobranca.saldoextrato') }}" id="formFiltros">
+                        <div class="row align-items-end">
+                                                    <div class="col-md-2 mb-3">
+                            <label for="gateway_authorization" class="form-label fw-bold">Gateway:</label>
+                            <select class="form-select" name="gateway_authorization" id="gateway_authorization">
+                                <option value="">Todos</option>
+                                <option value="PAYTIME" {{ $filtros['gateway_authorization'] == 'PAYTIME' ? 'selected' : '' }}>PAYTIME</option>
+                                <option value="ZOOP" {{ $filtros['gateway_authorization'] == 'ZOOP' ? 'selected' : '' }}>ZOOP</option>
+                                <option value="PAGSEGURO" {{ $filtros['gateway_authorization'] == 'PAGSEGURO' ? 'selected' : '' }}>PAGSEGURO</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <label for="data_inicio" class="form-label fw-bold">Data:</label>
+                            <select class="form-select" name="data_inicio" id="data_inicio">
+                                <option value="">Hoje</option>
+                                @if(isset($saldo['calendar']))
+                                    @foreach($saldo['calendar'] as $data)
+                                        <option value="{{ $data['date'] }}" 
+                                                {{ $filtros['data_inicio'] == $data['date'] ? 'selected' : '' }}>
+                                            {{ \Carbon\Carbon::parse($data['date'])->format('d/m/Y') }} 
+                                            (R$ {{ number_format($data['amount'] / 100, 2, ',', '.') }})
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="search" class="form-label fw-bold">Buscar:</label>
+                            <input type="text" class="form-control" name="search" id="search" 
+                                   placeholder="Buscar..." value="{{ $filtros['search'] ?? '' }}">
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
+                            <label for="perPage" class="form-label fw-bold">Por página:</label>
+                            <select class="form-select" name="perPage" id="perPage">
+                                <option value="10" {{ $filtros['perPage'] == 10 ? 'selected' : '' }}>10</option>
+                                <option value="20" {{ $filtros['perPage'] == 20 ? 'selected' : '' }}>20</option>
+                                <option value="50" {{ $filtros['perPage'] == 50 ? 'selected' : '' }}>50</option>
+                                <option value="100" {{ $filtros['perPage'] == 100 ? 'selected' : '' }}>100</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <button type="submit" class="btn btn-warning text-white w-100">
+                                <i class="fas fa-search me-2"></i>
+                                Filtrar
+                            </button>
+                        </div>
+                        </div>
+                    </form>
+                </div>
+
+                @if(isset($extrato['data']) && count($extrato['data']) > 0)
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Modalidade</th>
+                                    <th>Bandeira</th>
+                                    <th>Gateway</th>
+                                    <th>Valor Original</th>
+                                    <th>Valor Líquido</th>
+                                    <th>Parcela</th>
+                                    <th>Data Liberação</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($extrato['data'] as $transacao)
+                                    <tr>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ \Carbon\Carbon::parse($transacao['transaction_date'])->format('d/m/Y H:i') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ $transacao['transaction_modality'] }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ $transacao['brand_name'] }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ $transacao['gateway_authorization'] }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>R$ {{ number_format($transacao['transaction_original_amount'] / 100, 2, ',', '.') }}</strong>
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">R$ {{ number_format($transacao['transaction_amount'] / 100, 2, ',', '.') }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning">{{ $transacao['installment'] }}x</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ \Carbon\Carbon::parse($transacao['date'])->format('d/m/Y') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <a href="{{ route('cobranca.transacao.detalhes', $transacao['transaction_id']) }}?from=saldoextrato" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Ver Detalhes
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    @if(isset($extrato['lastPage']) && $extrato['lastPage'] > 1)
+                        <div class="d-flex justify-content-between align-items-center mt-4">
+                            <div class="text-muted">
+                                Mostrando {{ ($extrato['page'] - 1) * $extrato['perPage'] + 1 }} a 
+                                {{ min($extrato['page'] * $extrato['perPage'], $extrato['total']) }} 
+                                de {{ $extrato['total'] }} registros
+                            </div>
+                            <nav aria-label="Paginação">
+                                <ul class="pagination pagination-sm mb-0">
+                                    @if($extrato['page'] > 1)
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $extrato['page'] - 1]) }}">
+                                                <i class="fas fa-chevron-left"></i>
+                                            </a>
+                                        </li>
+                                    @endif
+                                    
+                                    @for($i = max(1, $extrato['page'] - 2); $i <= min($extrato['lastPage'], $extrato['page'] + 2); $i++)
+                                        <li class="page-item {{ $i == $extrato['page'] ? 'active' : '' }}">
+                                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
+                                        </li>
+                                    @endfor
+                                    
+                                    @if($extrato['page'] < $extrato['lastPage'])
+                                        <li class="page-item">
+                                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $extrato['page'] + 1]) }}">
+                                                <i class="fas fa-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    @endif
+                                </ul>
+                            </nav>
+                        </div>
+                    @endif
+                @else
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle text-muted fa-2x mb-3"></i>
+                        <p class="text-muted mb-0">Nenhuma transação encontrada para os filtros aplicados.</p>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
