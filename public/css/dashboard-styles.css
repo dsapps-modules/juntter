@@ -99,6 +99,19 @@
     color: var(--dashboard-text-color);
 }
 
+/* Estilos para elementos de informação */
+.info-card strong,
+.status-card strong,
+.info-item strong {
+    color: var(--dashboard-text-color);
+}
+
+.info-card small,
+.status-card small,
+.info-item small {
+    color: var(--dashboard-text-color);
+}
+
 /* Mobile Menu Toggle */
 .navbar-toggler {
     border: 1px solid rgba(0,0,0,0.2);

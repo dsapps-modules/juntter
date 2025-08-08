@@ -131,7 +131,7 @@
                     <div class="card border-0 shadow-lg rounded-4">
                         <div class="card-header bg-success text-white">
                             <h6 class="mb-0 fw-bold">
-                                <i class="fas fa-users me-2"></i>Estabelecimentos Participantes
+                                <i class="fas fa-users me-2" style="color: #ccc;"></i> <strong style="color: #ccc;">Estabelecimentos Participantes</strong>
                                 <span class="badge bg-light text-dark ms-2">{{ count($regra['establishments']) }}</span>
                             </h6>
                         </div>
@@ -192,8 +192,8 @@
                     <!-- Estabelecimento Principal -->
                     <div class="card border-0 shadow-lg rounded-4 mb-4">
                         <div class="card-header bg-primary text-white">
-                            <h6 class="mb-0 fw-bold">
-                                <i class="fas fa-crown me-2"></i>Estabelecimento Principal
+                            <h6 class="mb-0 fw-bold" style="color: #ccc;">
+                                <i class="fas fa-crown me-2"></i> <strong style="color: #ccc;">Estabelecimento Principal</strong>
                             </h6>
                         </div>
                         <div class="card-body">

@@ -530,8 +530,6 @@
     }
 
     .info-item strong {
-       
-        color: var(--dashboard-text-color);
         font-size: 0.95rem;
     }
 
