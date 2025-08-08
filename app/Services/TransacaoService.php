@@ -15,7 +15,7 @@ class TransacaoService
 
     public function listarTransacoes(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/transactions?" . http_build_query($filtros));
+        return $this->apiClient->get("marketplace/transactions", $filtros);
     }
 
     public function detalhesTransacao(string $codigo)
@@ -45,33 +45,13 @@ class TransacaoService
 
     public function lancamentosFuturos(array $filtros = [])
     {
-        // Separa extra_headers dos filtros normais
-        $extra_headers = $filtros['extra_headers'] ?? [];
-        unset($filtros['extra_headers']);
-        
-        $query_params = http_build_query($filtros);
-        $endpoint = "marketplace/transactions/future_releases";
-        if ($query_params) {
-            $endpoint .= "?" . $query_params;
-        }
-        
-        return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
+        return $this->apiClient->get("marketplace/transactions/future_releases", $filtros);
     }
     public function lancamentosFuturosDiarios(array $filtros = [])
     {
-        // Separa extra_headers dos filtros normais
-        $extra_headers = $filtros['extra_headers'] ?? [];
-        unset($filtros['extra_headers']);
         
-
         
-        $query_params = http_build_query($filtros);
-        $endpoint = "marketplace/transactions/future_releases_daily";
-        if ($query_params) {
-            $endpoint .= "?" . $query_params;
-        }
-        
-        return $this->apiClient->get($endpoint, ['extra_headers' => $extra_headers]);
+        return $this->apiClient->get("marketplace/transactions/future_releases_daily", $filtros);
     }
 
     public function estornarTransacao(string $id)
