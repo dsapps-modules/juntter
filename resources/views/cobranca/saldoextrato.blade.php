@@ -187,8 +187,8 @@
 
                 @if(isset($extrato['data']) && count($extrato['data']) > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
+                        <table id="saldoExtratoTable" class="table table-hover table-striped">
+                            <thead class="table-header-juntter">
                                 <tr>
                                     <th></th>
                                     <th>Data</th>
@@ -246,42 +246,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <!-- Paginação -->
-                    @if(isset($extrato['lastPage']) && $extrato['lastPage'] > 1)
-                        <div class="d-flex justify-content-between align-items-center mt-4">
-                            <div class="text-muted">
-                                Mostrando {{ ($extrato['page'] - 1) * $extrato['perPage'] + 1 }} a 
-                                {{ min($extrato['page'] * $extrato['perPage'], $extrato['total']) }} 
-                                de {{ $extrato['total'] }} registros
-                            </div>
-                            <nav aria-label="Paginação">
-                                <ul class="pagination pagination-sm mb-0">
-                                    @if($extrato['page'] > 1)
-                                        <li class="page-item">
-                                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $extrato['page'] - 1]) }}">
-                                                <i class="fas fa-chevron-left"></i>
-                                            </a>
-                                        </li>
-                                    @endif
-                                    
-                                    @for($i = max(1, $extrato['page'] - 2); $i <= min($extrato['lastPage'], $extrato['page'] + 2); $i++)
-                                        <li class="page-item {{ $i == $extrato['page'] ? 'active' : '' }}">
-                                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $i]) }}">{{ $i }}</a>
-                                        </li>
-                                    @endfor
-                                    
-                                    @if($extrato['page'] < $extrato['lastPage'])
-                                        <li class="page-item">
-                                            <a class="page-link" href="{{ request()->fullUrlWithQuery(['page' => $extrato['page'] + 1]) }}">
-                                                <i class="fas fa-chevron-right"></i>
-                                            </a>
-                                        </li>
-                                    @endif
-                                </ul>
-                            </nav>
-                        </div>
-                    @endif
                 @else
                     <div class="text-center py-4">
                         <i class="fas fa-info-circle text-muted fa-2x mb-3"></i>

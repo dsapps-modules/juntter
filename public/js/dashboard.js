@@ -213,6 +213,17 @@ function initDataTables() {
                 details: { type: 'column', target: 0 }
             }
         });
+        
+        // DataTable para Saldo e Extrato
+        initDataTableSafely('#saldoExtratoTable', [
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
+            },
+            order: [[1, 'desc']] // Ordenar pela coluna 1 (Data) de forma decrescente
+        });
     } else {
         console.error('DataTable AdminLTE não disponível!');
     }
