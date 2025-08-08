@@ -223,6 +223,7 @@
                                  <table id="regrasSplitTable" class="table table-hover table-striped">
                                      <thead>
                                          <tr class="table-header-juntter">
+                                             <th></th>
                                              <th>Título</th>
                                              <th>Modalidade</th>
                                              <th>Canal</th>
@@ -236,6 +237,7 @@
                                           @if(isset($regrasSplit['data']) && count($regrasSplit['data']) > 0)
                                               @foreach($regrasSplit['data'] as $regra)
                                                   <tr>
+                                                      <td></td>
                                                       <td><strong>{{ $regra['title'] }}</strong></td>
                                                       <td>
                                                           <span class="badge bg-info">{{ $regra['modality'] }}</span>
@@ -283,7 +285,7 @@
                                               @endforeach
                                           @else
                                               <tr>
-                                                  <td colspan="7" class="text-center py-4">
+                                                  <td colspan="8" class="text-center py-4">
                                                       <i class="fas fa-info-circle text-muted"></i>
                                                       <p class="text-muted mt-2 mb-0">Nenhuma regra de split encontrada</p>
                                                   </td>

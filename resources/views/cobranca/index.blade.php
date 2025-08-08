@@ -58,6 +58,7 @@
                     <table id="cobrancasTable" class="table table-hover table-striped">
                         <thead>
                             <tr class="table-header-juntter">
+                                <th></th>
                                 <th>ID</th>
                                 <th>Tipo</th>
                                 <th>Valor</th>
@@ -71,6 +72,7 @@
                             @if(isset($transacoes) && isset($transacoes['data']) && count($transacoes['data']) > 0)
                                 @foreach($transacoes['data'] as $transacao)
                                     <tr>
+                                        <td></td>
                                         <td>
                                             <small class="text-muted font-monospace">
                                                 {{ substr($transacao['_id'] ?? 'N/A', 0, 8) }}...

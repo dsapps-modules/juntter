@@ -680,6 +680,9 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 /* DataTables Juntter Style */
 .dataTables_wrapper {
     font-family: 'Source Sans Pro', sans-serif;
+    overflow: visible;
+    max-width: 100%;
+    width: 100%;
 }
 
 
@@ -831,6 +834,131 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
     border-color: var(--primary-color) !important;
 }
 
+/* Paginador responsivo */
+@media (max-width: 768px) {
+    .dataTables_wrapper {
+        overflow: visible;
+        width: 100%;
+    }
+    
+    .table-responsive {
+        overflow: visible;
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate {
+        text-align: center !important;
+        margin-top: 1rem;
+        overflow: visible;
+        white-space: normal;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.25rem 0.5rem !important;
+        margin: 0 0.0625rem !important;
+        font-size: 0.75rem !important;
+        min-width: auto !important;
+        white-space: normal;
+        display: inline-block;
+        word-wrap: break-word;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+    .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+        padding: 0.25rem 0.375rem !important;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        text-align: center !important;
+        margin-bottom: 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+    
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        text-align: center !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .dataTables_wrapper .dataTables_length select {
+        width: auto !important;
+        min-width: 60px !important;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100% !important;
+        max-width: 200px !important;
+    }
+    
+    /* Botões de exportação responsivos */
+    .dataTables_wrapper .dt-buttons {
+        text-align: center !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .dataTables_wrapper .dt-buttons .btn {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.75rem !important;
+        margin: 0.125rem !important;
+    }
+    
+    /* Garantir que nada seja cortado */
+    .dataTables_wrapper,
+    .dataTables_wrapper *,
+    .table-responsive,
+    .table-responsive * {
+        overflow: visible;
+    }
+    
+    /* Forçar responsividade total */
+    .dataTables_wrapper table {
+        width: 100% !important;
+        table-layout: auto !important;
+    }
+    
+    .dataTables_wrapper table th,
+    .dataTables_wrapper table td {
+        word-wrap: break-word;
+        white-space: normal;
+        max-width: none;
+    }
+    
+    /* Tabela totalmente responsiva */
+    .dataTables_wrapper .dataTable {
+        overflow: visible;
+        width: 100%;
+        table-layout: auto;
+    }
+    
+    /* Coluna dedicada para o ícone no mobile */
+    .dataTables_wrapper table th:first-child,
+    .dataTables_wrapper table td:first-child {
+        min-width: 40px;
+        width: 40px;
+        padding: 8px 4px !important;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .dataTables_wrapper .dtr-control {
+        padding-left: 0 !important;
+        text-align: center;
+        min-width: 40px;
+    }
+    
+    .dataTables_wrapper .dtr-control:before {
+        position: static;
+        display: inline-block;
+        transform: none;
+        margin: 0 auto;
+    }
+    
+
+}
+
 /* Tabela Personalizada */
 #cobrancasTable,
 #cobrancasRecorrentesTable,
@@ -838,10 +966,12 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 #planosTable,
 #estabelecimentos-table {
     border-radius: 1rem;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
     margin: 0;
     font-size: 0.875rem;
+    width: 100%;
+    min-width: 100%;
 }
 
 /* Header da tabela personalizado */
@@ -889,6 +1019,10 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
     border-radius: 0.375rem;
 }
 
+
+
+
+
 .badge-success {
     background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
@@ -909,6 +1043,8 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
     border-radius: 1rem;
     margin: 0;
     padding: 0;
+    overflow: visible;
+    max-width: 100%;
 }
 
 /* Tabs do modal melhorados */
@@ -953,10 +1089,12 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 /* Card da tabela com espaçamento */
 .card {
     margin: 1.5rem 0;
+    overflow: visible;
 }
 
 .card-body {
     padding: 2rem !important;
+    overflow: visible;
 }
 
 /* Botão Novo Pagamento Único */

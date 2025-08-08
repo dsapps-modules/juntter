@@ -91,7 +91,9 @@ function getJuntterDataTableConfig(columnDefs = [], options = {}) {
                 "sLast": "Último"
             }
         },
-        responsive: options.responsive !== undefined ? options.responsive : true,
+        responsive: {
+            details: { type: 'column', target: 0 }
+        },
         pageLength: 10,
         lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Todos"]],
         dom: 'Bfrtip',
@@ -150,58 +152,66 @@ function initDataTables() {
     if ($.fn.DataTable) {
         // DataTable para Cobrança Única
         initDataTableSafely('#cobrancasTable', [
-            {
-                targets: -1,
-                orderable: false
-            }
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
         ], {
-            order: [[4, 'desc']] // Ordenar pela coluna 4 (Data) de forma decrescente
+            responsive: {
+                details: { type: 'column', target: 0 }
+            },
+            order: [[5, 'desc']], // Ordenar pela coluna 5 (Data) de forma decrescente
+            columnDefs: [
+                { className: 'dtr-control', orderable: false, targets: 0 }
+            ]
         });
         
         // DataTable para Cobrança Recorrente
         initDataTableSafely('#cobrancasRecorrentesTable', [
-            {
-                targets: -1,
-                orderable: false
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
             }
-        ]);
+        });
         
         // DataTable para Regras de Split Pré
         initDataTableSafely('#regrasSplitTable', [
-            {
-                targets: -1,
-                orderable: false,
-                responsivePriority: 1,
-                className: 'text-center'
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
             }
-        ]);
+        });
         
         // DataTable para Planos de Cobrança
         initDataTableSafely('#planosTable', [
-            {
-                targets: -1,
-                orderable: false
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
             }
-        ]);
+        });
         
         // DataTable para Enviar Pix
         initDataTableSafely('#pixTable', [
-            {
-                targets: -1,
-                orderable: false
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
             }
-        ]);
+        });
         
         // DataTable para Estabelecimentos
         initDataTableSafely('#estabelecimentos-table', [
-            {
-                targets: -1,
-                orderable: false,
-                responsivePriority: 1,
-                className: 'text-center'
-            }
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
         ], {
-            responsive: false
+            responsive: {
+                details: { type: 'column', target: 0 }
+            }
         });
     } else {
         console.error('DataTable AdminLTE não disponível!');

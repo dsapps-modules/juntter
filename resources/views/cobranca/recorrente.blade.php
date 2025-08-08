@@ -45,6 +45,7 @@
                     <table id="cobrancasRecorrentesTable" class="table table-hover table-striped">
                         <thead>
                             <tr class="table-header-juntter">
+                                <th></th>
                                 <th>Cliente</th>
                                 <th>Valor</th>
                                 <th>Periodicidade</th>
@@ -56,6 +57,7 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td></td>
                                 <td><strong>João Silva</strong></td>
                                 <td><strong class="text-success">R$ 150,00</strong></td>
                                 <td><span class="badge badge-info">Mensal</span></td>
@@ -74,6 +76,7 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td></td>
                                 <td><strong>Maria Santos</strong></td>
                                 <td><strong class="text-warning">R$ 200,00</strong></td>
                                 <td><span class="badge badge-info">Mensal</span></td>
@@ -92,6 +95,7 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td></td>
                                 <td><strong>Pedro Oliveira</strong></td>
                                 <td><strong class="text-danger">R$ 300,00</strong></td>
                                 <td><span class="badge badge-info">Trimestral</span></td>

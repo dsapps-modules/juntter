@@ -45,6 +45,7 @@
                     <table id="planosTable" class="table table-hover table-striped">
                         <thead>
                             <tr class="table-header-juntter">
+                                <th></th>
                                 <th>Nome do Plano</th>
                                 <th>Valor</th>
                                 <th>Periodicidade</th>
@@ -56,6 +57,7 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td></td>
                                 <td><strong>Plano Básico</strong></td>
                                 <td><strong class="text-success">R$ 99,00</strong></td>
                                 <td><span class="badge badge-info">Mensal</span></td>
@@ -77,6 +79,7 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td></td>
                                 <td><strong>Plano Premium</strong></td>
                                 <td><strong class="text-warning">R$ 199,00</strong></td>
                                 <td><span class="badge badge-info">Mensal</span></td>
@@ -98,6 +101,7 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td></td>
                                 <td><strong>Plano Trimestral</strong></td>
                                 <td><strong class="text-danger">R$ 250,00</strong></td>
                                 <td><span class="badge badge-info">Trimestral</span></td>

@@ -190,6 +190,7 @@
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
+                                    <th></th>
                                     <th>Data</th>
                                     <th>Modalidade</th>
                                     <th>Bandeira</th>
@@ -204,6 +205,7 @@
                             <tbody>
                                 @foreach($extrato['data'] as $transacao)
                                     <tr>
+                                        <td></td>
                                         <td>
                                             <small class="text-muted">
                                                 {{ \Carbon\Carbon::parse($transacao['transaction_date'])->format('d/m/Y H:i') }}

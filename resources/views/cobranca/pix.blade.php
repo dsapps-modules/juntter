@@ -45,6 +45,7 @@
                     <table id="pixTable" class="table table-hover table-striped">
                         <thead>
                             <tr class="table-header-juntter">
+                                <th></th>
                                 <th>Beneficiário</th>
                                 <th>Valor</th>
                                 <th>Data</th>
@@ -54,6 +55,7 @@
                         </thead>
                         <tbody>
                             <tr>
+                                <td></td>
                                 <td><strong>João Silva</strong></td>
                                 <td><strong class="text-success">R$ 150,00</strong></td>
                                 <td><span class="text-muted">15/12/2024</span></td>
@@ -70,6 +72,7 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td></td>
                                 <td><strong>Maria Santos</strong></td>
                                 <td><strong class="text-warning">R$ 300,00</strong></td>
                                 <td><span class="text-muted">12/12/2024</span></td>
@@ -86,6 +89,7 @@
                                 </td>
                             </tr>
                             <tr>
+                                <td></td>
                                 <td><strong>Pedro Oliveira</strong></td>
                                 <td><strong class="text-danger">R$ 220,00</strong></td>
                                 <td><span class="text-muted">10/12/2024</span></td>

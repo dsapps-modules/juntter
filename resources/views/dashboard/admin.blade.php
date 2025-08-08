@@ -34,6 +34,7 @@
                            <table id="estabelecimentos-table" class="table table-hover table-striped">
                                <thead>
                                    <tr class="table-header-juntter">
+                                       <th></th>
                                        <th>ID</th>
                                        <th>Nome</th>
                                        <th>Documento</th>
@@ -48,6 +49,7 @@
                                <tbody>
                                    @foreach($estabelecimentos['data'] ?? [] as $estabelecimento)
                                        <tr>
+                                           <td></td>
                                            <td><strong>{{ $estabelecimento['id'] ?? 'N/A' }}</strong></td>
                                            <td>
                                                <strong>{{ $estabelecimento['first_name'] ?? $estabelecimento['name1'] ?? 'N/A' }}</strong>
