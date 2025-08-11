@@ -75,7 +75,7 @@
                                 </div>
                                 <div class="user-details">
                                     <span class="user-name">{{ Auth::user()->name }}</span>
-                                    <span class="user-role">{{ ucfirst(Auth::user()->nivel_acesso) }}</span>
+                                   
                                 </div>
                             </div>
                         </button>
