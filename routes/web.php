@@ -45,9 +45,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('nivel.acesso:vendedor')->group(function () {
     Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
     
-    Route::get('/cobranca/recorrente', function () {
-        return view('cobranca.recorrente');
-    })->name('cobranca.recorrente');
+    // Route::get('/cobranca/recorrente', function () {
+//     return view('cobranca.recorrente');
+// })->name('cobranca.recorrente');
     
     Route::get('/cobranca/planos', function () {
         return view('cobranca.planos');
