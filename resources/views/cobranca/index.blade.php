@@ -759,24 +759,33 @@
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label fw-bold">
-                                                    Multa por atraso (%) <span class="text-danger">*</span>
+                                                    Multa por atraso <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" name="instruction[late_fee][amount]" class="form-control" placeholder="0,00" step="0.01" required>
-                                                <input type="hidden" name="instruction[late_fee][mode]" value="PERCENTAGE">
+                                                <div class="input-group">
+                                                    <input type="text" name="instruction[late_fee][amount]" class="form-control" placeholder="2,00" required style="width: 80%;">
+                                                    <span class="input-group-text"><i class="fas fa-percentage"></i></span>
+                                                </div>
+                                                <small class="text-muted">Ex: 2,00 para 2%</small>
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label fw-bold">
-                                                    Juros ao mês (%) <span class="text-danger">*</span>
+                                                    Juros ao mês <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" name="instruction[interest][amount]" class="form-control" placeholder="0,00" step="0.01" required>
-                                                <input type="hidden" name="instruction[interest][mode]" value="MONTHLY_PERCENTAGE">
+                                                <div class="input-group">
+                                                    <input type="text" name="instruction[interest][amount]" class="form-control" placeholder="1,00" required style="width: 80%;">
+                                                    <span class="input-group-text"><i class="fas fa-percentage"></i></span>
+                                                </div>
+                                                <small class="text-muted">Ex: 1,00 para 1%</small>
                                             </div>
                                             <div class="col-md-4 mb-3">
                                                 <label class="form-label fw-bold">
-                                                    Desconto (%) <span class="text-danger">*</span>
+                                                    Desconto <span class="text-danger">*</span>
                                                 </label>
-                                                <input type="text" name="instruction[discount][amount]" class="form-control" placeholder="0,00" step="0.01" required>
-                                                <input type="hidden" name="instruction[discount][mode]" value="PERCENTAGE">
+                                                <div class="input-group">
+                                                    <input type="text" name="instruction[discount][amount]" class="form-control" placeholder="5,00" required style="width: 80%;">
+                                                    <span class="input-group-text"><i class="fas fa-percentage"></i></span>
+                                                </div>
+                                                <small class="text-muted">Ex: 5,00 para 5%</small>
                                             </div>
                                         </div>
                                         <div class="mb-3">

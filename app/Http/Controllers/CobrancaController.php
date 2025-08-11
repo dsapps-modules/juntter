@@ -231,17 +231,19 @@ class CobrancaController extends Controller
                 'client.address.zip_code' => 'required|string|size:8',
                 'instruction.booklet' => 'required|boolean',
                 'instruction.description' => 'nullable|string|max:255',
-                'instruction.late_fee.mode' => 'required|string|in:PERCENTAGE',
                 'instruction.late_fee.amount' => 'required|string',
-                'instruction.interest.mode' => 'required|string|in:MONTHLY_PERCENTAGE',
                 'instruction.interest.amount' => 'required|string',
-                'instruction.discount.mode' => 'required|string|in:PERCENTAGE',
                 'instruction.discount.amount' => 'required|string',
                 'instruction.discount.limit_date' => 'required|date_format:Y-m-d|before:expiration',
             ]);
 
             // Converter valores para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
+            
+            // Adicionar os campos mode automaticamente (são sempre os mesmos para boleto)
+            $dados['instruction']['late_fee']['mode'] = 'PERCENTAGE';
+            $dados['instruction']['interest']['mode'] = 'MONTHLY_PERCENTAGE';
+            $dados['instruction']['discount']['mode'] = 'PERCENTAGE';
             
             // Converter outros valores numéricos usando função helper
             $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavos($dados['instruction']['late_fee']['amount']) / 100.0;
