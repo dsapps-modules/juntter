@@ -53,13 +53,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('cobranca.planos');
     })->name('cobranca.planos');
     
-    Route::get('/cobranca/pix', function () {
-        return view('cobranca.pix');
-    })->name('cobranca.pix');
+    // Route::get('/cobranca/pix', function () {
+    //     return view('cobranca.pix');
+    // })->name('cobranca.pix');
 
-    Route::get('/cobranca/pagarcontas', function () {
-        return view('cobranca.pagarcontas');
-    })->name('cobranca.pagarcontas');
+    // Route::get('/cobranca/pagarcontas', function () {
+    //     return view('cobranca.pagarcontas');
+    // })->name('cobranca.pagarcontas');
 
     Route::get('/cobranca/saldoextrato', [CobrancaController::class, 'saldoExtrato'])->name('cobranca.saldoextrato');
     
