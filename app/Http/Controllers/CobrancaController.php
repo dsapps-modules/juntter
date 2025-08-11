@@ -471,4 +471,41 @@ class CobrancaController extends Controller
             return view('cobranca.saldoextrato')->with('error', 'Erro ao carregar saldo e extrato: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Listar planos comerciais disponíveis
+     */
+    public function listarPlanos(Request $request)
+    {
+        try {
+            // Buscar todos os planos - DataTable faz a filtragem
+            $planos = $this->transacaoService->listarPlanosComerciais();
+
+            return view('cobranca.planos', compact('planos'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao listar planos: ' . $e->getMessage());
+            return view('cobranca.planos')->with('error', 'Erro ao carregar planos: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Exibir detalhes de um plano comercial
+     */
+    public function detalhesPlano($id)
+    {
+        try {
+            $plano = $this->transacaoService->detalhesPlanoComercial($id);
+            
+            if (!$plano) {
+                return redirect()->route('cobranca.planos')
+                    ->with('error', 'Plano não encontrado.');
+            }
+
+            return view('cobranca.plano-detalhes', compact('plano'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar detalhes do plano: ' . $e->getMessage());
+            return redirect()->route('cobranca.planos')
+                ->with('error', 'Erro ao carregar detalhes do plano: ' . $e->getMessage());
+        }
+    }
 }
