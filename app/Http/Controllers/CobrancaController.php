@@ -29,11 +29,38 @@ class CobrancaController extends Controller
     }
 
     /**
+     * Converte valor brasileiro para centavos
+     * Aceita formatos: 1.100,00, 1100,00, 1100.00, 1100
+     */
+    private function converterValorParaCentavos($valor)
+    {
+        // Remover símbolos de moeda e espaços
+        $valor = preg_replace('/[R$\s]/', '', $valor);
+        
+        // Se tem vírgula, é formato brasileiro (1.100,00)
+        if (strpos($valor, ',') !== false) {
+            // Remover pontos (separadores de milhares) e trocar vírgula por ponto
+            $valor = str_replace('.', '', $valor);
+            $valor = str_replace(',', '.', $valor);
+        }
+        
+        $valorFloat = (float)$valor;
+        
+        // Validar valor mínimo (1 centavo = R$ 0,01)
+        if ($valorFloat < 0.01) {
+            throw new \Exception('O valor deve ser pelo menos R$ 0,01');
+        }
+        
+        return (int)($valorFloat * 100);
+    }
+
+    /**
      * Página principal de cobrança única
      */
     public function index(Request $request)
     {
         try {
+       
             // Buscar todas as transações do estabelecimento atual
             $filtros = [
                 'perPage' => 1000, // Buscar o máximo possível
@@ -43,9 +70,7 @@ class CobrancaController extends Controller
 
             $transacoes = $this->transacaoService->listarTransacoes($filtros);
 
-          
-
-          
+         
 
             return view('cobranca.index', compact('transacoes'));
         } catch (\Exception $e) {
@@ -85,21 +110,8 @@ class CobrancaController extends Controller
                 'card.security_code' => 'required|string|min:3|max:4',
             ]);
 
-            // Converter valor para centavos (aceita vírgula ou ponto)
-            $valor = $dados['amount'];
-            
-            // Remover símbolos de moeda e espaços
-            $valor = preg_replace('/[R$\s]/', '', $valor);
-            $valor = str_replace(',', '.', $valor);
-            $valorFloat = (float)$valor;
-            
-            // Validar valor mínimo (1 centavo = R$ 0,01)
-            if ($valorFloat < 0.01) {
-                throw new \Exception('O valor deve ser pelo menos R$ 0,01');
-            }
-            
-            // Converter para centavos
-            $dados['amount'] = (int)($valorFloat * 100);
+            // Converter valor para centavos usando função helper
+            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
             
             // Converter campos para números inteiros
             $dados['installments'] = (int)$dados['installments'];
@@ -111,7 +123,6 @@ class CobrancaController extends Controller
                 'establishment_id' => '155102'
             ];
             
-           
             $sessionId = $request->input('session_id', 'session_' . uniqid());
             $dados['session_id'] = $sessionId;
 
@@ -146,20 +157,8 @@ class CobrancaController extends Controller
                 'info_additional.*.value' => 'nullable|string',
             ]);
 
-            // Converter valor para centavos (aceita vírgula ou ponto)
-            $valor = $dados['amount'];
-            
-            // Remover símbolos de moeda e espaços
-            $valor = preg_replace('/[R$\s]/', '', $valor);
-            $valor = str_replace(',', '.', $valor);
-            $valorFloat = (float)$valor;
-            
-            // Validar valor mínimo (1 centavo = R$ 0,01)
-            if ($valorFloat < 0.01) {
-                throw new \Exception('O valor deve ser pelo menos R$ 0,01');
-            }
-            
-            $dados['amount'] = (int)($valorFloat * 100);
+            // Converter valor para centavos usando função helper
+            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
 
             // Filtrar info_additional vazios
             if (isset($dados['info_additional'])) {
@@ -242,21 +241,13 @@ class CobrancaController extends Controller
                 'instruction.discount.limit_date' => 'required|date_format:Y-m-d|before:expiration',
             ]);
 
-            // Converter valores para centavos (aceita vírgula ou ponto)
-            $valor = str_replace(',', '.', $dados['amount']);
-            $valorFloat = (float)$valor;
+            // Converter valores para centavos usando função helper
+            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
             
-            // Validar valor mínimo (1 centavo = R$ 0,01)
-            if ($valorFloat < 0.01) {
-                throw new \Exception('O valor deve ser pelo menos R$ 0,01');
-            }
-            
-            $dados['amount'] = (int)($valorFloat * 100);
-            
-            // Converter outros valores numéricos
-            $dados['instruction']['late_fee']['amount'] = (float)str_replace(',', '.', $dados['instruction']['late_fee']['amount']);
-            $dados['instruction']['interest']['amount'] = (float)str_replace(',', '.', $dados['instruction']['interest']['amount']);
-            $dados['instruction']['discount']['amount'] = (float)str_replace(',', '.', $dados['instruction']['discount']['amount']);
+            // Converter outros valores numéricos usando função helper
+            $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavos($dados['instruction']['late_fee']['amount']) / 100.0;
+            $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavos($dados['instruction']['interest']['amount']) / 100.0;
+            $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavos($dados['instruction']['discount']['amount']) / 100.0;
 
             // Adicionar establishment_id
             $dados['extra_headers'] = [
@@ -288,8 +279,8 @@ class CobrancaController extends Controller
                 'interest' => 'required|in:CLIENT,ESTABLISHMENT'
             ]);
 
-            // Converter valor para centavos
-            $dados['amount'] = (int)($dados['amount'] * 100);
+            // Converter valor para centavos usando função helper
+            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
 
             $dados['extra_headers'] = [
                 'establishment_id' => '155102'
