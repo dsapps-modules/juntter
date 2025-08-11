@@ -501,11 +501,78 @@ class CobrancaController extends Controller
                     ->with('error', 'Plano não encontrado.');
             }
 
+            // Compactar parcelas de crédito para cada bandeira
+            if (isset($plano['flags'])) {
+                foreach ($plano['flags'] as &$flag) {
+                    if (isset($flag['fees']['credit'])) {
+                        $flag['parcelas_compactadas'] = $this->compactarParcelasCredito($flag['fees']['credit']);
+                    }
+                }
+            }
+
             return view('cobranca.plano-detalhes', compact('plano'));
         } catch (\Exception $e) {
             Log::error('Erro ao buscar detalhes do plano: ' . $e->getMessage());
             return redirect()->route('cobranca.planos')
                 ->with('error', 'Erro ao carregar detalhes do plano: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Compacta parcelas de crédito agrupando aquelas com taxas iguais
+     */
+    private function compactarParcelasCredito($parcelas)
+    {
+        $resultado = [];
+        $taxaAnterior = null;
+        $inicioRange = null;
+        
+        // Agrupar parcelas com taxas iguais
+        for ($i = 1; $i <= 18; $i++) {
+            if (isset($parcelas[$i.'x'])) {
+                $taxaAtual = $parcelas[$i.'x'];
+                
+                if ($taxaAtual === $taxaAnterior) {
+                    // Continua o range
+                    $inicioRange = $inicioRange ?? $i;
+                } else {
+                    // Finaliza o range anterior
+                    if ($inicioRange !== null) {
+                        if ($inicioRange === $i - 1) {
+                            $resultado[] = [
+                                'parcela' => $inicioRange.'x',
+                                'taxa' => $taxaAnterior
+                            ];
+                        } else {
+                            $resultado[] = [
+                                'parcela' => $inicioRange.'x-'.($i-1).'x',
+                                'taxa' => $taxaAnterior
+                            ];
+                        }
+                    }
+                    
+                    // Inicia novo range
+                    $inicioRange = $i;
+                    $taxaAnterior = $taxaAtual;
+                }
+            }
+        }
+        
+        // Finaliza o último range
+        if ($inicioRange !== null) {
+            if ($inicioRange === 18) {
+                $resultado[] = [
+                    'parcela' => $inicioRange.'x',
+                    'taxa' => $taxaAnterior
+                ];
+            } else {
+                $resultado[] = [
+                    'parcela' => $inicioRange.'x-18x',
+                    'taxa' => $taxaAnterior
+                ];
+            }
+        }
+        
+        return $resultado;
     }
 }

@@ -465,6 +465,16 @@ function initModals() {
             alert('Extrato filtrado com sucesso!');
         }, 1500);
     });
+    
+    // Select de bandeiras para planos comerciais
+    $('#bandeiraSelect').on('change', function() {
+        // Esconder todas as bandeiras
+        $('.bandeira-detalhes').addClass('d-none');
+        
+        // Mostrar a bandeira selecionada
+        var selectedIndex = $(this).val();
+        $('#bandeira-' + selectedIndex).removeClass('d-none');
+    });
 }
 
 // Expor função globalmente para uso inline
