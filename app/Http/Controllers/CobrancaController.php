@@ -152,24 +152,23 @@ class CobrancaController extends Controller
                 'client.document' => 'nullable|string|max:18',
                 'client.phone' => 'nullable|string|max:20',
                 'client.email' => 'nullable|email',
-                'info_additional' => 'nullable|array',
-                'info_additional.*.key' => 'nullable|string',
-                'info_additional.*.value' => 'nullable|string',
+                'info_additional' => 'nullable|string|max:500',
             ]);
 
             // Converter valor para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
 
-            // Filtrar info_additional vazios
-            if (isset($dados['info_additional'])) {
-                $dados['info_additional'] = array_filter($dados['info_additional'], function($item) {
-                    return !empty($item['key']) && !empty($item['value']);
-                });
-                
-                // Se não há info_additional válidos, remover o campo
-                if (empty($dados['info_additional'])) {
-                    unset($dados['info_additional']);
-                }
+            // Processar info_additional como string simples
+            if (isset($dados['info_additional']) && !empty($dados['info_additional'])) {
+                // Converter para o formato esperado pela API com chave padrão
+                $dados['info_additional'] = [
+                    [
+                        'key' => 'info_adicional',
+                        'value' => $dados['info_additional']
+                    ]
+                ];
+            } else {
+                unset($dados['info_additional']);
             }
 
             // Adicionar establishment_id

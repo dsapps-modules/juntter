@@ -307,13 +307,10 @@
                                             INFORMAÇÕES ADICIONAIS <span class="text-muted">(OPCIONAL)</span>
                                         </h6>
                                         <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label fw-bold">Chave da informação</label>
-                                                <input type="text" name="info_additional[0][key]" class="form-control" placeholder="Ex: origin_system">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label fw-bold">Valor da informação</label>
-                                                <input type="text" name="info_additional[0][value]" class="form-control" placeholder="Ex: ERP12345">
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label fw-bold">Informações Adicionais</label>
+                                                <input type="text" name="info_additional" class="form-control" placeholder="Ex: ERP12345, Sistema de origem, etc.">
+                                                <small class="text-muted">Informações extras sobre a transação</small>
                                             </div>
                                         </div>
                                     </div>
