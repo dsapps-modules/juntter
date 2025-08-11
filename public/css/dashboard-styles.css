@@ -353,6 +353,11 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
     color: white;
 }
 
+.saldo-processamento .saldo-icon {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
 /* Analytics Card */
 .analytics-card {
     background: white;

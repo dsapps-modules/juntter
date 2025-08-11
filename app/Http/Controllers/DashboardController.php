@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Services\EstabelecimentoService;
+use App\Services\TransacaoService;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     protected $estabelecimentoService;
+    protected $transacaoService;
 
-    public function __construct(EstabelecimentoService $estabelecimentoService)
+    public function __construct(EstabelecimentoService $estabelecimentoService, TransacaoService $transacaoService)
     {
         $this->estabelecimentoService = $estabelecimentoService;
+        $this->transacaoService = $transacaoService;
     }
 
     /**
@@ -69,55 +73,53 @@ class DashboardController extends Controller
     }
 
     /**
-     * Dashboard do Administrador
+     * Dashboard do Administrador - Consolidação Geral da Juntter
      */
     public function adminDashboard(Request $request)
     {
-        $saldos = [
-            'disponivel' => 'R$ 123.456,78',
-            'transito' => 'R$ 1.200,00',
-            'bloqueado_cartao' => 'R$ 450,00',
-            'bloqueado_boleto' => 'R$ 800,00'
-        ];
+        try {
+            // Buscar dados consolidados de todos os estabelecimentos
+            $dadosConsolidados = $this->buscarDadosConsolidados();
 
-        $metricas = [
-            [
-                'valor' => '5',
-                'label' => 'Clientes Inadimplentes',
-                'icone' => 'fas fa-user-times',
-                'cor' => 'metric-icon-red'
-            ],
-            [
-                'valor' => '89',
-                'label' => 'Transações Pagas',
-                'icone' => 'fas fa-dollar-sign',
-                'cor' => 'metric-icon-blue'
-            ],
-            [
-                'valor' => '12',
-                'label' => 'Contratos Ativos',
-                'icone' => 'fas fa-file-contract',
-                'cor' => 'metric-icon-teal'
-            ],
-            [
-                'valor' => 'R$ 3.200,00',
-                'label' => 'A vencer nos próximos dias',
-                'icone' => 'fas fa-calendar-check',
-                'cor' => 'metric-icon-cyan'
-            ],
-            [
-                'valor' => 'R$ 850,00',
-                'label' => 'Ticket médio: contratos',
-                'icone' => 'fas fa-chart-line',
-                'cor' => 'metric-icon-teal'
-            ],
-            [
-                'valor' => 'R$ 420,00',
-                'label' => 'Ticket médio: vendas',
-                'icone' => 'fas fa-shopping-cart',
-                'cor' => 'metric-icon-green'
-            ]
-        ];
+            $saldos = $dadosConsolidados['saldos'];
+            $metricas = $dadosConsolidados['metricas'];
+            $detalhes = $dadosConsolidados['detalhes'] ?? [];
+        } catch (\Exception $e) {
+            // Em caso de erro, usar dados padrão
+            $saldos = [
+                'disponivel' => 'R$ 0,00',
+                'transito' => 'R$ 0,00',
+                'bloqueado_cartao' => 'R$ 0,00',
+                'bloqueado_boleto' => 'R$ 0,00'
+            ];
+
+            $metricas = [
+                [
+                    'valor' => '0',
+                    'label' => 'Total de Estabelecimentos',
+                    'icone' => 'fas fa-building',
+                    'cor' => 'metric-icon-blue'
+                ],
+                [
+                    'valor' => '0',
+                    'label' => 'Transações Hoje',
+                    'icone' => 'fas fa-exchange-alt',
+                    'cor' => 'metric-icon-green'
+                ],
+                [
+                    'valor' => 'R$ 0,00',
+                    'label' => 'Volume Total',
+                    'icone' => 'fas fa-chart-line',
+                    'cor' => 'metric-icon-teal'
+                ],
+                [
+                    'valor' => '0%',
+                    'label' => 'Taxa de Sucesso',
+                    'icone' => 'fas fa-check-circle',
+                    'cor' => 'metric-icon-cyan'
+                ]
+            ];
+        }
 
         // Buscar estabelecimentos (sem filtros - DataTables fará o filtro)
         try {
@@ -126,7 +128,274 @@ class DashboardController extends Controller
             $estabelecimentos = [];
         }
 
-        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos'));
+        return view('dashboard.admin', compact('saldos', 'metricas', 'detalhes', 'estabelecimentos'));
+    }
+
+
+
+    /**
+     * Buscar dados consolidados de todos os estabelecimentos
+     */
+    private function buscarDadosConsolidados()
+    {
+        try {
+            // Buscar todos os estabelecimentos primeiro
+            $estabelecimentos = $this->estabelecimentoService->listarEstabelecimentos();
+            $estabelecimentosIds = [];
+
+            if (isset($estabelecimentos['data']) && is_array($estabelecimentos['data'])) {
+                foreach ($estabelecimentos['data'] as $estabelecimento) {
+                    if (isset($estabelecimento['id'])) {
+                        $estabelecimentosIds[] = $estabelecimento['id'];
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning("Erro ao buscar estabelecimentos: " . $e->getMessage());
+            $estabelecimentosIds = [];
+        }
+
+        // Inicializar variáveis de consolidação
+        $saldosConsolidados = [
+            'disponivel' => 0,
+            'transito' => 0,
+            'processamento' => 0,
+            'bloqueado_cartao' => 0,
+            'bloqueado_boleto' => 0
+        ];
+
+        $totalTransacoes = 0;
+        $volumeBruto = 0;
+        $volumeLiquido = 0;
+        $totalTaxas = 0;
+        $transacoesHoje = 0;
+        $transacoesPagas = 0;
+        $transacoesFalhadas = 0;
+        $transacoesProcessadasIds = []; // Para evitar duplicatas
+        $transacoesPorTipo = [
+            'CREDIT' => 0,
+            'DEBIT' => 0,
+            'PIX' => 0
+        ];
+        $transacoesPorStatus = [
+            'PAID' => 0,
+            'PENDING' => 0,
+            'APPROVED' => 0,
+            'FAILED' => 0,
+            'CANCELED' => 0,
+            'REFUNDED' => 0,
+            'DISPUTED' => 0,
+            'CHARGEBACK' => 0
+        ];
+
+        // Para cada estabelecimento, buscar dados e consolidar
+        foreach ($estabelecimentosIds as $estabelecimentoId) {
+            try {
+                // 1. Buscar lançamentos futuros (saldo disponível)
+                $filtrosSaldo = [
+                    'extra_headers' => [
+                        'establishment_id' => $estabelecimentoId
+                    ]
+                ];
+
+                $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
+
+                if ($saldo && isset($saldo['total']['amount'])) {
+                    // Saldo total consolidado da API
+                    $saldosConsolidados['disponivel'] += $saldo['total']['amount'];
+                }
+
+                // 2. Buscar lançamentos futuros diários para valores em trânsito
+                $lancamentosDiarios = $this->transacaoService->lancamentosFuturosDiarios($filtrosSaldo);
+
+                if ($lancamentosDiarios && isset($lancamentosDiarios['data'])) {
+                    foreach ($lancamentosDiarios['data'] as $item) {
+                        $valor = $item['amount'] ?? 0;
+                        $data = $item['date'] ?? '';
+
+                        // Valores para os próximos 7 dias são considerados "em trânsito"
+                        if ($data && strtotime($data) <= strtotime('+7 days')) {
+                            $saldosConsolidados['transito'] += $valor;
+                        }
+                    }
+                }
+
+                // 3. Buscar transações dos últimos 30 dias
+                $filtrosTransacoes = [
+                    'extra_headers' => [
+                        'establishment_id' => $estabelecimentoId
+                    ],
+                    'perPage' => 1000,
+                    'filters' => json_encode([
+                        'created_at' => [
+                            'min' => date('Y-m-d', strtotime('-30 days')),
+                            'max' => date('Y-m-d')
+                        ]
+                    ])
+                ];
+
+                $transacoes = $this->transacaoService->listarTransacoes($filtrosTransacoes);
+
+                if ($transacoes && isset($transacoes['data'])) {
+                    $totalTransacoes += count($transacoes['data']);
+
+                    foreach ($transacoes['data'] as $transacao) {
+                        // Valores da transação
+                        $valorLiquido = $transacao['amount'] ?? 0;
+                        $valorOriginal = $transacao['original_amount'] ?? $valorLiquido;
+                        $taxas = $transacao['fees'] ?? 0;
+                        $status = $transacao['status'] ?? '';
+                        $tipo = $transacao['type'] ?? '';
+                        $dataTransacao = $transacao['created_at'] ?? '';
+
+                        // Verificar se transação já foi processada
+                        $transacaoId = $transacao['_id'] ?? '';
+                        if (in_array($transacaoId, $transacoesProcessadasIds)) {
+                            continue; // Pula transação duplicada
+                        }
+
+                        // Acumular volumes
+                        $volumeBruto += $valorOriginal;
+                        $volumeLiquido += $valorLiquido;
+                        $totalTaxas += $taxas;
+
+
+
+                        // Contar transações de hoje
+                        if (date('Y-m-d', strtotime($dataTransacao)) === date('Y-m-d')) {
+                            $transacoesHoje++;
+                        }
+
+                        // Contar por status
+                        if (isset($transacoesPorStatus[$status])) {
+                            $transacoesPorStatus[$status]++;
+                        }
+
+
+
+                        // Contar por tipo
+                        if (isset($transacoesPorTipo[$tipo])) {
+                            $transacoesPorTipo[$tipo]++;
+                        }
+
+                        // Categorizar por status para saldos
+                        switch ($status) {
+                            case 'PAID':
+                                $transacoesPagas++;
+                                break;
+                            case 'PENDING':
+                            case 'APPROVED':
+                                // Transações em processamento
+                                $saldosConsolidados['processamento'] += $valorLiquido;
+                                break;
+                            case 'FAILED':
+                            case 'CANCELED':
+                            case 'REFUNDED':
+                                $transacoesFalhadas++;
+                                break;
+                        }
+
+                        // Adicionar ID ao array DEPOIS de processar tudo
+                        $transacoesProcessadasIds[] = $transacaoId;
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning("Erro ao buscar dados do estabelecimento {$estabelecimentoId}: " . $e->getMessage());
+                continue;
+            }
+        }
+
+
+
+
+
+        // Formatar saldos para exibição (valores em centavos)
+        $saldos = [
+            'disponivel' => 'R$ ' . number_format($saldosConsolidados['disponivel'] / 100, 2, ',', '.'),
+            'transito' => 'R$ ' . number_format($saldosConsolidados['transito'] / 100, 2, ',', '.'),
+            'processamento' => 'R$ ' . number_format($saldosConsolidados['processamento'] / 100, 2, ',', '.'),
+            'bloqueado_cartao' => 'R$ ' . number_format($saldosConsolidados['bloqueado_cartao'] / 100, 2, ',', '.'),
+            'bloqueado_boleto' => 'R$ ' . number_format($saldosConsolidados['bloqueado_boleto'] / 100, 2, ',', '.')
+        ];
+
+        // Calcular taxa de sucesso
+        $totalTransacoesProcessadas = $transacoesPagas + $transacoesFalhadas;
+        $taxaSucesso = $totalTransacoesProcessadas > 0 ? round(($transacoesPagas / $totalTransacoesProcessadas) * 100, 1) : 0;
+
+        // Métricas do dashboard
+        $metricas = [
+            [
+                'valor' => count($estabelecimentosIds),
+                'label' => 'Total de Estabelecimentos',
+                'icone' => 'fas fa-building',
+                'cor' => 'metric-icon-blue'
+            ],
+            [
+                'valor' => $transacoesHoje,
+                'label' => 'Transações Hoje',
+                'icone' => 'fas fa-exchange-alt',
+                'cor' => 'metric-icon-green'
+            ],
+            [
+                'valor' => 'R$ ' . number_format($volumeBruto / 100, 2, ',', '.'),
+                'label' => 'Volume Bruto (30 dias)',
+                'icone' => 'fas fa-chart-line',
+                'cor' => 'metric-icon-teal'
+            ],
+            [
+                'valor' => 'R$ ' . number_format($volumeLiquido / 100, 2, ',', '.'),
+                'label' => 'Volume Líquido (30 dias)',
+                'icone' => 'fas fa-chart-bar',
+                'cor' => 'metric-icon-blue'
+            ],
+            [
+                'valor' => 'R$ ' . number_format($totalTaxas / 100, 2, ',', '.'),
+                'label' => 'Total de Taxas (30 dias)',
+                'icone' => 'fas fa-percentage',
+                'cor' => 'metric-icon-red'
+            ],
+            [
+                'valor' => 'R$ ' . number_format(($volumeLiquido - $saldosConsolidados['disponivel'] - $saldosConsolidados['processamento']) / 100, 2, ',', '.'),
+                'label' => 'Diferença (Volume - Saldos)',
+                'icone' => 'fas fa-question-circle',
+                'cor' => 'metric-icon-orange'
+            ],
+            [
+                'valor' => $taxaSucesso . '%',
+                'label' => 'Taxa de Sucesso',
+                'icone' => 'fas fa-check-circle',
+                'cor' => 'metric-icon-cyan'
+            ],
+            [
+                'valor' => $transacoesPorTipo['CREDIT'],
+                'label' => 'Transações Crédito',
+                'icone' => 'fas fa-credit-card',
+                'cor' => 'metric-icon-blue'
+            ],
+            [
+                'valor' => $transacoesPorTipo['PIX'],
+                'label' => 'Transações PIX',
+                'icone' => 'fas fa-qrcode',
+                'cor' => 'metric-icon-green'
+            ]
+        ];
+
+
+
+        return [
+            'saldos' => $saldos,
+            'metricas' => $metricas,
+            'detalhes' => [
+                'total_transacoes' => $totalTransacoes,
+                'transacoes_por_tipo' => $transacoesPorTipo,
+                'transacoes_por_status' => $transacoesPorStatus,
+                'volume_por_estabelecimento' => $volumeLiquido / max(count($estabelecimentosIds), 1),
+                'volume_bruto' => $volumeBruto,
+                'volume_liquido' => $volumeLiquido,
+                'total_taxas' => $totalTaxas,
+                'diferenca_bruto_liquido' => $volumeBruto - $volumeLiquido
+            ]
+        ];
     }
 
     /**
