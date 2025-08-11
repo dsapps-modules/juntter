@@ -62,4 +62,14 @@ class TransacaoService
         
         return $this->apiClient->post("marketplace/transactions/{$id}/reversal", $dados);
     }
+
+    public function listarPlanosComerciais(array $filtros = [])
+    {
+        return $this->apiClient->get("marketplace/plans", $filtros);
+    }
+
+    public function detalhesPlanoComercial(int $id)
+    {
+        return $this->apiClient->get("marketplace/plans/{$id}");
+    }
 }
