@@ -49,9 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 //     return view('cobranca.recorrente');
 // })->name('cobranca.recorrente');
     
-    Route::get('/cobranca/planos', function () {
-        return view('cobranca.planos');
-    })->name('cobranca.planos');
+    Route::get('/cobranca/planos', [CobrancaController::class, 'listarPlanos'])->name('cobranca.planos');
+    Route::get('/cobranca/planos/{id}', [CobrancaController::class, 'detalhesPlano'])->name('cobranca.plano.detalhes');
     
     // Route::get('/cobranca/pix', function () {
     //     return view('cobranca.pix');
