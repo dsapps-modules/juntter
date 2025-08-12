@@ -165,9 +165,11 @@
                                         </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                                <a href="{{ route('cobranca.transacao.detalhes', $transacao['_id']) }}" 
+                                                <a href="{{ ($transacao['type'] ?? '') === 'BILLET' || ($transacao['type'] ?? '') === 'BOLETO' 
+                                                    ? route('cobranca.boleto.detalhes', $transacao['_id']) 
+                                                    : route('cobranca.transacao.detalhes', $transacao['_id']) }}" 
                                                    class="btn btn-sm btn-outline-info" title="Ver detalhes">
-                                            <i class="fas fa-eye"></i>
+                                                    <i class="fas fa-eye"></i>
                                                     Ver detalhes
                                                 </a>
                                                 @if(($transacao['status'] ?? '') === 'PAID' || ($transacao['status'] ?? '') === 'APPROVED')
