@@ -240,15 +240,14 @@ class DashboardController extends Controller
 
                 // 3. Buscar transações dos últimos 30 dias
                 $filtrosTransacoes = [
-                    'extra_headers' => [
-                        'establishment_id' => $estabelecimentoId
-                    ],
+                 
                     'perPage' => 1000,
                     'filters' => json_encode([
                         'created_at' => [
                             'min' => date('Y-m-d', strtotime('-30 days')),
                             'max' => date('Y-m-d')
-                        ]
+                        ],
+                        'establishment.id' => $estabelecimentoId
                     ])
                 ];
 
@@ -397,15 +396,14 @@ class DashboardController extends Controller
 
             // Buscar transações do estabelecimento (últimos 30 dias)
             $filtrosTransacoes = [
-                'extra_headers' => [
-                    'establishment_id' => $estabelecimentoId,
-                ],
+              
                 'perPage' => 1000,
                 'filters' => json_encode([
                     'created_at' => [
                         'min' => date('Y-m-d', strtotime('-30 days')),
                         'max' => date('Y-m-d'),
                     ],
+                    'establishment.id' => $estabelecimentoId
                 ]),
             ];
 
