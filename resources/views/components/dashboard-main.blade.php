@@ -1,4 +1,13 @@
-@props(['title' => 'Dashboard', 'saldos' => [], 'metricas' => [], 'breadcrumbItems' => [], 'showSaldos' => true])
+@props([
+  'title' => 'Dashboard',
+  'saldos' => [],
+  'metricas' => [],
+  'metricasGeral' => null,
+  'metricasCartao' => null,
+  'metricasBoleto' => null,
+  'breadcrumbItems' => [],
+  'showSaldos' => true
+])
 
 <!-- Breadcrumb -->
 <x-breadcrumb :items="$breadcrumbItems" />
@@ -105,22 +114,78 @@
                 <button class="tab-btn" onclick="switchTab('boleto')">Boleto</button>
             </div>
             
-            <!-- Metrics Grid -->
-            <div class="metrics-grid">
-                @foreach($metricas as $metrica)
-                <div class="metric-card">
-                    <div class="metric-value">{{ $metrica['valor'] }}</div>
-                    <div class="metric-label">
-                        <i class="fas fa-info-circle me-1"></i>
-                        {{ $metrica['label'] }}
+            <!-- Metrics Grid por abas -->
+
+            <div id="tab-content-geral" class="metrics-grid">
+                @foreach(($metricasGeral ?? $metricas ?? []) as $metrica)
+                    <div class="metric-card">
+                        <div class="metric-value">{{ $metrica['valor'] }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ $metrica['label'] }}
+                        </div>
+                        <div class="metric-icon {{ $metrica['cor'] }}">
+                            <i class="{{ $metrica['icone'] }}"></i>
+                        </div>
                     </div>
-                    <div class="metric-icon {{ $metrica['cor'] }}">
-                        <i class="{{ $metrica['icone'] }}"></i>
-                    </div>
-                </div>
                 @endforeach
+            </div>
+
+            <div id="tab-content-cartao" class="metrics-grid" style="display:none;">
+                @forelse(($metricasCartao ?? []) as $metrica)
+                    <div class="metric-card">
+                        <div class="metric-value">{{ $metrica['valor'] }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ $metrica['label'] }}
+                        </div>
+                        <div class="metric-icon {{ $metrica['cor'] }}">
+                            <i class="{{ $metrica['icone'] }}"></i>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-muted p-3">Sem métricas de cartão.</div>
+                @endforelse
+            </div>
+
+            <div id="tab-content-boleto" class="metrics-grid" style="display:none;">
+                @forelse(($metricasBoleto ?? []) as $metrica)
+                    <div class="metric-card">
+                        <div class="metric-value">{{ $metrica['valor'] }}</div>
+                        <div class="metric-label">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {{ $metrica['label'] }}
+                        </div>
+                        <div class="metric-icon {{ $metrica['cor'] }}">
+                            <i class="{{ $metrica['icone'] }}"></i>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-muted p-3">Sem métricas de boleto.</div>
+                @endforelse
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+  window.switchTab = function(tab){
+    const map = {
+      'geral':  {btn: '.analytics-tabs .tab-btn:nth-child(1)', div: '#tab-content-geral'},
+      'cartao': {btn: '.analytics-tabs .tab-btn:nth-child(2)', div: '#tab-content-cartao'},
+      'boleto': {btn: '.analytics-tabs .tab-btn:nth-child(3)', div: '#tab-content-boleto'}
+    };
+    // esconder todos
+    ['#tab-content-geral','#tab-content-cartao','#tab-content-boleto'].forEach(id=>$(id).hide());
+    $('.analytics-tabs .tab-btn').removeClass('active');
+    // mostrar o selecionado
+    const cfg = map[tab] || map.geral;
+    $(cfg.div).show();
+    $(cfg.btn).addClass('active');
+  };
+  // garantir estado inicial
+  $(function(){ switchTab('geral'); });
+</script>
+@endpush
 

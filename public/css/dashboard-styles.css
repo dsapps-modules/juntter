@@ -482,6 +482,10 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
     background: linear-gradient(135deg, #28a745, #1e7e34);
 }
 
+.metric-icon-orange {
+    background: linear-gradient(135deg, #fd7e14, #e55353);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .analytics-tabs {
