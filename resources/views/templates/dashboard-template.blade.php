@@ -42,6 +42,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Navigation Menu -->
                 <div class="navbar-nav mx-auto">
+                    @if(Auth::user()->isVendedor())
                     <div class="dropdown">
                         <button class="nav-link dropdown-toggle menu-item btn" type="button" id="cobrancaDropdown" data-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-credit-card me-2"></i>
@@ -50,19 +51,18 @@
                         <ul class="dropdown-menu dropdown-menu-modern" aria-labelledby="cobrancaDropdown">
                             <li><a class="dropdown-item" href="{{ route('dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a></li>
                             
-                            @if(Auth::user()->isSuperAdminOrAdminOrVendedor())
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ route('cobranca.index') }}"><i class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
                             {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li> --}}
                             <li><a class="dropdown-item" href="{{ route('cobranca.planos') }}"><i class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>
                             <li><hr class="dropdown-divider"></li>
-                                                    {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pix') }}"><i class="fas fa-paper-plane me-2"></i>Enviar Pix</a></li> --}}
-                        {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
-                            @endif
+                            {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pix') }}"><i class="fas fa-paper-plane me-2"></i>Enviar Pix</a></li> --}}
+                            {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
                             
                             <li><a class="dropdown-item" href="{{ route('cobranca.saldoextrato') }}"><i class="fas fa-wallet me-2"></i>Saldo e Extrato</a></li>
                         </ul>
                     </div>
+                    @endif
                 </div>
 
                 <!-- User Menu -->
