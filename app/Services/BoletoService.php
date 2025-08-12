@@ -20,7 +20,7 @@ class BoletoService
 
     public function listarBoletos(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/billets?" . http_build_query($filtros));
+        return $this->apiClient->get("marketplace/billets", $filtros);
     }
 
     public function consultarBoleto(string $id)

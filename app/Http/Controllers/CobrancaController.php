@@ -7,6 +7,7 @@ use App\Services\CreditoService;
 use App\Services\PixService;
 use App\Services\BoletoService;
 use Illuminate\Http\Request;
+
 use Illuminate\Support\Facades\Log;
 
 class CobrancaController extends Controller
@@ -73,6 +74,53 @@ class CobrancaController extends Controller
             ];
 
             $transacoes = $this->transacaoService->listarTransacoes($filtros);
+
+            // Também buscar boletos e mesclar na mesma lista para exibir junto
+            try {
+                $filtrosBoletos = [
+                    'perPage' => 1000,
+                    'page' => 1,
+                    'filters' => json_encode([
+                        'establishment.id' => auth()->user()?->vendedor?->estabelecimento_id
+                    ])
+                ];
+                $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
+
+                if (isset($boletos['data']) && is_array($boletos['data'])) {
+                    // Adaptar estrutura dos boletos para o formato da tabela de transações
+                    $boletosAdaptados = array_map(function($b) {
+                        return [
+                            '_id' => $b['_id'] ?? ($b['id'] ?? null),
+                            'type' => 'BOLETO',
+                            'amount' => $b['amount'] ?? 0,
+                            'fees' => $b['fees'] ?? 0,
+                            'gateway_authorization' => $b['gateway_authorization'] ?? ($b['gateway_key'] ?? null),
+                            'created_at' => $b['created_at'] ?? ($b['emission_at'] ?? null),
+                            'status' => $b['status'] ?? null,
+                        ];
+                    }, $boletos['data']);
+
+                    // Garantir estrutura base
+                    if (!isset($transacoes['data']) || !is_array($transacoes['data'])) {
+                        $transacoes['data'] = [];
+                        $transacoes['total'] = 0;
+                        $transacoes['page'] = 1;
+                    }
+
+                    // Mesclar e ordenar por data desc
+                    $transacoes['data'] = array_merge($transacoes['data'], $boletosAdaptados);
+                    usort($transacoes['data'], function($a, $b) {
+                        $da = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
+                        $db = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+                        return $db <=> $da;
+                    });
+
+                    // Recalcular total aproximado
+                    $transacoes['total'] = count($transacoes['data']);
+                }
+            } catch (\Exception $e) {
+                // Silenciar falhas de boletos para não quebrar a listagem principal
+            }
 
          
 
@@ -260,7 +308,7 @@ class CobrancaController extends Controller
 
             // Adicionar establishment_id
             $dados['extra_headers'] = [
-                'establishment_id' => '155102'
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
             ];
 
             $boleto = $this->boletoService->gerarBoleto($dados);
