@@ -52,6 +52,7 @@
                             @error('name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small id="name-hint" class="form-text"></small>
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -67,6 +68,7 @@
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
+                            <small id="email-hint" class="form-text"></small>
                             
                             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
                                 <div class="mt-2">
@@ -86,47 +88,30 @@
                             <label for="nivel_acesso" class="form-label fw-bold">
                                 <i class="fas fa-shield-alt me-1 text-primary"></i>Nível de Acesso
                             </label>
-                            <div class="input-group">
-                                <input type="text" 
-                                       class="form-control readonly-field" 
-                                       value="{{ ucfirst($user->nivel_acesso) }}" 
-                                       readonly>
-                                <span class="input-group-text locked">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                            </div>
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>Seu nível de acesso não pode ser alterado
-                            </small>
+                            <input type="text" 
+                                   class="form-control readonly-field" 
+                                   value="{{ ucfirst($user->nivel_acesso) }}" 
+                                   readonly>
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="created_at" class="form-label fw-bold">
                                 <i class="fas fa-calendar me-1 text-primary"></i>Membro Desde
                             </label>
-                            <div class="input-group">
-                                <input type="text" 
-                                       class="form-control readonly-field" 
-                                       value="{{ $user->created_at->format('d/m/Y') }}" 
-                                       readonly>
-                                <span class="input-group-text locked">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                            </div>
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>Data de criação da conta
-                            </small>
+                            <input type="text" 
+                                   class="form-control readonly-field" 
+                                   value="{{ $user->created_at->format('d/m/Y') }}" 
+                                   readonly>
                         </div>
                     </div>
 
-                    <div class="d-flex gap-3 mt-4">
-                        <button type="submit" class="btn btn-warning text-white">
-                            <i class="fas fa-save me-2"></i>Salvar Alterações
-                        </button>
-                        
+                    <div class="d-flex justify-content-between align-items-center mt-4">
                         <a href="{{ route('profile.password') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-key me-2"></i>Alterar Senha
+                            <i class="fas fa-key mr-2"></i>Alterar Senha
                         </a>
+                        <button type="submit" id="saveProfileBtn" class="btn btn-warning text-white" disabled>
+                            <i class="fas fa-save mr-2"></i>Salvar Alterações
+                        </button>
                     </div>
                 </form>
             </div>
@@ -176,10 +161,55 @@
     border-color: #6c757d !important;
 }
 
-.input-group-text.locked {
-    background-color: #6c757d !important;
-    border-color: #6c757d !important;
-    color: white !important;
-}
+ 
+
 </style>
+@push('scripts')
+<script>
+$(function(){
+  const emailInput = $('#email');
+  const nameInput = $('#name');
+  const btn = $('#saveProfileBtn');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  function validate(){
+    const nameVal = (nameInput.val() || '').trim();
+    const emailVal = (emailInput.val() || '').trim();
+    const validName = nameVal.length >= 2;
+    const validEmail = emailRegex.test(emailVal);
+
+    // Mensagens de ajuda
+    const $nameHint = $('#name-hint');
+    const $emailHint = $('#email-hint');
+    $nameHint.text(''); $emailHint.text('');
+    $nameHint.removeClass('text-danger text-success');
+    $emailHint.removeClass('text-danger text-success');
+
+    if (!validName) {
+      $nameHint.addClass('text-danger').text('Informe pelo menos 2 caracteres.');
+    }
+    if (emailVal.length === 0) {
+      $emailHint.addClass('text-danger').text('Informe seu e-mail.');
+    } else if (!validEmail) {
+      $emailHint.addClass('text-danger').text('Formato de e-mail inválido.');
+    }
+
+    btn.prop('disabled', !(validEmail && validName));
+  }
+
+  emailInput.on('input', function(){
+    const ok = emailRegex.test(this.value);
+    $(this).toggleClass('is-invalid', !ok).toggleClass('is-valid', ok);
+    validate();
+  });
+  nameInput.on('input', function(){
+    const ok = (this.value || '').trim().length >= 2;
+    $(this).toggleClass('is-invalid', !ok).toggleClass('is-valid', ok);
+    validate();
+  });
+
+  validate();
+});
+</script>
+@endpush
 @endsection
