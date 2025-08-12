@@ -18,8 +18,8 @@
                 Crie links de pagamento profissionais, receba via PIX, cartão ou boleto. 
                 Venda online com segurança e receba em até 1 dia útil.
             </p>
-            <a href="{{ route('register') }}" class="btn-hero animate__animated animate__fadeInUp animate__delay-2s">
-                <i class="fas fa-link mr-2"></i>Criar Meu Checkout
+            <a href="{{ route('login') }}" class="btn-hero animate__animated animate__fadeInUp animate__delay-2s">
+                <i class="fas fa-sign-in-alt mr-2"></i>Entrar para Começar
             </a>
         </div>
     </div>
@@ -177,7 +177,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte por email</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Relatórios básicos</li>
                     </ul>
-                    <a href="{{ route('register') }}" class="btn btn-outline-warning btn-block">Escolher Mais</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -233,7 +233,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte prioritário</li>
                         <li><i class="fas fa-check text-success mr-2"></i>API básica</li>
                     </ul>
-                    <a href="{{ route('register') }}" class="btn btn-warning btn-block">Escolher Negócio</a>
+                    <a href="{{ route('login') }}" class="btn btn-warning btn-block">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -289,7 +289,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>White label</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Webhooks avançados</li>
                     </ul>
-                    <a href="{{ route('register') }}" class="btn btn-outline-warning btn-block">Escolher Flex</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -452,10 +452,10 @@
                 Pronto para vender mais?
             </h2>
             <p class="fade-in-up" style="font-size: 1.3rem; margin-bottom: 40px; opacity: 0.9;">
-                Crie sua conta gratuita e comece a receber pagamentos online hoje mesmo
+                Acesse sua conta e comece a receber pagamentos online hoje mesmo
             </p>
-                <a id="comecar-agora" href="{{ route('register') }}" class="btn-hero fade-in-up">
-                <i class="fas fa-rocket mr-2"></i>Começar Agora - É Grátis
+                <a id="comecar-agora" href="{{ route('login') }}" class="btn-hero fade-in-up">
+                <i class="fas fa-sign-in-alt mr-2"></i>Entrar para Começar
             </a>
         </div>
     </div>

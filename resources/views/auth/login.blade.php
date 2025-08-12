@@ -69,11 +69,7 @@
         </form>
 
         <div class="form-links">
-            @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="back-link">
-                    <i class="fas fa-user-plus mr-1"></i>Cadastre-se
-                </a>
-            @endif
+            <!-- Registro desabilitado -->
             <br>
             <a href="{{ route('password.request') }}" class="forgot-link">
                 <i class="fas fa-key mr-1"></i>Esqueceu a senha?

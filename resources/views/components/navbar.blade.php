@@ -55,7 +55,7 @@
                 @else
                     <!-- Usuário não logado -->
                     <li class="nav-item"><a id="login-navbar" href="{{ route('login') }}" class="btn btn-warning ml-2 px-4">Login</a></li>
-                    <li class="nav-item"><a id="criarconta-navbar" href="{{ route('register') }}" class="btn btn-outline-warning ml-2 px-4">Criar Conta</a></li>
+                    <!-- Registro desabilitado -->
                 @endauth
             </ul>
         </div>
