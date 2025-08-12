@@ -24,7 +24,7 @@
                     </div>
                     <div>
                         <a href="{{ route('cobranca.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                            <i class="fas fa-arrow-left mr-2"></i>Voltar
                         </a>
                     </div>
                 </div>
@@ -35,15 +35,96 @@
                             <h6 class="fw-bold text-primary mb-3">
                                 <i class="fas fa-info-circle me-2"></i>Informações do Boleto
                             </h6>
+                            @php
+                                $status = $boleto['status'] ?? '';
+                                $statusBadge = 'badge-secondary';
+                                $statusText = $status;
+                                if ($status === 'PENDING') { $statusBadge = 'badge-warning'; $statusText = 'Pendente'; }
+                                elseif ($status === 'PAID') { $statusBadge = 'badge-success'; $statusText = 'Pago'; }
+                                elseif ($status === 'CANCELED') { $statusBadge = 'badge-secondary'; $statusText = 'Cancelado'; }
+                                elseif ($status === 'REFUNDED') { $statusBadge = 'badge-info'; $statusText = 'Estornado'; }
+                                elseif ($status === 'FAILED') { $statusBadge = 'badge-danger'; $statusText = 'Falhou'; }
+                                elseif ($status === 'APPROVED') { $statusBadge = 'badge-success'; $statusText = 'Aprovado'; }
+                            @endphp
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Tipo</small>
-                                    <strong>{{ $boleto['type'] ?? 'BILLET' }}</strong>
+                                    <small class="text-muted d-block">ID do Boleto</small>
+                                    <strong class="font-monospace">{{ $boleto['_id'] ?? 'N/A' }}</strong>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <small class="text-muted d-block">Status</small>
-                                    <strong>{{ $boleto['status'] ?? 'N/A' }}</strong>
+                                    <span class="badge {{ $statusBadge }}">{{ $statusText }}</span>
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Valor Final</small>
+                                    <strong>R$ {{ number_format(($boleto['amount'] ?? 0) / 100, 2, ',', '.') }}</strong>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Valor Original</small>
+                                    <strong>R$ {{ number_format(($boleto['original_amount'] ?? 0) / 100, 2, ',', '.') }}</strong>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Taxas</small>
+                                    <strong>R$ {{ number_format(($boleto['fees'] ?? 0) / 100, 2, ',', '.') }}</strong>
+                                </div>
+                                @if(isset($boleto['fees_banking']['fees']))
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Tarifa Bancária</small>
+                                    <strong>R$ {{ number_format(($boleto['fees_banking']['fees'] ?? 0) / 100, 2, ',', '.') }}</strong>
+                                </div>
+                                @endif
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Emissão</small>
+                                    <strong>{{ isset($boleto['created_at']) ? \Carbon\Carbon::parse($boleto['created_at'])->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') : 'N/A' }}</strong>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Atualizado em</small>
+                                    <strong>{{ isset($boleto['updated_at']) ? \Carbon\Carbon::parse($boleto['updated_at'])->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') : 'N/A' }}</strong>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Vencimento</small>
+                                    <strong>{{ isset($boleto['expiration_at']) ? \Carbon\Carbon::parse($boleto['expiration_at'])->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') : 'N/A' }}</strong>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <small class="text-muted d-block">Data Limite de Pagamento</small>
+                                    <strong>{{ isset($boleto['payment_limit_date']) ? \Carbon\Carbon::parse($boleto['payment_limit_date'])->setTimezone('America/Sao_Paulo')->format('d/m/Y') : 'N/A' }}</strong>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <small class="text-muted d-block">Linha Digitável</small>
+                                    <div class="input-group no-wrap">
+                                        <input type="text" class="form-control font-monospace" value="{{ $boleto['digitable_line'] ?? '' }}" readonly>
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" data-value="{{ $boleto['digitable_line'] ?? '' }}" onclick="copyToClipboard(this)">Copiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <small class="text-muted d-block">Código de Barras</small>
+                                    <div class="input-group no-wrap">
+                                        <input type="text" class="form-control font-monospace" value="{{ $boleto['barcode'] ?? '' }}" readonly>
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" data-value="{{ $boleto['barcode'] ?? '' }}" onclick="copyToClipboard(this)">Copiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                @if(isset($boleto['pix_emv']))
+                                <div class="col-12 mb-3">
+                                    <small class="text-muted d-block">PIX (Copia e Cola)</small>
+                                    <div class="input-group no-wrap">
+                                        <input type="text" class="form-control" value="{{ $boleto['pix_emv'] }}" readonly>
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" data-value="{{ $boleto['pix_emv'] }}" onclick="copyToClipboard(this)">Copiar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+                                @if(isset($boleto['url']))
+                                <div class="col-12">
+                                    <a href="{{ $boleto['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-file-pdf me-2"></i>Abrir PDF do Boleto
+                                    </a>
+                                </div>
+                                @endif
                                 <div class="col-md-6 mb-3">
                                     <small class="text-muted d-block">Recarga</small>
                                     @if(isset($boleto['recharge']) && $boleto['recharge'])
@@ -53,57 +134,34 @@
                                     @endif
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Valor</small>
-                                    <strong>R$ {{ number_format(($boleto['amount'] ?? 0) / 100, 2, ',', '.') }}</strong>
+                                    <small class="text-muted d-block">Gateway</small>
+                                    <strong>{{ $boleto['gateway_authorization'] ?? ($boleto['gateway_key'] ?? 'N/A') }}</strong>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Valor Original</small>
-                                    <strong>R$ {{ number_format(($boleto['original_amount'] ?? 0) / 100, 2, ',', '.') }}</strong>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Vencimento</small>
-                                    <strong>{{ isset($boleto['expiration_at']) ? \Carbon\Carbon::parse($boleto['expiration_at'])->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') : 'N/A' }}</strong>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <small class="text-muted d-block">Data Limite</small>
-                                    <strong>{{ isset($boleto['payment_limit_date']) ? \Carbon\Carbon::parse($boleto['payment_limit_date'])->setTimezone('America/Sao_Paulo')->format('d/m/Y') : 'N/A' }}</strong>
-                                </div>
-                                <div class="col-12 mb-3">
-                                    <small class="text-muted d-block">Linha Digitável</small>
-                                    <span class="font-monospace">{{ $boleto['digitable_line'] ?? 'N/A' }}</span>
-                                </div>
-                                <div class="col-12 mb-3">
-                                    <small class="text-muted d-block">Código de Barras</small>
-                                    <span class="font-monospace">{{ $boleto['barcode'] ?? 'N/A' }}</span>
-                                </div>
-                                @if(isset($boleto['pix_emv']))
-                                <div class="col-12 mb-3">
-                                    <small class="text-muted d-block">PIX (Copia e Cola)</small>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" value="{{ $boleto['pix_emv'] }}" readonly>
-                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('{{ $boleto['pix_emv'] }}')">Copiar</button>
-                                    </div>
-                                </div>
-                                @endif
-                                @if(isset($boleto['url']))
-                                <div class="col-12">
-                                    <a href="{{ $boleto['url'] }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-download me-2"></i>Baixar PDF
-                                    </a>
-                                </div>
-                                @endif
                             </div>
                         </div>
 
                         @if(isset($boleto['billing_instructions']))
                         <div class="info-card bg-light rounded-3 p-4 mb-3">
                             <h6 class="fw-bold text-primary mb-3">
-                                <i class="fas fa-list me-2"></i>Instruções
+                                <i class="fas fa-list me-2"></i>Instruções do Boleto
                             </h6>
                             <ul class="mb-0">
                                 @foreach($boleto['billing_instructions'] as $inst)
+                                    @php
+                                        $nome = $inst['name'] ?? '';
+                                        $rotulo = $nome;
+                                        if ($nome === 'late_fee') $rotulo = 'Multa';
+                                        elseif ($nome === 'interest') $rotulo = 'Juros';
+                                        elseif ($nome === 'discount') $rotulo = 'Desconto';
+                                        $modo = $inst['mode'] ?? '';
+                                        $modoPt = $modo;
+                                        if ($modo === 'PERCENTAGE') $modoPt = 'Percentual';
+                                        elseif ($modo === 'MONTHLY_PERCENTAGE') $modoPt = 'Percentual Mensal';
+                                        $valor = $inst['amount'] ?? 0;
+                                        $sufixo = ($modo === 'PERCENTAGE' || $modo === 'MONTHLY_PERCENTAGE') ? '%' : '';
+                                    @endphp
                                     <li class="mb-1">
-                                        <strong>{{ $inst['name'] ?? '' }}</strong> - {{ $inst['mode'] ?? '' }}: {{ $inst['amount'] ?? '' }}
+                                        <strong>{{ $rotulo }}</strong> — {{ $modoPt }}: {{ $valor }}{{ $sufixo }}
                                         @if(isset($inst['limit_date']))
                                             (até {{ \Carbon\Carbon::parse($inst['limit_date'])->format('d/m/Y') }})
                                         @endif
@@ -137,5 +195,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function copyToClipboard(btn){
+  try{
+    const value = btn.getAttribute('data-value') || '';
+    navigator.clipboard.writeText(value);
+    btn.classList.remove('btn-outline-secondary');
+    btn.classList.add('btn-success');
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check"></i>';
+    setTimeout(()=>{ btn.classList.remove('btn-success'); btn.classList.add('btn-outline-secondary'); btn.innerHTML = original; }, 1500);
+  }catch(e){ console.error(e); }
+}
+</script>
+@endpush
 
 

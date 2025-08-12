@@ -30,11 +30,11 @@
                     <div>
                         @if(request('from') == 'saldoextrato')
                             <a href="{{ route('cobranca.saldoextrato') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Voltar ao Saldo e Extrato
+                                <i class="fas fa-arrow-left mr-2"></i>Voltar ao Saldo e Extrato
                             </a>
                         @else
                             <a href="{{ route('cobranca.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>Voltar
+                                <i class="fas fa-arrow-left mr-2"></i>Voltar
                             </a>
                         @endif
                     </div>
@@ -283,11 +283,13 @@
                             </h6>
                             <div class="info-item mb-2">
                                 <small class="text-muted d-block">Código EMV (Copia e Cola)</small>
-                                <div class="input-group">
+                                <div class="input-group no-wrap">
                                     <input type="text" class="form-control font-monospace" value="{{ $transacao['emv'] }}" readonly>
-                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard(this)">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" data-value="{{ $transacao['emv'] }}" onclick="copyToClipboard(this)">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -549,22 +551,29 @@
 @push('scripts')
 <script>
 function copyToClipboard(button) {
-    const input = button.parentElement.querySelector('input');
-    input.select();
-    input.setSelectionRange(0, 99999);
-    document.execCommand('copy');
-    
-    // Feedback visual
-    const originalText = button.innerHTML;
+  try {
+    const value = button.getAttribute('data-value') || '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value);
+    } else {
+      // Fallback
+      const temp = document.createElement('textarea');
+      temp.value = value;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+    }
+    const original = button.innerHTML;
     button.innerHTML = '<i class="fas fa-check"></i>';
     button.classList.remove('btn-outline-secondary');
     button.classList.add('btn-success');
-    
     setTimeout(() => {
-        button.innerHTML = originalText;
-        button.classList.remove('btn-success');
-        button.classList.add('btn-outline-secondary');
-    }, 2000);
+      button.innerHTML = original;
+      button.classList.remove('btn-success');
+      button.classList.add('btn-outline-secondary');
+    }, 1500);
+  } catch (e) { console.error(e); }
 }
 </script>
 @endpush

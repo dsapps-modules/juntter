@@ -1130,6 +1130,17 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 .input-group.no-wrap {
     flex-wrap: nowrap;
 }
+
+/* Garantir botão alinhado ao input em grupos de cópia */
+.input-group.no-wrap .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.input-group.no-wrap .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    white-space: nowrap;
+}
 .input-group.no-wrap .btn {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
