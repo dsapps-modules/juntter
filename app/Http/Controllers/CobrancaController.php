@@ -63,8 +63,12 @@ class CobrancaController extends Controller
        
             // Buscar todas as transações do estabelecimento atual
             $filtros = [
+                'filters' => json_encode([
+                    'establishment.id' => auth()->user()?->vendedor?->estabelecimento_id
+                ]),
                 'perPage' => 1000, // Buscar o máximo possível
                 'page' => 1,
+               
                
             ];
 
@@ -120,7 +124,7 @@ class CobrancaController extends Controller
             
             // Adicionar establishment_id
             $dados['extra_headers'] = [
-                'establishment_id' => '155102'
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
             ];
             
             $sessionId = $request->input('session_id', 'session_' . uniqid());
@@ -173,7 +177,7 @@ class CobrancaController extends Controller
 
             // Adicionar establishment_id
             $dados['extra_headers'] = [
-                'establishment_id' => '155102'
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
             ];
 
             $transacao = $this->pixService->criarTransacaoPix($dados);
@@ -284,7 +288,7 @@ class CobrancaController extends Controller
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
 
             $dados['extra_headers'] = [
-                'establishment_id' => '155102'
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
             ];
 
             $simulacao = $this->transacaoService->simularTransacao($dados);
@@ -403,7 +407,7 @@ class CobrancaController extends Controller
             // Preparar filtros para lançamentos futuros (saldo - apenas headers obrigatórios)
             $filtrosSaldo = [
                 'extra_headers' => [
-                    'establishment_id' => '155102'
+                    'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
                 ]
             ];
 
@@ -413,7 +417,7 @@ class CobrancaController extends Controller
             // Preparar filtros para extrato detalhado
             $filtrosExtrato = [
                 'extra_headers' => [
-                    'establishment_id' => '155102'
+                    'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
                 ]
             ];
 
