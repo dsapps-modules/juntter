@@ -24,7 +24,7 @@
                         <p class="text-muted mb-0">Mantenha sua conta segura com uma senha forte</p>
                     </div>
                     <a href="{{ route('profile.edit') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Voltar ao Perfil
+                        <i class="fas fa-arrow-left mr-2"></i>Voltar ao Perfil
                     </a>
                 </div>
 
@@ -53,18 +53,7 @@
                     </div>
                 @endif
 
-                <!-- Dicas de Segurança -->
-                <div class="alert alert-info border-0" role="alert">
-                    <h6 class="alert-heading">
-                        <i class="fas fa-info-circle me-2"></i>Dicas para uma senha segura:
-                    </h6>
-                    <ul class="mb-0">
-                        <li>Use pelo menos 8 caracteres</li>
-                        <li>Combine letras maiúsculas e minúsculas</li>
-                        <li>Inclua números e símbolos</li>
-                        <li>Evite informações pessoais óbvias</li>
-                    </ul>
-                </div>
+                
 
                 <form method="post" action="{{ route('password.update') }}">
                     @csrf
@@ -75,15 +64,17 @@
                             <label for="current_password" class="form-label fw-bold">
                                 <i class="fas fa-lock me-1 text-primary"></i>Senha Atual
                             </label>
-                            <div class="input-group">
+                            <div class="input-group no-wrap">
                                 <input type="password" 
                                        class="form-control @error('current_password', 'updatePassword') is-invalid @enderror" 
                                        id="current_password" 
                                        name="current_password" 
                                        required>
-                                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordField('current_password')">
-                                     <i class="fas fa-eye" id="current_password_icon"></i>
-                                 </button>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordField('current_password')">
+                                        <i class="fas fa-eye" id="current_password_icon"></i>
+                                    </button>
+                                </div>
                             </div>
                             @error('current_password', 'updatePassword')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -94,15 +85,17 @@
                             <label for="password" class="form-label fw-bold">
                                 <i class="fas fa-key me-1 text-primary"></i>Nova Senha
                             </label>
-                            <div class="input-group">
+                            <div class="input-group no-wrap">
                                 <input type="password" 
                                        class="form-control @error('password', 'updatePassword') is-invalid @enderror" 
                                        id="password" 
                                        name="password" 
                                        required>
-                                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordField('password')">
-                                     <i class="fas fa-eye" id="password_icon"></i>
-                                 </button>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordField('password')">
+                                        <i class="fas fa-eye" id="password_icon"></i>
+                                    </button>
+                                </div>
                             </div>
                             
                             <!-- Indicador de força da senha -->
@@ -141,15 +134,17 @@
                             <label for="password_confirmation" class="form-label fw-bold">
                                 <i class="fas fa-check-double me-1 text-primary"></i>Confirmar Nova Senha
                             </label>
-                            <div class="input-group">
+                            <div class="input-group no-wrap">
                                 <input type="password" 
                                        class="form-control @error('password_confirmation', 'updatePassword') is-invalid @enderror" 
                                        id="password_confirmation" 
                                        name="password_confirmation" 
                                        required>
-                                                                 <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordField('password_confirmation')">
-                                     <i class="fas fa-eye" id="password_confirmation_icon"></i>
-                                 </button>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordField('password_confirmation')">
+                                        <i class="fas fa-eye" id="password_confirmation_icon"></i>
+                                    </button>
+                                </div>
                             </div>
                                                          <!-- Mensagem de confirmação de senha -->
                              <div id="password-match-message" class="mt-2" style="display: none;">
@@ -165,14 +160,13 @@
                          </div>
                      </div>
 
-                    <div class="d-flex gap-3 mt-4">
-                        <button type="submit" class="btn btn-warning text-white">
-                            <i class="fas fa-save me-2"></i>Alterar Senha
-                        </button>
-                        
+                    <div class="d-flex justify-content-between align-items-center mt-4">
                         <a href="{{ route('profile.edit') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-2"></i>Cancelar
+                            <i class="fas fa-times mr-2"></i>Cancelar
                         </a>
+                        <button type="submit" id="changePasswordBtn" class="btn btn-warning text-white" disabled>
+                            <i class="fas fa-save mr-2"></i>Alterar Senha
+                        </button>
                     </div>
                 </form>
             </div>
@@ -297,16 +291,20 @@ $(document).ready(function() {
         }
     }
     
-    // Event listeners usando jQuery
+    // Habilitar botão somente quando as senhas coincidirem e respeitarem critérios mínimos
     if ($password.length) {
         $password.on('input', function() {
             updatePasswordStrength($(this).val());
             validatePasswordConfirmation();
+            toggleSubmit();
         });
     }
     
     if ($passwordConfirmation.length) {
-        $passwordConfirmation.on('input', validatePasswordConfirmation);
+        $passwordConfirmation.on('input', function(){
+            validatePasswordConfirmation();
+            toggleSubmit();
+        });
     }
     
     if ($currentPassword.length) {
@@ -315,6 +313,14 @@ $(document).ready(function() {
                 $(this).removeClass('is-invalid');
             }
         });
+    }
+
+    function toggleSubmit(){
+        const pass = $password.val();
+        const conf = $passwordConfirmation.val();
+        const okStrength = validatePasswordStrength(pass).minLength; // mínimo: 8
+        const match = pass && conf && pass === conf;
+        $('#changePasswordBtn').prop('disabled', !(okStrength && match));
     }
 });
 </script>

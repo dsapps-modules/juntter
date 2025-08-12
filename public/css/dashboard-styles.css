@@ -1122,6 +1122,15 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
     overflow: visible;
 }
 
+/* Evitar quebra do botão de mostrar senha em input-group */
+.input-group.no-wrap {
+    flex-wrap: nowrap;
+}
+.input-group.no-wrap .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
 .card-body {
     padding: 2rem !important;
     overflow: visible;
