@@ -84,7 +84,18 @@ class DashboardController extends Controller
 
             $saldos = $dadosConsolidados['saldos'];
             $metricas = $dadosConsolidados['metricas'];
-            $detalhes = $dadosConsolidados['detalhes'] ?? [];
+            // Pré-separar métricas por tipo para a view
+            $metricasGeral = [];
+            $metricasCartao = [];
+            $metricasBoleto = [];
+            foreach ($metricas as $m) {
+                $tipo = $m['tipo'] ?? 'GERAL';
+                switch ($tipo) {
+                    case 'CARTAO': $metricasCartao[] = $m; break;
+                    case 'BOLETO': $metricasBoleto[] = $m; break;
+                    default: $metricasGeral[] = $m; break;
+                }
+            }
         } catch (\Exception $e) {
             // Em caso de erro, usar dados padrão
             $saldos = [
@@ -120,6 +131,9 @@ class DashboardController extends Controller
                     'cor' => 'metric-icon-cyan'
                 ]
             ];
+            $metricasGeral = $metricas; // tudo na geral no fallback
+            $metricasCartao = [];
+            $metricasBoleto = [];
         }
 
         // Buscar estabelecimentos (sem filtros - DataTables fará o filtro)
@@ -129,7 +143,7 @@ class DashboardController extends Controller
             $estabelecimentos = [];
         }
 
-        return view('dashboard.admin', compact('saldos', 'metricas', 'detalhes', 'estabelecimentos'));
+        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos', 'metricasGeral', 'metricasCartao', 'metricasBoleto'));
     }
 
 
@@ -169,6 +183,8 @@ class DashboardController extends Controller
         $volumeBruto = 0;
         $volumeLiquido = 0;
         $totalTaxas = 0;
+        $volumePorMetodo = [ 'CREDIT' => 0, 'DEBIT' => 0, 'PIX' => 0, 'BOLETO' => 0 ];
+        $taxasPorMetodo  = [ 'CREDIT' => 0, 'DEBIT' => 0, 'PIX' => 0, 'BOLETO' => 0 ];
         $transacoesHoje = 0;
         $transacoesPagas = 0;
         $transacoesFalhadas = 0;
@@ -176,7 +192,8 @@ class DashboardController extends Controller
         $transacoesPorTipo = [
             'CREDIT' => 0,
             'DEBIT' => 0,
-            'PIX' => 0
+            'PIX' => 0,
+            'BOLETO' => 0,
         ];
         $transacoesPorStatus = [
             'PAID' => 0,
@@ -259,6 +276,10 @@ class DashboardController extends Controller
                         $volumeBruto += $valorOriginal;
                         $volumeLiquido += $valorLiquido;
                         $totalTaxas += $taxas;
+                        if (isset($volumePorMetodo[$tipo])) {
+                            $volumePorMetodo[$tipo] += $valorLiquido;
+                            $taxasPorMetodo[$tipo]  += $taxas;
+                        }
 
 
 
@@ -321,81 +342,44 @@ class DashboardController extends Controller
 
         // Calcular taxa de sucesso
         $totalTransacoesProcessadas = $transacoesPagas + $transacoesFalhadas;
-        $taxaSucesso = $totalTransacoesProcessadas > 0 ? round(($transacoesPagas / $totalTransacoesProcessadas) * 100, 1) : 0;
+     
 
-        // Métricas do dashboard
+        // Métricas do dashboard tipadas (sem Taxa de Sucesso global)
         $metricas = [
-            [
-                'valor' => count($estabelecimentosIds),
-                'label' => 'Total de Estabelecimentos',
-                'icone' => 'fas fa-building',
-                'cor' => 'metric-icon-blue'
-            ],
-            [
-                'valor' => $transacoesHoje,
-                'label' => 'Transações Hoje',
-                'icone' => 'fas fa-exchange-alt',
-                'cor' => 'metric-icon-green'
-            ],
-            [
-                'valor' => 'R$ ' . number_format($volumeBruto / 100, 2, ',', '.'),
-                'label' => 'Volume Bruto (30 dias)',
-                'icone' => 'fas fa-chart-line',
-                'cor' => 'metric-icon-teal'
-            ],
-            [
-                'valor' => 'R$ ' . number_format($volumeLiquido / 100, 2, ',', '.'),
-                'label' => 'Volume Líquido (30 dias)',
-                'icone' => 'fas fa-chart-bar',
-                'cor' => 'metric-icon-blue'
-            ],
-            [
-                'valor' => 'R$ ' . number_format($totalTaxas / 100, 2, ',', '.'),
-                'label' => 'Total de Taxas (30 dias)',
-                'icone' => 'fas fa-percentage',
-                'cor' => 'metric-icon-red'
-            ],
-            [
-                'valor' => 'R$ ' . number_format(($volumeLiquido - $saldosConsolidados['disponivel'] - $saldosConsolidados['processamento']) / 100, 2, ',', '.'),
-                'label' => 'Diferença (Volume - Saldos)',
-                'icone' => 'fas fa-question-circle',
-                'cor' => 'metric-icon-orange'
-            ],
-            [
-                'valor' => $taxaSucesso . '%',
-                'label' => 'Taxa de Sucesso',
-                'icone' => 'fas fa-check-circle',
-                'cor' => 'metric-icon-cyan'
-            ],
-            [
-                'valor' => $transacoesPorTipo['CREDIT'],
-                'label' => 'Transações Crédito',
-                'icone' => 'fas fa-credit-card',
-                'cor' => 'metric-icon-blue'
-            ],
-            [
-                'valor' => $transacoesPorTipo['PIX'],
-                'label' => 'Transações PIX',
-                'icone' => 'fas fa-qrcode',
-                'cor' => 'metric-icon-green'
-            ]
+            // GERAL
+            [ 'valor' => count($estabelecimentosIds), 'label' => 'Total de Estabelecimentos', 'icone' => 'fas fa-building', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => null ],
+            [ 'valor' => $transacoesHoje, 'label' => 'Transações Hoje', 'icone' => 'fas fa-exchange-alt', 'cor' => 'metric-icon-green', 'tipo' => 'GERAL', 'metodo' => null ],
+            [ 'valor' => 'R$ ' . number_format($volumeBruto / 100, 2, ',', '.'), 'label' => 'Volume Bruto (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal', 'tipo' => 'GERAL', 'metodo' => null ],
+            [ 'valor' => 'R$ ' . number_format($volumeLiquido / 100, 2, ',', '.'), 'label' => 'Volume Líquido (30 dias)', 'icone' => 'fas fa-chart-bar', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => null ],
+            [ 'valor' => 'R$ ' . number_format($totalTaxas / 100, 2, ',', '.'), 'label' => 'Taxas (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red', 'tipo' => 'GERAL', 'metodo' => null ],
+            [ 'valor' => 'R$ ' . number_format($volumePorMetodo['PIX'] / 100, 2, ',', '.'), 'label' => 'Volume PIX (30 dias)', 'icone' => 'fas fa-qrcode', 'cor' => 'metric-icon-green', 'tipo' => 'GERAL', 'metodo' => 'PIX' ],
+         
+            [ 'valor' => $transacoesPorTipo['PIX'], 'label' => 'Transações PIX', 'icone' => 'fas fa-qrcode', 'cor' => 'metric-icon-green', 'tipo' => 'GERAL', 'metodo' => 'PIX' ],
+            [ 'valor' => $transacoesPorTipo['BOLETO'], 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => 'BOLETO' ],
+            [ 'valor' => $transacoesPorTipo['CREDIT'] + $transacoesPorTipo['DEBIT'], 'label' => 'Transações Cartão', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => 'CREDIT' ],
+            
+
+            // CARTÃO
+            [ 'valor' => $transacoesPorTipo['CREDIT'] + $transacoesPorTipo['DEBIT'], 'label' => 'Transações Cartão', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue', 'tipo' => 'CARTAO', 'metodo' => null ],
+            [ 'valor' => $transacoesPorTipo['CREDIT'], 'label' => 'Transações Crédito', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue', 'tipo' => 'CARTAO', 'metodo' => 'CREDIT' ],
+            [ 'valor' => $transacoesPorTipo['DEBIT'], 'label' => 'Transações Débito', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-teal', 'tipo' => 'CARTAO', 'metodo' => 'DEBIT' ],
+            [ 'valor' => 'R$ ' . number_format($volumePorMetodo['CREDIT']/100, 2, ',', '.'), 'label'=>'Volume Crédito (30 dias)', 'icone'=>'fas fa-chart-line','cor'=>'metric-icon-teal','tipo'=>'CARTAO','metodo'=>'CREDIT'],
+            [ 'valor' => 'R$ ' . number_format($volumePorMetodo['DEBIT']/100, 2, ',', '.'), 'label'=>'Volume Débito (30 dias)', 'icone'=>'fas fa-chart-line','cor'=>'metric-icon-teal','tipo'=>'CARTAO','metodo'=>'DEBIT'],
+            [ 'valor' => 'R$ ' . number_format(($taxasPorMetodo['CREDIT']+$taxasPorMetodo['DEBIT'])/100, 2, ',', '.'), 'label'=>'Taxas Cartão (30 dias)', 'icone'=>'fas fa-percentage','cor'=>'metric-icon-red','tipo'=>'CARTAO','metodo'=>null],
+
+            // BOLETO (se houver)
+            [ 'valor' => $transacoesPorTipo['BOLETO'] ?? 0, 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-orange', 'tipo' => 'BOLETO', 'metodo' => 'BOLETO' ],
+            [ 'valor' => 'R$ ' . number_format(($volumePorMetodo['BOLETO'] ?? 0)/100, 2, ',', '.'), 'label'=>'Volume Boleto (30 dias)', 'icone'=>'fas fa-chart-line','cor'=>'metric-icon-orange','tipo'=>'BOLETO','metodo'=>'BOLETO'],
+            [ 'valor' => 'R$ ' . number_format(($taxasPorMetodo['BOLETO'] ?? 0)/100, 2, ',', '.'), 'label'=>'Taxas Boleto (30 dias)', 'icone'=>'fas fa-percentage','cor'=>'metric-icon-red','tipo'=>'BOLETO','metodo'=>'BOLETO'],
         ];
 
+     
+        
 
 
         return [
             'saldos' => $saldos,
-            'metricas' => $metricas,
-            'detalhes' => [
-                'total_transacoes' => $totalTransacoes,
-                'transacoes_por_tipo' => $transacoesPorTipo,
-                'transacoes_por_status' => $transacoesPorStatus,
-                'volume_por_estabelecimento' => $volumeLiquido / max(count($estabelecimentosIds), 1),
-                'volume_bruto' => $volumeBruto,
-                'volume_liquido' => $volumeLiquido,
-                'total_taxas' => $totalTaxas,
-                'diferenca_bruto_liquido' => $volumeBruto - $volumeLiquido
-            ]
+            'metricas' => $metricas       
         ];
     }
 
