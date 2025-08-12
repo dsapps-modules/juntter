@@ -100,4 +100,36 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return in_array($this->nivel_acesso, ['super_admin', 'admin', 'vendedor', 'comprador']);
     }
+
+    /**
+     * Relacionamento com Vendedor (1:1)
+     */
+    public function vendedor()
+    {
+        return $this->hasOne(Vendedor::class);
+    }
+
+    /**
+     * Verifica se é admin de loja
+     */
+    public function isAdminLoja(): bool
+    {
+        return $this->isVendedor() && $this->vendedor && $this->vendedor->isAdminLoja();
+    }
+
+    /**
+     * Verifica se é vendedor de loja
+     */
+    public function isVendedorLoja(): bool
+    {
+        return $this->isVendedor() && $this->vendedor && $this->vendedor->isVendedorLoja();
+    }
+
+    /**
+     * Obtém o ID do estabelecimento (se for vendedor)
+     */
+    public function getEstabelecimentoId()
+    {
+        return $this->vendedor ? $this->vendedor->estabelecimento_id : null;
+    }
 }
