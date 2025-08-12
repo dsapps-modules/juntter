@@ -21,11 +21,11 @@
                         <p class="text-muted mb-0">Atualize as informações do estabelecimento</p>
                     </div>
                     <div>
-                        <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" class="btn btn-info me-2">
-                            <i class="fas fa-eye me-2"></i>Visualizar
+                        <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" class="btn btn-info mr-2">
+                            <i class="fas fa-eye mr-2"></i>Visualizar
                         </a>
                         <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                            <i class="fas fa-arrow-left mr-2"></i>Voltar
                         </a>
                     </div>
                 </div>
@@ -184,12 +184,12 @@
                      
                      <div class="row mt-4">
                          <div class="col-12">
-                             <button type="submit" class="btn btn-primary">
-                                 <i class="fas fa-save me-2"></i>Salvar Alterações
-                             </button>
-                             <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" class="btn btn-secondary ms-2">
-                                 Cancelar
-                             </a>
+                            <button type="submit" class="btn btn-warning text-white">
+                                <i class="fas fa-save mr-2"></i>Salvar Alterações
+                            </button>
+                            <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" class="btn btn-secondary ml-2">
+                                Cancelar
+                            </a>
                          </div>
                      </div>
                 </form>
