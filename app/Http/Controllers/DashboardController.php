@@ -7,6 +7,7 @@ use App\Services\EstabelecimentoService;
 use App\Services\TransacaoService;
 use Illuminate\Support\Facades\Log;
 
+
 class DashboardController extends Controller
 {
     protected $estabelecimentoService;
@@ -403,53 +404,141 @@ class DashboardController extends Controller
      */
     public function vendedorDashboard()
     {
-        $saldos = [
-            'disponivel' => 'R$ 3.250,00',
-            'transito' => 'R$ 680,00',
-            'bloqueado_cartao' => 'R$ 120,00',
-            'bloqueado_boleto' => 'R$ 200,00'
-        ];
+        
+        $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
-        $metricas = [
-            [
-                'valor' => '2',
-                'label' => 'Clientes Inadimplentes',
-                'icone' => 'fas fa-user-times',
-                'cor' => 'metric-icon-red'
-            ],
-            [
-                'valor' => '24',
-                'label' => 'Transações Pagas',
-                'icone' => 'fas fa-dollar-sign',
-                'cor' => 'metric-icon-blue'
-            ],
-            [
-                'valor' => '8',
-                'label' => 'Contratos Ativos',
-                'icone' => 'fas fa-file-contract',
-                'cor' => 'metric-icon-teal'
-            ],
-            [
-                'valor' => 'R$ 1.850,00',
-                'label' => 'A vencer nos próximos dias',
-                'icone' => 'fas fa-calendar-check',
-                'cor' => 'metric-icon-cyan'
-            ],
-            [
-                'valor' => 'R$ 485,00',
-                'label' => 'Ticket médio: contratos',
-                'icone' => 'fas fa-chart-line',
-                'cor' => 'metric-icon-teal'
-            ],
-            [
-                'valor' => 'R$ 320,00',
-                'label' => 'Ticket médio: vendas',
-                'icone' => 'fas fa-shopping-cart',
-                'cor' => 'metric-icon-green'
-            ]
-        ];
+        try {
+            // Buscar dados do estabelecimento
+            $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
 
-        return view('dashboard.vendedor', compact('saldos', 'metricas'));
+            // Buscar transações do estabelecimento (últimos 30 dias)
+            $filtrosTransacoes = [
+                'extra_headers' => [
+                    'establishment_id' => $estabelecimentoId,
+                ],
+                'perPage' => 1000,
+                'filters' => json_encode([
+                    'created_at' => [
+                        'min' => date('Y-m-d', strtotime('-30 days')),
+                        'max' => date('Y-m-d'),
+                    ],
+                ]),
+            ];
+
+            $transacoes = $this->transacaoService->listarTransacoes($filtrosTransacoes);
+
+            // Buscar saldos do estabelecimento
+            $filtrosSaldo = [
+                'extra_headers' => [
+                    'establishment_id' => $estabelecimentoId,
+                ],
+            ];
+
+            $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
+            $lancamentosDiarios = $this->transacaoService->lancamentosFuturosDiarios($filtrosSaldo);
+
+            // Calcular métricas
+            $totalTransacoes = isset($transacoes['data']) ? count($transacoes['data']) : 0;
+            $volumeTotal = 0;
+            $transacoesPagas = 0;
+            $transacoesPendentes = 0;
+
+            if (isset($transacoes['data'])) {
+                foreach ($transacoes['data'] as $transacao) {
+                    $valor = $transacao['amount'] ?? 0;
+                    $status = $transacao['status'] ?? '';
+
+                    $volumeTotal += $valor;
+
+                    if ($status === 'PAID') {
+                        $transacoesPagas++;
+                    } elseif (in_array($status, ['PENDING', 'APPROVED'])) {
+                        $transacoesPendentes++;
+                    }
+                }
+            }
+
+            // Saldos formatados
+            $saldos = [
+                'disponivel' => isset($saldo['total']['amount'])
+                    ? 'R$ ' . number_format($saldo['total']['amount'] / 100, 2, ',', '.')
+                    : 'R$ 0,00',
+                'transito' => 'R$ 0,00',
+                'bloqueado_cartao' => 'R$ 0,00',
+                'bloqueado_boleto' => 'R$ 0,00',
+            ];
+
+            // Valores em trânsito (próximos 7 dias)
+            if (isset($lancamentosDiarios['data'])) {
+                $valorTransito = 0;
+                foreach ($lancamentosDiarios['data'] as $item) {
+                    $valor = $item['amount'] ?? 0;
+                    $data = $item['date'] ?? '';
+
+                    if ($data && strtotime($data) <= strtotime('+7 days')) {
+                        $valorTransito += $valor;
+                    }
+                }
+                $saldos['transito'] = 'R$ ' . number_format($valorTransito / 100, 2, ',', '.');
+            }
+
+            $metricas = [
+                [
+                    'valor' => $totalTransacoes,
+                    'label' => 'Total de Transações (30 dias)',
+                    'icone' => 'fas fa-exchange-alt',
+                    'cor' => 'metric-icon-blue',
+                ],
+                [
+                    'valor' => $transacoesPagas,
+                    'label' => 'Transações Pagas',
+                    'icone' => 'fas fa-check-circle',
+                    'cor' => 'metric-icon-green',
+                ],
+                [
+                    'valor' => $transacoesPendentes,
+                    'label' => 'Transações Pendentes',
+                    'icone' => 'fas fa-clock',
+                    'cor' => 'metric-icon-orange',
+                ],
+                [
+                    'valor' => 'R$ ' . number_format($volumeTotal / 100, 2, ',', '.'),
+                    'label' => 'Volume Total (30 dias)',
+                    'icone' => 'fas fa-chart-line',
+                    'cor' => 'metric-icon-teal',
+                ],
+                [
+                    'valor' => $totalTransacoes > 0
+                        ? 'R$ ' . number_format(($volumeTotal / $totalTransacoes) / 100, 2, ',', '.')
+                        : 'R$ 0,00',
+                    'label' => 'Ticket Médio',
+                    'icone' => 'fas fa-chart-bar',
+                    'cor' => 'metric-icon-cyan',
+                ],
+            ];
+
+            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
+
+            $saldos = [
+                'disponivel' => 'R$ 0,00',
+                'transito' => 'R$ 0,00',
+                'bloqueado_cartao' => 'R$ 0,00',
+                'bloqueado_boleto' => 'R$ 0,00',
+            ];
+
+            $metricas = [
+                [
+                    'valor' => '0',
+                    'label' => 'Erro ao carregar dados',
+                    'icone' => 'fas fa-exclamation-triangle',
+                    'cor' => 'metric-icon-red',
+                ],
+            ];
+
+            return view('dashboard.vendedor', compact('saldos', 'metricas'));
+        }
     }
 
     /**

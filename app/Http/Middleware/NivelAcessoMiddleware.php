@@ -42,7 +42,7 @@ class NivelAcessoMiddleware
                     }
                     break;
                 case 'vendedor':
-                    if ($user->isSuperAdminOrAdminOrVendedor()) {
+                    if ($user->isVendedor()) {
                         return $next($request);
                     }
                     break;
