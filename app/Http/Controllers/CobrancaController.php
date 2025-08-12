@@ -254,6 +254,10 @@ class CobrancaController extends Controller
             $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavos($dados['instruction']['interest']['amount']) / 100.0;
             $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavos($dados['instruction']['discount']['amount']) / 100.0;
 
+            // Garantir tipos booleanos corretos exigidos pela API (normalização simples)
+            $dados['recharge'] = $request->boolean('recharge');
+            $dados['instruction']['booklet'] = $request->boolean('instruction.booklet');
+
             // Adicionar establishment_id
             $dados['extra_headers'] = [
                 'establishment_id' => '155102'
