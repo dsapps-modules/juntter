@@ -10,6 +10,7 @@
     :breadcrumbItems="[
         ['label' => 'Vendas', 'icon' => 'fas fa-chart-line', 'url' => '#']
     ]"
+    :showSaldos="auth()->user()?->isAdminLoja()"
 />
 
 <div class="container-fluid mt-3">

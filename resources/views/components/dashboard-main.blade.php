@@ -1,4 +1,4 @@
-@props(['title' => 'Dashboard', 'saldos' => [], 'metricas' => [], 'breadcrumbItems' => []])
+@props(['title' => 'Dashboard', 'saldos' => [], 'metricas' => [], 'breadcrumbItems' => [], 'showSaldos' => true])
 
 <!-- Breadcrumb -->
 <x-breadcrumb :items="$breadcrumbItems" />
@@ -10,87 +10,89 @@
     </div>
 </div>
 
-<!-- Saldo Cards -->
-<div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="saldo-card saldo-disponivel fade-in-up" data-delay="0.1s">
-            <div class="saldo-content">
-                <div class="saldo-valor">{{ $saldos['disponivel'] ?? 'R$ 0,00' }}</div>
-                <div class="saldo-label">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Lançamentos Futuros
+@if($showSaldos)
+    <!-- Saldo Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="saldo-card saldo-disponivel fade-in-up" data-delay="0.1s">
+                <div class="saldo-content">
+                    <div class="saldo-valor">{{ $saldos['disponivel'] ?? 'R$ 0,00' }}</div>
+                    <div class="saldo-label">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Lançamentos Futuros
+                    </div>
+                </div>
+                <div class="saldo-icon">
+                    <i class="fas fa-wallet"></i>
                 </div>
             </div>
-            <div class="saldo-icon">
-                <i class="fas fa-wallet"></i>
-            </div>
         </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="saldo-card saldo-transito fade-in-up" data-delay="0.2s">
-            <div class="saldo-content">
-                <div class="saldo-valor">{{ $saldos['transito'] ?? 'R$ 0,00' }}</div>
-                <div class="saldo-label">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Saldo em trânsito
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="saldo-card saldo-transito fade-in-up" data-delay="0.2s">
+                <div class="saldo-content">
+                    <div class="saldo-valor">{{ $saldos['transito'] ?? 'R$ 0,00' }}</div>
+                    <div class="saldo-label">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Saldo em trânsito
+                    </div>
+                </div>
+                <div class="saldo-icon">
+                    <i class="fas fa-clock"></i>
                 </div>
             </div>
-            <div class="saldo-icon">
-                <i class="fas fa-clock"></i>
-            </div>
         </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="saldo-card saldo-processamento fade-in-up" data-delay="0.3s">
-            <div class="saldo-content">
-                <div class="saldo-valor">{{ $saldos['processamento'] ?? 'R$ 0,00' }}</div>
-                <div class="saldo-label">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Em Processamento
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="saldo-card saldo-processamento fade-in-up" data-delay="0.3s">
+                <div class="saldo-content">
+                    <div class="saldo-valor">{{ $saldos['processamento'] ?? 'R$ 0,00' }}</div>
+                    <div class="saldo-label">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Em Processamento
+                    </div>
+                </div>
+                <div class="saldo-icon">
+                    <i class="fas fa-spinner"></i>
                 </div>
             </div>
-            <div class="saldo-icon">
-                <i class="fas fa-spinner"></i>
-            </div>
         </div>
-    </div>
-    
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="saldo-card saldo-bloqueado fade-in-up" data-delay="0.4s">
-            <div class="saldo-content">
-                <div class="saldo-valor">{{ $saldos['bloqueado_cartao'] ?? 'R$ 0,00' }}</div>
-                <div class="saldo-label">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Bloqueado: cartão
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="saldo-card saldo-bloqueado fade-in-up" data-delay="0.4s">
+                <div class="saldo-content">
+                    <div class="saldo-valor">{{ $saldos['bloqueado_cartao'] ?? 'R$ 0,00' }}</div>
+                    <div class="saldo-label">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Bloqueado: cartão
+                    </div>
+                </div>
+                <div class="saldo-icon">
+                    <i class="fas fa-credit-card"></i>
                 </div>
             </div>
-            <div class="saldo-icon">
-                <i class="fas fa-credit-card"></i>
-            </div>
         </div>
+        
     </div>
-    
-</div>
 
-<!-- Segunda linha para o último card -->
-<div class="row justify-content-center">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="saldo-card saldo-bloqueado-boleto fade-in-up" data-delay="0.5s">
-            <div class="saldo-content">
-                <div class="saldo-valor">{{ $saldos['bloqueado_boleto'] ?? 'R$ 0,00' }}</div>
-                <div class="saldo-label">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Bloqueado: boleto
+    <!-- Segunda linha para o último card -->
+    <div class="row justify-content-center">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="saldo-card saldo-bloqueado-boleto fade-in-up" data-delay="0.5s">
+                <div class="saldo-content">
+                    <div class="saldo-valor">{{ $saldos['bloqueado_boleto'] ?? 'R$ 0,00' }}</div>
+                    <div class="saldo-label">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Bloqueado: boleto
+                    </div>
                 </div>
-            </div>
-            <div class="saldo-icon">
-                <i class="fas fa-file-alt"></i>
+                <div class="saldo-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
             </div>
         </div>
     </div>
-</div>
+@endif
 
 <!-- Dashboard Analytics Card -->
 <div class="row">
