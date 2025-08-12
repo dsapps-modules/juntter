@@ -23,10 +23,10 @@
                                <h3 class="h4 mb-1 fw-bold">Estabelecimentos</h3>
                                <p class="text-muted mb-0">Gerencie os estabelecimentos cadastrados</p>
                            </div>
-                           <button class="btn btn-novo-pagamento shadow-sm">
+                         {{--  <button class="btn btn-novo-pagamento shadow-sm">
                                <i class="fas fa-plus me-2"></i>
                                Novo Estabelecimento
-                           </button>
+                           </button> --}}
                        </div>
                        
                        <!-- Tabela Juntter Style -->
