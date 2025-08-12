@@ -24,7 +24,7 @@ class TesteCompletoAuth extends DuskTestCase
             
             // Remove validação JavaScript
             $("#loginForm").off("submit");
-            $("#registerForm").off("submit");
+            // Registro desabilitado
             
             // Remove validação em tempo real
             $("#email, #password, #name, #password_confirmation").off("input");
@@ -48,20 +48,14 @@ class TesteCompletoAuth extends DuskTestCase
         ]);
 
         $this->browse(function (Browser $browser) use ($email) {
-            $browser->visit('/register')
+            $browser->visit('/login')
                     ->waitFor('.login-container')
-                    ->type('#name', 'João Silva')
                     ->type('#email', $email)
                     ->type('#password', 'senha123456')
-                    ->type('#password_confirmation', 'senha123456')
-                    ->waitFor('#registerBtn')
-                    ->waitUntil('!$("#registerBtn").prop("disabled")', 5)
-                    
-                    ->pause(2000)
-                    ->click('#registerBtn')
-                    ->waitForText('O valor informado para o campo e-mail já está em uso.', 3)
-                    ->assertSee('O valor informado para o campo e-mail já está em uso.')
-                    ->assertPathIs('/register');
+                    ->waitFor('#loginBtn')
+                    ->pause(1000)
+                    ->click('#loginBtn')
+                    ->waitForLocation('/vendedor/dashboard', 10);
         });
     }
 
@@ -71,15 +65,14 @@ class TesteCompletoAuth extends DuskTestCase
     public function test_cliente_deseja_voltar_para_home()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/register')
+            $browser->visit('/login')
                     ->waitFor('.login-container')
                     ->waitFor('#logo-navbar', 5)
                     ->click('#logo-navbar')
                     ->waitForLocation('/', 10)
                     ->assertPathIs('/')
                     ->pause(2000)
-                    ->waitForText('vende por ', 3)
-                    ->assertSee('vende por ');
+                    ->assertSee('Checkout Digital');
         });
     }
 
@@ -89,22 +82,20 @@ class TesteCompletoAuth extends DuskTestCase
     public function test_cliente_nao_preencheu_nome()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/register')
+            $browser->visit('/login')
                     ->waitFor('.login-container')
-                    ->type('#email', 'teste@example.com')
                     ->type('#password', 'senha123456')
-                    ->type('#password_confirmation', 'senha123456')
-                    ->waitFor('#registerBtn')
-                    ->waitUntil('!$("#registerBtn").prop("disabled")', 5)
+                    ->waitFor('#loginBtn')
+                    ->waitUntil('!$("#loginBtn").prop("disabled")', 5)
                     ->pause(2000);
             
             // Desabilita validação HTML5 e JavaScript
             $this->disableHtmlValidation($browser);
             
-            $browser->click('#registerBtn')
-                    ->waitForText('O campo nome é obrigatório.', 3)
-                    ->assertSee('O campo nome é obrigatório.')
-                    ->assertPathIs('/register');
+            $browser->click('#loginBtn')
+                    ->waitForText('O campo e-mail é obrigatório.', 3)
+                    ->assertSee('O campo e-mail é obrigatório.')
+                    ->assertPathIs('/login');
         });
     }
 
@@ -114,23 +105,22 @@ class TesteCompletoAuth extends DuskTestCase
     public function test_cliente_nao_preencheu_email()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/register')
+            $browser->visit('/login')
                     ->waitFor('.login-container')
-                    ->type('#name', 'João Silva')
+                    ->type('#email', '')
                     ->type('#password', 'senha123456')
-                    ->type('#password_confirmation', 'senha123456')
-                    ->waitFor('#registerBtn')
-                    ->waitUntil('!$("#registerBtn").prop("disabled")', 5)
+                    ->waitFor('#loginBtn')
+                    ->waitUntil('!$("#loginBtn").prop("disabled")', 5)
                     ->pause(1000);
             
             // Desabilita validação HTML5 e JavaScript
             $this->disableHtmlValidation($browser);
             
             $browser->pause(1000)
-                    ->click('#registerBtn')
+                    ->click('#loginBtn')
                     ->waitForText('O campo e-mail é obrigatório.', 5)
                     ->assertSee('O campo e-mail é obrigatório.')
-                    ->assertPathIs('/register');
+                    ->assertPathIs('/login');
         });
     }
 
@@ -140,22 +130,20 @@ class TesteCompletoAuth extends DuskTestCase
     public function test_cliente_nao_preencheu_senha()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/register')
+            $browser->visit('/login')
                     ->waitFor('.login-container')
-                    ->type('#name', 'João Silva')
                     ->type('#email', 'teste@example.com')
-                    ->type('#password_confirmation', 'senha123456')
-                    ->waitFor('#registerBtn')
-                    ->waitUntil('!$("#registerBtn").prop("disabled")', 5)
+                    ->waitFor('#loginBtn')
+                    ->waitUntil('!$("#loginBtn").prop("disabled")', 5)
                     ->pause(2000);
             
             // Desabilita validação HTML5 e JavaScript
             $this->disableHtmlValidation($browser);
             
-            $browser->click('#registerBtn')
+            $browser->click('#loginBtn')
                     ->waitForText('O campo senha é obrigatório.', 3)
                     ->assertSee('O campo senha é obrigatório.')
-                    ->assertPathIs('/register');
+                    ->assertPathIs('/login');
         });
     }
 
@@ -165,23 +153,22 @@ class TesteCompletoAuth extends DuskTestCase
     public function test_cliente_nao_preencheu_confirmacao_senha()
     {
         $this->browse(function (Browser $browser) {
-            $browser->visit('/register')
+            $browser->visit('/login')
                     ->waitFor('.login-container')
-                    ->type('#name', 'João Silva')
                     ->type('#email', 'teste@example.com')
-                    ->type('#password', 'senha123456')
-                    ->waitFor('#registerBtn')
-                    ->waitUntil('!$("#registerBtn").prop("disabled")', 5)
+                    ->type('#password', '')
+                    ->waitFor('#loginBtn')
+                    ->waitUntil('!$("#loginBtn").prop("disabled")', 5)
                     ->pause(1000);
             
             // Desabilita validação HTML5 e JavaScript
             $this->disableHtmlValidation($browser);
             
             $browser->pause(1000)
-                    ->click('#registerBtn')
-                    ->waitForText('A confirmação para o campo senha não coincide.', 5)
-                    ->assertSee('A confirmação para o campo senha não coincide.')
-                    ->assertPathIs('/register');
+                    ->click('#loginBtn')
+                    ->waitForText('O campo senha é obrigatório.', 5)
+                    ->assertSee('O campo senha é obrigatório.')
+                    ->assertPathIs('/login');
         });
     }
 
@@ -300,28 +287,7 @@ class TesteCompletoAuth extends DuskTestCase
     /**
      * Teste 12: Registro com sucesso
      */
-    public function test_registro_com_sucesso()
-    {
-        $email = 'registro_sucesso@test.com';
-        
-        $this->browse(function (Browser $browser) use ($email) {
-            $browser->visit('/register')
-                    ->waitFor('.login-container')
-                    ->type('#name', 'João Silva')
-                    ->type('#email', $email)
-                    ->type('#password', 'senha123456')
-                    ->type('#password_confirmation', 'senha123456')
-                    ->waitFor('#registerBtn')
-                    ->waitUntil('!$("#registerBtn").prop("disabled")', 5)
-                    ->pause(2000)
-                    ->click('#registerBtn')
-                    ->waitForLocation('/login', 15)
-                    ->pause(2000)
-                    ->assertPathIs('/login')
-                    ->waitForText('Conta criada com sucesso! Faça login para continuar.', 5)
-                    ->assertSee('Conta criada com sucesso! Faça login para continuar.');
-        });
-    }
+    // Registro desabilitado
 
     /**
      * Teste 13: Logout
@@ -469,12 +435,7 @@ class TesteCompletoAuth extends DuskTestCase
                     ->assertVisible('.login-container')
                     ->assertVisible('.login-card');
 
-            // Registro em mobile
-            $browser->visit('/register')
-                    ->resize(375, 667)
-                    ->waitFor('.login-container')
-                    ->assertVisible('.login-container')
-                    ->assertVisible('.login-card');
+            // Registro desabilitado
         });
     }
 } 

@@ -18,10 +18,10 @@ class TesteCompletoLandingPage extends DuskTestCase
                     ->waitFor('.hero-section', 10)
                     ->waitForText('Checkout Digital que', 10)
                     ->waitForText('vende por você', 10)
-                    ->waitForText('Criar Meu Checkout', 10)
+                    ->waitForText('Entrar para Começar', 10)
                     ->assertSee('Checkout Digital que')
                     ->assertSee('vende por você')
-                    ->assertSee('Criar Meu Checkout');
+                    ->assertSee('Entrar para Começar');
         });
     }
 
@@ -113,8 +113,8 @@ class TesteCompletoLandingPage extends DuskTestCase
                     ->waitUntilMissing('#loading', 5)
                     ->waitFor('.hero-section', 10)
                     ->click('.btn-hero')
-                    ->waitForLocation('/register', 10)
-                    ->assertPathIs('/register');
+                    ->waitForLocation('/login', 10)
+                    ->assertPathIs('/login');
         });
     }
 
@@ -133,8 +133,8 @@ class TesteCompletoLandingPage extends DuskTestCase
 
             // Teste botão Starter (primeiro botão outline-warning)
             $browser->click('#starter')
-                    ->waitForLocation('/register', 10)
-                    ->assertPathIs('/register');
+                    ->waitForLocation('/login', 10)
+                    ->assertPathIs('/login');
 
             // Teste botão Pro
             $browser->visit('/')
@@ -144,8 +144,8 @@ class TesteCompletoLandingPage extends DuskTestCase
                     ->pause(2000)
                     ->waitFor('#precos', 10)
                     ->click('#pro')
-                    ->waitForLocation('/register', 10)
-                    ->assertPathIs('/register');
+                    ->waitForLocation('/login', 10)
+                    ->assertPathIs('/login');
 
             // Teste botão Enterprise
             $browser->visit('/')
@@ -155,8 +155,8 @@ class TesteCompletoLandingPage extends DuskTestCase
                     ->pause(2000)
                     ->waitFor('#precos', 10)
                     ->click('#enterprise')
-                    ->waitForLocation('/register', 10)
-                    ->assertPathIs('/register');
+                    ->waitForLocation('/login', 10)
+                    ->assertPathIs('/login');
         });
     }
 
@@ -227,11 +227,7 @@ class TesteCompletoLandingPage extends DuskTestCase
                     ->waitUntilMissing('#loading', 5)
                     ->waitFor('.hero-section', 10);
 
-            // Teste link Criar Conta
-            $browser->waitFor('#criarconta-navbar', 10)
-                    ->click('#criarconta-navbar')
-                    ->waitForLocation('/register', 10)
-                    ->assertPathIs('/register');
+            // Link Criar Conta removido
         });
     }
 
@@ -244,8 +240,8 @@ class TesteCompletoLandingPage extends DuskTestCase
                     ->scrollTo('#comecar-agora')
                     ->pause(2000)
                     ->click('#comecar-agora')
-                    ->waitForLocation('/register', 10)
-                    ->assertPathIs('/register');
+                    ->waitForLocation('/login', 10)
+                    ->assertPathIs('/login');
         });
     }
 
