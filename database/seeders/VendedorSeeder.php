@@ -19,7 +19,7 @@ class VendedorSeeder extends Seeder
         $adminLojaDS = User::create([
             'name' => 'Admin DS Aplicativos',
             'email' => 'admin-ds@teste.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('12345678'),
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now()
         ]);
@@ -39,7 +39,7 @@ class VendedorSeeder extends Seeder
         $vendedorLojaDS = User::create([
             'name' => 'Vendedor DS Aplicativos',
             'email' => 'vendedor-ds@teste.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('12345678'),
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now()
         ]);
@@ -59,9 +59,29 @@ class VendedorSeeder extends Seeder
         $adminLojaJuntter = User::create([
             'name' => 'Admin Juntter',
             'email' => 'admin-juntter@teste.com',
-            'password' => Hash::make('password'),
+            'password' => Hash::make('12345678'),
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now()
+        ]);
+
+        // Criar usuário vendedor da Juntter (não admin)
+        $vendedorJuntter = User::create([
+            'name' => 'Vendedor Juntter',
+            'email' => 'vendedor-juntter@teste.com',
+            'password' => Hash::make('12345678'),
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now()
+        ]);
+
+        Vendedor::create([
+            'user_id' => $vendedorJuntter->id,
+            'estabelecimento_id' => '155102', // Mesmo estabelecimento - Juntter
+            'sub_nivel' => 'vendedor_loja',
+            'comissao' => 3.50,
+            'meta_vendas' => 25000.00,
+            'telefone' => '(11) 96666-6666',
+            'endereco' => 'Rua Projetos, 100 - Botucatu/SP',
+            'status' => 'ativo'
         ]);
 
         Vendedor::create([
@@ -76,8 +96,9 @@ class VendedorSeeder extends Seeder
         ]);
 
         $this->command->info('Usuários vendedores criados com sucesso!');
-        $this->command->info('Admin DS Aplicativos: admin-ds@teste.com / password');
-        $this->command->info('Vendedor DS Aplicativos: vendedor-ds@teste.com / password');
-        $this->command->info('Admin Juntter: admin-juntter@teste.com / password');
+        $this->command->info('Admin DS Aplicativos: admin-ds@teste.com / 12345678');
+        $this->command->info('Vendedor DS Aplicativos: vendedor-ds@teste.com / 12345678');
+        $this->command->info('Admin Juntter: admin-juntter@teste.com / 12345678');
+        $this->command->info('Vendedor Juntter: vendedor-juntter@teste.com / 12345678');
     }
 }
