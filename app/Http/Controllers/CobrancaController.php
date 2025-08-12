@@ -405,6 +405,27 @@ class CobrancaController extends Controller
     }
 
     /**
+     * Detalhes do boleto (estrutura distinta da transação)
+     */
+    public function detalhesBoleto($id)
+    {
+        try {
+            $boleto = $this->boletoService->consultarBoleto($id);
+
+            if (!$boleto) {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Boleto não encontrado.');
+            }
+
+            return view('cobranca.boleto-detalhes', compact('boleto'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao buscar detalhes do boleto: ' . $e->getMessage());
+            return redirect()->route('cobranca.index')
+                ->with('error', 'Erro ao buscar detalhes do boleto: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Estornar transação
      */
     public function estornarTransacao($id)

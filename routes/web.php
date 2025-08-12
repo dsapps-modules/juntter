@@ -68,6 +68,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/cobranca/boleto', [CobrancaController::class, 'criarBoleto'])->name('cobranca.boleto.criar');
     Route::post('/cobranca/simular', [CobrancaController::class, 'simularTransacao'])->name('cobranca.transacao.simular');
     Route::get('/cobranca/transacao/{id}', [CobrancaController::class, 'detalhesTransacao'])->name('cobranca.transacao.detalhes');
+    Route::get('/cobranca/boleto/{id}', [CobrancaController::class, 'detalhesBoleto'])->name('cobranca.boleto.detalhes');
     Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
     Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
 
