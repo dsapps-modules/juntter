@@ -41,7 +41,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('nivel.acesso:comprador')
         ->name('comprador.dashboard');
 
-    // Rotas de Cobrança (acessível para super_admin, admin e vendedor - NÃO para comprador)
+            
     Route::middleware('nivel.acesso:vendedor')->group(function () {
     Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
     

@@ -989,7 +989,8 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 #pixTable,
 #planosTable,
 #estabelecimentos-table,
-#saldoExtratoTable {
+#saldoExtratoTable,
+#tabela-transacoes {
     border-radius: 1rem;
     overflow: visible;
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
@@ -1020,7 +1021,8 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 #pixTable tbody td,
 #planosTable tbody td,
 #estabelecimentos-table tbody td,
-#saldoExtratoTable tbody td {
+#saldoExtratoTable tbody td,
+#tabela-transacoes tbody td {
     border-top: 1px solid #e9ecef;
     padding: 0.5rem 0.5rem;
     vertical-align: middle;
@@ -1032,7 +1034,8 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
 #pixTable tbody tr:hover,
 #planosTable tbody tr:hover,
 #estabelecimentos-table tbody tr:hover,
-#saldoExtratoTable tbody tr:hover {
+#saldoExtratoTable tbody tr:hover,
+#tabela-transacoes tbody tr:hover {
     background-color: rgba(255, 193, 7, 0.05);
     transform: translateY(-1px);
     transition: all 0.2s ease;

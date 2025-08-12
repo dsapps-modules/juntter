@@ -213,6 +213,17 @@ function initDataTables() {
                 details: { type: 'column', target: 0 }
             }
         });
+
+        // DataTable para Transações do Vendedor
+        initDataTableSafely('#tabela-transacoes', [
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
+            },
+            order: [[5, 'desc']] // coluna Data
+        });
         
         // DataTable para Saldo e Extrato
         initDataTableSafely('#saldoExtratoTable', [
