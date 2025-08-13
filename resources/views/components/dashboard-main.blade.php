@@ -12,12 +12,6 @@
 <!-- Breadcrumb -->
 <x-breadcrumb :items="$breadcrumbItems" />
 
-<!-- Dashboard Title -->
-<div class="row mb-4">
-    <div class="col-12">
-        <h1 class="dashboard-title fw-bold mb-0">{{ $title ?? 'Dashboard' }}</h1>
-    </div>
-</div>
 
 @if($showSaldos)
     <!-- Saldo Cards -->
