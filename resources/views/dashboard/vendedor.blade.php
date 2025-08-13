@@ -16,28 +16,7 @@
     :showSaldos="auth()->user()?->isAdminLoja()"
 />
 
-<div class="container-fluid mt-3">
-    @if(isset($estabelecimento))
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-body d-flex flex-wrap align-items-center justify-content-between">
-                        <div>
-                            <h5 class="mb-1">
-                                {{ $estabelecimento['first_name'] ?? $estabelecimento['name'] ?? 'Estabelecimento' }}
-                            </h5>
-                            <div class="text-muted small">
-                                ID: {{ $estabelecimento['id'] ?? 'N/A' }}
-                            </div>
-                        </div>
-                        <div class="text-muted small">
-                            {{ $estabelecimento['address']['city'] ?? '' }}{{ isset($estabelecimento['address']['state']) ? ' / '.$estabelecimento['address']['state'] : '' }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
+
 
     <div class="row">
         <div class="col-12">
