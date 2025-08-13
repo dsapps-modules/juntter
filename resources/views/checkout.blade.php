@@ -177,7 +177,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte por email</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Relatórios básicos</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block">Entrar e Usar</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block" id="btn-plano-flex">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -233,7 +233,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte prioritário</li>
                         <li><i class="fas fa-check text-success mr-2"></i>API básica</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-warning btn-block">Entrar e Usar</a>
+                    <a href="{{ route('login') }}" class="btn btn-warning btn-block" id="btn-plano-negocio">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -289,7 +289,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>White label</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Webhooks avançados</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block">Entrar e Usar</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block" id="btn-plano-mais">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -316,7 +316,7 @@
                         <li><i class="fas fa-check text-success mr-2"></i>SLA personalizado</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Consultoria especializada</li>
                     </ul>
-                    <a href="#" class="btn btn-outline-warning btn-block" onclick="abrirWhatsApp()">Falar com Especialista</a>
+                    <a href="#" class="btn btn-outline-warning btn-block" id="btn-plano-customizado" onclick="abrirWhatsApp()">Falar com Especialista</a>
                 </div>
             </div>
         </div>
