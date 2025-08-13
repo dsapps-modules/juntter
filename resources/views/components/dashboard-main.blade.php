@@ -6,11 +6,12 @@
   'metricasCartao' => null,
   'metricasBoleto' => null,
   'breadcrumbItems' => [],
-  'showSaldos' => true
+  'showSaldos' => true,
+  'rightSub' => null
 ])
 
 <!-- Breadcrumb -->
-<x-breadcrumb :items="$breadcrumbItems" />
+<x-breadcrumb :items="$breadcrumbItems" :rightSub="$rightSub" />
 
 
 @if($showSaldos)

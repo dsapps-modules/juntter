@@ -11,8 +11,15 @@
     :metricasCartao="$metricasCartao"
     :metricasBoleto="$metricasBoleto"
     :breadcrumbItems="[
-        ['label' => 'Vendas', 'icon' => 'fas fa-chart-line', 'url' => '#']
+        [
+            'label' => 'Vendas',
+            'icon' => 'fas fa-chart-line',
+            'url' => '#',
+          
+        ]
+        
     ]"
+    :rightSub="isset($estabelecimento) ? (($estabelecimento['first_name'] ?? $estabelecimento['name'] ?? 'Estabelecimento') . ' • ID ' . ($estabelecimento['id'] ?? 'N/A')) : null"
     :showSaldos="auth()->user()?->isAdminLoja()"
 />
 
