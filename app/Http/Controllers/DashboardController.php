@@ -487,25 +487,105 @@ class DashboardController extends Controller
             $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
             $lancamentosDiarios = $this->transacaoService->lancamentosFuturosDiarios($filtrosSaldo);
 
-            // Calcular métricas
-            $totalTransacoes = isset($transacoes['data']) ? count($transacoes['data']) : 0;
-            $volumeTotal = 0;
+            // Calcular métricas (inclui Cartão, PIX e Boleto)
+            $totalTransacoes = 0;
+            $volumeLiquidoTotal = 0; // amount
+            $volumeBrutoTotal = 0;   // original_amount
+            $totalTaxas = 0;
             $transacoesPagas = 0;
             $transacoesPendentes = 0;
+            $transacoesHoje = 0;
+
+            // Cartão
+            $qtdCredito = 0; $qtdDebito = 0; $qtdCartao = 0;
+            $volumeCredito = 0; $volumeDebito = 0; $taxasCartao = 0;
+            $cartaoPagas = 0; $cartaoPendentes = 0;
+            // PIX
+            $qtdPix = 0; $volumePix = 0; $taxasPix = 0;
 
             if (isset($transacoes['data'])) {
                 foreach ($transacoes['data'] as $transacao) {
-                    $valor = $transacao['amount'] ?? 0;
+                    $valor = (int)($transacao['amount'] ?? 0);
+                    $valorOriginal = (int)($transacao['original_amount'] ?? $valor);
                     $status = $transacao['status'] ?? '';
+                    $tipo = $transacao['type'] ?? '';
 
-                    $volumeTotal += $valor;
+                    // apenas últimos 30 dias já garantidos no filtro
+                    $totalTransacoes++;
+                    $volumeLiquidoTotal += $valor;
+                    $volumeBrutoTotal += $valorOriginal;
+                    $totalTaxas += (int)($transacao['fees'] ?? 0);
 
-                    if ($status === 'PAID') {
-                        $transacoesPagas++;
-                    } elseif (in_array($status, ['PENDING', 'APPROVED'])) {
-                        $transacoesPendentes++;
+                    if ($status === 'PAID') { $transacoesPagas++; }
+                    elseif (in_array($status, ['PENDING','APPROVED'])) { $transacoesPendentes++; }
+
+                    if (in_array($tipo, ['CREDIT','DEBIT'])) {
+                        $qtdCartao++;
+                        $taxasCartao += (int)($transacao['fees'] ?? 0);
+                        if ($tipo === 'CREDIT') { $qtdCredito++; $volumeCredito += $valor; }
+                        if ($tipo === 'DEBIT')  { $qtdDebito++;  $volumeDebito  += $valor; }
+                        if ($status === 'PAID') { $cartaoPagas++; }
+                        elseif (in_array($status, ['PENDING','APPROVED'])) { $cartaoPendentes++; }
+                    }
+
+                    if ($tipo === 'PIX') {
+                        $qtdPix++;
+                        $volumePix += $valor;
+                        $taxasPix += (int)($transacao['fees'] ?? 0);
+                    }
+
+                    // Transações de hoje
+                    $dataTrans = $transacao['created_at'] ?? '';
+                    if (!empty($dataTrans) && date('Y-m-d', strtotime($dataTrans)) === date('Y-m-d')) {
+                        $transacoesHoje++;
                     }
                 }
+            }
+
+            // Boletos
+            $qtdBoletos = 0; $volumeBoletos = 0; $taxasBoletos = 0; $boletosPagos = 0; $boletosPendentes = 0; $boletosVencidosValor = 0;
+            try {
+                $filtrosBoletos = [
+                    'perPage' => 1000,
+                    'filters' => json_encode([
+                        'establishment.id' => $estabelecimentoId
+                    ])
+                ];
+                $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
+                if (isset($boletos['data']) && is_array($boletos['data'])) {
+                    foreach ($boletos['data'] as $boleto) {
+                        $dataBoleto = $boleto['created_at'] ?? ($boleto['updated_at'] ?? '');
+                        if (!empty($dataBoleto)) {
+                            $ts = strtotime($dataBoleto);
+                            if ($ts !== false && $ts < strtotime('-30 days')) { continue; }
+                        }
+                        $valor = (int)($boleto['amount'] ?? 0);
+                        $valorOriginalBoleto = (int)($boleto['original_amount'] ?? $valor);
+                        $taxa  = (int)($boleto['fees'] ?? 0);
+                        $status = $boleto['status'] ?? '';
+                        $qtdBoletos++;
+                        $volumeBoletos += $valor;
+                        $taxasBoletos += $taxa;
+                        $totalTransacoes++;
+                        $volumeLiquidoTotal += $valor;
+                        $volumeBrutoTotal += $valorOriginalBoleto;
+                        $totalTaxas += $taxa;
+                        if ($status === 'PAID') { $boletosPagos++; $transacoesPagas++; }
+                        elseif (in_array($status, ['PENDING','APPROVED'])) { $boletosPendentes++; $transacoesPendentes++; }
+                        // vencido e pendente
+                        $venc = $boleto['expiration_at'] ?? null;
+                        if ($venc && strtotime($venc) < time() && in_array($status, ['PENDING','PROCESSING'])) {
+                            $boletosVencidosValor += $valor;
+                        }
+
+                        // Boletos criados hoje
+                        if (!empty($dataBoleto) && date('Y-m-d', strtotime($dataBoleto)) === date('Y-m-d')) {
+                            $transacoesHoje++;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::warning('Erro ao listar boletos para vendedor: '.$e->getMessage());
             }
 
             // Saldos formatados
@@ -532,42 +612,44 @@ class DashboardController extends Controller
                 $saldos['transito'] = 'R$ ' . number_format($valorTransito / 100, 2, ',', '.');
             }
 
-            $metricas = [
-                [
-                    'valor' => $totalTransacoes,
-                    'label' => 'Total de Transações (30 dias)',
-                    'icone' => 'fas fa-exchange-alt',
-                    'cor' => 'metric-icon-blue',
-                ],
-                [
-                    'valor' => $transacoesPagas,
-                    'label' => 'Transações Pagas',
-                    'icone' => 'fas fa-check-circle',
-                    'cor' => 'metric-icon-green',
-                ],
-                [
-                    'valor' => $transacoesPendentes,
-                    'label' => 'Transações Pendentes',
-                    'icone' => 'fas fa-clock',
-                    'cor' => 'metric-icon-orange',
-                ],
-                [
-                    'valor' => 'R$ ' . number_format($volumeTotal / 100, 2, ',', '.'),
-                    'label' => 'Volume Total (30 dias)',
-                    'icone' => 'fas fa-chart-line',
-                    'cor' => 'metric-icon-teal',
-                ],
-                [
-                    'valor' => $totalTransacoes > 0
-                        ? 'R$ ' . number_format(($volumeTotal / $totalTransacoes) / 100, 2, ',', '.')
-                        : 'R$ 0,00',
-                    'label' => 'Ticket Médio',
-                    'icone' => 'fas fa-chart-bar',
-                    'cor' => 'metric-icon-cyan',
-                ],
+            
+            $metricasGeral = [
+                [ 'valor' => $transacoesHoje, 'label' => 'Transações Hoje', 'icone' => 'fas fa-exchange-alt', 'cor' => 'metric-icon-green' ],
+                [ 'valor' => 'R$ ' . number_format($volumeBrutoTotal / 100, 2, ',', '.'),  'label' => 'Volume Bruto (30 dias)',   'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal' ],
+                [ 'valor' => 'R$ ' . number_format($volumeLiquidoTotal / 100, 2, ',', '.'),'label' => 'Volume Líquido (30 dias)', 'icone' => 'fas fa-chart-bar',  'cor' => 'metric-icon-blue' ],
+                [ 'valor' => 'R$ ' . number_format($totalTaxas / 100, 2, ',', '.'),       'label' => 'Taxas (30 dias)',          'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red' ],
+                [ 'valor' => 'R$ ' . number_format($volumePix / 100, 2, ',', '.'),        'label' => 'Volume PIX (30 dias)',     'icone' => 'fas fa-qrcode',     'cor' => 'metric-icon-green' ],
+                [ 'valor' => $qtdPix,     'label' => 'Transações PIX',     'icone' => 'fas fa-qrcode',       'cor' => 'metric-icon-green' ],
+                [ 'valor' => $qtdBoletos, 'label' => 'Transações Boleto',  'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-blue' ],
+                [ 'valor' => $qtdCartao,  'label' => 'Transações Cartão',  'icone' => 'fas fa-credit-card',  'cor' => 'metric-icon-blue' ],
+                [ 'valor' => ($totalTransacoes > 0 ? 'R$ ' . number_format(($volumeLiquidoTotal / $totalTransacoes) / 100, 2, ',', '.') : 'R$ 0,00'), 'label' => 'Ticket Médio (30 dias)', 'icone' => 'fas fa-ticket-alt', 'cor' => 'metric-icon-cyan' ],
             ];
 
-            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes'));
+            $metricasCartao = [
+                [ 'valor' => $qtdCartao, 'label' => 'Transações Cartão', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue' ],
+                [ 'valor' => $qtdCredito, 'label' => 'Transações Crédito', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue' ],
+                [ 'valor' => $qtdDebito,  'label' => 'Transações Débito',  'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-teal' ],
+                [ 'valor' => 'R$ ' . number_format($volumeCredito / 100, 2, ',', '.'), 'label' => 'Volume Crédito (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal' ],
+                [ 'valor' => 'R$ ' . number_format($volumeDebito / 100, 2, ',', '.'),  'label' => 'Volume Débito (30 dias)',  'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal' ],
+                [ 'valor' => 'R$ ' . number_format($taxasCartao / 100, 2, ',', '.'),   'label' => 'Taxas Cartão (30 dias)',   'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red' ],
+                [ 'valor' => $cartaoPagas, 'label' => 'Cartão Pagas', 'icone' => 'fas fa-check-circle', 'cor' => 'metric-icon-green' ],
+                [ 'valor' => $cartaoPendentes, 'label' => 'Cartão Pendentes', 'icone' => 'fas fa-clock', 'cor' => 'metric-icon-orange' ],
+                [ 'valor' => ($qtdCartao > 0 ? 'R$ ' . number_format((($volumeCredito + $volumeDebito) / $qtdCartao) / 100, 2, ',', '.') : 'R$ 0,00'), 'label' => 'Ticket Médio Cartão', 'icone' => 'fas fa-ticket-alt', 'cor' => 'metric-icon-cyan' ],
+            ];
+
+            $metricasBoleto = [
+                [ 'valor' => $qtdBoletos, 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-orange' ],
+                [ 'valor' => 'R$ ' . number_format($volumeBoletos / 100, 2, ',', '.'), 'label' => 'Volume Boleto (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-orange' ],
+                [ 'valor' => 'R$ ' . number_format($taxasBoletos / 100, 2, ',', '.'),  'label' => 'Taxas Boleto (30 dias)',  'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red' ],
+                [ 'valor' => 'R$ ' . number_format($boletosVencidosValor / 100, 2, ',', '.'), 'label' => 'Boletos Vencidos (valor)', 'icone' => 'fas fa-exclamation-triangle', 'cor' => 'metric-icon-red' ],
+                [ 'valor' => $boletosPagos, 'label' => 'Boletos Pagos', 'icone' => 'fas fa-check-circle', 'cor' => 'metric-icon-green' ],
+                [ 'valor' => $boletosPendentes, 'label' => 'Boletos Pendentes', 'icone' => 'fas fa-clock', 'cor' => 'metric-icon-orange' ],
+            ];
+
+            // Para compatibilidade, manter $metricas como geral
+            $metricas = $metricasGeral;
+
+            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto'));
         } catch (\Exception $e) {
             Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
 
