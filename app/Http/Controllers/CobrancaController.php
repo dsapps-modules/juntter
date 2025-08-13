@@ -95,7 +95,7 @@ class CobrancaController extends Controller
                             'amount' => $b['amount'] ?? 0,
                             'fees' => $b['fees'] ?? 0,
                             'gateway_authorization' => $b['gateway_authorization'] ?? ($b['gateway_key'] ?? null),
-                            'created_at' => $b['created_at'] ?? ($b['emission_at'] ?? null),
+                            'created_at' => $b['created_at'] ?? ($b['updated_at'] ?? null),
                             'status' => $b['status'] ?? null,
                         ];
                     }, $boletos['data']);

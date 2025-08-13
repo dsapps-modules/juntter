@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\EstabelecimentoService;
 use App\Services\TransacaoService;
+use App\Services\BoletoService;
 use Illuminate\Support\Facades\Log;
 
 
@@ -12,11 +13,13 @@ class DashboardController extends Controller
 {
     protected $estabelecimentoService;
     protected $transacaoService;
+    protected $boletoService;
 
-    public function __construct(EstabelecimentoService $estabelecimentoService, TransacaoService $transacaoService)
+    public function __construct(EstabelecimentoService $estabelecimentoService, TransacaoService $transacaoService, BoletoService $boletoService)
     {
         $this->estabelecimentoService = $estabelecimentoService;
-        $this->transacaoService = $transacaoService;
+		$this->transacaoService = $transacaoService;
+		$this->boletoService = $boletoService;
     }
 
     /**
@@ -320,6 +323,71 @@ class DashboardController extends Controller
                         $transacoesProcessadasIds[] = $transacaoId;
                     }
                 }
+
+				// 4. Buscar boletos (últimos 30 dias) e consolidar
+				try {
+					$filtrosBoletos = [
+						'perPage' => 1000,
+						'filters' => json_encode([
+							'establishment.id' => $estabelecimentoId
+						])
+					];
+
+					$boletos = $this->boletoService->listarBoletos($filtrosBoletos);
+
+					if ($boletos && isset($boletos['data']) && is_array($boletos['data'])) {
+						foreach ($boletos['data'] as $boleto) {
+							$valor = $boleto['amount'] ?? 0;
+							$taxa = $boleto['fees'] ?? 0;
+							$status = $boleto['status'] ?? '';
+							$dataBoleto = $boleto['created_at'] ?? ($boleto['updated_at'] ?? '');
+
+							// Considerar apenas últimos 30 dias, se houver data
+							if (!empty($dataBoleto)) {
+								$timestamp = strtotime($dataBoleto);
+								if ($timestamp === false || $timestamp < strtotime('-30 days')) {
+									continue;
+								}
+							}
+
+							// Consolidação geral
+							$volumeBruto += $valor;
+							$volumeLiquido += $valor; // assumir amount como líquido para boletos
+							$totalTaxas += $taxa;
+							$volumePorMetodo['BOLETO'] += $valor;
+							$taxasPorMetodo['BOLETO'] += $taxa;
+							$transacoesPorTipo['BOLETO']++;
+							$totalTransacoes++;
+
+							// De hoje
+							if (!empty($dataBoleto) && date('Y-m-d', strtotime($dataBoleto)) === date('Y-m-d')) {
+								$transacoesHoje++;
+							}
+
+							// Status
+							if (isset($transacoesPorStatus[$status])) {
+								$transacoesPorStatus[$status]++;
+							}
+
+							switch ($status) {
+								case 'PAID':
+									$transacoesPagas++;
+									break;
+								case 'PENDING':
+								case 'APPROVED':
+									$saldosConsolidados['processamento'] += $valor;
+									break;
+								case 'FAILED':
+								case 'CANCELED':
+								case 'REFUNDED':
+									$transacoesFalhadas++;
+									break;
+							}
+						}
+					}
+				} catch (\Exception $e) {
+					Log::warning("Erro ao buscar boletos do estabelecimento {$estabelecimentoId}: " . $e->getMessage());
+				}
             } catch (\Exception $e) {
                 Log::warning("Erro ao buscar dados do estabelecimento {$estabelecimentoId}: " . $e->getMessage());
                 continue;
