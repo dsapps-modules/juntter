@@ -171,13 +171,13 @@
                             </div>
                         </div>
                     </div>
-                    <ul class="list-unstyled mt-4 mb-4">
+                    <ul id="id-plano-mais" class="list-unstyled mt-4 mb-4">
                         <li><i class="fas fa-check text-success mr-2"></i>Links ilimitados</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Checkout básico</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte por email</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Relatórios básicos</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block" id="btn-plano-flex">Entrar e Usar</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block" id="btn-plano-mais">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -226,7 +226,7 @@
                             </div>
                         </div>
                     </div>
-                    <ul class="list-unstyled mt-4 mb-4">
+                    <ul id="id-plano-negocio" class="list-unstyled mt-4 mb-4">
                         <li><i class="fas fa-check text-success mr-2"></i>Tudo do plano Mais</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Checkout personalizado</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Analytics avançado</li>
@@ -282,14 +282,14 @@
                             </div>
                         </div>
                     </div>
-                    <ul class="list-unstyled mt-4 mb-4">
+                    <ul id="id-plano-flex" class="list-unstyled mt-4 mb-4">
                         <li><i class="fas fa-check text-success mr-2"></i>Tudo do plano Negócio</li>
                         <li><i class="fas fa-check text-success mr-2"></i>API completa</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Suporte 24/7</li>
                         <li><i class="fas fa-check text-success mr-2"></i>White label</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Webhooks avançados</li>
                     </ul>
-                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block" id="btn-plano-mais">Entrar e Usar</a>
+                    <a href="{{ route('login') }}" class="btn btn-outline-warning btn-block" id="btn-plano-flex">Entrar e Usar</a>
                 </div>
             </div>
             <div class="col-lg-3 mb-4">
@@ -309,7 +309,7 @@
                             </div>
                         </div>
                     </div>
-                    <ul class="list-unstyled mt-4 mb-4">
+                    <ul id="id-plano-customizado" class="list-unstyled mt-4 mb-4">
                         <li><i class="fas fa-check text-success mr-2"></i>Tudo do plano Flex</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Taxas negociadas</li>
                         <li><i class="fas fa-check text-success mr-2"></i>Account manager</li>

@@ -4,6 +4,7 @@ namespace Tests\Browser;
 
 use Tests\DuskTestCase;
 use Laravel\Dusk\Browser;
+use Facebook\WebDriver\WebDriverBy;
 
 class TesteCompletoLandingPage extends DuskTestCase
 {
@@ -14,14 +15,14 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->waitForText('Checkout Digital que', 10)
-                    ->waitForText('vende por você', 10)
-                    ->waitForText('Entrar para Começar', 10)
-                    ->assertSee('Checkout Digital que')
-                    ->assertSee('vende por você')
-                    ->assertSee('Entrar para Começar');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->waitForText('Checkout Digital que', 10)
+                ->waitForText('vende por você', 10)
+                ->waitForText('Entrar para Começar', 10)
+                ->assertSee('Checkout Digital que')
+                ->assertSee('vende por você')
+                ->assertSee('Entrar para Começar');
         });
     }
 
@@ -32,11 +33,11 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->click('#beneficioslink')
-                    ->pause(2000)
-                    ->assertSee('Por que usar o Juntter Checkout?');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->click('#beneficioslink')
+                ->pause(2000)
+                ->assertSee('Por que usar o Juntter Checkout?');
         });
     }
 
@@ -47,11 +48,11 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->click('#precoslink')
-                    ->pause(2000)
-                    ->assertSee('Planos transparentes');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->click('#precoslink')
+                ->pause(2000)
+                ->assertSee('Planos transparentes');
         });
     }
 
@@ -62,12 +63,12 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->click('#como-funcionalink')
-                    ->pause(2000)
-                    ->assertSee('Como funciona?')
-                    ->assertSee('Venda online em 3 passos simples');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->click('#como-funcionalink')
+                ->pause(2000)
+                ->assertSee('Como funciona?')
+                ->assertSee('Venda online em 3 passos simples');
         });
     }
 
@@ -78,12 +79,12 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->click('#depoimentoslink')
-                    ->pause(2000)
-                    ->waitFor('#depoimentos', 10)
-                    ->assertSee('O que nossos clientes dizem');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->click('#depoimentoslink')
+                ->pause(2000)
+                ->waitFor('#depoimentos', 10)
+                ->assertSee('O que nossos clientes dizem');
         });
     }
 
@@ -94,12 +95,12 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->click('#faqlink')
-                    ->pause(2000)
-                    ->waitFor('#faq', 10)
-                    ->assertSee('Perguntas Frequentes');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->click('#faqlink')
+                ->pause(2000)
+                ->waitFor('#faq', 10)
+                ->assertSee('Perguntas Frequentes');
         });
     }
 
@@ -110,11 +111,11 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->click('.btn-hero')
-                    ->waitForLocation('/login', 10)
-                    ->assertPathIs('/login');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->click('.btn-hero')
+                ->waitForLocation('/login', 10)
+                ->assertPathIs('/login');
         });
     }
 
@@ -125,38 +126,47 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#precos')
-                    ->pause(2000)
-                    ->waitFor('#precos', 10);
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#id-plano-mais')
+                ->pause(2000)
+                ->waitFor('#precos', 10);
 
-            // Teste botão Starter (primeiro botão outline-warning)
-            $browser->click('#starter')
-                    ->waitForLocation('/login', 10)
-                    ->assertPathIs('/login');
+            // Teste botão Mais
+            $browser->waitFor('#btn-plano-mais', 10)
+                ->assertVisible('#btn-plano-mais'); 
+            $browser->pause(2000)
+                ->click('#btn-plano-mais')
+                ->waitForLocation('/login', 10)
+                ->assertPathIs('/login');
 
-            // Teste botão Pro
+            // Teste botão Negócio
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#precos')
-                    ->pause(2000)
-                    ->waitFor('#precos', 10)
-                    ->click('#pro')
-                    ->waitForLocation('/login', 10)
-                    ->assertPathIs('/login');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#id-plano-negocio')
+                ->pause(2000)
+                ->waitFor('#precos', 10)
+                ->waitFor('#btn-plano-negocio', 10)
+                ->assertVisible('#btn-plano-negocio'); 
+            $browser->pause(2000)
+                ->click('#btn-plano-negocio')
+                ->waitForLocation('/login', 10)
+                ->assertPathIs('/login');
 
-            // Teste botão Enterprise
+            // Teste botão Flex
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#precos')
-                    ->pause(2000)
-                    ->waitFor('#precos', 10)
-                    ->click('#enterprise')
-                    ->waitForLocation('/login', 10)
-                    ->assertPathIs('/login');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#id-plano-flex')
+                ->pause(2000)
+                ->waitFor('#precos', 10)
+                ->waitFor('#btn-plano-flex', 10)
+                ->assertVisible('#btn-plano-flex'); 
+            $browser->pause(2000)
+                ->click('#btn-plano-flex')
+                ->waitForLocation('/login', 10)
+                ->assertPathIs('/login');
         });
     }
 
@@ -167,13 +177,15 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#faq')
-                    ->pause(2000)
-                    ->click('.faq-question')
-                    ->waitFor('.faq-answer', 5)
-                    ->assertVisible('.faq-answer');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#faq')
+                ->pause(2000)
+                ->waitFor('.faq-question', 10)
+                ->click('.faq-question:first-child')
+                ->pause(1000)
+                ->waitFor('.faq-answer', 10)
+                ->assertVisible('.faq-answer');
         });
     }
 
@@ -184,24 +196,24 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10);
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10);
 
             // Teste em desktop
             $browser->assertVisible('.navbar-nav')
-                    ->assertSee('Benefícios')
-                    ->assertSee('Preços')
-                    ->assertSee('Como Funciona')
-                    ->assertSee('Depoimentos')
-                    ->assertSee('FAQ');
+                ->assertSee('Benefícios')
+                ->assertSee('Preços')
+                ->assertSee('Como Funciona')
+                ->assertSee('Depoimentos')
+                ->assertSee('FAQ');
 
             // Teste em mobile
             $browser->resize(375, 667)
-                    ->pause(1000)
-                    ->assertVisible('.navbar-toggler')
-                    ->click('.navbar-toggler')
-                    ->pause(500)
-                    ->assertVisible('.navbar-collapse.show');
+                ->pause(1000)
+                ->assertVisible('.navbar-toggler')
+                ->click('.navbar-toggler')
+                ->pause(500)
+                ->assertVisible('.navbar-collapse.show');
         });
     }
 
@@ -212,20 +224,20 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->resize(1920, 1080)
-                    ->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10);
+                ->visit('/')
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10);
 
             // Teste link Login
             $browser->waitFor('#login-navbar', 10)
-                    ->click('#login-navbar')
-                    ->waitForLocation('/login', 10)
-                    ->assertPathIs('/login');
+                ->click('#login-navbar')
+                ->waitForLocation('/login', 10)
+                ->assertPathIs('/login');
 
             // Volta para home
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10);
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10);
 
             // Link Criar Conta removido
         });
@@ -235,65 +247,59 @@ class TesteCompletoLandingPage extends DuskTestCase
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#comecar-agora')
-                    ->pause(2000)
-                    ->click('#comecar-agora')
-                    ->waitForLocation('/login', 10)
-                    ->assertPathIs('/login');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#comecar-agora')
+                ->pause(2000)
+                ->click('#comecar-agora')
+                ->waitForLocation('/login', 10)
+                ->assertPathIs('/login');
         });
     }
 
-    
- 
+
+
 
 
     public function test_footer_navegacao_beneficios()
     {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#footer')
-                    ->pause(2000)
-                    ->click('#beneficiosfooter')
-                    ->pause(2000)
-                    ->assertSee('Por que usar o Juntter Checkout?');
-                    
-                    
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#footer')
+                ->pause(2000)
+                ->click('#beneficiosfooter')
+                ->pause(2000)
+                ->assertSee('Por que usar o Juntter Checkout?');
         });
-      }
+    }
 
-      public function test_footer_navegacao_precos()
-      {
+    public function test_footer_navegacao_precos()
+    {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#footer') 
-                    ->pause(2000)
-                    ->click('#precosfooter')
-                    ->pause(2000)
-                    ->assertSee('Planos transparentes');
-                    
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#footer')
+                ->pause(2000)
+                ->click('#precosfooter')
+                ->pause(2000)
+                ->assertSee('Planos transparentes');
         });
-      }
+    }
 
-      public function test_footer_navegacao_como_funciona()
-      {
+    public function test_footer_navegacao_como_funciona()
+    {
         $this->browse(function (Browser $browser) {
             $browser->visit('/')
-                    ->waitUntilMissing('#loading', 5)
-                    ->waitFor('.hero-section', 10)
-                    ->scrollTo('#footer')
-                    ->pause(2000)
-                    ->click('#como-funcionafooter')
-                    ->pause(2000)
-                    ->assertSee('Como funciona?');
+                ->waitUntilMissing('#loading', 5)
+                ->waitFor('.hero-section', 10)
+                ->scrollTo('#footer')
+                ->pause(2000)
+                ->click('#como-funcionafooter')
+                ->pause(2000)
+                ->assertSee('Como funciona?');
         });
-      }
-      
-      
-      
+    }
 }
