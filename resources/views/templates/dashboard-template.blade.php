@@ -80,8 +80,8 @@
                             </div>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-modern dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>Editar Perfil</a></li>
-                            <li><a class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-key me-2"></i>Alterar Senha</a></li>
+                            <li><a id="editar-perfil" class="dropdown-item" href="{{ route('profile.edit') }}"><i class="fas fa-user me-2"></i>Editar Perfil</a></li>
+                            <li><a id="alterar-senha" class="dropdown-item" href="{{ route('profile.password') }}"><i class="fas fa-key me-2"></i>Alterar Senha</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}" class="d-inline w-100">
