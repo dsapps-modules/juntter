@@ -170,6 +170,17 @@ class CobrancaController extends Controller
             $dados['card']['expiration_month'] = (int)$dados['card']['expiration_month'];
             $dados['card']['expiration_year'] = (int)$dados['card']['expiration_year'];
             
+            // Tratar campos opcionais que a API espera como string
+            if (empty($dados['client']['last_name'])) {
+                $dados['client']['last_name'] = '';
+            }
+            if (empty($dados['client']['address']['complement'])) {
+                $dados['client']['address']['complement'] = '';
+            }
+            if (empty($dados['card']['holder_document'])) {
+                $dados['card']['holder_document'] = '';
+            }
+            
             // Adicionar establishment_id
             $dados['extra_headers'] = [
                 'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
@@ -179,6 +190,8 @@ class CobrancaController extends Controller
             $dados['session_id'] = $sessionId;
 
             $transacao = $this->creditoService->criarTransacaoCredito($dados);
+            
+        
 
             return redirect()->route('cobranca.index')
                 ->with('success', 'Transação de crédito criada com sucesso!');
