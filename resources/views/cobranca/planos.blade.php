@@ -55,7 +55,7 @@
                                     <th></th>
                                     <th>ID</th>
                                     <th>Nome do Plano</th>
-                                    <th>Gateway</th>
+                                     
                                     <th>Modalidade</th>
                                     <th>Tipo</th>
                                     <th>Antecipação</th>
@@ -81,9 +81,7 @@
                                                 @endif
                                             </div>
                                         </td>
-                                        <td>
-                                            <span class="badge badge-secondary">{{ $plano['gateway_id'] }}</span>
-                                        </td>
+                                   
                                         <td>
                                             @if($plano['modality'] === 'ONLINE')
                                                 <span class="badge badge-info">
