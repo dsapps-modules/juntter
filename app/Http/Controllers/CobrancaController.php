@@ -61,16 +61,49 @@ class CobrancaController extends Controller
     public function index(Request $request)
     {
         try {
-       
+            // Obter mês e ano do filtro
+            $mesAtual = $request->input('mes'); // pode ser vazio (Todos) ou um número
+            $anoAtual = $request->input('ano'); // pode ser vazio (Todos) ou um ano
+            
+            // Preparar filtros base
+            $filtrosData = [
+                'establishment.id' => auth()->user()?->vendedor?->estabelecimento_id
+            ];
+            
+            // Aplicar filtro de data baseado no que foi especificado
+            if (!empty($mesAtual) || !empty($anoAtual)) {
+                $dataInicio = null;
+                $dataFim = null;
+                
+                if (!empty($mesAtual) && !empty($anoAtual)) {
+                    // Mês e ano específicos
+                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                    $dataFim = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                } elseif (!empty($mesAtual)) {
+                    // Só mês especificado - usar ano atual
+                    $anoAtual = date('Y');
+                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                    $dataFim = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                } elseif (!empty($anoAtual)) {
+                    // Só ano especificado - usar todo o ano
+                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $anoAtual));
+                    $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $anoAtual));
+                }
+                
+                if ($dataInicio && $dataFim) {
+                    $filtrosData['created_at'] = [
+                        'min' => $dataInicio,
+                        'max' => $dataFim
+                    ];
+                }
+            }
+            // Se ambos estiverem vazios (Todos), não aplica filtro de data
+            
             // Buscar todas as transações do estabelecimento atual
             $filtros = [
-                'filters' => json_encode([
-                    'establishment.id' => auth()->user()?->vendedor?->estabelecimento_id
-                ]),
+                'filters' => json_encode($filtrosData),
                 'perPage' => 1000, // Buscar o máximo possível
                 'page' => 1,
-               
-               
             ];
 
             $transacoes = $this->transacaoService->listarTransacoes($filtros);
@@ -80,9 +113,7 @@ class CobrancaController extends Controller
                 $filtrosBoletos = [
                     'perPage' => 1000,
                     'page' => 1,
-                    'filters' => json_encode([
-                        'establishment.id' => auth()->user()?->vendedor?->estabelecimento_id
-                    ])
+                    'filters' => json_encode($filtrosData)
                 ];
                 $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
 
@@ -124,7 +155,7 @@ class CobrancaController extends Controller
 
          
 
-            return view('cobranca.index', compact('transacoes'));
+            return view('cobranca.index', compact('transacoes', 'mesAtual', 'anoAtual'));
         } catch (\Exception $e) {
             Log::error('Erro ao listar transações: ' . $e->getMessage());
             return view('cobranca.index')->with('error', 'Erro ao carregar transações.');

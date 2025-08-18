@@ -81,9 +81,13 @@ class DashboardController extends Controller
      */
     public function adminDashboard(Request $request)
     {
+        // Obter mês e ano do filtro
+        $mesAtual = $request->input('mes'); // pode ser vazio (Todos) ou um número
+        $anoAtual = $request->input('ano'); // pode ser vazio (Todos) ou um ano
+        
         try {
-            // Buscar dados consolidados de todos os estabelecimentos
-            $dadosConsolidados = $this->buscarDadosConsolidados();
+            // Buscar dados consolidados de todos os estabelecimentos com filtro de data
+            $dadosConsolidados = $this->buscarDadosConsolidados($mesAtual, $anoAtual);
 
             $saldos = $dadosConsolidados['saldos'];
             $metricas = $dadosConsolidados['metricas'];
@@ -146,15 +150,12 @@ class DashboardController extends Controller
             $estabelecimentos = [];
         }
 
-        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos', 'metricasGeral', 'metricasCartao', 'metricasBoleto'));
+        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual'));
     }
 
 
 
-    /**
-     * Buscar dados consolidados de todos os estabelecimentos
-     */
-    private function buscarDadosConsolidados()
+    private function buscarDadosConsolidados($mes = null, $ano = null)
     {
         try {
             // Buscar todos os estabelecimentos primeiro
@@ -222,8 +223,54 @@ class DashboardController extends Controller
                 $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
 
                 if ($saldo && isset($saldo['total']['amount'])) {
-                    // Saldo total consolidado da API
-                    $saldosConsolidados['disponivel'] += $saldo['total']['amount'];
+                    $saldoDisponivel = 0;
+                    
+                    if (empty($mes) && empty($ano)) {
+                        // Sem filtro: mostrar total geral dos lançamentos futuros
+                        $saldoDisponivel = $saldo['total']['amount'];
+                    } elseif (!empty($mes) && !empty($ano)) {
+                        // Filtro completo: mês + ano específicos
+                        $mesFiltro = (int)$mes;
+                        $anoFiltro = (int)$ano;
+                        
+                        // Procurar no array de meses
+                        if (isset($saldo['months']) && is_array($saldo['months'])) {
+                            foreach ($saldo['months'] as $mesLancamento) {
+                                if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
+                                    $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoFiltro) {
+                                    $saldoDisponivel = $mesLancamento['amount'];
+                                    break;
+                                }
+                            }
+                        }
+                    } elseif (!empty($ano)) {
+                        // Apenas ano: somar todos os meses daquele ano
+                        $anoFiltro = (int)$ano;
+                        
+                        if (isset($saldo['months']) && is_array($saldo['months'])) {
+                            foreach ($saldo['months'] as $mesLancamento) {
+                                if (isset($mesLancamento['year']) && $mesLancamento['year'] == $anoFiltro) {
+                                    $saldoDisponivel += $mesLancamento['amount'];
+                                }
+                            }
+                        }
+                    } elseif (!empty($mes)) {
+                        // Apenas mês: usar ano atual
+                        $mesFiltro = (int)$mes;
+                        $anoAtual = (int)date('Y');
+                        
+                        if (isset($saldo['months']) && is_array($saldo['months'])) {
+                            foreach ($saldo['months'] as $mesLancamento) {
+                                if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
+                                    $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoAtual) {
+                                    $saldoDisponivel = $mesLancamento['amount'];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    $saldosConsolidados['disponivel'] += $saldoDisponivel;
                 }
 
                 // 2. Buscar lançamentos futuros diários para valores em trânsito
@@ -234,21 +281,77 @@ class DashboardController extends Controller
                         $valor = $item['amount'] ?? 0;
                         $data = $item['date'] ?? '';
 
-                        // Valores para os próximos 7 dias são considerados "em trânsito"
-                        if ($data && strtotime($data) <= strtotime('+7 days')) {
-                            $saldosConsolidados['transito'] += $valor;
+                        if ($data) {
+                            $dataLancamento = strtotime($data);
+                            
+                            // Aplicar filtro de data se especificado
+                            if (!empty($mes) || !empty($ano)) {
+                                $dataInicioFiltro = null;
+                                $dataFimFiltro = null;
+                                
+                                if (!empty($mes) && !empty($ano)) {
+                                    $dataInicioFiltro = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
+                                    $dataFimFiltro = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
+                                } elseif (!empty($mes)) {
+                                    $anoTemp = date('Y');
+                                    $dataInicioFiltro = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $anoTemp));
+                                    $dataFimFiltro = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $anoTemp));
+                                } elseif (!empty($ano)) {
+                                    $dataInicioFiltro = date('Y-m-d', mktime(0, 0, 0, 1, 1, $ano));
+                                    $dataFimFiltro = date('Y-m-t', mktime(0, 0, 0, 12, 1, $ano));
+                                }
+                                
+                                // Pular se não estiver no período filtrado
+                                if ($dataInicioFiltro && $dataFimFiltro) {
+                                    $dataInicioTs = strtotime($dataInicioFiltro);
+                                    $dataFimTs = strtotime($dataFimFiltro . ' 23:59:59');
+                                    
+                                    if ($dataLancamento < $dataInicioTs || $dataLancamento > $dataFimTs) {
+                                        continue;
+                                    }
+                                }
+                            }
+                            
+                            // Valores para os próximos 7 dias são considerados "em trânsito"
+                            if ($dataLancamento <= strtotime('+7 days')) {
+                                $saldosConsolidados['transito'] += $valor;
+                            }
                         }
                     }
                 }
 
-                // 3. Buscar transações dos últimos 30 dias
+                // 3. Buscar transações com filtro de mês/ano ou últimos 30 dias como padrão
+                $dataInicio = null;
+                $dataFim = null;
+                
+                if (!empty($mes) || !empty($ano)) {
+                    // Aplicar filtro baseado no que foi especificado
+                    if (!empty($mes) && !empty($ano)) {
+                        // Mês e ano específicos
+                        $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
+                        $dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
+                    } elseif (!empty($mes)) {
+                        // Só mês especificado - usar ano atual
+                        $ano = date('Y');
+                        $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
+                        $dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
+                    } elseif (!empty($ano)) {
+                        // Só ano especificado - usar todo o ano
+                        $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $ano));
+                        $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $ano));
+                    }
+                } else {
+                    // Caso contrário, usamos os últimos 30 dias
+                    $dataInicio = date('Y-m-d', strtotime('-30 days'));
+                    $dataFim = date('Y-m-d');
+                }
+                
                 $filtrosTransacoes = [
-                 
                     'perPage' => 1000,
                     'filters' => json_encode([
                         'created_at' => [
-                            'min' => date('Y-m-d', strtotime('-30 days')),
-                            'max' => date('Y-m-d')
+                            'min' => $dataInicio,
+                            'max' => $dataFim
                         ],
                         'establishment.id' => $estabelecimentoId
                     ])
@@ -309,6 +412,7 @@ class DashboardController extends Controller
                                 break;
                             case 'PENDING':
                             case 'APPROVED':
+                            case 'PROCESSING':
                                 // Transações em processamento
                                 $saldosConsolidados['processamento'] += $valorLiquido;
                                 break;
@@ -324,7 +428,7 @@ class DashboardController extends Controller
                     }
                 }
 
-				// 4. Buscar boletos (últimos 30 dias) e consolidar
+				// 4. Buscar boletos com filtro de data aplicado na API
 				try {
 					$filtrosBoletos = [
 						'perPage' => 1000,
@@ -332,6 +436,29 @@ class DashboardController extends Controller
 							'establishment.id' => $estabelecimentoId
 						])
 					];
+					
+					// Aplicar filtro de data aos boletos se especificado
+					if (!empty($mes) || !empty($ano)) {
+						if (!empty($mes) && !empty($ano)) {
+							$dataInicio = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
+							$dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
+						} elseif (!empty($mes)) {
+							$ano = date('Y');
+							$dataInicio = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
+							$dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
+						} elseif (!empty($ano)) {
+							$dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $ano));
+							$dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $ano));
+						}
+						
+						$filtrosBoletos['filters'] = json_encode([
+							'establishment.id' => $estabelecimentoId,
+							'created_at' => [
+								'min' => $dataInicio,
+								'max' => $dataFim
+							]
+						]);
+					}
 
 					$boletos = $this->boletoService->listarBoletos($filtrosBoletos);
 
@@ -342,16 +469,17 @@ class DashboardController extends Controller
 							$status = $boleto['status'] ?? '';
 							$dataBoleto = $boleto['created_at'] ?? ($boleto['updated_at'] ?? '');
 
-							// Considerar apenas últimos 30 dias, se houver data
+							// Verificar se a data do boleto é válida (filtro já aplicado na API)
 							if (!empty($dataBoleto)) {
 								$timestamp = strtotime($dataBoleto);
-								if ($timestamp === false || $timestamp < strtotime('-30 days')) {
-									continue;
+								if ($timestamp === false) {
+									continue; // Data inválida
 								}
 							}
 
 							// Consolidação geral
-							$volumeBruto += $valor;
+							$valorOriginalBoleto = $boleto['original_amount'] ?? $valor;
+							$volumeBruto += $valorOriginalBoleto;
 							$volumeLiquido += $valor; // assumir amount como líquido para boletos
 							$totalTaxas += $taxa;
 							$volumePorMetodo['BOLETO'] += $valor;
@@ -375,6 +503,7 @@ class DashboardController extends Controller
 									break;
 								case 'PENDING':
 								case 'APPROVED':
+								case 'PROCESSING':
 									$saldosConsolidados['processamento'] += $valor;
 									break;
 								case 'FAILED':
@@ -453,8 +582,11 @@ class DashboardController extends Controller
     /**
      * Dashboard do Vendedor
      */
-    public function vendedorDashboard()
+    public function vendedorDashboard(Request $request)
     {
+        // Obter mês e ano do filtro (podem vir vazios para representar "Todos")
+        $mesAtual = $request->input('mes');
+        $anoAtual = $request->input('ano');
         
         $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
@@ -462,20 +594,109 @@ class DashboardController extends Controller
             // Buscar dados do estabelecimento
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
 
-            // Buscar transações do estabelecimento (últimos 30 dias)
+            // Buscar transações do estabelecimento com filtro parcial (mês ou ano) ou completos; senão últimos 30 dias
+            $dataInicio = null;
+            $dataFim = null;
+            if (!empty($mesAtual) || !empty($anoAtual)) {
+                if (!empty($mesAtual) && !empty($anoAtual)) {
+                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, (int)$mesAtual, 1, (int)$anoAtual));
+                    $dataFim = date('Y-m-t', mktime(0, 0, 0, (int)$mesAtual, 1, (int)$anoAtual));
+                } elseif (!empty($mesAtual)) {
+                    $anoTemp = (int)date('Y');
+                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, (int)$mesAtual, 1, $anoTemp));
+                    $dataFim = date('Y-m-t', mktime(0, 0, 0, (int)$mesAtual, 1, $anoTemp));
+                } elseif (!empty($anoAtual)) {
+                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, (int)$anoAtual));
+                    $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, (int)$anoAtual));
+                }
+            } else {
+                // Últimos 30 dias
+                $dataInicio = date('Y-m-d', strtotime('-30 days'));
+                $dataFim = date('Y-m-d');
+            }
+            
             $filtrosTransacoes = [
-              
                 'perPage' => 1000,
                 'filters' => json_encode([
                     'created_at' => [
-                        'min' => date('Y-m-d', strtotime('-30 days')),
-                        'max' => date('Y-m-d'),
+                        'min' => $dataInicio,
+                        'max' => $dataFim,
                     ],
                     'establishment.id' => $estabelecimentoId
                 ]),
             ];
 
             $transacoes = $this->transacaoService->listarTransacoes($filtrosTransacoes);
+
+            // Buscar boletos e mesclar com transações para exibição na tabela
+            try {
+                $filtrosBoletos = [
+                    'perPage' => 1000,
+                    'filters' => json_encode([
+                        'establishment.id' => $estabelecimentoId
+                    ])
+                ];
+                
+                // Aplicar filtro de data aos boletos se especificado
+                if (!empty($mesAtual) || !empty($anoAtual)) {
+                    if (!empty($mesAtual) && !empty($anoAtual)) {
+                        $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                        $dataFim = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                    } elseif (!empty($mesAtual)) {
+                        $anoAtual = date('Y');
+                        $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                        $dataFim = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                    } elseif (!empty($anoAtual)) {
+                        $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $anoAtual));
+                        $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $anoAtual));
+                    }
+                    
+                    $filtrosBoletos['filters'] = json_encode([
+                        'establishment.id' => $estabelecimentoId,
+                        'created_at' => [
+                            'min' => $dataInicio,
+                            'max' => $dataFim
+                        ]
+                    ]);
+                }
+                
+                $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
+
+                if (isset($boletos['data']) && is_array($boletos['data'])) {
+                    // Adaptar estrutura dos boletos para o formato da tabela de transações
+                    $boletosAdaptados = array_map(function($b) {
+                        return [
+                            '_id' => $b['_id'] ?? ($b['id'] ?? null),
+                            'type' => 'BOLETO',
+                            'amount' => $b['amount'] ?? 0,
+                            'fees' => $b['fees'] ?? 0,
+                            'gateway_authorization' => $b['gateway_authorization'] ?? ($b['gateway_key'] ?? null),
+                            'created_at' => $b['created_at'] ?? ($b['updated_at'] ?? null),
+                            'status' => $b['status'] ?? null,
+                        ];
+                    }, $boletos['data']);
+
+                    // Garantir estrutura base
+                    if (!isset($transacoes['data']) || !is_array($transacoes['data'])) {
+                        $transacoes['data'] = [];
+                        $transacoes['total'] = 0;
+                        $transacoes['page'] = 1;
+                    }
+
+                    // Mesclar e ordenar por data desc
+                    $transacoes['data'] = array_merge($transacoes['data'], $boletosAdaptados);
+                    usort($transacoes['data'], function($a, $b) {
+                        $da = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
+                        $db = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+                        return $db <=> $da;
+                    });
+
+                    // Recalcular total
+                    $transacoes['total'] = count($transacoes['data']);
+                }
+            } catch (\Exception $e) {
+                Log::warning('Erro ao buscar boletos para mesclar na tabela: ' . $e->getMessage());
+            }
 
             // Buscar saldos do estabelecimento
             $filtrosSaldo = [
@@ -505,10 +726,12 @@ class DashboardController extends Controller
 
             if (isset($transacoes['data'])) {
                 foreach ($transacoes['data'] as $transacao) {
+                    $tipo = $transacao['type'] ?? '';
+                    // Importante: boletos já serão contabilizados no bloco específico de boletos abaixo
+                    if ($tipo === 'BOLETO') { continue; }
                     $valor = (int)($transacao['amount'] ?? 0);
                     $valorOriginal = (int)($transacao['original_amount'] ?? $valor);
                     $status = $transacao['status'] ?? '';
-                    $tipo = $transacao['type'] ?? '';
 
                     // apenas últimos 30 dias já garantidos no filtro
                     $totalTransacoes++;
@@ -548,7 +771,11 @@ class DashboardController extends Controller
                 $filtrosBoletos = [
                     'perPage' => 1000,
                     'filters' => json_encode([
-                        'establishment.id' => $estabelecimentoId
+                        'establishment.id' => $estabelecimentoId,
+                        'created_at' => [
+                            'min' => $dataInicio,
+                            'max' => $dataFim,
+                        ],
                     ])
                 ];
                 $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
@@ -557,7 +784,13 @@ class DashboardController extends Controller
                         $dataBoleto = $boleto['created_at'] ?? ($boleto['updated_at'] ?? '');
                         if (!empty($dataBoleto)) {
                             $ts = strtotime($dataBoleto);
-                            if ($ts !== false && $ts < strtotime('-30 days')) { continue; }
+                            if ($ts === false) { continue; } // Data inválida
+                            // Filtro manual de segurança (redundante com o da API, mas mantém consistência)
+                            if (!empty($dataInicio) && !empty($dataFim)) {
+                                $dataInicioTs = strtotime($dataInicio);
+                                $dataFimTs = strtotime($dataFim . ' 23:59:59');
+                                if ($ts < $dataInicioTs || $ts > $dataFimTs) { continue; }
+                            }
                         }
                         $valor = (int)($boleto['amount'] ?? 0);
                         $valorOriginalBoleto = (int)($boleto['original_amount'] ?? $valor);
@@ -589,11 +822,58 @@ class DashboardController extends Controller
             }
 
             // Saldos formatados
+            $saldoDisponivel = 0;
+            if (isset($saldo['total']['amount'])) {
+                if (empty($mesAtual) && empty($anoAtual)) {
+                    // Sem filtro: mostrar total geral dos lançamentos futuros
+                    $saldoDisponivel = $saldo['total']['amount'];
+                } elseif (!empty($mesAtual) && !empty($anoAtual)) {
+                    // Filtro completo: mês + ano específicos
+                    $mesFiltro = (int)$mesAtual;
+                    $anoFiltro = (int)$anoAtual;
+                    
+                    // Procurar no array de meses
+                    if (isset($saldo['months']) && is_array($saldo['months'])) {
+                        foreach ($saldo['months'] as $mesLancamento) {
+                            if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
+                                $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoFiltro) {
+                                $saldoDisponivel = $mesLancamento['amount'];
+                                break;
+                            }
+                        }
+                    }
+                } elseif (!empty($anoAtual)) {
+                    // Apenas ano: somar todos os meses daquele ano
+                    $anoFiltro = (int)$anoAtual;
+                    
+                    if (isset($saldo['months']) && is_array($saldo['months'])) {
+                        foreach ($saldo['months'] as $mesLancamento) {
+                            if (isset($mesLancamento['year']) && $mesLancamento['year'] == $anoFiltro) {
+                                $saldoDisponivel += $mesLancamento['amount'];
+                            }
+                        }
+                    }
+                } elseif (!empty($mesAtual)) {
+                    // Apenas mês: usar ano atual
+                    $mesFiltro = (int)$mesAtual;
+                    $anoAtualSistema = (int)date('Y');
+                    
+                    if (isset($saldo['months']) && is_array($saldo['months'])) {
+                        foreach ($saldo['months'] as $mesLancamento) {
+                            if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
+                                $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoAtualSistema) {
+                                $saldoDisponivel = $mesLancamento['amount'];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
             $saldos = [
-                'disponivel' => isset($saldo['total']['amount'])
-                    ? 'R$ ' . number_format($saldo['total']['amount'] / 100, 2, ',', '.')
-                    : 'R$ 0,00',
+                'disponivel' => 'R$ ' . number_format($saldoDisponivel / 100, 2, ',', '.'),
                 'transito' => 'R$ 0,00',
+                'processamento' => 'R$ 0,00', // Inicializar processamento
                 'bloqueado_cartao' => 'R$ 0,00',
                 'bloqueado_boleto' => 'R$ 0,00',
             ];
@@ -605,12 +885,57 @@ class DashboardController extends Controller
                     $valor = $item['amount'] ?? 0;
                     $data = $item['date'] ?? '';
 
-                    if ($data && strtotime($data) <= strtotime('+7 days')) {
-                        $valorTransito += $valor;
+                    if ($data) {
+                        $dataLancamento = strtotime($data);
+                        
+                        // Aplicar filtro de data se especificado
+                        if (!empty($mesAtual) || !empty($anoAtual)) {
+                            $dataInicioFiltro = null;
+                            $dataFimFiltro = null;
+                            
+                            if (!empty($mesAtual) && !empty($anoAtual)) {
+                                $dataInicioFiltro = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                                $dataFimFiltro = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
+                            } elseif (!empty($mesAtual)) {
+                                $anoTemp = date('Y');
+                                $dataInicioFiltro = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoTemp));
+                                $dataFimFiltro = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoTemp));
+                            } elseif (!empty($anoAtual)) {
+                                $dataInicioFiltro = date('Y-m-d', mktime(0, 0, 0, 1, 1, $anoAtual));
+                                $dataFimFiltro = date('Y-m-t', mktime(0, 0, 0, 12, 1, $anoAtual));
+                            }
+                            
+                            // Pular se não estiver no período filtrado
+                            if ($dataInicioFiltro && $dataFimFiltro) {
+                                $dataInicioTs = strtotime($dataInicioFiltro);
+                                $dataFimTs = strtotime($dataFimFiltro . ' 23:59:59');
+                                
+                                if ($dataLancamento < $dataInicioTs || $dataLancamento > $dataFimTs) {
+                                    continue;
+                                }
+                            }
+                        }
+                        
+                        // Valores para os próximos 7 dias são considerados "em trânsito"
+                        if ($dataLancamento <= strtotime('+7 days')) {
+                            $valorTransito += $valor;
+                        }
                     }
                 }
                 $saldos['transito'] = 'R$ ' . number_format($valorTransito / 100, 2, ',', '.');
             }
+
+            // Calcular valor em processamento (transações pendentes)
+            $valorProcessamento = 0;
+            if (isset($transacoes['data'])) {
+                foreach ($transacoes['data'] as $transacao) {
+                    $status = $transacao['status'] ?? '';
+                    if (in_array($status, ['PENDING', 'APPROVED', 'PROCESSING'])) {
+                        $valorProcessamento += (int)($transacao['amount'] ?? 0);
+                    }
+                }
+            }
+            $saldos['processamento'] = 'R$ ' . number_format($valorProcessamento / 100, 2, ',', '.');
 
             
             $metricasGeral = [
@@ -649,7 +974,7 @@ class DashboardController extends Controller
             // Para compatibilidade, manter $metricas como geral
             $metricas = $metricasGeral;
 
-            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto'));
+            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual'));
         } catch (\Exception $e) {
             Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
 
@@ -676,8 +1001,12 @@ class DashboardController extends Controller
     /**
      * Dashboard do Comprador
      */
-    public function compradorDashboard()
+    public function compradorDashboard(Request $request)
     {
+        // Obter mês e ano do filtro ou usar o mês/ano atual
+        $mesAtual = $request->input('mes', date('n')); // n retorna o mês sem zero à esquerda (1-12)
+        $anoAtual = $request->input('ano', date('Y'));
+        
         $saldos = [
             'disponivel' => 'R$ 1.500,00',
             'transito' => 'R$ 300,00',
@@ -724,6 +1053,6 @@ class DashboardController extends Controller
             ]
         ];
 
-        return view('dashboard.comprador', compact('saldos', 'metricas'));
+        return view('dashboard.comprador', compact('saldos', 'metricas', 'mesAtual', 'anoAtual'));
     }
 }
