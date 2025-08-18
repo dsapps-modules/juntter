@@ -80,6 +80,10 @@
                                                         <span class="badge badge-success">
                                                             <i class="fas fa-credit-card me-1"></i>Débito
                                                         </span>
+                                                    @elseif($transacao['type'] === 'BOLETO')
+                                                        <span class="badge badge-warning">
+                                                            <i class="fas fa-file-invoice me-1"></i>Boleto
+                                                        </span>
                                                     @else
                                                         <span class="badge badge-secondary">{{ $transacao['type'] }}</span>
                                                     @endif
