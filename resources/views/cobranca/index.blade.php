@@ -71,7 +71,7 @@
                                 <option value="11" {{ $mesAtual == 11 ? 'selected' : '' }}>Novembro</option>
                                 <option value="12" {{ $mesAtual == 12 ? 'selected' : '' }}>Dezembro</option>
                             </select>
-                            <select name="ano" class="form-select form-select-sm" style="width: 85px; font-size: 0.8rem;">
+                            <select name="ano" class="form-select form-select-sm" style="width: 100px; font-size: 0.8rem;">
                                 <option value="" {{ empty($anoAtual) ? 'selected' : '' }}>Todos</option>
                                 @for ($i = date('Y'); $i >= date('Y')-2; $i--)
                                     <option value="{{ $i }}" {{ $anoAtual == $i ? 'selected' : '' }}>
