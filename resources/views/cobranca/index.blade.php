@@ -41,15 +41,49 @@
     <div class="col-12">
         <div class="card border-0 shadow-lg rounded-4">
             <div class="card-header bg-transparent border-0 pb-0">
-                <div class="text-center">
-                    <h5 class="card-title fw-bold mb-2">
-                        <i class="fas fa-credit-card me-2 text-primary"></i>
-                        Histórico de Transações
-                    </h5>
-                    <p class="text-muted mb-0 small">
-                        <i class="fas fa-info-circle me-1"></i>
-                        Clique em "Ver Detalhes" para ver informações completas do cliente e da transação
-                    </p>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="text-center flex-grow-1">
+                        <h5 class="card-title fw-bold mb-2">
+                            <i class="fas fa-credit-card me-2 text-primary"></i>
+                            Histórico de Transações
+                        </h5>
+                        <p class="text-muted mb-0 small">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Clique em "Ver Detalhes" para ver informações completas do cliente e da transação
+                        </p>
+                    </div>
+                    
+                    <!-- Filtro de Data -->
+                    <div class="d-flex align-items-center gap-2">
+                        <form method="GET" action="{{ request()->url() }}" class="d-flex align-items-center gap-1">
+                            <select name="mes" class="form-select form-select-sm" style="width: 100px; font-size: 0.8rem;">
+                                <option value="" {{ empty($mesAtual) ? 'selected' : '' }}>Todos</option>
+                                <option value="1" {{ $mesAtual == 1 ? 'selected' : '' }}>Janeiro</option>
+                                <option value="2" {{ $mesAtual == 2 ? 'selected' : '' }}>Fevereiro</option>
+                                <option value="3" {{ $mesAtual == 3 ? 'selected' : '' }}>Março</option>
+                                <option value="4" {{ $mesAtual == 4 ? 'selected' : '' }}>Abril</option>
+                                <option value="5" {{ $mesAtual == 5 ? 'selected' : '' }}>Maio</option>
+                                <option value="6" {{ $mesAtual == 6 ? 'selected' : '' }}>Junho</option>
+                                <option value="7" {{ $mesAtual == 7 ? 'selected' : '' }}>Julho</option>
+                                <option value="8" {{ $mesAtual == 8 ? 'selected' : '' }}>Agosto</option>
+                                <option value="9" {{ $mesAtual == 9 ? 'selected' : '' }}>Setembro</option>
+                                <option value="10" {{ $mesAtual == 10 ? 'selected' : '' }}>Outubro</option>
+                                <option value="11" {{ $mesAtual == 11 ? 'selected' : '' }}>Novembro</option>
+                                <option value="12" {{ $mesAtual == 12 ? 'selected' : '' }}>Dezembro</option>
+                            </select>
+                            <select name="ano" class="form-select form-select-sm" style="width: 85px; font-size: 0.8rem;">
+                                <option value="" {{ empty($anoAtual) ? 'selected' : '' }}>Todos</option>
+                                @for ($i = date('Y'); $i >= date('Y')-2; $i--)
+                                    <option value="{{ $i }}" {{ $anoAtual == $i ? 'selected' : '' }}>
+                                        {{ $i }}
+                                    </option>
+                                @endfor
+                            </select>
+                            <button type="submit" class="btn btn-warning btn-sm ml-2" style="font-size: 0.8rem; padding: 0.25rem 0.5rem;">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
             <div class="card-body p-4">
