@@ -7,12 +7,21 @@
   'metricasBoleto' => null,
   'breadcrumbItems' => [],
   'showSaldos' => true,
-  'rightSub' => null
+  'rightSub' => null,
+  'filtroMesAno' => null,
+  'mesAtual' => null,
+  'anoAtual' => null
 ])
 
 <!-- Breadcrumb -->
-<x-breadcrumb :items="$breadcrumbItems" :rightSub="$rightSub" />
-
+<x-breadcrumb 
+    :items="$breadcrumbItems" 
+    :rightSub="$rightSub"
+    :filtroData="[
+        'mesAtual' => $mesAtual,
+        'anoAtual' => $anoAtual
+    ]"
+/>
 
 @if($showSaldos)
     <!-- Saldo Cards -->
