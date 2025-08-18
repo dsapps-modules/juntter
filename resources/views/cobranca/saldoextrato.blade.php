@@ -194,7 +194,7 @@
                                     <th>Data</th>
                                     <th>Modalidade</th>
                                     <th>Bandeira</th>
-                                    <th>Gateway</th>
+                                 
                                     <th>Valor Original</th>
                                     <th>Valor Líquido</th>
                                     <th>Parcela</th>
@@ -217,9 +217,7 @@
                                         <td>
                                             <span class="badge bg-secondary">{{ $transacao['brand_name'] }}</span>
                                         </td>
-                                        <td>
-                                            <span class="badge bg-secondary">{{ $transacao['gateway_authorization'] }}</span>
-                                        </td>
+                                              
                                         <td>
                                             <strong>R$ {{ number_format($transacao['transaction_original_amount'] / 100, 2, ',', '.') }}</strong>
                                         </td>
