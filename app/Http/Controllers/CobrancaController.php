@@ -140,7 +140,7 @@ class CobrancaController extends Controller
             $dados = $request->validate([
                 'payment_type' => 'required|in:CREDIT',
                 'amount' => 'required|string',
-                'installments' => 'required|integer|min:1|max:12',
+                'installments' => 'required|integer|min:1|max:18',
                 'interest' => 'required|in:CLIENT,ESTABLISHMENT',
                 'client.first_name' => 'required|string|max:255',
                 'client.last_name' => 'nullable|string|max:255',
