@@ -1,0 +1,15 @@
+    public function index(Request $request, $ano = null, $mes = null)
+    {
+
+        if ($ano && $mes) {
+            // Validar ano e mês
+            if (!preg_match('/^\d{4}$/', $ano) || !preg_match('/^(0[1-9]|1[0-2])$/', $mes)) {
+                return redirect()->route('cobranca.index')
+                    ->with('error', 'Ano ou mês inválidos.');
+            }
+        } else {
+            // Redirecionar para o mês atual se não especificado
+            $ano = date('Y');
+            $mes = date('m');
+        }
+    }
