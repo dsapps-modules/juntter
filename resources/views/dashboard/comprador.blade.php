@@ -7,6 +7,8 @@
     :title="'Dashboard Comprador'"
     :saldos="$saldos"
     :metricas="$metricas"
+    :mesAtual="$mesAtual"
+    :anoAtual="$anoAtual"
     :breadcrumbItems="[
         ['label' => 'Compras', 'icon' => 'fas fa-shopping-cart', 'url' => '#']
     ]"

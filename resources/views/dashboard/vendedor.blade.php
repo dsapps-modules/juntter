@@ -10,6 +10,8 @@
     :metricasGeral="$metricasGeral"
     :metricasCartao="$metricasCartao"
     :metricasBoleto="$metricasBoleto"
+    :mesAtual="$mesAtual"
+    :anoAtual="$anoAtual"
     :breadcrumbItems="[
         [
             'label' => 'Vendas',
