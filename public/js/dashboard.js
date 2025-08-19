@@ -268,7 +268,7 @@ function initModals() {
     }
     
     // Máscara para valores monetários
-    $('[placeholder="0,00"], #valorParcela, #valorPlano, #precoBoleto, #precoCredito, #valorTransferir, #valorTransferirAgencia, #valorMinimo, #valorPagar, #valorMaximo, #taxaConta').on('input', function() {
+    $('[placeholder="0,00"], #valor, #valorParcela, #valorPlano, #precoBoleto, #precoCredito, #valorTransferir, #valorTransferirAgencia, #valorMinimo, #valorPagar, #valorMaximo, #taxaConta').on('input', function() {
         let value = this.value.replace(/\D/g, '');
         value = (value/100).toFixed(2) + '';
         value = value.replace(".", ",");
