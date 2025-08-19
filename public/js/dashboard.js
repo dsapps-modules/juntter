@@ -158,7 +158,7 @@ function initDataTables() {
             responsive: {
                 details: { type: 'column', target: 0 }
             },
-            order: [[5, 'desc']], // Ordenar pela coluna 5 (Data) de forma decrescente
+            order: [[4, 'desc']], // Ordenar pela coluna 5 (Data) de forma decrescente
             columnDefs: [
                 { className: 'dtr-control', orderable: false, targets: 0 }
             ]
@@ -222,7 +222,7 @@ function initDataTables() {
             responsive: {
                 details: { type: 'column', target: 0 }
             },
-            order: [[5, 'desc']] // coluna Data
+            order: [[4, 'desc']] // coluna Data
         });
         
         // DataTable para Saldo e Extrato
