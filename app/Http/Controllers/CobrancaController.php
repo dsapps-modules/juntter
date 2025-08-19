@@ -372,16 +372,19 @@ class CobrancaController extends Controller
     public function simularTransacao(Request $request)
     {
         try {
+
             $dados = $request->validate([
-                'amount' => 'required|numeric|min:0.01',
-                'flag_id' => 'required|integer',
-                'gateway_id' => 'required|integer',
-                'modality' => 'required|in:ONLINE,PHYSICAL',
+                'amount' => 'required|string',
+                'flag_id' => 'required|integer|in:1,2,3,4,5,6,8',
                 'interest' => 'required|in:CLIENT,ESTABLISHMENT'
             ]);
 
             // Converter valor para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
+
+            $dados['flag_id'] = (int)$dados['flag_id'];
+            $dados['gateway_id'] = 4; // SUBPAYTIME
+            $dados['modality'] = 'ONLINE';
 
             $dados['extra_headers'] = [
                 'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
@@ -389,11 +392,13 @@ class CobrancaController extends Controller
 
             $simulacao = $this->transacaoService->simularTransacao($dados);
 
-            return redirect()->route('cobranca.index')
+            
+
+            return view('cobranca.simular', compact('simulacao'))
                 ->with('success', 'Simulação realizada com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao simular transação: ' . $e->getMessage());
-            return redirect()->route('cobranca.index')
+            return redirect()->route('cobranca.simular')
                 ->with('error', 'Erro ao simular transação: ' . $e->getMessage());
         }
     }
@@ -513,6 +518,14 @@ class CobrancaController extends Controller
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao estornar transação: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mostrar formulário de simulação de transação
+     */
+    public function mostrarSimulacao()
+    {
+        return view('cobranca.simular');
     }
 
     /**
