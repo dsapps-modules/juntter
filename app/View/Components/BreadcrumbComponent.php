@@ -74,6 +74,29 @@ class BreadcrumbComponent extends Component
                     ['label' => 'Saldo e Extrato']
                 ];
             
+            case 'links-pagamento.index':
+                return [
+                    ['label' => 'Links de Pagamento - Cartão']
+                ];
+            
+            case 'links-pagamento.create':
+                return [
+                    ['label' => 'Links de Pagamento - Cartão', 'url' => route('links-pagamento.index')],
+                    ['label' => 'Novo Link']
+                ];
+            
+            case 'links-pagamento.show':
+                return [
+                    ['label' => 'Links de Pagamento - Cartão', 'url' => route('links-pagamento.index')],
+                    ['label' => 'Detalhes do Link']
+                ];
+            
+            case 'links-pagamento.edit':
+                return [
+                    ['label' => 'Links de Pagamento - Cartão', 'url' => route('links-pagamento.index')],
+                    ['label' => 'Editar Link']
+                ];
+            
             default:
                 return [];
         }
