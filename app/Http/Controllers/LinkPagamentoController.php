@@ -66,7 +66,27 @@ class LinkPagamentoController extends Controller
      */
     public function store(Request $request)
     {
-        try {
+        try {   
+
+            $valor = $this->converterValorParaCentavos($request->input('valor')) / 100;
+            $parcelas = (int) $request->input('parcelas');
+            
+           
+            // Validar parcelas antes da validação
+            if($parcelas > 1) {
+                $valorMinimoParcela = 5.00;
+                $valorParcela = $valor / $parcelas;
+                
+              
+
+                if($valorParcela < $valorMinimoParcela) {
+                  
+                    return redirect()->back()->with('error', 'O valor mínimo de cada parcela é de R$ 5,00');
+                }
+            }
+
+         
+
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
             
             if (!$estabelecimentoId) {
@@ -181,6 +201,23 @@ class LinkPagamentoController extends Controller
     public function update(Request $request, LinkPagamento $linkPagamento)
     {
         try {
+            $valor = $this->converterValorParaCentavos($request->input('valor'))/ 100;
+            $parcelas = (int) $request->input('parcelas');
+            
+          
+            
+            // Validar parcelas antes da validação
+            if($parcelas > 1) {
+                $valorMinimoParcela = 5.00;
+                $valorParcela = $valor / $parcelas;
+               
+
+                if($valorParcela < $valorMinimoParcela) {
+                  
+                    return redirect()->back()->with('error', 'O valor mínimo de cada parcela é de R$ 5,00');
+                }
+            }
+
             // Verificar se o usuário tem acesso a este link
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
             

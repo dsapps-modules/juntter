@@ -168,6 +168,19 @@ class CobrancaController extends Controller
     public function criarTransacaoCredito(Request $request)
     {
         try {
+            $valor = $this->converterValorParaCentavos($request->input('amount')) / 100;
+            $parcelas = (int) $request->input('installments');
+
+            if($parcelas > 1) {
+                $valorMinimoParcela = 5.00;
+                $valorParcela = $valor / $parcelas;
+
+                if($valorParcela < $valorMinimoParcela) {
+                    return redirect()->route('cobranca.index')
+                        ->with('error', 'O valor mínimo de cada parcela é de R$ 5,00');
+                } 
+            }
+
             $dados = $request->validate([
                 'payment_type' => 'required|in:CREDIT',
                 'amount' => 'required|string',
