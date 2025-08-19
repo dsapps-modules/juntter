@@ -71,8 +71,13 @@
                                     <option value="1" {{ old('parcelas') == '1' ? 'selected' : '' }}>À vista (1x)</option>
                                     @for($i = 2; $i <= 18; $i++)
                                         <option value="{{ $i }}" {{ old('parcelas') == $i ? 'selected' : '' }}>Até {{ $i }}x sem juros</option>
-                                        @endfor
+                                    @endfor
                                 </select>
+                                
+                                <div id="parcelas-info" class="mt-2 small text-muted" style="display: none;">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    <span id="parcelas-possiveis"></span>
+                                </div>
 
                                 @error('parcelas')
                                 <div class="text-danger small mt-2">
@@ -306,10 +311,72 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
+        const VALOR_MINIMO_PARCELA = 5.00; // R$ 5,00 por parcela
+        
+        // Função para calcular parcelas possíveis
+        function calcularParcelasPossiveis(valor) {
+            if (!valor || valor <= 0) return 1;
+            
+            const valorNumerico = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+            const maxParcelas = Math.floor(valorNumerico / VALOR_MINIMO_PARCELA);
+            
+            return Math.max(1, Math.min(maxParcelas, 18));
+        }
+        
+        // Função para atualizar opções de parcelas
+        function atualizarOpcoesParcelas(valor) {
+            const parcelasPossiveis = calcularParcelasPossiveis(valor);
+            const selectParcelas = $('#parcelas');
+            const parcelasInfo = $('#parcelas-info');
+            const parcelasPossiveisSpan = $('#parcelas-possiveis');
+            
+            // Limpar opções existentes (exceto à vista)
+            selectParcelas.find('option:not([value="1"])').remove();
+            
+            // Converter valor formatado para numérico
+            const valorNumerico = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+            
+            // Adicionar opções baseadas no valor
+            for (let i = 2; i <= parcelasPossiveis; i++) {
+                const valorParcela = (valorNumerico / i).toFixed(2).replace('.', ',');
+                selectParcelas.append(`<option value="${i}">Até ${i}x sem juros (R$ ${valorParcela} cada)</option>`);
+            }
+            
+            // Mostrar informação sobre parcelas possíveis
+            if (parcelasPossiveis > 1) {
+                parcelasInfo.show();
+                parcelasPossiveisSpan.text(`Com R$ ${valor} você pode parcelar em até ${parcelasPossiveis}x (mínimo R$ ${VALOR_MINIMO_PARCELA.toFixed(2).replace('.', ',')} por parcela)`);
+            } else {
+                parcelasInfo.hide();
+            }
+            
+            // Ajustar valor selecionado se necessário
+            const valorAtual = selectParcelas.val();
+            if (valorAtual > parcelasPossiveis) {
+                selectParcelas.val('1');
+            }
+        }
+        
+        // Máscara para valor monetário
+        $('#valor').on('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                value = (value/100).toFixed(2) + '';
+                value = value.replace(".", ",");
+                value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+                value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
+                this.value = 'R$ ' + value;
+                
+                // Atualizar opções de parcelas
+                atualizarOpcoesParcelas(this.value);
+            }
+        });
+        
         // Validação do formulário
         $('#formLinkPagamento').submit(function(e) {
             let parcelas = $('select[name="parcelas"]').val();
-
+            let valor = $('#valor').val();
+            
             if (!parcelas) {
                 e.preventDefault();
                 Swal.fire({
@@ -319,16 +386,36 @@
                 });
                 return false;
             }
+            
+            // Validar se o valor permite a parcela selecionada
+            if (parcelas > 1) {
+                const valorNumerico = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+                const valorParcela = valorNumerico / parcelas;
+                
+                if (valorParcela < VALOR_MINIMO_PARCELA) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Valor insuficiente para parcelamento',
+                        text: `Para parcelar em ${parcelas}x, cada parcela deve ser pelo menos R$ ${VALOR_MINIMO_PARCELA.toFixed(2).replace('.', ',')}. Valor atual por parcela: R$ ${valorParcela.toFixed(2).replace('.', ',')}`
+                    });
+                    return false;
+                }
+            }
         });
 
         // Atualizar data mínima de expiração
         $('#data_expiracao').attr('min', new Date().toISOString().split('T')[0]);
 
-        // Método de pagamento fixo: cartão de crédito
-
         // Marcar à vista por padrão
         if (!$('select[name="parcelas"]').val()) {
             $('#parcelas').val('1');
+        }
+        
+        // Inicializar com valor padrão se existir
+        const valorInicial = $('#valor').val();
+        if (valorInicial) {
+            atualizarOpcoesParcelas(valorInicial);
         }
     });
 </script>
