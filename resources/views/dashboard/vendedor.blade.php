@@ -48,7 +48,7 @@
                                         <th>ID</th>
                                         <th>Tipo</th>
                                         <th>Valor</th>
-                                        <th>Autorização</th>
+                                      
                                         <th>Data</th>
                                         <th>Status</th>
                                         <th>Ações</th>
@@ -101,15 +101,7 @@
                                                     @endif
                                                 </div>
                                             </td>
-                                            <td>
-                                                @if(isset($transacao['gateway_authorization']))
-                                                    <span class="badge badge-outline-secondary">
-                                                        {{ $transacao['gateway_authorization'] }}
-                                                    </span>
-                                                @else
-                                                    <span class="text-muted">N/A</span>
-                                                @endif
-                                            </td>
+                                            
                                             <td>
                                                 <span class="text-muted">
                                                     {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
