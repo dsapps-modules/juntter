@@ -204,7 +204,7 @@
                         </div>
                     </div>
 
-                    <!-- Card de Dados do Cliente -->
+                
                     <div class="card mb-4 rounded-border">
                         <div class="card-header">
                             <h5 class="mb-0">
@@ -214,14 +214,14 @@
                         </div>
                         <div class="card-body d-flex flex-column justify-content-between">
                             <div class="row">
-                                @if(isset($linkPagamento->dados_cliente['nome_obrigatorio']))
+                                @if(isset($linkPagamento->dados_cliente['preenchidos']['nome']))
                                 <div class="col-md-3 mb-3">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-user text-primary mr-3" style="font-size: 1rem; width: 20px;"></i>
                                         <div class="flex-grow-1">
                                             <label class="form-label text-muted small mb-1">Nome</label>
                                             <div>
-                                                <span class="badge badge-success badge-sm">Obrigatório</span>
+                                               
                                                 @if(isset($linkPagamento->dados_cliente['preenchidos']['nome']) && $linkPagamento->dados_cliente['preenchidos']['nome'])
                                                     <div class="mt-1">
                                                         <small class="text-success"><i class="fas fa-check-circle"></i> Pré-preenchido: {{ $linkPagamento->dados_cliente['preenchidos']['nome'] }}</small>
@@ -237,7 +237,7 @@
                                         <div class="flex-grow-1">
                                             <label class="form-label text-muted small mb-1">Sobrenome</label>
                                             <div>
-                                                <span class="badge badge-success badge-sm">Obrigatório</span>
+                                                
                                                 @if(isset($linkPagamento->dados_cliente['preenchidos']['sobrenome']) && $linkPagamento->dados_cliente['preenchidos']['sobrenome'])
                                                     <div class="mt-1">
                                                         <small class="text-success"><i class="fas fa-check-circle"></i> Pré-preenchido: {{ $linkPagamento->dados_cliente['preenchidos']['sobrenome'] }}</small>
@@ -248,14 +248,14 @@
                                     </div>
                                 </div>
                                 @endif
-                                @if(isset($linkPagamento->dados_cliente['email_obrigatorio']))
+                                @if(isset($linkPagamento->dados_cliente['preenchidos']['email']))
                                 <div class="col-md-6 mb-3">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-envelope text-primary mr-3" style="font-size: 1rem; width: 20px;"></i>
                                         <div class="flex-grow-1">
                                             <label class="form-label text-muted small mb-1">Email</label>
                                             <div>
-                                                <span class="badge badge-success badge-sm">Obrigatório</span>
+                                              
                                                 @if(isset($linkPagamento->dados_cliente['preenchidos']['email']) && $linkPagamento->dados_cliente['preenchidos']['email'])
                                                     <div class="mt-1">
                                                         <small class="text-success"><i class="fas fa-check-circle"></i> Pré-preenchido: {{ $linkPagamento->dados_cliente['preenchidos']['email'] }}</small>
@@ -266,14 +266,14 @@
                                     </div>
                                 </div>
                                 @endif
-                                @if(isset($linkPagamento->dados_cliente['telefone_obrigatorio']))
+                                @if(isset($linkPagamento->dados_cliente['preenchidos']['telefone']))
                                 <div class="col-md-6 mb-3">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-phone text-primary mr-3" style="font-size: 1rem; width: 20px;"></i>
                                         <div class="flex-grow-1">
                                             <label class="form-label text-muted small mb-1">Telefone</label>
                                             <div>
-                                                <span class="badge badge-success badge-sm">Obrigatório</span>
+                                               
                                                 @if(isset($linkPagamento->dados_cliente['preenchidos']['telefone']) && $linkPagamento->dados_cliente['preenchidos']['telefone'])
                                                     <div class="mt-1">
                                                         <small class="text-success"><i class="fas fa-check-circle"></i> Pré-preenchido: {{ $linkPagamento->dados_cliente['preenchidos']['telefone'] }}</small>
@@ -284,14 +284,14 @@
                                     </div>
                                 </div>
                                 @endif
-                                @if(isset($linkPagamento->dados_cliente['documento_obrigatorio']))
+                                @if(isset($linkPagamento->dados_cliente['preenchidos']['documento']))
                                 <div class="col-md-6 mb-3">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-id-card text-primary mr-3" style="font-size: 1rem; width: 20px;"></i>
                                         <div class="flex-grow-1">
                                             <label class="form-label text-muted small mb-1">Documento</label>
                                             <div>
-                                                <span class="badge badge-success badge-sm">Obrigatório</span>
+                                               
                                                 @if(isset($linkPagamento->dados_cliente['preenchidos']['documento']) && $linkPagamento->dados_cliente['preenchidos']['documento'])
                                                     <div class="mt-1">
                                                         <small class="text-success"><i class="fas fa-check-circle"></i> Pré-preenchido: {{ $linkPagamento->dados_cliente['preenchidos']['documento'] }}</small>
@@ -302,14 +302,14 @@
                                     </div>
                                 </div>
                                 @endif
-                                @if(isset($linkPagamento->dados_cliente['endereco_obrigatorio']))
+                                @if(isset($linkPagamento->dados_cliente['preenchidos']['endereco']) && is_array($linkPagamento->dados_cliente['preenchidos']['endereco']))
                                 <div class="col-md-12 mb-3">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-map-marker-alt text-primary mr-3" style="font-size: 1rem; width: 20px;"></i>
                                         <div class="flex-grow-1">
                                             <label class="form-label text-muted small mb-1">Endereço</label>
                                             <div>
-                                                <span class="badge badge-success badge-sm">Obrigatório</span>
+                                               
                                                 @if(isset($linkPagamento->dados_cliente['preenchidos']['endereco']) && is_array($linkPagamento->dados_cliente['preenchidos']['endereco']))
                                                     @php
                                                         $endereco = $linkPagamento->dados_cliente['preenchidos']['endereco'];
@@ -335,6 +335,7 @@
                             </div>
                         </div>
                     </div>
+                   
                 
 
                     <!-- Card de URLs -->
