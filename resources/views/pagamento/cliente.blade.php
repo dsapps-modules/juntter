@@ -437,12 +437,14 @@
                                         <!-- Resumo dos dados preenchidos -->
                                         @if($link->dados_cliente['preenchidos'] && 
                                              $link->dados_cliente['preenchidos']['nome'] && 
+                                             $link->dados_cliente['preenchidos']['sobrenome'] &&
                                              $link->dados_cliente['preenchidos']['email'] && 
                                              $link->dados_cliente['preenchidos']['telefone'] && 
                                              $link->dados_cliente['preenchidos']['documento'])
                                         <div class="data-summary mb-3">
                                             <small><strong>Dados pré-preenchidos:</strong></small><br>
                                             <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] }}</small><br>
+                                            <small><strong>Sobrenome:</strong> {{ $link->dados_cliente['preenchidos']['sobrenome'] }}</small><br>
                                             <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] }}</small><br>
                                             <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] }}</small><br>
                                             <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] }}</small>
@@ -461,7 +463,7 @@
                                                 </div>
                                                 <div class="col-md-6 mb-3">
                                                     <label class="form-label">Sobrenome <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[last_name]" class="form-control" placeholder="Sobrenome" required>
+                                                    <input type="text" name="client[last_name]" class="form-control" placeholder="Sobrenome" value="{{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}" required>
                                                 </div>
                                             </div>
                                             <div class="row">
