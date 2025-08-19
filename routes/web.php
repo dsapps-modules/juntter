@@ -19,6 +19,11 @@ Route::get('/', function () {
     return view('checkout');
 })->name('checkout');
 
+// Rotas públicas para pagamento do cliente (apenas cartão)
+Route::get('/pagamento/{codigoUnico}', [App\Http\Controllers\PagamentoClienteController::class, 'mostrarPagamento'])->name('pagamento.link');
+Route::post('/pagamento/{codigoUnico}/cartao', [App\Http\Controllers\PagamentoClienteController::class, 'processarCartao'])->name('pagamento.cartao');
+Route::get('/pagamento/{codigoUnico}/status', [App\Http\Controllers\PagamentoClienteController::class, 'verificarStatus'])->name('pagamento.status');
+
 // Página de acesso não autorizado
 Route::get('/unauthorized', function () {
     return view('auth.unauthorized');
@@ -71,6 +76,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cobranca/boleto/{id}', [CobrancaController::class, 'detalhesBoleto'])->name('cobranca.boleto.detalhes');
     Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
     Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
+
+    // Rotas para Links de Pagamento
+    Route::get('/links-pagamento', [App\Http\Controllers\LinkPagamentoController::class, 'index'])->name('links-pagamento.index');
+    Route::get('/links-pagamento/create', [App\Http\Controllers\LinkPagamentoController::class, 'create'])->name('links-pagamento.create');
+    Route::post('/links-pagamento', [App\Http\Controllers\LinkPagamentoController::class, 'store'])->name('links-pagamento.store');
+    Route::get('/links-pagamento/{linkPagamento}', [App\Http\Controllers\LinkPagamentoController::class, 'show'])->name('links-pagamento.show');
+    Route::get('/links-pagamento/{linkPagamento}/edit', [App\Http\Controllers\LinkPagamentoController::class, 'edit'])->name('links-pagamento.edit');
+    Route::put('/links-pagamento/{linkPagamento}', [App\Http\Controllers\LinkPagamentoController::class, 'update'])->name('links-pagamento.update');
+    Route::delete('/links-pagamento/{linkPagamento}', [App\Http\Controllers\LinkPagamentoController::class, 'destroy'])->name('links-pagamento.destroy');
+    Route::patch('/links-pagamento/{linkPagamento}/status', [App\Http\Controllers\LinkPagamentoController::class, 'alterarStatus'])->name('links-pagamento.status');
 
 });
 });
