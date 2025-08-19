@@ -370,34 +370,25 @@
                                         <label class="form-label fw-bold">
                                             Valor da transação <span class="text-danger">*</span>
                                         </label>
-                                        <input type="text" name="amount" class="form-control" placeholder="0,00" required>
+                                        <input type="text" name="amount" id="amount-credito" class="form-control" placeholder="0,00" required>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-bold">
                                             Número de parcelas <span class="text-danger">*</span>
                                         </label>
-                                        <select name="installments" class="form-select" required>
+                                        <select name="installments" class="form-select" id="installments" required>
                                             <option value="">Selecione...</option>
-                                            <option value="1">1x</option>
-                                            <option value="2">2x</option>
-                                            <option value="3">3x</option>
-                                            <option value="4">4x</option>
-                                            <option value="5">5x</option>
-                                            <option value="6">6x</option>
-                                            <option value="7">7x</option>
-                                            <option value="8">8x</option>
-                                            <option value="9">9x</option>
-                                            <option value="10">10x</option>
-                                            <option value="11">11x</option>
-                                            <option value="12">12x</option>
-                                            <option value="13">13x</option>
-                                            <option value="14">14x</option>
-                                            <option value="15">15x</option>
-                                            <option value="16">16x</option>
-                                            <option value="17">17x</option>
-                                            <option value="18">18x</option>
-                                          
+                                            <option value="1">À vista (1x)</option>
                                         </select>
+                                        
+                                        <!-- Informação sobre parcelas possíveis -->
+                                        <div id="parcelas-info" class="mt-2" style="display: none;">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Máximo de <span id="parcelas-possiveis" class="fw-bold"></span> parcelas 
+                                                (mínimo R$ 5,00 cada)
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -911,6 +902,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const pixData = JSON.parse(pixDataElement.dataset.pixData);
         showPixModal(pixData);
     }
+    
+    // Inicializar validação dinâmica de parcelas para cartão de crédito
+    inicializarValidacaoParcelas();
 });
 
 function showPixModal(pixData) {
@@ -987,6 +981,78 @@ function closePixModal() {
     $('#modalQrCodePix').modal('hide');
 }
 
+// ===== VALIDAÇÃO DINÂMICA DE PARCELAS PARA CARTÃO DE CRÉDITO =====
+
+function inicializarValidacaoParcelas() {
+    const amountInput = document.getElementById('amount-credito');
+    const installmentsSelect = document.getElementById('installments');
+    
+    if (amountInput && installmentsSelect) {
+        // Aplicar máscara monetária
+        amountInput.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                value = (value/100).toFixed(2) + '';
+                value = value.replace(".", ",");
+                value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+                value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
+                this.value = 'R$ ' + value;
+            }
+            
+            // Atualizar opções de parcelas
+            atualizarOpcoesParcelasCredito(this.value);
+        });
+        
+        // Marcar à vista por padrão
+        if (!installmentsSelect.value) {
+            installmentsSelect.value = '1';
+        }
+    }
+}
+
+function calcularParcelasPossiveisCredito(valor) {
+    if (!valor || valor.trim() === '') return 1;
+    
+    // Converter valor formatado para número
+    const valorNumerico = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+    
+    if (isNaN(valorNumerico) || valorNumerico < 5) return 1;
+    
+    // Calcular quantas parcelas são possíveis (mínimo R$ 5,00 cada)
+    const parcelasPossiveis = Math.floor(valorNumerico / 5);
+    
+    // Limitar a 18 parcelas
+    return Math.min(parcelasPossiveis, 18);
+}
+
+function atualizarOpcoesParcelasCredito(valor) {
+    const parcelasPossiveis = calcularParcelasPossiveisCredito(valor);
+    const selectParcelas = document.getElementById('installments');
+    const parcelasInfo = document.getElementById('parcelas-info');
+    const parcelasPossiveisSpan = document.getElementById('parcelas-possiveis');
+    
+    // Limpar opções existentes (exceto à vista)
+    const options = selectParcelas.querySelectorAll('option:not([value="1"])');
+    options.forEach(option => option.remove());
+    
+    // Adicionar opções baseadas no valor
+    for (let i = 2; i <= parcelasPossiveis; i++) {
+        const valorNumerico = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+        const valorParcela = (valorNumerico / i).toFixed(2).replace('.', ',');
+        const option = document.createElement('option');
+        option.value = i;
+        option.textContent = `Até ${i}x sem juros (R$ ${valorParcela} cada)`;
+        selectParcelas.appendChild(option);
+    }
+    
+    // Mostrar informação sobre parcelas possíveis
+    if (parcelasPossiveis > 1) {
+        parcelasInfo.style.display = 'block';
+        parcelasPossiveisSpan.textContent = parcelasPossiveis;
+    } else {
+        parcelasInfo.style.display = 'none';
+    }
+}
 
 </script>
 @endpush
