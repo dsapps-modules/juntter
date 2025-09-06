@@ -25,7 +25,7 @@
                             <i class="fas fa-eye mr-2"></i>Visualizar
                         </a>
                         <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left mr-2"></i>Voltar
+                            <i class="fas fa-home mr-2"></i>
                         </a>
                     </div>
                 </div>

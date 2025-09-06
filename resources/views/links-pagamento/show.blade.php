@@ -48,7 +48,7 @@
                         <i class="fas fa-edit mr-2"></i>Editar
                     </a>
                     <a href="{{ route('links-pagamento.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left mr-2"></i>Voltar
+                        <i class="fas fa-home mr-2"></i>
                     </a>
                 </div>
             </div>

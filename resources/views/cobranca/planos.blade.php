@@ -12,14 +12,14 @@
 />
 
 <!-- Alert -->
-<div class="row mb-4">
+{{-- <div class="row mb-4">
     <div class="col-12">
         <div class="alert alert-info bg-info text-white border-0 rounded-3 shadow-sm">
             <i class="fas fa-info-circle me-2"></i>
             Visualize os planos comerciais disponíveis para integração com gateways configurados.
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- Header -->
 <div class="row align-items-center mb-4">

@@ -23,9 +23,9 @@
 <div class="row justify-content-center">
     <div class="col-lg-10 col-xl-8">
         <div class="card border-0 shadow-lg rounded-4">
-            <div class="card-header bg-transparent border-0 pb-0">
+            {{-- <div class="card-header bg-transparent border-0 pb-0">
                 <h5 class="card-title fw-bold mb-2">Simulação de Transação</h5>
-            </div>
+            </div> --}}
             <div class="card-body p-4">
                 <!-- Alertas de sessão -->
                 @if(session('success'))
@@ -52,12 +52,12 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <div class="form-floating">
-                                <input type="text" class="form-control @error('amount') is-invalid @enderror" 
-                                       id="amount" name="amount" placeholder="0,00" required>
                                 <label for="amount" class="fw-bold">
                                     <i class="fas fa-dollar-sign me-2 text-success"></i>
                                     Valor da Transação <span class="text-danger">*</span>
-                                </label>
+                                </label>                                
+                                <input type="text" class="form-control @error('amount') is-invalid @enderror" 
+                                    id="amount" name="amount" placeholder="0,00" required>
                                 @error('amount')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -66,6 +66,10 @@
 
                         <div class="col-md-6">
                             <div class="form-floating">
+                                <label for="flag_id" class="fw-bold">
+                                    <i class="fas fa-credit-card me-2 text-info"></i>
+                                    Bandeira do Cartão <span class="text-danger">*</span>
+                                </label>
                                 <select class="form-select @error('flag_id') is-invalid @enderror" 
                                         id="flag_id" name="flag_id" required>
                                     <option value="">Selecione a bandeira</option>
@@ -77,10 +81,6 @@
                                     <option value="6">Outras</option>
                                     <option value="8">Bacen</option>
                                 </select>
-                                <label for="flag_id" class="fw-bold">
-                                    <i class="fas fa-credit-card me-2 text-info"></i>
-                                    Bandeira do Cartão <span class="text-danger">*</span>
-                                </label>
                                 @error('flag_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -92,16 +92,16 @@
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
                             <div class="form-floating">
+                                <label for="interest" class="fw-bold">
+                                    <i class="fas fa-percentage me-2 text-warning"></i>
+                                    Quem paga as taxas? <span class="text-danger">*</span>
+                                </label>
                                 <select class="form-select @error('interest') is-invalid @enderror" 
                                         id="interest" name="interest" required>
                                     <option value="">Selecione</option>
                                     <option value="CLIENT">Cliente</option>
                                     <option value="ESTABLISHMENT">Estabelecimento</option>
                                 </select>
-                                <label for="interest" class="fw-bold">
-                                    <i class="fas fa-percentage me-2 text-warning"></i>
-                                    Quem paga as taxas? <span class="text-danger">*</span>
-                                </label>
                                 @error('interest')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -112,14 +112,13 @@
                     <!-- Botões de ação -->
                     <div class="row mt-4">
                         <div class="col-12 text-center">
+                            <a href="{{ route('cobranca.index') }}" class="btn btn-outline-secondary ms-2">
+                                Cancelar
+                            </a>                            
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-calculator me-2"></i>
                                 Simular Transação
                             </button>
-                            <a href="{{ route('cobranca.index') }}" class="btn btn-outline-secondary ms-2">
-                                <i class="fas fa-arrow-left me-2"></i>
-                                Voltar
-                            </a>
                         </div>
                     </div>
                 </form>

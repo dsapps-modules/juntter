@@ -30,11 +30,11 @@
                     <div>
                         @if(request('from') == 'saldoextrato')
                             <a href="{{ route('cobranca.saldoextrato') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left mr-2"></i>Voltar ao Saldo e Extrato
+                                <i class="fas fa-home mr-2"></i> ao Saldo e Extrato
                             </a>
                         @else
                             <a href="{{ route('cobranca.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left mr-2"></i>Voltar
+                                <i class="fas fa-home mr-2"></i>
                             </a>
                         @endif
                     </div>
@@ -122,10 +122,10 @@
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="status-card rounded-3 p-4 mb-3">
-                            <h6 class="fw-bold text-primary mb-3">
+                        <div class="status-card rounded-3 pl-3 mb-3">
+                            {{-- <h6 class="fw-bold text-primary mb-3">
                                 <i class="fas fa-chart-line me-2"></i>Informações Adicionais
-                            </h6>
+                            </h6> --}}
                             <div class="status-item mb-3">
                                 <small class="text-muted d-block">Gateway</small>
                                 <strong>{{ $transacao['gateway_authorization'] ?? 'N/A' }}</strong>

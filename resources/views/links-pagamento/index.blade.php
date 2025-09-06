@@ -21,7 +21,7 @@
                     </div>
                     <div>
                         <a href="{{ route('links-pagamento.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>Novo Link
+                            <i class="fas fa-plus me-2 mr-2"></i>Novo Link
                         </a>
                     </div>
                 </div>
@@ -131,7 +131,7 @@
                         <h5 class="text-muted">Nenhum link de pagamento criado</h5>
                         <p class="text-muted">Crie seu primeiro link para começar a receber pagamentos online</p>
                         <a href="{{ route('links-pagamento.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>
+                            <i class="fas fa-plus me-2 mr-2"></i>
                             Criar Primeiro Link
                         </a>
                     </div>

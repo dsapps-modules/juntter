@@ -24,7 +24,7 @@
                     </div>
                     <div>
                         <a href="{{ route('cobranca.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left mr-2"></i>Voltar
+                            <i class="fas fa-home mr-2"></i>
                         </a>
                     </div>
                 </div>

@@ -24,7 +24,7 @@
                         <div class="saldo-card saldo-disponivel">
                             <div class="saldo-content">
                                 <div class="saldo-valor">R$ {{ number_format(($saldo['total']['amount'] ?? 0) / 100, 2, ',', '.') }}</div>
-                                <div class="saldo-label">Total em lançamentos futuros</div>
+                                <div class="saldo-label">Lançamentos futuros</div>
                             </div>
                             <div class="saldo-icon">
                                 <i class="fas fa-wallet"></i>
@@ -217,7 +217,6 @@
                                         <td>
                                             <span class="badge bg-secondary">{{ $transacao['brand_name'] }}</span>
                                         </td>
-                                              
                                         <td>
                                             <strong>R$ {{ number_format($transacao['transaction_original_amount'] / 100, 2, ',', '.') }}</strong>
                                         </td>
@@ -234,7 +233,7 @@
                                         </td>
                                         <td>
                                             <a href="{{ route('cobranca.transacao.detalhes', $transacao['transaction_id']) }}?from=saldoextrato" 
-                                               class="btn btn-sm btn-outline-primary">
+                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye me-1"></i>
                                                 Ver Detalhes
                                             </a>

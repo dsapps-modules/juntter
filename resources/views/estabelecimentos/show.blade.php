@@ -37,7 +37,7 @@
                             <i class="fas fa-edit me-2"></i>Editar
                         </a>
                         <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left me-2"></i>Voltar
+                            <i class="fas fa-home me-2"></i>
                         </a>
                     </div>
                 </div>
@@ -215,7 +215,7 @@
                                     <i class="fas fa-share-alt me-2"></i>Regras de Split 
                                 </h6>
                                 <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalNovaRegra">
-                                    <i class="fas fa-plus me-2"></i>Nova Regra
+                                    <i class="fas fa-plus me-2 mr-2"></i>Nova Regra
                                 </button>
                             </div>
 
@@ -269,7 +269,7 @@
                                                       <td>
                                                           <div class="btn-group" role="group">
                                                               <a href="{{ route('estabelecimentos.split-pre.show', ['id' => $estabelecimento['id'], 'splitId' => $regra['id']]) }}" 
-                                                                 class="btn btn-sm btn-outline-info" 
+                                                                 class="btn btn-sm btn-outline-info mr-1" 
                                                                  title="Visualizar detalhes">
                                                                   <i class="fas fa-eye"></i>
                                                               </a>
