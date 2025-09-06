@@ -53,7 +53,7 @@
                             
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ route('cobranca.index') }}"><i class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
-                            <li><a class="dropdown-item" href="{{ route('cobranca.simular') }}"><i class="fas fa-calculator me-2"></i>Simular Transação</a></li>
+                            <li><a class="dropdown-item" href="{{ route('cobranca.transacao.simular') }}"><i class="fas fa-calculator me-2"></i>Simular Transação</a></li>
                             <li><a class="dropdown-item" href="{{ route('links-pagamento.index') }}"><i class="fas fa-link me-2"></i>Links de Pagamento - Cartão</a></li>
                             {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li> --}}
                             <li><a class="dropdown-item" href="{{ route('cobranca.planos') }}"><i class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>

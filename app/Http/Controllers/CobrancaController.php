@@ -411,7 +411,7 @@ class CobrancaController extends Controller
                 ->with('success', 'Simulação realizada com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao simular transação: ' . $e->getMessage());
-            return redirect()->route('cobranca.simular')
+            return redirect()->route('cobranca.transacao.simular')
                 ->with('error', 'Erro ao simular transação: ' . $e->getMessage());
         }
     }
