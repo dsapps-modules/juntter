@@ -688,10 +688,14 @@ class CobrancaController extends Controller
             // Buscar lançamentos futuros diários (extrato detalhado)
             $extrato = $this->transacaoService->lancamentosFuturosDiarios($filtrosExtrato);
 
+            // Preparar projeção mensal (5 meses: 2 para trás, atual, 2 para frente)
+            $projecaoMensal = $this->prepararProjecaoMensal($saldo);
+
             // Preparar dados para a view
             $dados = [
                 'saldo' => $saldo,
                 'extrato' => $extrato,
+                'projecaoMensal' => $projecaoMensal,
                 'filtros' => [
                     'gateway_authorization' => $request->gateway_authorization,
                     'data_inicio' => $request->data_inicio,
@@ -706,6 +710,55 @@ class CobrancaController extends Controller
             Log::error('Erro ao buscar saldo e extrato: ' . $e->getMessage());
             return view('cobranca.saldoextrato')->with('error', 'Erro ao carregar saldo e extrato: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Preparar projeção mensal com 5 meses (2 para trás, atual, 2 para frente)
+     */
+    private function prepararProjecaoMensal($saldo)
+    {
+        $mesAtual = date('n'); // Mês atual (1-12)
+        $anoAtual = date('Y'); // Ano atual
+        
+        // Criar array com 5 meses: 2 para trás, atual, 2 para frente
+        $mesesExibir = [];
+        for ($i = -2; $i <= 2; $i++) {
+            $mesCalculado = $mesAtual + $i;
+            $anoCalculado = $anoAtual;
+            
+            // Ajustar mês e ano se necessário
+            if ($mesCalculado < 1) {
+                $mesCalculado += 12;
+                $anoCalculado--;
+            } elseif ($mesCalculado > 12) {
+                $mesCalculado -= 12;
+                $anoCalculado++;
+            }
+            
+            $mesesExibir[] = [
+                'month' => $mesCalculado,
+                'year' => $anoCalculado,
+                'amount' => 0, // Valor padrão
+                'is_current' => ($mesCalculado == $mesAtual && $anoCalculado == $anoAtual),
+                'formatted_date' => date('M/Y', mktime(0, 0, 0, $mesCalculado, 1, $anoCalculado)),
+                'formatted_amount' => 'R$ 0,00'
+            ];
+        }
+        
+        // Preencher com valores reais da API
+        if (isset($saldo['months']) && is_array($saldo['months'])) {
+            foreach ($saldo['months'] as $mesApi) {
+                foreach ($mesesExibir as &$mesExibir) {
+                    if ($mesExibir['month'] == $mesApi['month'] && $mesExibir['year'] == $mesApi['year']) {
+                        $mesExibir['amount'] = $mesApi['amount'];
+                        $mesExibir['formatted_amount'] = 'R$ ' . number_format($mesApi['amount'] / 100, 2, ',', '.');
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return $mesesExibir;
     }
 
     /**

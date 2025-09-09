@@ -85,15 +85,22 @@
             </div>
             <div class="card-body p-4">
                 <!-- Projeção por Mês -->
-                @if(isset($saldo['months']) && count($saldo['months']) > 0)
+                @if(isset($projecaoMensal) && count($projecaoMensal) > 0)
                     <div>
                         <h6 class="fw-bold mb-3">Projeção por Mês</h6>
-                        <div class="row">
-                            @foreach($saldo['months'] as $mes)
+                        <div class="row justify-content-center">
+                            @foreach($projecaoMensal as $mes)
                                 <div class="col-md-2 mb-2">
-                                    <div class="text-center p-2 bg-light rounded">
-                                        <small class="text-muted d-block">{{ date('M/Y', mktime(0, 0, 0, $mes['month'], 1, $mes['year'])) }}</small>
-                                        <strong class="text-primary">R$ {{ number_format($mes['amount'] / 100, 2, ',', '.') }}</strong>
+                                    <div class="text-center p-3 {{ $mes['is_current'] ? 'bg-warning text-white' : 'bg-light' }} rounded shadow-sm">
+                                        <small class="text-muted d-block {{ $mes['is_current'] ? 'text-black' : '' }}">
+                                            {{ $mes['formatted_date'] }}
+                                            @if($mes['is_current'])
+                                                <br><small class="badge bg-warning text-dark">Atual</small>
+                                            @endif
+                                        </small>
+                                        <strong class="{{ $mes['is_current'] ? 'text-white' : 'text-primary' }} fs-6">
+                                            {{ $mes['formatted_amount'] }}
+                                        </strong>
                                     </div>
                                 </div>
                             @endforeach
