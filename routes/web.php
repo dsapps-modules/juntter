@@ -49,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             
     Route::middleware('nivel.acesso:vendedor')->group(function () {
     Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
+    Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
     
     // Route::get('/cobranca/recorrente', function () {
 //     return view('cobranca.recorrente');
