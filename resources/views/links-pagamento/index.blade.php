@@ -43,6 +43,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th class="fw-bold">Valor</th>
+                                    <th class="fw-bold">Descrição</th>
                                     <th class="fw-bold">Status</th>
                                     <th class="fw-bold">Criado em</th>
                                     <th class="fw-bold">Ações</th>
@@ -55,8 +56,11 @@
                                         <span class="badge bg-success fs-6">
                                             {{ $link->valor_formatado }}
                                         </span>
+                                         
+                                    </td>
+                                    <td>
                                         @if($link->descricao)
-                                            <br><small class="text-muted">{{ Str::limit($link->descricao, 50) }}</small>
+                                            <small class="text-muted">{{ Str::limit($link->descricao, 50) }}</small>
                                         @endif
                                     </td>
                                     <td>
@@ -103,7 +107,6 @@
                                             <button type="button" 
                                                     class="btn btn-sm btn-danger delete-link" 
                                                     data-link-id="{{ $link->id }}"
-                                                    data-link-titulo="{{ $link->titulo }}"
                                                     title="Excluir">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -145,7 +148,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p>Tem certeza que deseja excluir o link "<strong id="linkTitulo"></strong>"?</p>
+                <p>Tem certeza que deseja excluir este link de pagamento?</p>
                 <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
             </div>
             <div class="modal-footer">
@@ -193,9 +196,7 @@ $(document).ready(function() {
     // Exclusão de link
     $('.delete-link').click(function() {
         const linkId = $(this).data('link-id');
-        const linkTitulo = $(this).data('link-titulo');
         
-        $('#linkTitulo').text(linkTitulo);
         $('#deleteForm').attr('action', `/links-pagamento/${linkId}`);
         $('#deleteModal').modal('show');
     });

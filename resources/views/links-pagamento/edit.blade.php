@@ -44,21 +44,6 @@
                         <div class="col-md-6">
                             <h5 class="fw-bold mb-3">Informações Básicas</h5>
                             <div class="mb-3">
-                                <label for="titulo" class="form-label fw-bold">
-                                    Título do Link <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" 
-                                       class="form-control @error('titulo') is-invalid @enderror" 
-                                       id="titulo" 
-                                       name="titulo" 
-                                       value="{{ old('titulo', $linkPagamento->titulo) }}" 
-                                       placeholder="Ex: Pagamento Consulta Médica" 
-                                       required>
-                                @error('titulo')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
                                 <label for="descricao" class="form-label fw-bold">Descrição</label>
                                 <input type="text" 
                                        class="form-control @error('descricao') is-invalid @enderror" 
@@ -70,6 +55,7 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            @if(!$linkPagamento->is_avista)
                             <div class="mb-3">
                                 <label for="parcelas" class="form-label">Número máximo de parcelas:</label>
                                 <select class="form-select" id="parcelas" name="parcelas">
@@ -85,11 +71,21 @@
                                 </div>
 
                                 @error('parcelas')
-                                    <div class="text-danger small mt-2">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>{{ $message }}
-                                    </div>
+                                <div class="text-danger small mt-2">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ $message }}
+                                </div>
                                 @enderror
                             </div>
+                            @else
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de pagamento:</label>
+                                <div class="form-control-plaintext">
+                                    <span class="badge bg-primary">À vista (1x)</span>
+                                    <small class="text-muted d-block">Este link foi criado para pagamentos à vista</small>
+                                </div>
+                                <input type="hidden" name="parcelas" value="1">
+                            </div>
+                            @endif
                         </div>
                         <div class="col-md-6">
                             <h5 class="fw-bold mb-3">Valor e Configurações</h5>
@@ -144,6 +140,7 @@
                         </div>
                     </div>
                     
+                    @if(!$linkPagamento->is_avista)
                     <div class="row">
                         <div class="col-md-6">
                             <h5 class="fw-bold mb-3">Dados do Cliente (Opcional)</h5>
@@ -251,9 +248,10 @@
                                 </div>
                             </div>
                        
-
+                       
 
                     </div>
+                    @endif
 
                     <div class="row">
                         <div class="col-md-12">

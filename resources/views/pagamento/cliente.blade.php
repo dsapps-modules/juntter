@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $link->titulo }} - Pagamento</title>
+    <title>Pagamento</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -349,7 +349,7 @@
                             <div class="payment-logo">
                                 <i class="fas fa-credit-card"></i>
                             </div>
-                            <h1 class="payment-title">{{ $link->titulo }}</h1>
+                            <h1 class="payment-title">Pagamento</h1>
                             @if($link->descricao)
                                 <p class="payment-subtitle">{{ $link->descricao }}</p>
                             @endif

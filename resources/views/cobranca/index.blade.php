@@ -27,12 +27,20 @@
     <div class="col-12 text-center">
         <h1 class="h3 mb-2 fw-bold">Cobrança Única</h1>
         <p class="text-muted mb-3">Gerencie suas cobranças avulsas</p>
-        <button class="btn btn-novo-pagamento shadow-sm" 
-                data-bs-toggle="modal" 
-                data-bs-target="#modalCobranca">
-            <i class="fas fa-plus me-2"></i>
-            Novo Pagamento Único
-        </button>
+        <div class="d-flex gap-2 justify-content-center">
+            <button class="btn btn-novo-pagamento shadow-sm" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#modalCobranca">
+                <i class="fas fa-plus me-2"></i>
+                Novo Pagamento Único
+            </button>
+            <button class="btn btn-novo-pagamento shadow-sm" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#modalCreditoVista">
+                <i class="fas fa-credit-card me-2"></i>
+                Crédito à Vista
+            </button>
+        </div>
     </div>
 </div>
 
@@ -891,6 +899,71 @@
     </div>
 </div>
 
+<!-- Modal Crédito à Vista - Link de Pagamento -->
+<div class="modal fade" id="modalCreditoVista" tabindex="-1" aria-labelledby="modalCreditoVistaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalCreditoVistaLabel">Crédito à Vista - Link de Pagamento</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('cobranca.credito-vista.store') }}" method="POST">
+                    @csrf
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">
+                                Valor <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" name="valor" id="valor-credito-vista" class="form-control" placeholder="0,00" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">
+                                Quem paga as taxas <span class="text-danger">*</span>
+                            </label>
+                            <select name="juros" class="form-select" required>
+                                <option value="">Selecione...</option>
+                                <option value="CLIENT">Cliente</option>
+                                <option value="ESTABLISHMENT">Estabelecimento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">
+                                Descrição
+                            </label>
+                            <input type="text" name="descricao" class="form-control" placeholder="Descrição detalhada do pagamento (opcional)">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">
+                                Data de expiração <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" 
+                                   name="data_expiracao" 
+                                   class="form-control" 
+                                   id="data_expiracao_credito"
+                                   min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                                   required>
+                        </div>
+                    </div>
+
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-link me-2"></i>
+                            Gerar Link de Pagamento
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -905,6 +978,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Inicializar validação dinâmica de parcelas para cartão de crédito
     inicializarValidacaoParcelas();
+    
+    // Inicializar máscara monetária para crédito à vista
+    inicializarMascaraCreditoVista();
+    
+    // Definir data padrão de expiração (7 dias)
+    definirDataPadraoExpiracao();
 });
 
 function showPixModal(pixData) {
@@ -1051,6 +1130,39 @@ function atualizarOpcoesParcelasCredito(valor) {
         parcelasPossiveisSpan.textContent = parcelasPossiveis;
     } else {
         parcelasInfo.style.display = 'none';
+    }
+}
+
+// ===== MÁSCARA MONETÁRIA PARA CRÉDITO À VISTA =====
+
+function inicializarMascaraCreditoVista() {
+    const amountInput = document.getElementById('valor-credito-vista');
+    
+    if (amountInput) {
+        // Aplicar máscara monetária
+        amountInput.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length > 0) {
+                value = (value/100).toFixed(2) + '';
+                value = value.replace(".", ",");
+                value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+                value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
+                this.value = 'R$ ' + value;
+            }
+        });
+    }
+}
+
+// ===== DEFINIR DATA PADRÃO DE EXPIRAÇÃO =====
+
+function definirDataPadraoExpiracao() {
+    const dataExpiracaoInput = document.getElementById('data_expiracao_credito');
+    
+    if (dataExpiracaoInput && !dataExpiracaoInput.value) {
+        // Definir data padrão de 7 dias a partir de hoje
+        const dataExpiracao = new Date();
+        dataExpiracao.setDate(dataExpiracao.getDate() + 7);
+        dataExpiracaoInput.value = dataExpiracao.toISOString().split('T')[0];
     }
 }
 
