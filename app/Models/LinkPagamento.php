@@ -18,6 +18,7 @@ class LinkPagamento extends Model
         'valor',
         'valor_centavos',
         'parcelas',
+        'is_avista',
         'juros',
         'status',
         'data_expiracao',
@@ -30,6 +31,7 @@ class LinkPagamento extends Model
         'valor' => 'decimal:2',
         'valor_centavos' => 'integer',
         'parcelas' => 'integer',
+        'is_avista' => 'boolean',
         'juros' => 'string',
         'data_expiracao' => 'datetime',
         'dados_cliente' => 'array'

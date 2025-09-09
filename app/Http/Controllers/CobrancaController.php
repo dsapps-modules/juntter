@@ -6,6 +6,7 @@ use App\Services\TransacaoService;
 use App\Services\CreditoService;
 use App\Services\PixService;
 use App\Services\BoletoService;
+use App\Models\LinkPagamento;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Log;
@@ -514,6 +515,64 @@ class CobrancaController extends Controller
             Log::error('Erro ao buscar detalhes do boleto: ' . $e->getMessage());
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao buscar detalhes do boleto: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Criar link de pagamento para crédito à vista
+     */
+    public function criarCreditoVista(Request $request)
+    {
+        try {
+            $dados = $request->validate([
+                'valor' => 'required|string',
+                'juros' => 'required|in:CLIENT,ESTABLISHMENT',
+                'descricao' => 'nullable|string|max:1000',
+                'data_expiracao' => 'required|date|after:today',
+            ]);
+
+            $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+            
+            if (!$estabelecimentoId) {
+                return redirect()->back()->with('error', 'Estabelecimento não encontrado');
+            }
+
+            // Converter valor para centavos
+            $valorCentavos = $this->converterValorParaCentavos($dados['valor']);
+            $valorFloat = $valorCentavos / 100;
+
+            // Criar link de pagamento
+            $link = LinkPagamento::create([
+                'estabelecimento_id' => $estabelecimentoId,
+                'codigo_unico' => LinkPagamento::gerarCodigoUnico(),
+                'descricao' => $dados['descricao'],
+                'valor' => $valorFloat,
+                'valor_centavos' => $valorCentavos,
+                'parcelas' => 1, // Apenas à vista
+                'is_avista' => true, // Marcar como à vista
+                'juros' => $dados['juros'],
+                'data_expiracao' => $dados['data_expiracao'],
+                'dados_cliente' => [
+                    'nome_obrigatorio' => true,
+                    'email_obrigatorio' => true,
+                    'telefone_obrigatorio' => true,
+                    'documento_obrigatorio' => true,
+                    'endereco_obrigatorio' => true,
+                    'preenchidos' => null, // Cliente preenche na página
+                ],
+                'url_retorno' => null,
+                'url_webhook' => null,
+                'status' => 'ATIVO'
+            ]);
+
+            return redirect()->route('links-pagamento.show', $link->id)
+                ->with('success', 'Link de pagamento à vista criado com sucesso!');
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao criar link de crédito à vista: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao criar link: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
