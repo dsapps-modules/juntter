@@ -1766,6 +1766,7 @@ textarea.form-control {
 /* SweetAlert2 Custom */
 .swal2-popup-custom {
     border-radius: 15px !important;
+    overflow-x: hidden !important;
 }
 
 .swal2-popup-custom .swal2-title {
@@ -1775,6 +1776,16 @@ textarea.form-control {
 
 .swal2-popup-custom .swal2-html-container {
     color: #6c757d !important;
+    overflow-x: hidden !important;
+}
+
+/* Garantir que o container principal não tenha overflow horizontal */
+.swal2-container {
+    overflow-x: hidden !important;
+}
+
+.swal2-popup {
+    overflow-x: hidden !important;
 }
 
 /* FAB Validações em Tempo Real */
