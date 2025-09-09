@@ -132,9 +132,18 @@
                             - Hoje
                         @endif
                     </h5>
+                
                     <span class="badge bg-primary">{{ count($extrato['data'] ?? []) }} transações</span>
                 </div>
+                <div class="d-flex justify-content-end">
+                    <a href="https://login.juntter.com.br/client/pix" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-plus me-1"></i>
+                        Sacar Meu Dinheiro
+                    </a>
+                </div>
+               
             </div>
+           
             <div class="card-body p-4">
                 <!-- Filtros dentro do extrato -->
                 <div class="mb-4">
