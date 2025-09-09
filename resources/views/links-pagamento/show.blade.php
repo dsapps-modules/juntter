@@ -135,26 +135,22 @@
                                 </div>
                             </div>
                             
-                            <div class="d-flex justify-content-center gap-2 mb-3">
-                                <a href="{{ $linkPagamento->url_completa }}" target="_blank" class="btn btn-primary">
+                            <div class="d-flex flex-wrap">
+                                <a href="{{ $linkPagamento->url_completa }}" target="_blank" class="btn btn-primary mr-3">
                                     <i class="fas fa-external-link-alt mr-2"></i>Testar Link
                                 </a>
-                            </div>
-
-                            <div class="d-flex justify-content-center gap-2">
+                                
                                 @if($linkPagamento->status === 'ATIVO')
-                                    <button type="button" class="btn btn-outline-warning mr-2" onclick="alterarStatus('INATIVO')">
+                                    <button type="button" class="btn btn-outline-warning mr-3" onclick="alterarStatus('INATIVO')">
                                         <i class="fas fa-pause mr-2"></i>Desativar
                                     </button>
                                 @else
-                                    <button type="button" class="btn btn-outline-success mr-2" style="width: auto; padding: 10px 40px; font-size: 0.9rem;" onclick="alterarStatus('ATIVO')">
+                                    <button type="button" class="btn btn-outline-success mr-3" onclick="alterarStatus('ATIVO')">
                                         <i class="fas fa-play mr-2"></i>Ativar
                                     </button>
                                 @endif
                                 
-                              
-                                
-                                <button type="button" class="btn btn-outline-danger mr-2" onclick="confirmarExclusao()">
+                                <button type="button" class="btn btn-outline-danger" onclick="confirmarExclusao()">
                                     <i class="fas fa-trash mr-2"></i>Excluir
                                 </button>
                             </div>
@@ -426,6 +422,9 @@ function copiarLink() {
     btn.classList.remove('btn-outline-primary', 'btn-outline-secondary');
     btn.classList.add('btn-success');
     
+    // Mostrar mensagem de sucesso
+    showToast('Link copiado com sucesso!', 'success');
+    
     setTimeout(() => {
         btn.innerHTML = originalText;
         btn.classList.remove('btn-success');
@@ -462,6 +461,30 @@ function alterarStatus(novoStatus) {
 
 function confirmarExclusao() {
     $('#deleteModal').modal('show');
+}
+
+function showToast(message, type = 'success') {
+    // Criar elemento do toast
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} mr-2"></i>
+        ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    `;
+    
+    // Adicionar ao body
+    document.body.appendChild(toast);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
 }
 </script>
 @endpush
