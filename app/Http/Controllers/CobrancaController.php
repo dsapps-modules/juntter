@@ -636,6 +636,10 @@ class CobrancaController extends Controller
     public function saldoExtrato(Request $request)
     {
         try {
+            // Obter mês e ano do filtro
+            $mesAtual = $request->input('mes'); // pode ser vazio (Todos) ou um número
+            $anoAtual = $request->input('ano'); // pode ser vazio (Todos) ou um ano
+            
             // Preparar filtros para lançamentos futuros (saldo - apenas headers obrigatórios)
             $filtrosSaldo = [
                 'extra_headers' => [
@@ -645,6 +649,11 @@ class CobrancaController extends Controller
 
             // Buscar lançamentos futuros (saldo) - sem filtros, apenas headers obrigatórios
             $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
+
+            // Aplicar filtros de data localmente (igual ao dashboard)
+            if (!empty($mesAtual) || !empty($anoAtual)) {
+                $saldo = $this->aplicarFiltrosDataSaldo($saldo, $mesAtual, $anoAtual);
+            }
 
             // Preparar filtros para extrato detalhado
             $filtrosExtrato = [
@@ -689,13 +698,15 @@ class CobrancaController extends Controller
             $extrato = $this->transacaoService->lancamentosFuturosDiarios($filtrosExtrato);
 
             // Preparar projeção mensal (5 meses: 2 para trás, atual, 2 para frente)
-            $projecaoMensal = $this->prepararProjecaoMensal($saldo);
+            $projecaoMensal = $this->prepararProjecaoMensal($saldo, $mesAtual, $anoAtual);
 
             // Preparar dados para a view
             $dados = [
                 'saldo' => $saldo,
                 'extrato' => $extrato,
                 'projecaoMensal' => $projecaoMensal,
+                'mesAtual' => $mesAtual,
+                'anoAtual' => $anoAtual,
                 'filtros' => [
                     'gateway_authorization' => $request->gateway_authorization,
                     'data_inicio' => $request->data_inicio,
@@ -713,12 +724,75 @@ class CobrancaController extends Controller
     }
 
     /**
+     * Aplicar filtros de data ao saldo (igual ao dashboard)
+     */
+    private function aplicarFiltrosDataSaldo($saldo, $mes, $ano)
+    {
+        if (empty($mes) && empty($ano)) {
+            return $saldo; // Sem filtro
+        }
+
+        $saldoFiltrado = $saldo;
+        
+        if (!empty($mes) && !empty($ano)) {
+            // Filtro completo: mês + ano específicos
+            $mesFiltro = (int)$mes;
+            $anoFiltro = (int)$ano;
+            
+            // Procurar no array de meses
+            if (isset($saldo['months']) && is_array($saldo['months'])) {
+                $valorFiltrado = 0;
+                foreach ($saldo['months'] as $mesLancamento) {
+                    if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
+                        $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoFiltro) {
+                        $valorFiltrado = $mesLancamento['amount'];
+                        break;
+                    }
+                }
+                $saldoFiltrado['total']['amount'] = $valorFiltrado;
+            }
+        } elseif (!empty($ano)) {
+            // Apenas ano: somar todos os meses daquele ano
+            $anoFiltro = (int)$ano;
+            
+            if (isset($saldo['months']) && is_array($saldo['months'])) {
+                $valorFiltrado = 0;
+                foreach ($saldo['months'] as $mesLancamento) {
+                    if (isset($mesLancamento['year']) && $mesLancamento['year'] == $anoFiltro) {
+                        $valorFiltrado += $mesLancamento['amount'];
+                    }
+                }
+                $saldoFiltrado['total']['amount'] = $valorFiltrado;
+            }
+        } elseif (!empty($mes)) {
+            // Apenas mês: usar ano atual
+            $mesFiltro = (int)$mes;
+            $anoAtual = (int)date('Y');
+            
+            if (isset($saldo['months']) && is_array($saldo['months'])) {
+                $valorFiltrado = 0;
+                foreach ($saldo['months'] as $mesLancamento) {
+                    if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
+                        $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoAtual) {
+                        $valorFiltrado = $mesLancamento['amount'];
+                        break;
+                    }
+                }
+                $saldoFiltrado['total']['amount'] = $valorFiltrado;
+            }
+        }
+
+        return $saldoFiltrado;
+    }
+
+    /**
      * Preparar projeção mensal com 5 meses (2 para trás, atual, 2 para frente)
      */
-    private function prepararProjecaoMensal($saldo)
+    private function prepararProjecaoMensal($saldo, $mesFiltro = null, $anoFiltro = null)
     {
-        $mesAtual = date('n'); // Mês atual (1-12)
-        $anoAtual = date('Y'); // Ano atual
+        // Se não há filtro, usar mês/ano atual
+        $mesAtual = $mesFiltro ?: date('n'); // Mês atual (1-12)
+        $anoAtual = $anoFiltro ?: date('Y'); // Ano atual
         
         // Criar array com 5 meses: 2 para trás, atual, 2 para frente
         $mesesExibir = [];
