@@ -6,6 +6,7 @@ use App\Services\TransacaoService;
 use App\Services\CreditoService;
 use App\Services\PixService;
 use App\Services\BoletoService;
+use App\Services\EstabelecimentoService;
 use App\Models\LinkPagamento;
 use Illuminate\Http\Request;
 
@@ -17,17 +18,20 @@ class CobrancaController extends Controller
     protected $creditoService;
     protected $pixService;
     protected $boletoService;
+    protected $estabelecimentoService;
 
     public function __construct(
         TransacaoService $transacaoService,
         CreditoService $creditoService,
         PixService $pixService,
-        BoletoService $boletoService
+        BoletoService $boletoService,
+        EstabelecimentoService $estabelecimentoService
     ) {
         $this->transacaoService = $transacaoService;
         $this->creditoService = $creditoService;
         $this->pixService = $pixService;
         $this->boletoService = $boletoService;
+        $this->estabelecimentoService = $estabelecimentoService;
     }
 
     /**
@@ -901,18 +905,61 @@ public function simularTransacao(Request $request)
     }
 
     /**
-     * Listar planos comerciais disponíveis
+     * Listar plano comercial contratado pela empresa
      */
     public function listarPlanos(Request $request)
     {
         try {
-            // Buscar todos os planos - DataTable faz a filtragem
-            $planos = $this->transacaoService->listarPlanosComerciais();
+            // Obter ID do estabelecimento do usuário logado
+            $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+            
+            
+            
+            if (!$estabelecimentoId) {
+                return view('cobranca.planos')->with('error', 'Estabelecimento não encontrado - Usuário: ' . (auth()->user()?->id ?? 'não logado'));
+            }
 
-            return view('cobranca.planos', compact('planos'));
+            // Buscar informações do estabelecimento (que deve conter o plano contratado)
+            try {
+                $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar estabelecimento: ' . $e->getMessage());
+                return view('cobranca.planos')->with('error', 'Erro ao buscar estabelecimento: ' . $e->getMessage());
+            }
+            
+            if (!$estabelecimento) {
+                Log::warning('Estabelecimento não encontrado', [
+                    'estabelecimento_id' => $estabelecimentoId,
+                    'resposta' => $estabelecimento
+                ]);
+                return view('cobranca.planos')->with('error', 'Dados do estabelecimento não encontrados. ID: ' . $estabelecimentoId);
+            }
+
+
+            // Se o estabelecimento tem um plano contratado, buscar detalhes do plano
+            $planoContratado = null;
+            
+            // Verificar se tem planos ativos
+            if (isset($estabelecimento['plans']) && is_array($estabelecimento['plans']) && count($estabelecimento['plans']) > 0) {
+                // Pegar o primeiro plano ativo
+                $planoAtivo = collect($estabelecimento['plans'])->firstWhere('active', true);
+                
+                if ($planoAtivo) {
+                    $planoId = $planoAtivo['id'];
+                    
+                    // Buscar detalhes do plano
+                    try {
+                        $planoContratado = $this->transacaoService->detalhesPlanoComercial($planoId);
+                    } catch (\Exception $e) {
+                        Log::error('Erro ao buscar detalhes do plano: ' . $e->getMessage());
+                    }
+                }
+            }
+
+            return view('cobranca.planos', compact('estabelecimento', 'planoContratado'));
         } catch (\Exception $e) {
-            Log::error('Erro ao listar planos: ' . $e->getMessage());
-            return view('cobranca.planos')->with('error', 'Erro ao carregar planos: ' . $e->getMessage());
+            Log::error('Erro ao listar plano contratado: ' . $e->getMessage());
+            return view('cobranca.planos')->with('error', 'Erro ao carregar plano contratado: ' . $e->getMessage());
         }
     }
 

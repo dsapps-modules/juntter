@@ -11,21 +11,13 @@
     ]"
 />
 
-<!-- Alert -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-info bg-info text-white border-0 rounded-3 shadow-sm">
-            <i class="fas fa-info-circle me-2"></i>
-            Visualize os planos comerciais disponíveis para integração com gateways configurados.
-        </div>
-    </div>
-</div>
+
 
 <!-- Header -->
 <div class="row align-items-center mb-4">
     <div class="col-12 text-center">
-        <h1 class="h3 mb-2 fw-bold">Planos Comerciais</h1>
-        <p class="text-muted mb-3">Planos disponíveis para integração com gateways</p>
+        <h1 class="h3 mb-2 fw-bold">Plano Contratado</h1>
+        <p class="text-muted mb-3">Plano comercial ativo da sua empresa</p>
     </div>
 </div>
 
@@ -36,112 +28,108 @@
             <div class="card-header bg-transparent border-0 pb-0">
                 <div class="text-center">
                     <h5 class="card-title fw-bold mb-2">
-                        <i class="fas fa-list-alt me-2 text-primary"></i>
-                        Lista de Planos Comerciais
+                        <i class="fas fa-building me-2 text-primary"></i>
+                        Plano Comercial Ativo
                     </h5>
                     <p class="text-muted mb-0 small">
                         <i class="fas fa-info-circle me-1"></i>
-                        Clique em "Visualizar Detalhes" para ver informações completas do plano
+                        Informações do plano contratado pela sua empresa
                     </p>
                 </div>
             </div>
             <div class="card-body p-4">
-                @if(isset($planos['data']) && count($planos['data']) > 0)
-                    <!-- Tabela Juntter Style -->
-                    <div class="table-responsive">
-                        <table id="planosTable" class="table table-hover table-striped">
-                            <thead>
-                                <tr class="table-header-juntter">
-                                    <th></th>
-                                    <th>ID</th>
-                                    <th>Nome do Plano</th>
-                                     
-                                    <th>Modalidade</th>
-                                    <th>Tipo</th>
-                                    <th>Antecipação</th>
-                                    <th>Status</th>
-                                    <th>Criado em</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($planos['data'] as $plano)
-                                    <tr>
-                                        <td></td>
-                                        <td>
-                                            <small class="text-muted font-monospace">
-                                                #{{ $plano['id'] }}
-                                            </small>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <strong>{{ $plano['name'] }}</strong>
-                                                @if($plano['description'])
-                                                    <br><small class="text-muted">{{ $plano['description'] }}</small>
+                <!-- Debug temporário -->
+                
+                @if(isset($planoContratado) && $planoContratado)
+                    <!-- Card do Plano Contratado -->
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card mb-4 rounded-border">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-crown mr-2"></i>
+                                        {{ $planoContratado['name'] ?? 'Plano Comercial' }}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    @if(isset($planoContratado['description']) && $planoContratado['description'])
+                                        <p class="text-muted mb-3">{{ $planoContratado['description'] }}</p>
+                                    @endif
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted small">Tipo</label>
+                                            <p class="mb-0">
+                                                <span class="badge badge-secondary">{{ $planoContratado['type'] ?? 'N/A' }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted small">Modalidade</label>
+                                            <p class="mb-0">
+                                                @if(isset($planoContratado['modality']) && $planoContratado['modality'] === 'ONLINE')
+                                                    <span class="badge badge-info">
+                                                        <i class="fas fa-globe me-1"></i>Online
+                                                    </span>
+                                                @else
+                                                    <span class="badge badge-primary">
+                                                        <i class="fas fa-store me-1"></i>Presencial
+                                                    </span>
                                                 @endif
-                                            </div>
-                                        </td>
-                                   
-                                        <td>
-                                            @if($plano['modality'] === 'ONLINE')
-                                                <span class="badge badge-info">
-                                                    <i class="fas fa-globe me-1"></i>Online
-                                                </span>
-                                            @else
-                                                <span class="badge badge-primary">
-                                                    <i class="fas fa-store me-1"></i>Presencial
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-dark">{{ $plano['type'] }}</span>
-                                        </td>
-                                        <td>
-                                            @if($plano['allow_anticipation'])
-                                                <span class="badge badge-success">
-                                                    <i class="fas fa-check me-1"></i>Sim
-                                                </span>
-                                            @else
-                                                <span class="badge badge-warning">
-                                                    <i class="fas fa-times me-1"></i>Não
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($plano['active'])
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted small">Antecipação</label>
+                                            <p class="mb-0">
+                                                @if(isset($planoContratado['allow_anticipation']) && $planoContratado['allow_anticipation'])
+                                                    <span class="badge badge-success">
+                                                        <i class="fas fa-check me-1"></i>Sim
+                                                    </span>
+                                                @else
+                                                    <span class="badge badge-warning">
+                                                        <i class="fas fa-times me-1"></i>Não
+                                                    </span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-muted small">Status</label>
+                                            <p class="mb-0">
                                                 <span class="badge badge-success">
                                                     <i class="fas fa-check-circle me-1"></i>Ativo
                                                 </span>
-                                            @else
-                                                <span class="badge badge-danger">
-                                                    <i class="fas fa-times-circle me-1"></i>Inativo
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    @if(isset($planoContratado['created_at']))
+                                        <hr>
+                                        <div class="text-center">
                                             <small class="text-muted">
-                                                {{ \Carbon\Carbon::parse($plano['created_at'])->format('d/m/Y H:i') }}
+                                                <i class="fas fa-calendar me-1"></i>
+                                                Contratado em: {{ \Carbon\Carbon::parse($planoContratado['created_at'])->format('d/m/Y H:i') }}
                                             </small>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ route('cobranca.plano.detalhes', $plano['id']) }}" 
-                                                   class="btn btn-sm btn-outline-info" title="Visualizar Detalhes">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                        </div>
+                                    @endif
+                                    
+                                    <div class="text-center mt-3">
+                                        <a href="{{ route('cobranca.plano.detalhes', $planoContratado['id']) }}" 
+                                           class="btn btn-warning">
+                                            <i class="fas fa-eye mr-2"></i>Ver Detalhes
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 @else
                     <!-- Estado vazio -->
                     <div class="text-center py-5">
-                        <i class="fas fa-list-alt fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Nenhum plano encontrado</h5>
-                        <p class="text-muted">Não há planos comerciais disponíveis no momento.</p>
+                        <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                        <h5 class="text-muted">Nenhum plano contratado</h5>
+                        <p class="text-muted">Sua empresa ainda não possui um plano comercial ativo.</p>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Contratar Plano
+                        </a>
                     </div>
                 @endif
             </div>
