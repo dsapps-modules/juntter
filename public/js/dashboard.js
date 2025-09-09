@@ -490,3 +490,375 @@ function initModals() {
 
 // Expor função globalmente para uso inline
 window.switchTab = switchTab;
+
+/**
+ * Função para simular transação via FAB usando rota real (jQuery)
+ */
+function simularTransacaoFAB() {
+    const $form = $('#fabSimulacaoForm');
+    
+    // Obter valores usando jQuery
+    const valor = $form.find('#fabValor').val();
+    const parcelas = $form.find('#fabParcelas').val();
+    const bandeira = $form.find('#fabBandeira').val();
+    const interest = $form.find('#fabInterest').val();
+    
+    // Validações básicas
+    if (!valor || valor === '0,00' || valor === 'R$ 0,00') {
+        showFabToast('Por favor, insira um valor válido.', 'error');
+        return;
+    }
+    
+    if (!parcelas || parseInt(parcelas) < 1 || parseInt(parcelas) > 18) {
+        showFabToast('Por favor, selecione um número válido de parcelas (1x a 18x).', 'error');
+        return;
+    }
+    
+    if (!interest || interest === '') {
+        showFabToast('Por favor, selecione quem paga as taxas.', 'error');
+        return;
+    }
+    
+    // Converter valor para formato brasileiro (como na view de simulação)
+    let valorFormatado = valor;
+    
+    // Se não tem R$ no início, adicionar
+    if (!valorFormatado.startsWith('R$ ')) {
+        valorFormatado = 'R$ ' + valorFormatado;
+    }
+    
+    // Mostrar loading
+    Swal.fire({
+        title: 'Simulando...',
+        text: 'Processando simulação com a API',
+        icon: 'info',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Fazer requisição usando jQuery AJAX
+    $.ajax({
+        url: '/cobranca/simular',
+        type: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        data: {
+            amount: valorFormatado,
+            flag_id: bandeira,
+            interest: interest,
+            _token: $('meta[name="_token"]').attr('content')
+        },
+        dataType: 'json',
+        success: function(data) {
+            Swal.close();
+            
+            if (data.success) {
+                // Sucesso - exibir resultado
+                exibirResultadoSimulacao(data, valor, parcelas, interest, bandeira);
+            } else {
+                // Erro da API
+                showFabToast(data.message || 'Erro na simulação.', 'error');
+            }
+        },
+        error: function(xhr, status, error) {
+            Swal.close();
+            
+            let mensagemErro = 'Erro de conexão. Tente novamente.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                mensagemErro = xhr.responseJSON.message;
+            }
+            
+            showFabToast(mensagemErro, 'error');
+        }
+    });
+    
+    // Fechar modal do FAB
+    $('#fabSimulacaoModal').modal('hide');
+    
+    // Limpar formulário
+    $form[0].reset();
+}
+
+/**
+ * Exibir resultado da simulação real
+ */
+function exibirResultadoSimulacao(simulacao, valor, parcelas, interest, bandeira) {
+    // Converter valor formatado para número
+    const valorNumerico = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+    const valorParcela = valorNumerico / parseInt(parcelas);
+    
+    // Obter valores da API
+    const valorDebito = simulacao.simulation.simulation.debit / 100;
+    const valorPix = simulacao.simulation.simulation.pix / 100;
+    
+    let resultado = `
+        <div class="simulacao-resultado">
+            <h6 class="text-primary mb-3">
+                <i class="fas fa-calculator mr-2"></i>
+                Resultado da Simulação
+            </h6>
+            
+            <div class="row">
+                <div class="col-6">
+                    <div class="info-item">
+                        <small class="text-muted">Valor Original</small>
+                        <div class="font-weight-bold">R$ ${valorNumerico.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="info-item">
+                        <small class="text-muted">Parcelas</small>
+                        <div class="font-weight-bold">${parcelas}x</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-2">
+                <div class="col-6">
+                    <div class="info-item">
+                        <small class="text-muted">Valor por Parcela</small>
+                        <div class="font-weight-bold">R$ ${valorParcela.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="info-item">
+                        <small class="text-muted">Bandeira</small>
+                        <div class="font-weight-bold">${getBandeiraNome(bandeira)}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-2">
+                <div class="col-6">
+                    <div class="info-item">
+                        <small class="text-muted">Quem paga as taxas</small>
+                        <div class="font-weight-bold">${interest === 'CLIENT' ? 'Cliente' : 'Estabelecimento'}</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="info-item">
+                        <small class="text-muted">Valor por Parcela</small>
+                        <div class="font-weight-bold">R$ ${valorParcela.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <hr class="my-3">
+            
+            <div class="row">
+                <div class="col-4">
+                    <div class="info-item text-center">
+                        <small class="text-muted">Débito</small>
+                        <div class="font-weight-bold text-info">R$ ${valorDebito.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="info-item text-center">
+                        <small class="text-muted">PIX</small>
+                        <div class="font-weight-bold text-success">R$ ${valorPix.toFixed(2).replace('.', ',')}</div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="info-item text-center">
+                        <small class="text-muted">Crédito</small>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleParcelas()">
+                            <i class="fas fa-credit-card mr-1"></i>
+                            Ver Parcelas
+                        </button>
+                    </div>
+                </div>
+            </div>
+    `;
+    
+    // Adicionar tabela de parcelamento se existir
+    if (simulacao.simulation.simulation.credit) {
+        resultado += `
+            <div class="mt-4" id="tabelaParcelas" style="display: none;">
+                <h6 class="text-primary mb-3">
+                    <i class="fas fa-credit-card mr-2"></i>
+                    Opções de Parcelamento
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Parcelas</th>
+                                <th class="text-center">Valor da Parcela</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+        `;
+        
+        Object.entries(simulacao.simulation.simulation.credit).forEach(([parcelas, dados]) => {
+            resultado += `
+                <tr>
+                    <td><span class="badge bg-primary">${parcelas}</span></td>
+                    <td class="text-center">R$ ${(dados.installment / 100).toFixed(2).replace('.', ',')}</td>
+                    <td class="text-end"><strong>R$ ${(dados.total / 100).toFixed(2).replace('.', ',')}</strong></td>
+                </tr>
+            `;
+        });
+        
+        resultado += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+    
+    resultado += `</div>`;
+    
+    // Mostrar resultado
+    Swal.fire({
+        title: 'Simulação Concluída',
+        html: resultado,
+        icon: 'success',
+        confirmButtonText: 'Fechar',
+        confirmButtonColor: '#FFCF00',
+        customClass: {
+            popup: 'swal2-popup-custom'
+        },
+        width: '600px'
+    });
+}
+
+/**
+ * Função para mostrar toast do FAB (jQuery)
+ */
+function showFabToast(message, type = 'success') {
+    const iconClass = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+    
+    const $toast = $(`
+        <div class="alert alert-${type} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas fa-${iconClass} mr-2"></i>
+            ${message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    `);
+    
+    $('body').append($toast);
+    
+    // Auto-remover após 3 segundos
+    setTimeout(() => {
+        $toast.alert('close');
+    }, 3000);
+}
+
+/**
+ * Função para obter nome da bandeira pelo ID
+ */
+function getBandeiraNome(bandeiraId) {
+    const bandeiras = {
+        '1': 'Mastercard',
+        '2': 'Visa',
+        '3': 'Elo',
+        '4': 'American Express',
+        '5': 'Hiper/Hipercard',
+        '6': 'Outras',
+        '8': 'Bacen'
+    };
+    return bandeiras[bandeiraId] || 'Desconhecida';
+}
+
+/**
+ * Inicializar validações do FAB
+ */
+function initFabValidations() {
+    // Máscara monetária para o campo valor (igual à view de simulação)
+    $('#fabValor').on('input', function() {
+        let value = this.value.replace(/\D/g, '');
+        if (value.length > 0) {
+            value = (value/100).toFixed(2) + '';
+            value = value.replace(".", ",");
+            value = value.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+            value = value.replace(/(\d)(\d{3}),/g, "$1.$2,");
+            this.value = value;
+        }
+        
+        // Validação em tempo real
+        const valor = $(this).val();
+        const $group = $(this).closest('.form-group');
+        
+        if (valor && valor !== 'R$ 0,00' && valor !== '0,00') {
+            $group.removeClass('has-error').addClass('has-success');
+            $group.find('.form-control').removeClass('is-invalid').addClass('is-valid');
+        } else {
+            $group.removeClass('has-success').addClass('has-error');
+            $group.find('.form-control').removeClass('is-valid').addClass('is-invalid');
+        }
+    });
+    
+    // Validação em tempo real das parcelas
+    $('#fabParcelas').on('change', function() {
+        const parcelas = $(this).val();
+        const $group = $(this).closest('.form-group');
+        
+        if (parcelas && parseInt(parcelas) >= 1 && parseInt(parcelas) <= 18) {
+            $group.removeClass('has-error').addClass('has-success');
+            $group.find('.form-control').removeClass('is-invalid').addClass('is-valid');
+        } else {
+            $group.removeClass('has-success').addClass('has-error');
+            $group.find('.form-control').removeClass('is-valid').addClass('is-invalid');
+        }
+    });
+    
+    // Validação em tempo real de quem paga as taxas
+    $('#fabInterest').on('change', function() {
+        const interest = $(this).val();
+        const $group = $(this).closest('.form-group');
+        
+        if (interest && interest !== '') {
+            $group.removeClass('has-error').addClass('has-success');
+            $group.find('.form-control').removeClass('is-invalid').addClass('is-valid');
+        } else {
+            $group.removeClass('has-success').addClass('has-error');
+            $group.find('.form-control').removeClass('is-valid').addClass('is-invalid');
+        }
+    });
+    
+    // Limpar validações quando modal é fechado
+    $('#fabSimulacaoModal').on('hidden.bs.modal', function() {
+        $('.form-group').removeClass('has-error has-success');
+        $('.form-control').removeClass('is-invalid is-valid');
+    });
+}
+
+// Inicializar validações quando documento estiver pronto
+$(document).ready(function() {
+    initFabValidations();
+});
+
+/**
+ * Função para alternar visibilidade da tabela de parcelas (jQuery)
+ */
+function toggleParcelas() {
+    const $tabela = $('#tabelaParcelas');
+    const $botao = $(event.target);
+    
+    if ($tabela.is(':hidden')) {
+        $tabela.slideDown(300);
+        $botao.html('<i class="fas fa-eye-slash mr-1"></i>Ocultar Parcelas')
+               .removeClass('btn-outline-primary')
+               .addClass('btn-primary');
+    } else {
+        $tabela.slideUp(300);
+        $botao.html('<i class="fas fa-credit-card mr-1"></i>Ver Parcelas')
+               .removeClass('btn-primary')
+               .addClass('btn-outline-primary');
+    }
+}
+
+// Expor funções globalmente
+window.simularTransacaoFAB = simularTransacaoFAB;
+window.showFabToast = showFabToast;
+window.getBandeiraNome = getBandeiraNome;
+window.toggleParcelas = toggleParcelas;

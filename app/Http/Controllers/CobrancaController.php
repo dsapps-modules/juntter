@@ -413,7 +413,7 @@ class CobrancaController extends Controller
     /**
      * Simular transação
      */
-    public function simularTransacao(Request $request)
+public function simularTransacao(Request $request)
     {
         try {
 
@@ -436,12 +436,27 @@ class CobrancaController extends Controller
 
             $simulacao = $this->transacaoService->simularTransacao($dados);
 
-            
+            // Se for requisição AJAX, retornar JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'simulation' => $simulacao
+                ]);
+            }
 
             return view('cobranca.simular', compact('simulacao'))
                 ->with('success', 'Simulação realizada com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao simular transação: ' . $e->getMessage());
+            
+            // Se for requisição AJAX, retornar JSON de erro
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao simular transação: ' . $e->getMessage()
+                ], 422);
+            }
+            
             return redirect()->route('cobranca.simular')
                 ->with('error', 'Erro ao simular transação: ' . $e->getMessage());
         }

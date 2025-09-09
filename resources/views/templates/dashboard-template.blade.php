@@ -137,7 +137,93 @@
     <!-- Dashboard Scripts -->
     <script src="{{ asset('js/dashboard.js') }}"></script>
     
-    
+    <!-- FAB (Floating Action Button) -->
+    <button class="fab" data-toggle="modal" data-target="#fabSimulacaoModal" title="Simular Transação">
+        <i class="fas fa-calculator"></i>
+    </button>
+
+    <!-- Modal de Simulação -->
+    <div class="modal fade fab-modal" id="fabSimulacaoModal" tabindex="-1" role="dialog" aria-labelledby="fabSimulacaoModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="fabSimulacaoModalLabel">
+                        <i class="fas fa-calculator mr-2"></i>
+                        Simular Transação
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="fabSimulacaoForm">
+                        <div class="form-group">
+                            <label for="fabValor" class="form-label">Valor da Transação</label>
+                            <div class="input-wrapper">
+                                <span class="input-group-text">R$</span>
+                                <input type="text" class="form-control" id="fabValor" name="valor" placeholder="0,00" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fabParcelas" class="form-label">Parcelas</label>
+                            <select class="form-control" id="fabParcelas" name="parcelas" required>
+                                <option value="1">À vista (1x)</option>
+                                <option value="2">2x</option>
+                                <option value="3">3x</option>
+                                <option value="4">4x</option>
+                                <option value="5">5x</option>
+                                <option value="6">6x</option>
+                                <option value="7">7x</option>
+                                <option value="8">8x</option>
+                                <option value="9">9x</option>
+                                <option value="10">10x</option>
+                                <option value="11">11x</option>
+                                <option value="12">12x</option>
+                                <option value="13">13x</option>
+                                <option value="14">14x</option>
+                                <option value="15">15x</option>
+                                <option value="16">16x</option>
+                                <option value="17">17x</option>
+                                <option value="18">18x</option>
+                            </select>
+                        </div>
+                        
+                        
+                        <div class="form-group">
+                            <label for="fabInterest" class="form-label">Quem paga as taxas?</label>
+                            <select class="form-control" id="fabInterest" name="interest" required>
+                                <option value="">Selecione</option>
+                                <option value="CLIENT">Cliente</option>
+                                <option value="ESTABLISHMENT">Estabelecimento</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fabBandeira" class="form-label">Bandeira do Cartão</label>
+                            <select class="form-control" id="fabBandeira" name="bandeira">
+                                <option value="1">Mastercard</option>
+                                <option value="2">Visa</option>
+                                <option value="3">Elo</option>
+                                <option value="4">American Express</option>
+                                <option value="5">Hiper/Hipercard</option>
+                                <option value="6">Outras</option>
+                                <option value="8">Bacen</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="simularTransacaoFAB()">
+                        <i class="fas fa-calculator mr-2"></i>Simular
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     @stack('scripts')
 </body>
