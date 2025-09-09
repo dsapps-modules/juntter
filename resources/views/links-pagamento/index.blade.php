@@ -42,10 +42,8 @@
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="fw-bold">Título</th>
                                     <th class="fw-bold">Valor</th>
                                     <th class="fw-bold">Status</th>
-
                                     <th class="fw-bold">Criado em</th>
                                     <th class="fw-bold">Ações</th>
                                 </tr>
@@ -54,17 +52,12 @@
                                 @foreach($links as $link)
                                 <tr>
                                     <td>
-                                        <div>
-                                            <strong>{{ $link->titulo }}</strong>
-                                            @if($link->descricao)
-                                                <br><small class="text-muted">{{ Str::limit($link->descricao, 50) }}</small>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td>
                                         <span class="badge bg-success fs-6">
                                             {{ $link->valor_formatado }}
                                         </span>
+                                        @if($link->descricao)
+                                            <br><small class="text-muted">{{ Str::limit($link->descricao, 50) }}</small>
+                                        @endif
                                     </td>
                                     <td>
                                         @switch($link->status)

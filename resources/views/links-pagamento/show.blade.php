@@ -39,7 +39,7 @@
                 <div>
                     <h2 class="mb-1">
                         <i class="fas fa-link text-primary mr-2"></i>
-                        {{ $linkPagamento->titulo }}
+                        Link de Pagamento
                     </h2>
                     <p class="text-muted mb-0">{{ $linkPagamento->descricao ?: 'Sem descrição' }}</p>
                 </div>
@@ -66,10 +66,6 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-muted small">Título</label>
-                                    <p class="mb-0 font-weight-bold">{{ $linkPagamento->titulo }}</p>
-                                </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-muted small">Valor</label>
                                     <p class="mb-0">

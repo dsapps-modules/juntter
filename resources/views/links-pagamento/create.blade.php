@@ -39,21 +39,6 @@
                         <div class="col-md-6">
                             <h5 class="fw-bold mb-3">Informações Básicas</h5>
                             <div class="mb-3">
-                                <label for="titulo" class="form-label fw-bold">
-                                    Título do Link <span class="text-danger">*</span>
-                                </label>
-                                <input type="text"
-                                    class="form-control @error('titulo') is-invalid @enderror"
-                                    id="titulo"
-                                    name="titulo"
-                                    value="{{ old('titulo') }}"
-                                    placeholder="Ex: Pagamento Consulta Médica"
-                                    required>
-                                @error('titulo')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="mb-3">
                                 <label for="descricao" class="form-label fw-bold">Descrição</label>
                                 <input type="text"
                                     class="form-control @error('descricao') is-invalid @enderror"
@@ -120,7 +105,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="mb-3">
+                            <div class=" mb-3">
                                 <label for="data_expiracao" class="form-label fw-bold">Data de Expiração</label>
                                 <input type="date"
                                     class="form-control @error('data_expiracao') is-invalid @enderror"
