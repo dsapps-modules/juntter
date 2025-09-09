@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EstabelecimentoController;
 use App\Http\Controllers\CobrancaController;
+use App\Http\Controllers\AuthController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,9 @@ Route::get('/pagamento/{codigoUnico}/status', [App\Http\Controllers\PagamentoCli
 Route::get('/unauthorized', function () {
     return view('auth.unauthorized');
 })->name('unauthorized');
+
+// Rota para login com logout forçado (segurança)
+Route::get('/login-redirect', [AuthController::class, 'loginRedirect'])->name('login.redirect');
 
 
 
