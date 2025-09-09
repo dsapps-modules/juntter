@@ -94,7 +94,6 @@ class LinkPagamentoController extends Controller
             }
 
             $dados = $request->validate([
-                'titulo' => 'required|string|max:255',
                 'descricao' => 'nullable|string|max:1000',
                 'valor' => 'required|string',
                 'parcelas' => 'nullable|integer|min:1|max:18',
@@ -141,7 +140,6 @@ class LinkPagamentoController extends Controller
             $link = LinkPagamento::create([
                 'estabelecimento_id' => $estabelecimentoId,
                 'codigo_unico' => LinkPagamento::gerarCodigoUnico(),
-                'titulo' => $dados['titulo'],
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
@@ -226,7 +224,6 @@ class LinkPagamentoController extends Controller
             }
 
             $dados = $request->validate([
-                'titulo' => 'required|string|max:255',
                 'descricao' => 'nullable|string|max:1000',
                 'valor' => 'required|string',
                 'parcelas' => 'nullable|integer|min:1|max:18',
@@ -271,7 +268,6 @@ class LinkPagamentoController extends Controller
             ];
 
             $linkPagamento->update([
-                'titulo' => $dados['titulo'],
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
