@@ -108,6 +108,23 @@ class CobrancaController extends Controller
 
             $transacoes = $this->transacaoService->listarTransacoes($filtros);
 
+            // Filtrar transações de crédito para mostrar apenas à vista (1x) antes de mesclar com boletos
+            if (isset($transacoes['data']) && is_array($transacoes['data'])) {
+                $transacoes['data'] = array_filter($transacoes['data'], function($transacao) {
+                    // Se não for transação de crédito, manter
+                    if (!isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
+                        return true;
+                    }
+                    
+                    // Se for crédito, verificar se é à vista (1x)
+                    $installments = $transacao['installments'] ?? 1;
+                    return $installments == 1;
+                });
+                
+                // Recalcular total após filtragem
+                $transacoes['total'] = count($transacoes['data']);
+            }
+
             // Também buscar boletos e mesclar na mesma lista para exibir junto
             try {
                 $filtrosBoletos = [
@@ -140,6 +157,19 @@ class CobrancaController extends Controller
 
                     // Mesclar e ordenar por data desc
                     $transacoes['data'] = array_merge($transacoes['data'], $boletosAdaptados);
+                    
+                    // Filtrar transações de crédito para mostrar apenas à vista (1x)
+                    $transacoes['data'] = array_filter($transacoes['data'], function($transacao) {
+                        // Se não for transação de crédito, manter
+                        if (!isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
+                            return true;
+                        }
+                        
+                        // Se for crédito, verificar se é à vista (1x)
+                        $installments = $transacao['installments'] ?? 1;
+                        return $installments == 1;
+                    });
+                    
                     usort($transacoes['data'], function($a, $b) {
                         $da = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
                         $db = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
