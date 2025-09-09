@@ -24,7 +24,7 @@
                         <p class="text-muted mb-0">Mantenha sua conta segura com uma senha forte</p>
                     </div>
                     <a href="{{ route('profile.edit') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left mr-2"></i>Voltar ao Perfil
+                        <i class="fas fa-home mr-2"></i>
                     </a>
                 </div>
 

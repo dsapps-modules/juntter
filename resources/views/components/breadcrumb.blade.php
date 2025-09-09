@@ -15,9 +15,9 @@
       </li>
       @foreach($items as $item)
         @if($loop->last)
-          <li class="breadcrumb-item active small fw-semibold" aria-current="page">
+          <li class="breadcrumb-item active small fw-semibold mt-1" aria-current="page">
             @if(isset($item['icon']))
-              <i class="{{ $item['icon'] }} me-1"></i>
+              <i class="{{ $item['icon'] }} mt-1"></i>
             @endif
             <span class="d-none d-sm-inline">{{ $item['label'] }}</span>
             <span class="d-sm-none">{{ Str::limit($item['label'], 15) }}</span>
@@ -40,7 +40,7 @@
     @if($filtroData)
       <div class="d-flex align-items-center">
         <form id="filtroMesAnoForm" method="GET" action="{{ request()->url() }}" class="d-flex align-items-center gap-1">
-          <select name="mes" class="form-select form-select-sm" style="width: 100px; font-size: 0.8rem;">
+          <select name="mes" class="form-select form-select-sm mr-1" style="width: 100px; font-size: 0.8rem;">
             <option value="">Todos</option>
             <option value="1" {{ $filtroData['mesAtual'] == 1 ? 'selected' : '' }}>Janeiro</option>
             <option value="2" {{ $filtroData['mesAtual'] == 2 ? 'selected' : '' }}>Fevereiro</option>
@@ -72,7 +72,7 @@
     
     <!-- RightSub no lado direito -->
     @if(!empty($rightSub))
-      <div class="small text-muted d-none d-sm-block ms-3">
+      <div class="small text-muted d-none d-sm-block ms-3 mr-2">
         {!! $rightSub !!}
       </div>
     @endif

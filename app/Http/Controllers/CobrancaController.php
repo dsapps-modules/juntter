@@ -461,7 +461,7 @@ public function simularTransacao(Request $request)
                 ], 422);
             }
             
-            return redirect()->route('cobranca.simular')
+            return redirect()->route('cobranca.transacao.simular')
                 ->with('error', 'Erro ao simular transação: ' . $e->getMessage());
         }
     }

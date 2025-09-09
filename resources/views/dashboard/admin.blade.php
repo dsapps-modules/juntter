@@ -99,7 +99,7 @@
                                            <td>
                                                <div class="btn-group" role="group">
                                                    <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" 
-                                                      class="btn btn-sm btn-outline-info" title="Visualizar">
+                                                      class="btn btn-sm btn-outline-info mr-1" title="Visualizar">
                                                        <i class="fas fa-eye"></i>
                                                    </a>
                                                    <a href="{{ route('estabelecimentos.edit', $estabelecimento['id']) }}" 

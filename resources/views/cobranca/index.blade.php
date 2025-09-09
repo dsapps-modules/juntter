@@ -13,14 +13,14 @@
     <div id="pix-data" data-pix-data="{{ json_encode(session('pix_data')) }}" style="display: none;"></div>
 @endif
 <!-- Alert -->
-<div class="row mb-4">
+{{-- <div class="row mb-4">
     <div class="col-12">
         <div class="alert alert-warning bg-warning text-white border-0 rounded-3 shadow-sm">
             <i class="fas fa-info-circle me-2"></i>
             Gere links de pagamento para seus clientes.
         </div>
     </div>
-</div>
+</div> --}}
 
 <!-- Header com botão -->
 <div class="row align-items-center mb-4">
@@ -104,7 +104,6 @@
                                 <th>ID</th>
                                 <th>Tipo</th>
                                 <th>Valor</th>
-                             
                                 <th>Data</th>
                                 <th>Status</th>
                                 <th>Ações</th>
@@ -158,7 +157,6 @@
                                                 @endif
                                     </div>
                                 </td>
-                                        
                                         <td>
                                             <span class="text-muted">
                                                 {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
@@ -202,7 +200,7 @@
                                                 <a href="{{ ($transacao['type'] ?? '') === 'BILLET' || ($transacao['type'] ?? '') === 'BOLETO' 
                                                     ? route('cobranca.boleto.detalhes', $transacao['_id']) 
                                                     : route('cobranca.transacao.detalhes', $transacao['_id']) }}" 
-                                                   class="btn btn-sm btn-outline-info" title="Ver detalhes">
+                                                    class="btn btn-sm btn-outline-info mr-1" title="Ver detalhes">
                                                     <i class="fas fa-eye"></i>
                                                     Ver detalhes
                                                 </a>

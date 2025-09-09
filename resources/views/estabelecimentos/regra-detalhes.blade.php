@@ -29,7 +29,7 @@
                 </div>
                 <div>
                     <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                        <i class="fas fa-home me-2"></i>
                     </a>
                 </div>
             </div>
