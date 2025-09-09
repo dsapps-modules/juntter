@@ -144,7 +144,6 @@ class PagamentoClienteController extends Controller
             
             $transacao = $this->creditoService->criarTransacaoCredito($dadosTransacao);
             
-          Log::info($transacao);
 
             if (!$transacao) {
                 Log::error('Transação retornou vazia ou falsa');

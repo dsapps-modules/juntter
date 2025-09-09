@@ -240,7 +240,7 @@ class CobrancaController extends Controller
             return redirect()->route('cobranca.index')
                 ->with('success', 'Transação de crédito criada com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao criar transação de crédito: ' . $e->getMessage());
+            Log::error('Erro ao criar transação de crédito', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao criar transação de crédito: ' . $e->getMessage());
         }
@@ -310,7 +310,7 @@ class CobrancaController extends Controller
                     'qr_code' => $qrCode
                 ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao criar transação PIX: ' . $e->getMessage());
+            Log::error('Erro ao criar transação PIX', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao criar transação PIX: ' . $e->getMessage());
         }
@@ -373,7 +373,7 @@ class CobrancaController extends Controller
             return redirect()->route('cobranca.index')
                 ->with('success', 'Boleto criado com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao criar boleto: ' . $e->getMessage());
+            Log::error('Erro ao criar boleto', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao criar boleto: ' . $e->getMessage());
         }
