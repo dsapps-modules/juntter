@@ -90,7 +90,13 @@
                         <div class="saldo-card saldo-bloqueado-boleto">
                             <div class="saldo-content">
                                 <div class="saldo-valor">R$ {{ number_format(($saldo['thirtyDays']['amount'] ?? 0) / 100, 2, ',', '.') }}</div>
-                                <div class="saldo-label">Próximos 30 dias</div>
+                                <div class="saldo-label">
+                                    @if(!empty($mesAtual) || !empty($anoAtual))
+                                        Primeiros 30 dias
+                                    @else
+                                        Próximos 30 dias
+                                    @endif
+                                </div>
                             </div>
                             <div class="saldo-icon">
                                 <i class="fas fa-calendar"></i>
@@ -102,7 +108,13 @@
                         <div class="saldo-card saldo-bloqueado">
                             <div class="saldo-content">
                                 <div class="saldo-valor">R$ {{ number_format(($saldo['sevenDays']['amount'] ?? 0) / 100, 2, ',', '.') }}</div>
-                                <div class="saldo-label">Próximos 7 dias</div>
+                                <div class="saldo-label">
+                                    @if(!empty($mesAtual) || !empty($anoAtual))
+                                        Primeiros 7 dias
+                                    @else
+                                        Próximos 7 dias
+                                    @endif
+                                </div>
                             </div>
                             <div class="saldo-icon">
                                 <i class="fas fa-calendar-week"></i>

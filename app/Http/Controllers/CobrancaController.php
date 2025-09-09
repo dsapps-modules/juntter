@@ -751,6 +751,11 @@ class CobrancaController extends Controller
                 }
                 $saldoFiltrado['total']['amount'] = $valorFiltrado;
             }
+            
+            // Para filtro completo, calcular períodos relativos
+            $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoFiltro, 30);
+            $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoFiltro, 7);
+            
         } elseif (!empty($ano)) {
             // Apenas ano: somar todos os meses daquele ano
             $anoFiltro = (int)$ano;
@@ -764,6 +769,11 @@ class CobrancaController extends Controller
                 }
                 $saldoFiltrado['total']['amount'] = $valorFiltrado;
             }
+            
+            // Para filtro de ano, usar mês atual como referência
+            $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, date('n'), $anoFiltro, 30);
+            $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, date('n'), $anoFiltro, 7);
+            
         } elseif (!empty($mes)) {
             // Apenas mês: usar ano atual
             $mesFiltro = (int)$mes;
@@ -780,9 +790,49 @@ class CobrancaController extends Controller
                 }
                 $saldoFiltrado['total']['amount'] = $valorFiltrado;
             }
+            
+            // Para filtro de mês, calcular períodos relativos
+            $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoAtual, 30);
+            $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoAtual, 7);
         }
 
         return $saldoFiltrado;
+    }
+
+    /**
+     * Calcular período relativo (30 ou 7 dias) em relação ao mês filtrado
+     */
+    private function calcularPeriodoRelativo($saldo, $mes, $ano, $dias)
+    {
+        if (!isset($saldo['calendar']) || !is_array($saldo['calendar'])) {
+            return 0;
+        }
+
+        $valorTotal = 0;
+        $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
+        $dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
+        
+        // Calcular data limite baseada no período
+        $dataLimite = date('Y-m-d', strtotime($dataInicio . " +{$dias} days"));
+        
+        // Se a data limite ultrapassa o mês, usar o final do mês
+        if ($dataLimite > $dataFim) {
+            $dataLimite = $dataFim;
+        }
+
+        // Procurar lançamentos dentro do período usando dados do calendar
+        foreach ($saldo['calendar'] as $lancamento) {
+            if (isset($lancamento['date']) && isset($lancamento['amount'])) {
+                $dataLancamento = $lancamento['date'];
+                
+                // Verificar se a data está dentro do período
+                if ($dataLancamento >= $dataInicio && $dataLancamento <= $dataLimite) {
+                    $valorTotal += $lancamento['amount'];
+                }
+            }
+        }
+
+        return (int)$valorTotal;
     }
 
     /**
