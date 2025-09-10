@@ -230,6 +230,60 @@ function initDataTables() {
             }
         });
         
+        // DataTable para Links de Pagamento (Cartão)
+        initDataTableSafely('#linksTable', [
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
+            },
+            order: [[4, 'desc']], // Ordenar pela coluna 5 (Data) de forma decrescente
+            columnDefs: [
+                { className: 'dtr-control', orderable: false, targets: 0 },
+                { 
+                    targets: [4], // Coluna de data
+                    type: 'date'
+                }
+            ]
+        });
+        
+        // DataTable para Links de Pagamento PIX
+        initDataTableSafely('#linksPixTable', [
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
+            },
+            order: [[4, 'desc']], // Ordenar pela coluna 5 (Data) de forma decrescente
+            columnDefs: [
+                { className: 'dtr-control', orderable: false, targets: 0 },
+                { 
+                    targets: [4], // Coluna de data
+                    type: 'date'
+                }
+            ]
+        });
+        
+        // DataTable para Links de Pagamento Boleto
+        initDataTableSafely('#linksBoletoTable', [
+            { className: 'dtr-control', orderable: false, targets: 0 },
+            { targets: -1, orderable: false }
+        ], {
+            responsive: {
+                details: { type: 'column', target: 0 }
+            },
+            order: [[5, 'desc']], // Ordenar pela coluna 6 (Data) de forma decrescente
+            columnDefs: [
+                { className: 'dtr-control', orderable: false, targets: 0 },
+                { 
+                    targets: [5], // Coluna de data
+                    type: 'date'
+                }
+            ]
+        });
+        
         // DataTable para Estabelecimentos
         initDataTableSafely('#estabelecimentos-table', [
             { className: 'dtr-control', orderable: false, targets: 0 },

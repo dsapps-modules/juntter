@@ -23,8 +23,8 @@
                         <p class="text-muted mb-0">Gerencie seus links de pagamento com boleto bancário</p>
                     </div>
                     <div>
-                        <a href="{{ route('links-pagamento-boleto.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus mr-2"></i>Novo Link Boleto
+                        <a href="{{ route('links-pagamento-boleto.create') }}" class="btn btn-novo-pagamento">
+                            <i class="fas fa-plus me-2"></i>Novo Link Boleto
                         </a>
                     </div>
                 </div>
@@ -42,9 +42,10 @@
 
                 @if($links->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-light">
+                        <table id="linksBoletoTable" class="table table-hover">
+                            <thead class="table-header-juntter">
                                 <tr>
+                                    <th></th>
                                     <th class="fw-bold">Valor</th>
                                     <th class="fw-bold">Vencimento</th>
                                     <th class="fw-bold">Descrição</th>
@@ -56,6 +57,7 @@
                             <tbody>
                                 @foreach($links as $link)
                                 <tr>
+                                    <td></td>
                                     <td>
                                         <span class="badge bg-success fs-6">
                                             {{ $link->valor_formatado }}
@@ -91,8 +93,8 @@
                                                 <span class="badge bg-secondary fs-6">{{ $link->status }}</span>
                                         @endswitch
                                     </td>
-                                    <td>
-                                        <small>{{ $link->created_at->format('d/m/Y H:i') }}</small>
+                                    <td data-order="{{ $link->created_at->format('Y-m-d H:i:s') }}">
+                                        <small class="text-muted">{{ $link->created_at->format('d/m/Y H:i') }}</small>
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
@@ -126,17 +128,13 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <div class="d-flex justify-content-center">
-                        {{ $links->links() }}
-                    </div>
                 @else
                     <div class="text-center py-5">
                         <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">Nenhum link de pagamento boleto criado</h5>
                         <p class="text-muted">Crie seu primeiro link boleto para começar a receber pagamentos bancários</p>
-                        <a href="{{ route('links-pagamento-boleto.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus mr-2"></i>
+                        <a href="{{ route('links-pagamento-boleto.create') }}" class="btn btn-novo-pagamento">
+                            <i class="fas fa-plus me-2"></i>
                             Criar Primeiro Link Boleto
                         </a>
                     </div>
