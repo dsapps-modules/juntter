@@ -72,4 +72,14 @@ class TransacaoService
     {
         return $this->apiClient->get("marketplace/plans/{$id}");
     }
+
+    public function consultarSaldoEstabelecimento( array $filtros = [])
+    {
+        return $this->apiClient->get("marketplace/establishments/balance", $filtros);
+    }
+
+    public function consultarExtratoEstabelecimento(array $filtros = [])
+    {
+        return $this->apiClient->get("marketplace/establishments/extract", $filtros);
+    }
 }
