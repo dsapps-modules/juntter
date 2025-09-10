@@ -4,6 +4,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EstabelecimentoController;
 use App\Http\Controllers\CobrancaController;
+use App\Http\Controllers\LinkPagamentoBoletoController;
+use App\Http\Controllers\LinkPagamentoPixController;
+use App\Http\Controllers\LinkPagamentoController;
 use App\Http\Controllers\AuthController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -83,15 +86,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
     Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
 
-    // Rotas para Links de Pagamento
-    Route::get('/links-pagamento', [App\Http\Controllers\LinkPagamentoController::class, 'index'])->name('links-pagamento.index');
-    Route::get('/links-pagamento/create', [App\Http\Controllers\LinkPagamentoController::class, 'create'])->name('links-pagamento.create');
-    Route::post('/links-pagamento', [App\Http\Controllers\LinkPagamentoController::class, 'store'])->name('links-pagamento.store');
-    Route::get('/links-pagamento/{linkPagamento}', [App\Http\Controllers\LinkPagamentoController::class, 'show'])->name('links-pagamento.show');
-    Route::get('/links-pagamento/{linkPagamento}/edit', [App\Http\Controllers\LinkPagamentoController::class, 'edit'])->name('links-pagamento.edit');
-    Route::put('/links-pagamento/{linkPagamento}', [App\Http\Controllers\LinkPagamentoController::class, 'update'])->name('links-pagamento.update');
-    Route::delete('/links-pagamento/{linkPagamento}', [App\Http\Controllers\LinkPagamentoController::class, 'destroy'])->name('links-pagamento.destroy');
-    Route::patch('/links-pagamento/{linkPagamento}/status', [App\Http\Controllers\LinkPagamentoController::class, 'alterarStatus'])->name('links-pagamento.status');
+    // Rotas para Links de Pagamento - Cartão
+        Route::get('/links-pagamento', [LinkPagamentoController::class, 'index'])->name('links-pagamento.index');
+    Route::get('/links-pagamento/create', [LinkPagamentoController::class, 'create'])->name('links-pagamento.create');
+    Route::post('/links-pagamento', [LinkPagamentoController::class, 'store'])->name('links-pagamento.store');
+    Route::get('/links-pagamento/{linkPagamento}', [LinkPagamentoController::class, 'show'])->name('links-pagamento.show');
+    Route::get('/links-pagamento/{linkPagamento}/edit', [LinkPagamentoController::class, 'edit'])->name('links-pagamento.edit');
+    Route::put('/links-pagamento/{linkPagamento}', [LinkPagamentoController::class, 'update'])->name('links-pagamento.update');
+    Route::delete('/links-pagamento/{linkPagamento}', [LinkPagamentoController::class, 'destroy'])->name('links-pagamento.destroy');
+    Route::patch('/links-pagamento/{linkPagamento}/status', [LinkPagamentoController::class, 'alterarStatus'])->name('links-pagamento.status');
+
+    // Rotas para Links de Pagamento - PIX
+    Route::get('/links-pagamento-pix', [LinkPagamentoPixController::class, 'index'])->name('links-pagamento-pix.index');
+    Route::get('/links-pagamento-pix/create', [LinkPagamentoPixController::class, 'create'])->name('links-pagamento-pix.create');
+    Route::post('/links-pagamento-pix', [LinkPagamentoPixController::class, 'store'])->name('links-pagamento-pix.store');
+    Route::get('/links-pagamento-pix/{linkPagamento}', [LinkPagamentoPixController::class, 'show'])->name('links-pagamento-pix.show');
+    Route::get('/links-pagamento-pix/{linkPagamento}/edit', [LinkPagamentoPixController::class, 'edit'])->name('links-pagamento-pix.edit');
+    Route::put('/links-pagamento-pix/{linkPagamento}', [LinkPagamentoPixController::class, 'update'])->name('links-pagamento-pix.update');
+    Route::delete('/links-pagamento-pix/{linkPagamento}', [LinkPagamentoPixController::class, 'destroy'])->name('links-pagamento-pix.destroy');
+    Route::patch('/links-pagamento-pix/{linkPagamento}/status', [LinkPagamentoPixController::class, 'alterarStatus'])->name('links-pagamento-pix.status');
+
+    // Rotas para Links de Pagamento - Boleto
+    Route::get('/links-pagamento-boleto', [LinkPagamentoBoletoController::class, 'index'])->name('links-pagamento-boleto.index');
+    Route::get('/links-pagamento-boleto/create', [LinkPagamentoBoletoController::class, 'create'])->name('links-pagamento-boleto.create');
+    Route::post('/links-pagamento-boleto', [LinkPagamentoBoletoController::class, 'store'])->name('links-pagamento-boleto.store');
+    Route::get('/links-pagamento-boleto/{linkPagamento}', [LinkPagamentoBoletoController::class, 'show'])->name('links-pagamento-boleto.show');
+    Route::get('/links-pagamento-boleto/{linkPagamento}/edit', [LinkPagamentoBoletoController::class, 'edit'])->name('links-pagamento-boleto.edit');
+    Route::put('/links-pagamento-boleto/{linkPagamento}', [LinkPagamentoBoletoController::class, 'update'])->name('links-pagamento-boleto.update');
+    Route::delete('/links-pagamento-boleto/{linkPagamento}', [LinkPagamentoBoletoController::class, 'destroy'])->name('links-pagamento-boleto.destroy');
+    Route::patch('/links-pagamento-boleto/{linkPagamento}/status', [LinkPagamentoBoletoController::class, 'alterarStatus'])->name('links-pagamento-boleto.status');
 
 });
 });
