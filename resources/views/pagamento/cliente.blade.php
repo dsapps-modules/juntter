@@ -886,31 +886,74 @@
         }
 
 
-        // Processar Boleto
+        // Processar Boleto (real)
         function processarBoleto() {
             $('#loading').show();
             
-            // Simular geração de boleto
-            setTimeout(function() {
-                $('#loading').hide();
-                
-                // Mostrar código de barras simulado
-                const barcodeContainer = document.getElementById('boletoBarcode');
-                barcodeContainer.innerHTML = `
-                    <div class="mb-2">
-                        <small class="text-muted">Código de Barras:</small>
-                    </div>
-                    <div style="font-family: monospace; font-size: 0.7rem; letter-spacing: 1px;">
-                        12345.67890.12345.678901.23456.789012.3.45678901234567
-                    </div>
-                    <p class="mt-2 mb-0 text-success">
-                        <i class="fas fa-check-circle me-1"></i>
-                        Boleto gerado com sucesso!
-                    </p>
-                `;
-                
-                $('#successModal').modal('show');
-            }, 2000);
+            // Dados mínimos para Boleto (dados vêm do link)
+            const dados = {
+                _token: '{{ csrf_token() }}'
+            };
+            
+            // Fazer requisição para criar boleto
+            $.post('{{ route("pagamento.boleto", $link->codigo_unico) }}', dados)
+                .done(function(response) {
+                    $('#loading').hide();
+                    
+                    if (response.success && response.boleto_data) {
+                        // Mostrar dados do boleto
+                        const boletoData = response.boleto_data;
+                        
+                        // Atualizar código de barras se disponível
+                        if (boletoData.boleto_barcode) {
+                            const barcodeContainer = document.getElementById('boletoBarcode');
+                            barcodeContainer.innerHTML = `
+                                <div class="mb-2">
+                                    <small class="text-muted">Código de Barras:</small>
+                                </div>
+                                <div style="font-family: monospace; font-size: 0.7rem; letter-spacing: 1px;">
+                                    ${boletoData.boleto_barcode}
+                                </div>
+                                <p class="mt-2 mb-0 text-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Boleto gerado com sucesso!
+                                </p>
+                            `;
+                        }
+                        
+                        // Atualizar botão
+                        const button = event.target.closest('button');
+                        button.innerHTML = '<i class="fas fa-check me-2"></i>Boleto Gerado';
+                        button.classList.remove('btn-outline-primary');
+                        button.classList.add('btn-success');
+                        button.disabled = true;
+                        
+                        // Se tiver URL do boleto, mostrar botão para abrir
+                        if (boletoData.boleto_url) {
+                            const urlButton = document.createElement('a');
+                            urlButton.href = boletoData.boleto_url;
+                            urlButton.target = '_blank';
+                            urlButton.className = 'btn btn-outline-primary btn-sm mt-2';
+                            urlButton.innerHTML = '<i class="fas fa-external-link-alt me-2"></i>Abrir Boleto';
+                            
+                            const boletoContainer = document.querySelector('.boleto-container');
+                            boletoContainer.appendChild(urlButton);
+                        }
+                        
+                        $('#successModal').modal('show');
+                        
+                    } else {
+                        alert('Erro ao gerar boleto: ' + (response.error || 'Erro desconhecido'));
+                    }
+                })
+                .fail(function(xhr) {
+                    $('#loading').hide();
+                    let error = 'Erro ao processar boleto. Tente novamente.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        error = xhr.responseJSON.error;
+                    }
+                    alert(error);
+                });
         }
 
         // Gerar QR Code PIX (igual à cobrança única)

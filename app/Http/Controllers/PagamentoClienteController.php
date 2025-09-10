@@ -6,6 +6,7 @@ use App\Models\LinkPagamento;
 use App\Services\TransacaoService;
 use App\Services\CreditoService;
 use App\Services\PixService;
+use App\Services\BoletoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -14,15 +15,18 @@ class PagamentoClienteController extends Controller
     protected $transacaoService;
     protected $creditoService;
     protected $pixService;
+    protected $boletoService;
 
     public function __construct(
         TransacaoService $transacaoService,
         CreditoService $creditoService,
-        PixService $pixService
+        PixService $pixService,
+        BoletoService $boletoService
     ) {
         $this->transacaoService = $transacaoService;
         $this->creditoService = $creditoService;
         $this->pixService = $pixService;
+        $this->boletoService = $boletoService;
     }
 
     /**
@@ -250,7 +254,6 @@ class PagamentoClienteController extends Controller
             // Criar transação PIX
             $transacao = $this->pixService->criarTransacaoPix($dadosPix);
 
-            Log::info('Resposta da transação PIX:', $transacao);
 
             if (!$transacao) {
                 Log::error('Transação PIX retornou vazia ou falsa');
@@ -259,7 +262,7 @@ class PagamentoClienteController extends Controller
 
             // Verificar se a transação tem ID válido
             if (!isset($transacao['_id'])) {
-                Log::error('Transação PIX criada mas sem _id:', $transacao);
+                Log::error('Transação PIX criada mas sem _id');
                 throw new \Exception('Transação criada mas sem ID válido');
             }
 
@@ -267,7 +270,6 @@ class PagamentoClienteController extends Controller
             $qrCode = null;
             try {
                 $qrCode = $this->pixService->obterQrCodePix($transacao['_id']);
-                Log::info('QR Code obtido:', $qrCode);
             } catch (\Exception $e) {
                 Log::warning('Erro ao buscar QR Code: ' . $e->getMessage());
                 // Continua sem QR Code
@@ -296,6 +298,110 @@ class PagamentoClienteController extends Controller
             return response()->json(['error' => 'Erro ao processar PIX: ' . $e->getMessage()], 500);
         }
     }
+
+    /**
+     * Processar pagamento Boleto via link de pagamento
+     */
+    public function processarBoleto(Request $request, $codigoUnico)
+    {
+        try {
+            $link = LinkPagamento::where('codigo_unico', $codigoUnico)->first();
+
+            if (!$link || !$link->estaAtivo()) {
+                return response()->json(['error' => 'Link inválido ou inativo'], 400);
+            }
+
+            if ($link->tipo_pagamento !== 'BOLETO') {
+                return response()->json(['error' => 'Este link não é para Boleto'], 400);
+            }
+
+            // Pegar dados diretamente do link (sem validação de request)
+            $dadosCliente = $link->dados_cliente['preenchidos'] ?? [];
+            $dadosEndereco = $dadosCliente['endereco'] ?? [];
+            
+            // Preparar dados para a API Boleto (igual à cobrança única)
+            $dadosBoleto = [
+                'amount' => $link->valor_centavos,
+                'expiration' => $link->data_vencimento ?: now()->addDays(7)->format('Y-m-d'),
+                'payment_limit_date' => $link->data_limite_pagamento,
+                'recharge' => false, // Links de pagamento não são recarga
+                'client' => [
+                    'first_name' => $dadosCliente['nome'] ?? 'Cliente',
+                    'last_name' => $dadosCliente['sobrenome'] ?? '',
+                    'email' => $dadosCliente['email'] ?? '',
+                    'phone' => $dadosCliente['telefone'] ?? '',
+                    'document' => $dadosCliente['documento'] ?? '',
+                    'address' => [
+                        'street' => $dadosEndereco['rua'] ?? '',
+                        'number' => $dadosEndereco['numero'] ?? '',
+                        'complement' => $dadosEndereco['complemento'] ?? '',
+                        'neighborhood' => $dadosEndereco['bairro'] ?? '',
+                        'city' => $dadosEndereco['cidade'] ?? '',
+                        'state' => $dadosEndereco['estado'] ?? '',
+                        'zip_code' => $dadosEndereco['cep'] ?? '',
+                    ]
+                ],
+                'instruction' => [
+                    'booklet' => false, // Links de pagamento não são carnê
+                    'description' => $link->descricao ?? '',
+                    'late_fee' => [
+                        'mode' => 'PERCENTAGE',
+                        'amount' => (float) ($link->instrucoes_boleto['late_fee']['amount'] ?? '2.00')
+                    ],
+                    'interest' => [
+                        'mode' => 'MONTHLY_PERCENTAGE',
+                        'amount' => (float) ($link->instrucoes_boleto['interest']['amount'] ?? '1.00')
+                    ],
+                    'discount' => [
+                        'mode' => 'PERCENTAGE',
+                        'amount' => (float) ($link->instrucoes_boleto['discount']['amount'] ?? '5.00'),
+                        'limit_date' => $link->instrucoes_boleto['discount']['limit_date'] ?? now()->addDays(5)->format('Y-m-d')
+                    ]
+                ],
+                'extra_headers' => [
+                    'establishment_id' => $link->estabelecimento_id
+                ]
+            ];
+
+            // Garantir tipos booleanos corretos (igual à cobrança única)
+            $dadosBoleto['recharge'] = false;
+            $dadosBoleto['instruction']['booklet'] = false;
+
+            // Criar boleto
+            $boleto = $this->boletoService->gerarBoleto($dadosBoleto);
+
+
+            if (!$boleto) {
+                Log::error('Boleto retornou vazio ou falso');
+                throw new \Exception('Falha ao criar boleto');
+            }
+
+            // Verificar se o boleto tem ID válido
+            if (!isset($boleto['_id'])) {
+                Log::error('Boleto criado mas sem _id');
+                throw new \Exception('Boleto criado mas sem ID válido');
+            }
+
+            // Atualizar status do link se necessário
+            if (isset($boleto['status']) && $boleto['status'] === 'PAID') {
+                $link->update(['status' => 'PAID']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'boleto_data' => [
+                    'transacao' => $boleto,
+                    'boleto_url' => $boleto['boleto_url'] ?? null,
+                    'boleto_barcode' => $boleto['boleto_barcode'] ?? null
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao processar boleto via link: ' . $e->getMessage());
+            return response()->json(['error' => 'Erro ao processar boleto: ' . $e->getMessage()], 500);
+        }
+    }
+
 
     /**
      * Verificar status da transação

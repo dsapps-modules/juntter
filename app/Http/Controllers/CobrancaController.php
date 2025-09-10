@@ -406,7 +406,8 @@ class CobrancaController extends Controller
             $boleto = $this->boletoService->gerarBoleto($dados);
 
             return redirect()->route('cobranca.index')
-                ->with('success', 'Boleto criado com sucesso!');
+                ->with('success', 'Boleto criado com sucesso!')
+                ->with('boleto_data', $boleto);
         } catch (\Exception $e) {
             Log::error('Erro ao criar boleto', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return redirect()->route('cobranca.index')

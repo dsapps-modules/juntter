@@ -153,8 +153,9 @@ Route::middleware('auth')->group(function () {
     })->name('profile.password');
 });
 
-// Rota pública para processar PIX via link de pagamento
+// Rotas públicas para processar pagamentos via link
 Route::post('/pagamento/{codigo}/pix', [PagamentoClienteController::class, 'processarPix'])->name('pagamento.pix');
+Route::post('/pagamento/{codigo}/boleto', [PagamentoClienteController::class, 'processarBoleto'])->name('pagamento.boleto');
 
 // Rotas de autenticação do Breeze
 require __DIR__.'/auth.php';
