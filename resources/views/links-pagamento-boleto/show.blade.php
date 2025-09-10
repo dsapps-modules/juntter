@@ -52,396 +52,284 @@
                 </div>
             </div>
 
-            <!-- Cards de Informações -->
             <div class="row">
-                <!-- Informações Básicas -->
-                <div class="col-lg-8">
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-warning text-white">
+                <!-- Coluna Única -->
+                <div class="col-12">
+                    <!-- Card de Informações Básicas -->
+                    <div class="card mb-4 rounded-border" style="height: 320px;">
+                        <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-info-circle mr-2"></i>
-                                Informações Básicas
+                                Informações do Link
                             </h5>
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Valor</label>
-                                        <div class="h4 text-success">{{ $linkPagamento->valor_formatado }}</div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Valor</label>
+                                    <p class="mb-0">
+                                        <span class="badge badge-success" style="font-size: 1rem;">R$ {{ number_format($linkPagamento->valor, 2, ',', '.') }}</span>
+                                    </p>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Status</label>
-                                        <div>
-                                            @switch($linkPagamento->status)
-                                                @case('ATIVO')
-                                                    <span class="badge bg-success fs-6">Ativo</span>
-                                                    @break
-                                                @case('INATIVO')
-                                                    <span class="badge bg-secondary fs-6">Inativo</span>
-                                                    @break
-                                                @case('EXPIRADO')
-                                                    <span class="badge bg-warning fs-6">Expirado</span>
-                                                    @break
-                                                @case('PAID')
-                                                    <span class="badge bg-info fs-6">Pago</span>
-                                                    @break
-                                                @default
-                                                    <span class="badge bg-secondary fs-6">{{ $linkPagamento->status }}</span>
-                                            @endswitch
-                                        </div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Status</label>
+                                    <p class="mb-0">
+                                        @switch($linkPagamento->status)
+                                            @case('ATIVO')
+                                                <span class="badge badge-success">Ativo</span>
+                                                @break
+                                            @case('INATIVO')
+                                                <span class="badge badge-secondary">Inativo</span>
+                                                @break
+                                            @case('EXPIRADO')
+                                                <span class="badge badge-warning">Expirado</span>
+                                                @break
+                                            @case('PAID')
+                                                <span class="badge badge-info">Pago</span>
+                                                @break
+                                            @default
+                                                <span class="badge badge-secondary">{{ $linkPagamento->status }}</span>
+                                        @endswitch
+                                    </p>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Data de Vencimento</label>
-                                        <div>
-                                            @if($linkPagamento->data_vencimento)
-                                                <span class="badge bg-info">{{ $linkPagamento->data_vencimento->format('d/m/Y') }}</span>
-                                            @else
-                                                <span class="text-muted">Não definida</span>
-                                            @endif
-                                        </div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Código Único</label>
+                                    <p class="mb-0">
+                                        <code class="bg-light px-2 py-1 rounded">{{ $linkPagamento->codigo_unico }}</code>
+                                    </p>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Tipo de Pagamento</label>
-                                        <div>
-                                            <span class="badge bg-warning">
-                                                <i class="fas fa-file-invoice me-1"></i>Boleto
-                                            </span>
-                                        </div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Criado em</label>
+                                    <p class="mb-0">{{ $linkPagamento->created_at->format('d/m/Y H:i') }}</p>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Quem paga as taxas</label>
-                                        <div>
-                                            @if($linkPagamento->juros === 'CLIENT')
-                                                <span class="badge bg-info">Cliente</span>
-                                            @else
-                                                <span class="badge bg-warning">Estabelecimento</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Data limite para pagamento</label>
-                                        <div>
-                                            @if($linkPagamento->data_limite_pagamento)
-                                                <span class="badge bg-secondary">{{ $linkPagamento->data_limite_pagamento->format('d/m/Y') }}</span>
-                                            @else
-                                                <span class="text-muted">Não definida</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            @if($linkPagamento->descricao)
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted">Descrição</label>
-                                <div>{{ $linkPagamento->descricao }}</div>
-                            </div>
-                            @endif
-                            @if($linkPagamento->data_expiracao)
-                            <div class="mb-3">
-                                <label class="form-label fw-bold text-muted">Data de Expiração do Link</label>
-                                <div>{{ $linkPagamento->data_expiracao->format('d/m/Y H:i') }}</div>
-                            </div>
-                            @endif
-                        </div>
-                    </div>
-
-                    <!-- Instruções do Boleto -->
-                    @if($linkPagamento->instrucoes_boleto)
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-info text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-file-alt mr-2"></i>
-                                Instruções do Boleto
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            @php $instrucoes = $linkPagamento->instrucoes_boleto; @endphp
-                            <div class="row">
-                                @if(isset($instrucoes['descricao']))
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Descrição</label>
-                                        <div>{{ $instrucoes['descricao'] }}</div>
-                                    </div>
+                                @if($linkPagamento->data_expiracao)
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Expira em</label>
+                                    <p class="mb-0">{{ $linkPagamento->data_expiracao->format('d/m/Y H:i') }}</p>
                                 </div>
                                 @endif
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">É carnê?</label>
-                                        <div>
-                                            @if($instrucoes['carne'] ?? false)
-                                                <span class="badge bg-primary">Sim</span>
-                                            @else
-                                                <span class="badge bg-secondary">Não</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Multa por atraso</label>
-                                        <div>{{ number_format($instrucoes['multa'] ?? 0, 2, ',', '.') }}%</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Juros ao mês</label>
-                                        <div>{{ number_format($instrucoes['juros'] ?? 0, 2, ',', '.') }}%</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Desconto</label>
-                                        <div>{{ number_format($instrucoes['desconto'] ?? 0, 2, ',', '.') }}%</div>
-                                    </div>
-                                </div>
-                            </div>
-                            @if(isset($instrucoes['data_limite_desconto']))
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Data limite para desconto</label>
-                                        <div>{{ \Carbon\Carbon::parse($instrucoes['data_limite_desconto'])->format('d/m/Y') }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                            @endif
                         </div>
                     </div>
-                    @endif
 
-                    <!-- Link de Pagamento -->
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-success text-white">
+                    <!-- Card do Link de Pagamento -->
+                    <div class="card mb-4 rounded-border">
+                        <div class="card-header text-center">
                             <h5 class="mb-0">
-                                <i class="fas fa-link mr-2"></i>
+                                <i class="fas fa-external-link-alt mr-2"></i>
                                 Link de Pagamento
                             </h5>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body text-center">
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-muted">URL do Link</label>
-                                <div class="input-group">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           value="{{ $linkPagamento->url_completa }}" 
-                                           readonly 
-                                           id="linkUrl">
-                                    <button class="btn btn-outline-secondary" 
-                                            type="button" 
-                                            onclick="copiarLink()">
+                                <i class="fas fa-file-invoice text-warning fs-1"></i>
+                            </div>
+                            <p class="text-muted small mb-3">Compartilhe este link com seus clientes</p>
+                            
+                            <div class="input-group no-wrap mb-3">
+                                <input type="text" class="form-control" id="linkInput" value="{{ $linkPagamento->url_completa }}" readonly>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-primary" type="button" onclick="copiarLink()">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
-                                <small class="text-muted">Compartilhe este link com seus clientes para receber pagamentos via boleto</small>
                             </div>
-                            <div class="d-flex gap-2">
-                                <a href="{{ $linkPagamento->url_completa }}" 
-                                   target="_blank" 
-                                   class="btn btn-success">
-                                    <i class="fas fa-external-link-alt mr-2"></i>
-                                    Testar Link
+                            
+                            <div class="d-flex flex-wrap">
+                                <a href="{{ $linkPagamento->url_completa }}" target="_blank" class="btn btn-primary mr-3">
+                                    <i class="fas fa-external-link-alt mr-2"></i>Testar Link
                                 </a>
-                                <button class="btn btn-outline-primary" onclick="copiarLink()">
-                                    <i class="fas fa-copy mr-2"></i>
-                                    Copiar Link
+                                
+                                @if($linkPagamento->status === 'ATIVO')
+                                    <button type="button" class="btn btn-outline-warning mr-3" onclick="alterarStatus('INATIVO')">
+                                        <i class="fas fa-pause mr-2"></i>Desativar
+                                    </button>
+                                @else
+                                    <button type="button" class="btn btn-outline-success mr-3" onclick="alterarStatus('ATIVO')">
+                                        <i class="fas fa-play mr-2"></i>Ativar
+                                    </button>
+                                @endif
+                                
+                                <button type="button" class="btn btn-outline-danger" onclick="excluirLink()">
+                                    <i class="fas fa-trash mr-2"></i>Excluir
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Dados do Cliente -->
-                    @if($linkPagamento->dados_cliente && $linkPagamento->dados_cliente['preenchidos'])
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-primary text-white">
+                    <!-- Card de Informações do Boleto -->
+                    <div class="card mb-4 rounded-border">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-invoice mr-2"></i>
+                                Informações do Boleto
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Data de Vencimento</label>
+                                    <p class="mb-0">{{ $linkPagamento->data_vencimento ? $linkPagamento->data_vencimento->format('d/m/Y') : 'Não informado' }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Data Limite de Pagamento</label>
+                                    <p class="mb-0">{{ $linkPagamento->data_limite_pagamento ? $linkPagamento->data_limite_pagamento->format('d/m/Y') : 'Não informado' }}</p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Quem paga as taxas</label>
+                                    <p class="mb-0">
+                                        @if($linkPagamento->juros === 'CLIENT')
+                                            <span class="badge badge-info">Cliente</span>
+                                        @else
+                                            <span class="badge badge-warning">Estabelecimento</span>
+                                        @endif
+                                    </p>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Parcelas</label>
+                                    <p class="mb-0">À vista (1x)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card de Instruções do Boleto -->
+                    @if($linkPagamento->instrucoes_boleto)
+                    <div class="card mb-4 rounded-border">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list mr-2"></i>
+                                Instruções do Boleto
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                @if($linkPagamento->instrucoes_boleto['description'])
+                                <div class="col-12 mb-3">
+                                    <label class="form-label text-muted small">Descrição</label>
+                                    <p class="mb-0">{{ $linkPagamento->instrucoes_boleto['description'] }}</p>
+                                </div>
+                                @endif
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label text-muted small">Multa por atraso</label>
+                                    <p class="mb-0">{{ $linkPagamento->instrucoes_boleto['late_fee']['amount'] ?? '0' }}%</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label text-muted small">Juros ao mês</label>
+                                    <p class="mb-0">{{ $linkPagamento->instrucoes_boleto['interest']['amount'] ?? '0' }}%</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label text-muted small">Desconto</label>
+                                    <p class="mb-0">{{ $linkPagamento->instrucoes_boleto['discount']['amount'] ?? '0' }}%</p>
+                                </div>
+                                @if($linkPagamento->instrucoes_boleto['discount']['limit_date'])
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Data limite para desconto</label>
+                                    <p class="mb-0">{{ \Carbon\Carbon::parse($linkPagamento->instrucoes_boleto['discount']['limit_date'])->format('d/m/Y') }}</p>
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <!-- Card de Dados do Cliente -->
+                    @if($linkPagamento->dados_cliente && isset($linkPagamento->dados_cliente['preenchidos']))
+                    @php
+                        $dadosCliente = $linkPagamento->dados_cliente['preenchidos'];
+                        $endereco = $dadosCliente['endereco'] ?? [];
+                    @endphp
+                    <div class="card mb-4 rounded-border">
+                        <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-user mr-2"></i>
                                 Dados do Cliente
                             </h5>
                         </div>
                         <div class="card-body">
-                            @php $cliente = $linkPagamento->dados_cliente['preenchidos']; @endphp
                             <div class="row">
-                                @if(isset($cliente['nome']) || isset($cliente['sobrenome']))
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Nome</label>
-                                        <div>{{ ($cliente['nome'] ?? '') . ' ' . ($cliente['sobrenome'] ?? '') }}</div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Nome</label>
+                                    <p class="mb-0">{{ $dadosCliente['nome'] ?? 'Não informado' }} {{ $dadosCliente['sobrenome'] ?? '' }}</p>
                                 </div>
-                                @endif
-                                @if(isset($cliente['email']))
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Email</label>
-                                        <div>{{ $cliente['email'] }}</div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Email</label>
+                                    <p class="mb-0">{{ $dadosCliente['email'] ?? 'Não informado' }}</p>
                                 </div>
-                                @endif
-                            </div>
-                            <div class="row">
-                                @if(isset($cliente['telefone']))
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Telefone</label>
-                                        <div>{{ $cliente['telefone'] }}</div>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">Telefone</label>
+                                    <p class="mb-0">{{ $dadosCliente['telefone'] ?? 'Não informado' }}</p>
                                 </div>
-                                @endif
-                                @if(isset($cliente['documento']))
-                                <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">CPF/CNPJ</label>
-                                        <div>{{ $cliente['documento'] }}</div>
-                                    </div>
-                                </div>
-                                @endif
-                            </div>
-                            @if(isset($cliente['endereco']))
-                            <div class="row">
-                                <div class="col-12">
-                                    <h6 class="fw-bold text-muted mb-2">Endereço</h6>
-                                    <div class="text-muted">
-                                        {{ $cliente['endereco']['rua'] ?? '' }} 
-                                        {{ $cliente['endereco']['numero'] ?? '' }}
-                                        {{ $cliente['endereco']['complemento'] ? ', ' . $cliente['endereco']['complemento'] : '' }}<br>
-                                        {{ $cliente['endereco']['bairro'] ?? '' }} - 
-                                        {{ $cliente['endereco']['cidade'] ?? '' }}/{{ $cliente['endereco']['estado'] ?? '' }}<br>
-                                        CEP: {{ $cliente['endereco']['cep'] ?? '' }}
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted small">CPF/CNPJ</label>
+                                    <p class="mb-0">{{ $dadosCliente['documento'] ?? 'Não informado' }}</p>
                                 </div>
                             </div>
-                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Card de Endereço -->
+                    @if(!empty($endereco))
+                    <div class="card mb-4 rounded-border">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-map-marker-alt mr-2"></i>
+                                Endereço
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label text-muted small">Rua</label>
+                                    <p class="mb-0">{{ $endereco['rua'] ?? 'Não informado' }}, {{ $endereco['numero'] ?? '' }}</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label text-muted small">Complemento</label>
+                                    <p class="mb-0">{{ $endereco['complemento'] ?? 'Não informado' }}</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label text-muted small">Bairro</label>
+                                    <p class="mb-0">{{ $endereco['bairro'] ?? 'Não informado' }}</p>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label text-muted small">Cidade</label>
+                                    <p class="mb-0">{{ $endereco['cidade'] ?? 'Não informado' }}</p>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label text-muted small">Estado</label>
+                                    <p class="mb-0">{{ $endereco['estado'] ?? 'Não informado' }}</p>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label text-muted small">CEP</label>
+                                    <p class="mb-0">{{ $endereco['cep'] ?? 'Não informado' }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     @endif
-                </div>
-
-                <!-- Sidebar -->
-                <div class="col-lg-4">
-                    <!-- Estatísticas -->
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-secondary text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-chart-bar mr-2"></i>
-                                Estatísticas
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center">
-                                <div class="h3 text-primary mb-1">0</div>
-                                <div class="text-muted">Boletos Emitidos</div>
-                            </div>
-                            <hr>
-                            <div class="text-center">
-                                <div class="h3 text-success mb-1">R$ 0,00</div>
-                                <div class="text-muted">Total Arrecadado</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Ações Rápidas -->
-                    <div class="card border-0 shadow-sm mb-4">
-                        <div class="card-header bg-warning text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-bolt mr-2"></i>
-                                Ações Rápidas
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-grid gap-2">
-                                <button class="btn btn-outline-primary btn-sm toggle-status" 
-                                        data-link-id="{{ $linkPagamento->id }}"
-                                        data-current-status="{{ $linkPagamento->status }}">
-                                    @if($linkPagamento->status === 'ATIVO')
-                                        <i class="fas fa-pause mr-2"></i>Desativar Link
-                                    @else
-                                        <i class="fas fa-play mr-2"></i>Ativar Link
-                                    @endif
-                                </button>
-                                <a href="{{ route('links-pagamento-boleto.edit', $linkPagamento->id) }}" 
-                                   class="btn btn-outline-warning btn-sm">
-                                    <i class="fas fa-edit mr-2"></i>Editar Link
-                                </a>
-                                <button class="btn btn-outline-danger btn-sm delete-link" 
-                                        data-link-id="{{ $linkPagamento->id }}">
-                                    <i class="fas fa-trash mr-2"></i>Excluir Link
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Informações Técnicas -->
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-dark text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-cog mr-2"></i>
-                                Informações Técnicas
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-2">
-                                <label class="form-label fw-bold text-muted small">ID do Link</label>
-                                <div class="small font-monospace">{{ $linkPagamento->id }}</div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label fw-bold text-muted small">Código Único</label>
-                                <div class="small font-monospace">{{ $linkPagamento->codigo_unico }}</div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label fw-bold text-muted small">Criado em</label>
-                                <div class="small">{{ $linkPagamento->created_at->format('d/m/Y H:i:s') }}</div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label fw-bold text-muted small">Atualizado em</label>
-                                <div class="small">{{ $linkPagamento->updated_at->format('d/m/Y H:i:s') }}</div>
-                            </div>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal de Confirmação para Exclusão -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirmar Exclusão</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h5 class="modal-title">Confirmar Ação</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
                 </button>
             </div>
             <div class="modal-body">
-                <p>Tem certeza que deseja excluir este link de pagamento boleto?</p>
-                <p class="text-danger"><small>Esta ação não pode ser desfeita.</small></p>
+                <p id="confirmMessage"></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Excluir</button>
-                </form>
+                <button type="button" class="btn btn-danger" id="confirmButton">Confirmar</button>
             </div>
         </div>
     </div>
@@ -451,7 +339,7 @@
 @push('scripts')
 <script>
 function copiarLink() {
-    const linkInput = document.getElementById('linkUrl');
+    const linkInput = document.getElementById('linkInput');
     linkInput.select();
     linkInput.setSelectionRange(0, 99999);
     document.execCommand('copy');
@@ -459,51 +347,55 @@ function copiarLink() {
     // Mostrar feedback
     const button = event.target.closest('button');
     const originalText = button.innerHTML;
-    button.innerHTML = '<i class="fas fa-check mr-2"></i>Copiado!';
-    button.classList.remove('btn-outline-secondary', 'btn-outline-primary');
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    button.classList.remove('btn-outline-primary');
     button.classList.add('btn-success');
     
     setTimeout(() => {
         button.innerHTML = originalText;
         button.classList.remove('btn-success');
-        button.classList.add('btn-outline-secondary');
+        button.classList.add('btn-outline-primary');
     }, 2000);
 }
 
-$(document).ready(function() {
-    // Toggle status do link
-    $('.toggle-status').click(function() {
-        const linkId = $(this).data('link-id');
-        const currentStatus = $(this).data('current-status');
-        const newStatus = currentStatus === 'ATIVO' ? 'INATIVO' : 'ATIVO';
-        
-        $.ajax({
-            url: `/links-pagamento-boleto/${linkId}/status`,
-            method: 'PATCH',
-            data: {
-                status: newStatus,
-                _token: '{{ csrf_token() }}'
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload();
-                } else {
-                    alert('Erro ao alterar status: ' + response.error);
-                }
-            },
-            error: function() {
-                alert('Erro ao alterar status do link');
-            }
-        });
-    });
+function alterarStatus(novoStatus) {
+    const action = novoStatus === 'ATIVO' ? 'ativar' : 'desativar';
+    const message = `Tem certeza que deseja ${action} este link de pagamento?`;
+    
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmButton').onclick = function() {
+        window.location.href = `{{ route('links-pagamento-boleto.status', $linkPagamento->id) }}`;
+    };
+    
+    $('#confirmModal').modal('show');
+}
 
-    // Exclusão de link
-    $('.delete-link').click(function() {
-        const linkId = $(this).data('link-id');
+function excluirLink() {
+    const message = 'Tem certeza que deseja excluir este link de pagamento? Esta ação não pode ser desfeita.';
+    
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmButton').onclick = function() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ route('links-pagamento-boleto.destroy', $linkPagamento->id) }}`;
         
-        $('#deleteForm').attr('action', `/links-pagamento-boleto/${linkId}`);
-        $('#deleteModal').modal('show');
-    });
-});
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        
+        const methodField = document.createElement('input');
+        methodField.type = 'hidden';
+        methodField.name = '_method';
+        methodField.value = 'DELETE';
+        
+        form.appendChild(csrfToken);
+        form.appendChild(methodField);
+        document.body.appendChild(form);
+        form.submit();
+    };
+    
+    $('#confirmModal').modal('show');
+}
 </script>
 @endpush

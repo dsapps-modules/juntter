@@ -536,11 +536,25 @@ $(document).ready(function() {
     // Máscara para valor
     $('#valor').on('input', function() {
         let value = this.value.replace(/\D/g, '');
-        value = (value / 100).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        });
-        this.value = value;
+        if (value.length > 0) {
+            value = (value / 100).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            });
+            this.value = value;
+        }
+    });
+
+    // Garantir que o valor seja enviado corretamente no submit
+    $('#formLinkPagamentoBoleto').on('submit', function() {
+        const valorInput = $('#valor');
+        let valor = valorInput.val();
+        
+        // Se o valor estiver formatado como moeda, manter apenas números
+        if (valor.includes('R$')) {
+            valor = valor.replace(/[R$\s.]/g, '').replace(',', '.');
+            valorInput.val(valor);
+        }
     });
 
     // Máscara para telefone
