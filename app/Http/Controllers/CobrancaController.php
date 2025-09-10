@@ -667,6 +667,11 @@ public function simularTransacao(Request $request)
                 ]
             ];
 
+            $saldoDoEstabelecimento = $this->transacaoService->consultarSaldoEstabelecimento($filtrosSaldo);
+            $extratoDoEstabelecimento = $this->transacaoService->consultarExtratoEstabelecimento($filtrosSaldo);
+
+           
+
             // Buscar lançamentos futuros (saldo) - sem filtros, apenas headers obrigatórios
             $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
 
@@ -715,7 +720,7 @@ public function simularTransacao(Request $request)
             }
 
             // Buscar lançamentos futuros diários (extrato detalhado)
-            $extrato = $this->transacaoService->lancamentosFuturosDiarios($filtrosExtrato);
+            $lancamentosFuturosDiarios = $this->transacaoService->lancamentosFuturosDiarios($filtrosExtrato);
 
             // Preparar projeção mensal (5 meses: 2 para trás, atual, 2 para frente)
             $projecaoMensal = $this->prepararProjecaoMensal($saldo, $mesAtual, $anoAtual);
@@ -723,7 +728,9 @@ public function simularTransacao(Request $request)
             // Preparar dados para a view
             $dados = [
                 'saldo' => $saldo,
-                'extrato' => $extrato,
+                'extratoDoEstabelecimento' => $extratoDoEstabelecimento,
+                'saldoDoEstabelecimento' => $saldoDoEstabelecimento,
+                'lancamentosFuturosDiarios' => $lancamentosFuturosDiarios,
                 'projecaoMensal' => $projecaoMensal,
                 'mesAtual' => $mesAtual,
                 'anoAtual' => $anoAtual,

@@ -11,6 +11,60 @@
     ]"
 />
 
+<!-- Seção Saldo do Estabelecimento -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg rounded-4">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <h5 class="fw-bold mb-0">
+                    <i class="fas fa-building me-2 text-success"></i>
+                    Saldo do Estabelecimento
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <!-- Cards de Saldo do Estabelecimento -->
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="saldo-card saldo-disponivel">
+                            <div class="saldo-content">
+                                <div class="saldo-valor">R$ {{ number_format(($saldoEstabelecimento['balance'] ?? 0) / 100, 2, ',', '.') }}</div>
+                                <div class="saldo-label">Saldo Disponível</div>
+                            </div>
+                            <div class="saldo-icon">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="saldo-card saldo-bloqueado">
+                            <div class="saldo-content">
+                                <div class="saldo-valor">R$ {{ number_format(($saldoEstabelecimento['blocked_balance'] ?? 0) / 100, 2, ',', '.') }}</div>
+                                <div class="saldo-label">Saldo Bloqueado</div>
+                            </div>
+                            <div class="saldo-icon">
+                                <i class="fas fa-lock"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="saldo-card saldo-total">
+                            <div class="saldo-content">
+                                <div class="saldo-valor">R$ {{ number_format(($saldoEstabelecimento['total_balance'] ?? 0) / 100, 2, ',', '.') }}</div>
+                                <div class="saldo-label">Saldo Total</div>
+                            </div>
+                            <div class="saldo-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Seção Saldo -->
 <div class="row mb-4">
     <div class="col-12">
@@ -19,7 +73,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0">
                         <i class="fas fa-wallet me-2 text-primary"></i>
-                        Extrato
+                        Lancamentos Futuros
                         @if(!empty($mesAtual) || !empty($anoAtual))
                             <small class="text-muted">
                                 @if(!empty($mesAtual) && !empty($anoAtual))
@@ -196,6 +250,104 @@
     </div>
 </div>
 
+<!-- Seção Extrato do Estabelecimento -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-lg rounded-4">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">
+                        <i class="fas fa-list-alt me-2 text-info"></i>
+                        Extrato do Estabelecimento
+                    </h5>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-info mr-2">{{ count($extratoEstabelecimento['data'] ?? []) }} movimentações</span>
+                        <a href="https://login.juntter.com.br/client/pix" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-plus me-1"></i>
+                            Sacar Meu Dinheiro
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                @if(isset($extratoEstabelecimento['data']) && count($extratoEstabelecimento['data']) > 0)
+                    <div class="table-responsive">
+                        <table id="extratoEstabelecimentoTable" class="table table-hover table-striped">
+                            <thead class="table-header-juntter">
+                                <tr>
+                                    <th></th>
+                                    <th>Tipo</th>
+                                    <th>Modalidade</th>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Saldo Anterior</th>
+                                    <th>Saldo Atual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($extratoEstabelecimento['data'] as $movimentacao)
+                                    <tr>
+                                        <td></td>
+                                        <td>
+                                            <span class="badge 
+                                                @if($movimentacao['type'] === 'PIX') bg-info
+                                                @elseif($movimentacao['type'] === 'P2P') bg-warning
+                                                @elseif($movimentacao['type'] === 'FEES') bg-danger
+                                                @elseif($movimentacao['type'] === 'TED') bg-success
+                                                @elseif($movimentacao['type'] === 'BILLET') bg-primary
+                                                @else bg-secondary
+                                                @endif">
+                                                {{ $movimentacao['type'] }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                @if($movimentacao['modality'] === 'IN') bg-success
+                                                @else bg-danger
+                                                @endif">
+                                                {{ $movimentacao['modality'] === 'IN' ? 'Entrada' : 'Saída' }}
+                                            </span>
+                                        </td>
+                                        <td data-order="{{ \Carbon\Carbon::parse($movimentacao['created_at'])->format('Y-m-d H:i:s') }}">
+                                            <small class="text-muted">
+                                                {{ \Carbon\Carbon::parse($movimentacao['created_at'])->format('d/m/Y H:i') }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small>{{ $movimentacao['description'] }}</small>
+                                        </td>
+                                        <td>
+                                            <strong class="{{ $movimentacao['modality'] === 'IN' ? 'text-success' : 'text-danger' }}">
+                                                {{ $movimentacao['modality'] === 'IN' ? '+' : '-' }}R$ {{ number_format(abs($movimentacao['amount']) / 100, 2, ',', '.') }}
+                                            </strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ $movimentacao['status'] }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">R$ {{ number_format(($movimentacao['additionalInformation']['old_balance'] ?? 0) / 100, 2, ',', '.') }}</small>
+                                        </td>
+                                        <td>
+                                            <strong class="text-primary">R$ {{ number_format(($movimentacao['additionalInformation']['current_balance'] ?? 0) / 100, 2, ',', '.') }}</strong>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle text-muted fa-2x mb-3"></i>
+                        <p class="text-muted mb-0">Nenhuma movimentação encontrada no extrato do estabelecimento.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Seção Extrato Detalhado -->
 <div class="row mb-4">
     <div class="col-12">
@@ -204,7 +356,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0">
                         <i class="fas fa-list me-2 text-primary"></i>
-                        Extrato Detalhado
+                        Lancamentos Futuros Diários
                         @if(isset($filtros['data_inicio']))
                             - {{ \Carbon\Carbon::parse($filtros['data_inicio'])->format('d/m/Y') }}
                         @else
@@ -212,13 +364,7 @@
                         @endif
                     </h5>
                 
-                    <span class="badge bg-primary">{{ count($extrato['data'] ?? []) }} transações</span>
-                </div>
-                <div class="d-flex justify-content-end">
-                    <a href="https://login.juntter.com.br/client/pix" class="btn btn-sm btn-outline-warning">
-                        <i class="fas fa-plus me-1"></i>
-                        Sacar Meu Dinheiro
-                    </a>
+                    <span class="badge bg-primary">{{ count($lancamentosFuturosDiarios['data'] ?? []) }} transações</span>
                 </div>
                
             </div>
@@ -280,7 +426,7 @@
                     </form>
                 </div>
 
-                @if(isset($extrato['data']) && count($extrato['data']) > 0)
+                @if(isset($lancamentosFuturosDiarios['data']) && count($lancamentosFuturosDiarios['data']) > 0)
                     <div class="table-responsive">
                         <table id="saldoExtratoTable" class="table table-hover table-striped">
                             <thead class="table-header-juntter">
@@ -298,7 +444,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($extrato['data'] as $transacao)
+                                @foreach($lancamentosFuturosDiarios['data'] as $transacao)
                                     <tr>
                                         <td></td>
                                         <td data-order="{{ \Carbon\Carbon::parse($transacao['transaction_date'])->format('Y-m-d H:i:s') }}">
