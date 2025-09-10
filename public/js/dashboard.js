@@ -15,6 +15,32 @@ $(document).ready(function() {
     initDataTables();
     initModals();
     
+    // Submenu no mobile
+    $('.dropdown-submenu .dropdown-toggle').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if ($(window).width() <= 768) {
+            // Fechar outros submenus abertos
+            $('.dropdown-submenu').not($(this).parent()).removeClass('show');
+            $('.dropdown-submenu .dropdown-menu').not($(this).next()).hide();
+            
+            // Toggle do submenu atual
+            $(this).parent().toggleClass('show');
+            $(this).next('.dropdown-menu').toggle();
+        }
+    });
+    
+    // Fechar submenu ao clicar fora
+    $(document).on('click', function(e) {
+        if ($(window).width() <= 768) {
+            if (!$(e.target).closest('.dropdown-submenu').length) {
+                $('.dropdown-submenu').removeClass('show');
+                $('.dropdown-submenu .dropdown-menu').hide();
+            }
+        }
+    });
+    
 });
 
 /**
