@@ -46,7 +46,8 @@ class LinkPagamentoController extends Controller
             return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
         }
 
-        $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId)
+        $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId) 
+            ->where('tipo_pagamento', 'CARTAO')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
@@ -148,8 +149,9 @@ class LinkPagamentoController extends Controller
                 'data_expiracao' => $dados['data_expiracao'],
                 'dados_cliente' => $dadosCliente,
                 'url_retorno' => $dados['url_retorno'],
-                'url_webhook' => $dados['url_webhook'],
-                'status' => 'ATIVO'
+                'url_webhook' => $dados['url_webhook'], 
+                'status' => 'ATIVO',
+                'tipo_pagamento' => 'CARTAO'
             ]);
 
             return redirect()->route('links-pagamento.show', $link->id)
@@ -277,6 +279,7 @@ class LinkPagamentoController extends Controller
                 'dados_cliente' => $dadosCliente,
                 'url_retorno' => $dados['url_retorno'],
                 'url_webhook' => $dados['url_webhook'],
+                'tipo_pagamento' => 'CARTAO'
             ]);
 
             return redirect()->route('links-pagamento.show', $linkPagamento->id)
