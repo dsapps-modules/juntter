@@ -1887,3 +1887,125 @@ textarea.form-control {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
+
+/* Switch Personalizado com Cores do Juntter */
+.custom-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.custom-switch .custom-control-input {
+    position: absolute;
+    z-index: -1;
+    opacity: 0;
+}
+
+.custom-switch .custom-control-input:checked ~ .custom-control-label::before {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-color: var(--primary-color);
+}
+
+.custom-switch .custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+}
+
+.custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+    background-color: white;
+    transform: translateX(1.5rem);
+}
+
+.custom-switch .custom-control-label {
+    position: relative;
+    margin-bottom: 0;
+    color: var(--dark-color);
+    font-weight: 500;
+    cursor: pointer;
+    padding-left: 3.5rem;
+    line-height: 1.5;
+}
+
+.custom-switch .custom-control-label::before {
+    content: '';
+    position: absolute;
+    top: 0.125rem;
+    left: 0;
+    display: block;
+    width: 3rem;
+    height: 1.5rem;
+    pointer-events: none;
+    background-color: #adb5bd;
+    border: 1px solid #adb5bd;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.custom-switch .custom-control-label::after {
+    content: '';
+    position: absolute;
+    top: 0.25rem;
+    left: 0.125rem;
+    display: block;
+    width: 1.25rem;
+    height: 1.25rem;
+    background-color: white;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+
+
+
+
+.custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Dropdown Submenu */
+.dropdown-submenu {
+    position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -1px;
+    margin-left: 0.125rem;
+    min-width: 10rem;
+}
+
+.dropdown-submenu:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-submenu .dropdown-toggle::after {
+    display: inline-block;
+    margin-left: 0.255em;
+    vertical-align: 0.255em;
+    content: "";
+    border-top: 0.3em solid;
+    border-right: 0.3em solid transparent;
+    border-bottom: 0;
+    border-left: 0.3em solid transparent;
+    transform: rotate(-90deg);
+}
+
+.dropdown-submenu .dropdown-toggle:hover::after {
+    transform: rotate(-90deg);
+}
+
+/* Animação suave para o submenu */
+.dropdown-submenu .dropdown-menu {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+.dropdown-submenu:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
