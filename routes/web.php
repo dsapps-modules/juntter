@@ -114,7 +114,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/links-pagamento-boleto/{linkPagamento}/edit', [LinkPagamentoBoletoController::class, 'edit'])->name('links-pagamento-boleto.edit');
     Route::put('/links-pagamento-boleto/{linkPagamento}', [LinkPagamentoBoletoController::class, 'update'])->name('links-pagamento-boleto.update');
     Route::delete('/links-pagamento-boleto/{linkPagamento}', [LinkPagamentoBoletoController::class, 'destroy'])->name('links-pagamento-boleto.destroy');
-    Route::patch('/links-pagamento-boleto/{linkPagamento}/status', [LinkPagamentoBoletoController::class, 'alterarStatus'])->name('links-pagamento-boleto.status');
+    Route::patch('/links-pagamento-boleto/{linkPagamento}/status', [LinkPagamentoBoletoController::class, 'toggleStatus'])->name('links-pagamento-boleto.status');
 
 });
 });

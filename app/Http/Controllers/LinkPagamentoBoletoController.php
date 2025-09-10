@@ -15,8 +15,18 @@ class LinkPagamentoBoletoController extends Controller
      */
     private function converterValorParaCentavos($valor)
     {
+        // Verificar se o valor está vazio
+        if (empty($valor) || trim($valor) === '') {
+            throw new \Exception('O valor é obrigatório');
+        }
+
         // Remover símbolos de moeda e espaços
         $valor = preg_replace('/[R$\s]/', '', $valor);
+        
+        // Verificar se ainda está vazio após limpeza
+        if (empty($valor)) {
+            throw new \Exception('O valor é obrigatório');
+        }
         
         // Se tem vírgula, é formato brasileiro (1.100,00)
         if (strpos($valor, ',') !== false) {
@@ -49,13 +59,13 @@ class LinkPagamentoBoletoController extends Controller
         $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId)
             ->where('tipo_pagamento', 'BOLETO')
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->paginate(10);
 
         return view('links-pagamento-boleto.index', compact('links'));
     }
 
     /**
-     * Mostrar formulário para criar novo link Boleto
+     * Mostrar formulário de criação
      */
     public function create()
     {
@@ -76,35 +86,35 @@ class LinkPagamentoBoletoController extends Controller
 
             $dados = $request->validate([
                 'descricao' => 'nullable|string|max:1000',
-                'valor' => 'required|string',
+                'valor' => 'required|string|min:1',
                 'data_vencimento' => 'required|date|after:today',
                 'data_limite_pagamento' => 'nullable|date|after:data_vencimento',
                 'juros' => 'required|in:CLIENT,ESTABLISHMENT',
                 'data_expiracao' => 'nullable|date|after:today',
-                'url_retorno' => 'nullable|url',
-                'url_webhook' => 'nullable|url',
-                'dados_cliente_preenchidos' => 'nullable|array',
-                'dados_cliente_preenchidos.nome' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.sobrenome' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.email' => 'nullable|email|max:255',
-                'dados_cliente_preenchidos.telefone' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.documento' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.endereco' => 'nullable|array',
-                'dados_cliente_preenchidos.endereco.rua' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.endereco.numero' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.endereco.bairro' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.endereco.cidade' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.endereco.estado' => 'nullable|string|max:2',
-                'dados_cliente_preenchidos.endereco.cep' => 'nullable|string|max:10',
+                'dados_cliente_preenchidos' => 'required|array',
+                'dados_cliente_preenchidos.nome' => 'required|string|max:255',
+                'dados_cliente_preenchidos.sobrenome' => 'required|string|max:255',
+                'dados_cliente_preenchidos.email' => 'required|email|max:255',
+                'dados_cliente_preenchidos.telefone' => 'required|string|max:20',
+                'dados_cliente_preenchidos.documento' => 'required|string|max:20',
+                'dados_cliente_preenchidos.endereco' => 'required|array',
+                'dados_cliente_preenchidos.endereco.rua' => 'required|string|max:255',
+                'dados_cliente_preenchidos.endereco.numero' => 'required|string|max:20',
+                'dados_cliente_preenchidos.endereco.bairro' => 'required|string|max:255',
+                'dados_cliente_preenchidos.endereco.cidade' => 'required|string|max:255',
+                'dados_cliente_preenchidos.endereco.estado' => 'required|string|max:2',
+                'dados_cliente_preenchidos.endereco.cep' => 'required|string|max:10',
                 'dados_cliente_preenchidos.endereco.complemento' => 'nullable|string|max:255',
                 // Instruções do boleto
-                'instrucoes' => 'nullable|array',
-                'instrucoes.descricao' => 'nullable|string|max:500',
-                'instrucoes.carne' => 'nullable|boolean',
-                'instrucoes.multa' => 'nullable|numeric|min:0',
-                'instrucoes.juros' => 'nullable|numeric|min:0',
-                'instrucoes.desconto' => 'nullable|numeric|min:0',
-                'instrucoes.data_limite_desconto' => 'nullable|date|before:data_vencimento',
+                'instrucoes_boleto' => 'required|array',
+                'instrucoes_boleto.description' => 'nullable|string|max:500',
+                'instrucoes_boleto.late_fee' => 'required|array',
+                'instrucoes_boleto.late_fee.amount' => 'required|numeric|min:0',
+                'instrucoes_boleto.interest' => 'required|array',
+                'instrucoes_boleto.interest.amount' => 'required|numeric|min:0',
+                'instrucoes_boleto.discount' => 'required|array',
+                'instrucoes_boleto.discount.amount' => 'required|numeric|min:0',
+                'instrucoes_boleto.discount.limit_date' => 'required|date|before:data_vencimento',
             ]);
 
             // Converter valor para centavos
@@ -118,17 +128,22 @@ class LinkPagamentoBoletoController extends Controller
                 'telefone_obrigatorio' => true,
                 'documento_obrigatorio' => true,
                 'endereco_obrigatorio' => true,
-                'preenchidos' => $dados['dados_cliente_preenchidos'] ?? null,
+                'preenchidos' => $dados['dados_cliente_preenchidos'],
             ];
 
             // Processar instruções do boleto
             $instrucoesBoleto = [
-                'descricao' => $dados['instrucoes']['descricao'] ?? null,
-                'carne' => $dados['instrucoes']['carne'] ?? false,
-                'multa' => $dados['instrucoes']['multa'] ?? 0,
-                'juros' => $dados['instrucoes']['juros'] ?? 0,
-                'desconto' => $dados['instrucoes']['desconto'] ?? 0,
-                'data_limite_desconto' => $dados['instrucoes']['data_limite_desconto'] ?? null,
+                'description' => $dados['instrucoes_boleto']['description'] ?? null,
+                'late_fee' => [
+                    'amount' => $dados['instrucoes_boleto']['late_fee']['amount']
+                ],
+                'interest' => [
+                    'amount' => $dados['instrucoes_boleto']['interest']['amount']
+                ],
+                'discount' => [
+                    'amount' => $dados['instrucoes_boleto']['discount']['amount'],
+                    'limit_date' => $dados['instrucoes_boleto']['discount']['limit_date']
+                ]
             ];
 
             $link = LinkPagamento::create([
@@ -144,8 +159,6 @@ class LinkPagamentoBoletoController extends Controller
                 'data_limite_pagamento' => $dados['data_limite_pagamento'],
                 'dados_cliente' => $dadosCliente,
                 'instrucoes_boleto' => $instrucoesBoleto,
-                'url_retorno' => $dados['url_retorno'],
-                'url_webhook' => $dados['url_webhook'],
                 'tipo_pagamento' => 'BOLETO',
                 'status' => 'ATIVO'
             ]);
@@ -162,31 +175,39 @@ class LinkPagamentoBoletoController extends Controller
     }
 
     /**
-     * Mostrar detalhes do link Boleto
+     * Mostrar detalhes do link
      */
-    public function show(LinkPagamento $linkPagamento)
+    public function show($id)
     {
-        // Verificar se o usuário tem acesso a este link
         $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
         
-        if ($linkPagamento->estabelecimento_id !== $estabelecimentoId || $linkPagamento->tipo_pagamento !== 'BOLETO') {
-            abort(403, 'Acesso negado');
+        if (!$estabelecimentoId) {
+            return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
         }
+
+        $linkPagamento = LinkPagamento::where('id', $id)
+            ->where('estabelecimento_id', $estabelecimentoId)
+            ->where('tipo_pagamento', 'BOLETO')
+            ->firstOrFail();
 
         return view('links-pagamento-boleto.show', compact('linkPagamento'));
     }
 
     /**
-     * Mostrar formulário para editar link Boleto
+     * Mostrar formulário de edição
      */
-    public function edit(LinkPagamento $linkPagamento)
+    public function edit($id)
     {
-        // Verificar se o usuário tem acesso a este link
         $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
         
-        if ($linkPagamento->estabelecimento_id !== $estabelecimentoId || $linkPagamento->tipo_pagamento !== 'BOLETO') {
-            abort(403, 'Acesso negado');
+        if (!$estabelecimentoId) {
+            return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
         }
+
+        $linkPagamento = LinkPagamento::where('id', $id)
+            ->where('estabelecimento_id', $estabelecimentoId)
+            ->where('tipo_pagamento', 'BOLETO')
+            ->firstOrFail();
 
         return view('links-pagamento-boleto.edit', compact('linkPagamento'));
     }
@@ -194,47 +215,51 @@ class LinkPagamentoBoletoController extends Controller
     /**
      * Atualizar link de pagamento Boleto
      */
-    public function update(Request $request, LinkPagamento $linkPagamento)
+    public function update(Request $request, $id)
     {
         try {
-            // Verificar se o usuário tem acesso a este link
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
             
-            if ($linkPagamento->estabelecimento_id !== $estabelecimentoId || $linkPagamento->tipo_pagamento !== 'BOLETO') {
-                abort(403, 'Acesso negado');
+            if (!$estabelecimentoId) {
+                return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
+
+            $linkPagamento = LinkPagamento::where('id', $id)
+                ->where('estabelecimento_id', $estabelecimentoId)
+                ->where('tipo_pagamento', 'BOLETO')
+                ->firstOrFail();
 
             $dados = $request->validate([
                 'descricao' => 'nullable|string|max:1000',
-                'valor' => 'required|string',
+                'valor' => 'required|string|min:1',
                 'data_vencimento' => 'required|date|after:today',
                 'data_limite_pagamento' => 'nullable|date|after:data_vencimento',
                 'juros' => 'required|in:CLIENT,ESTABLISHMENT',
                 'data_expiracao' => 'nullable|date|after:today',
-                'url_retorno' => 'nullable|url',
-                'url_webhook' => 'nullable|url',
-                'dados_cliente_preenchidos' => 'nullable|array',
-                'dados_cliente_preenchidos.nome' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.sobrenome' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.email' => 'nullable|email|max:255',
-                'dados_cliente_preenchidos.telefone' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.documento' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.endereco' => 'nullable|array',
-                'dados_cliente_preenchidos.endereco.rua' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.endereco.numero' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.endereco.bairro' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.endereco.cidade' => 'nullable|string|max:255',
-                'dados_cliente_preenchidos.endereco.estado' => 'nullable|string|max:2',
-                'dados_cliente_preenchidos.endereco.cep' => 'nullable|string|max:10',
+                'dados_cliente_preenchidos' => 'required|array',
+                'dados_cliente_preenchidos.nome' => 'required|string|max:255',
+                'dados_cliente_preenchidos.sobrenome' => 'required|string|max:255',
+                'dados_cliente_preenchidos.email' => 'required|email|max:255',
+                'dados_cliente_preenchidos.telefone' => 'required|string|max:20',
+                'dados_cliente_preenchidos.documento' => 'required|string|max:20',
+                'dados_cliente_preenchidos.endereco' => 'required|array',
+                'dados_cliente_preenchidos.endereco.rua' => 'required|string|max:255',
+                'dados_cliente_preenchidos.endereco.numero' => 'required|string|max:20',
+                'dados_cliente_preenchidos.endereco.bairro' => 'required|string|max:255',
+                'dados_cliente_preenchidos.endereco.cidade' => 'required|string|max:255',
+                'dados_cliente_preenchidos.endereco.estado' => 'required|string|max:2',
+                'dados_cliente_preenchidos.endereco.cep' => 'required|string|max:10',
                 'dados_cliente_preenchidos.endereco.complemento' => 'nullable|string|max:255',
                 // Instruções do boleto
-                'instrucoes' => 'nullable|array',
-                'instrucoes.descricao' => 'nullable|string|max:500',
-                'instrucoes.carne' => 'nullable|boolean',
-                'instrucoes.multa' => 'nullable|numeric|min:0',
-                'instrucoes.juros' => 'nullable|numeric|min:0',
-                'instrucoes.desconto' => 'nullable|numeric|min:0',
-                'instrucoes.data_limite_desconto' => 'nullable|date|before:data_vencimento',
+                'instrucoes_boleto' => 'required|array',
+                'instrucoes_boleto.description' => 'nullable|string|max:500',
+                'instrucoes_boleto.late_fee' => 'required|array',
+                'instrucoes_boleto.late_fee.amount' => 'required|numeric|min:0',
+                'instrucoes_boleto.interest' => 'required|array',
+                'instrucoes_boleto.interest.amount' => 'required|numeric|min:0',
+                'instrucoes_boleto.discount' => 'required|array',
+                'instrucoes_boleto.discount.amount' => 'required|numeric|min:0',
+                'instrucoes_boleto.discount.limit_date' => 'required|date|before:data_vencimento',
             ]);
 
             // Converter valor para centavos
@@ -248,17 +273,22 @@ class LinkPagamentoBoletoController extends Controller
                 'telefone_obrigatorio' => true,
                 'documento_obrigatorio' => true,
                 'endereco_obrigatorio' => true,
-                'preenchidos' => $dados['dados_cliente_preenchidos'] ?? null,
+                'preenchidos' => $dados['dados_cliente_preenchidos'],
             ];
 
             // Processar instruções do boleto
             $instrucoesBoleto = [
-                'descricao' => $dados['instrucoes']['descricao'] ?? null,
-                'carne' => $dados['instrucoes']['carne'] ?? false,
-                'multa' => $dados['instrucoes']['multa'] ?? 0,
-                'juros' => $dados['instrucoes']['juros'] ?? 0,
-                'desconto' => $dados['instrucoes']['desconto'] ?? 0,
-                'data_limite_desconto' => $dados['instrucoes']['data_limite_desconto'] ?? null,
+                'description' => $dados['instrucoes_boleto']['description'] ?? null,
+                'late_fee' => [
+                    'amount' => $dados['instrucoes_boleto']['late_fee']['amount']
+                ],
+                'interest' => [
+                    'amount' => $dados['instrucoes_boleto']['interest']['amount']
+                ],
+                'discount' => [
+                    'amount' => $dados['instrucoes_boleto']['discount']['amount'],
+                    'limit_date' => $dados['instrucoes_boleto']['discount']['limit_date']
+                ]
             ];
 
             $linkPagamento->update([
@@ -271,8 +301,6 @@ class LinkPagamentoBoletoController extends Controller
                 'data_limite_pagamento' => $dados['data_limite_pagamento'],
                 'dados_cliente' => $dadosCliente,
                 'instrucoes_boleto' => $instrucoesBoleto,
-                'url_retorno' => $dados['url_retorno'],
-                'url_webhook' => $dados['url_webhook'],
             ]);
 
             return redirect()->route('links-pagamento-boleto.show', $linkPagamento->id)
@@ -287,50 +315,21 @@ class LinkPagamentoBoletoController extends Controller
     }
 
     /**
-     * Alterar status do link Boleto
-     */
-    public function alterarStatus(Request $request, LinkPagamento $linkPagamento)
-    {
-        try {
-            // Verificar se o usuário tem acesso a este link
-            $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
-            if ($linkPagamento->estabelecimento_id !== $estabelecimentoId || $linkPagamento->tipo_pagamento !== 'BOLETO') {
-                abort(403, 'Acesso negado');
-            }
-
-            $status = $request->input('status');
-            
-            if (!in_array($status, ['ATIVO', 'INATIVO'])) {
-                return response()->json(['error' => 'Status inválido'], 400);
-            }
-
-            $linkPagamento->update(['status' => $status]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Status alterado com sucesso',
-                'status' => $status
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Erro ao alterar status do link Boleto: ' . $e->getMessage());
-            return response()->json(['error' => 'Erro ao alterar status'], 500);
-        }
-    }
-
-    /**
      * Excluir link de pagamento Boleto
      */
-    public function destroy(LinkPagamento $linkPagamento)
+    public function destroy($id)
     {
         try {
-            // Verificar se o usuário tem acesso a este link
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
             
-            if ($linkPagamento->estabelecimento_id !== $estabelecimentoId || $linkPagamento->tipo_pagamento !== 'BOLETO') {
-                abort(403, 'Acesso negado');
+            if (!$estabelecimentoId) {
+                return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
+
+            $linkPagamento = LinkPagamento::where('id', $id)
+                ->where('estabelecimento_id', $estabelecimentoId)
+                ->where('tipo_pagamento', 'BOLETO')
+                ->firstOrFail();
 
             $linkPagamento->delete();
 
@@ -341,6 +340,38 @@ class LinkPagamentoBoletoController extends Controller
             Log::error('Erro ao excluir link de pagamento Boleto: ' . $e->getMessage());
             return redirect()->back()
                 ->with('error', 'Erro ao excluir link de pagamento Boleto: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Alternar status do link
+     */
+    public function toggleStatus($id)
+    {
+        try {
+            $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
+            
+            if (!$estabelecimentoId) {
+                return redirect()->back()->with('error', 'Estabelecimento não encontrado');
+            }
+
+            $linkPagamento = LinkPagamento::where('id', $id)
+                ->where('estabelecimento_id', $estabelecimentoId)
+                ->where('tipo_pagamento', 'BOLETO')
+                ->firstOrFail();
+
+            $linkPagamento->status = $linkPagamento->status === 'ATIVO' ? 'INATIVO' : 'ATIVO';
+            $linkPagamento->save();
+
+            $statusText = $linkPagamento->status === 'ATIVO' ? 'ativado' : 'desativado';
+            
+            return redirect()->back()
+                ->with('success', "Link de pagamento Boleto {$statusText} com sucesso!");
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao alterar status do link de pagamento Boleto: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Erro ao alterar status do link: ' . $e->getMessage());
         }
     }
 }
