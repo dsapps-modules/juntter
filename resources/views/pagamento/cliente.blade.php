@@ -239,26 +239,47 @@
             color: var(--dark-color);
         }
 
-        /* Modal Styles */
-        .modal-content {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        /* PIX Specific Styles */
+        .pix-qr-container {
+            text-align: center;
+            padding: 2rem;
+            background: var(--light-gray);
+            border-radius: 16px;
+            margin-bottom: 1rem;
         }
 
-        .modal-header {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 20px 20px 0 0;
-        }
-
-        /* Loading Overlay */
-        .loading-overlay {
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px);
-        }
-
-        .spinner-custom {
+        .pix-qr-code {
+            width: 200px;
+            height: 200px;
+            background: var(--white);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 3rem;
             color: var(--primary-color);
+        }
+
+        /* Boleto Specific Styles */
+        .boleto-info {
+            background: var(--light-gray);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .boleto-barcode {
+            background: var(--white);
+            border: 2px solid var(--dark-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            font-family: monospace;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
         }
 
         /* Data Summary Styles */
@@ -290,6 +311,28 @@
         .data-summary strong {
             color: var(--dark-color);
             font-weight: 700;
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 20px 20px 0 0;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .spinner-custom {
+            color: var(--primary-color);
         }
 
         /* Responsive */
@@ -347,9 +390,23 @@
                         <!-- Header do Pagamento -->
                         <div class="payment-header">
                             <div class="payment-logo">
-                                <i class="fas fa-credit-card"></i>
+                                @if($link->tipo_pagamento === 'PIX')
+                                    <i class="fas fa-qrcode"></i>
+                                @elseif($link->tipo_pagamento === 'BOLETO')
+                                    <i class="fas fa-file-invoice"></i>
+                                @else
+                                    <i class="fas fa-credit-card"></i>
+                                @endif
                             </div>
-                            <h1 class="payment-title">Pagamento</h1>
+                            <h1 class="payment-title">
+                                @if($link->tipo_pagamento === 'PIX')
+                                    Pagamento PIX
+                                @elseif($link->tipo_pagamento === 'BOLETO')
+                                    Pagamento Boleto
+                                @else
+                                    Pagamento
+                                @endif
+                            </h1>
                             @if($link->descricao)
                                 <p class="payment-subtitle">{{ $link->descricao }}</p>
                             @endif
@@ -358,76 +415,26 @@
                             </div>
                         </div>
 
-                        <!-- Formulário -->
-                        <form id="creditForm">
-                            @csrf
-                            
-                            <!-- Dados do Cartão e Cliente lado a lado -->
-                            <div class="row">
-                                <!-- Dados do Cartão -->
-                                <div class="col-md-6">
-                                    <div class="form-section">
-                                        <h6 class="section-title">
-                                            <i class="fas fa-credit-card me-2"></i>
-                                            Dados do Cartão
-                                        </h6>
-                                        
-                                        <!-- Parcelamento integrado -->
-                                        @if($link->parcelas > 1)
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">
-                                                    Parcelas <span class="text-danger">*</span>
-                                                </label>
-                                                <select name="installments" class="form-select" required>
-                                                    <option value="">Selecione...</option>
-                                                    @for($i = 1; $i <= $link->parcelas; $i++)
-                                                        <option value="{{ $i }}">{{ $i }}x de R$ {{ number_format($link->valor / $i, 2, ',', '.') }}</option>
-                                                    @endfor
-                                                </select>
-                                            </div>
-                                        </div>
-                                        @endif
-                                        
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Nome do titular <span class="text-danger">*</span></label>
-                                                <input type="text" name="card[holder_name]" class="form-control" placeholder="Nome completo" required>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Número do cartão <span class="text-danger">*</span></label>
-                                                <input type="text" name="card[card_number]" class="form-control" placeholder="0000 0000 0000 0000" required>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-3 mb-3">
-                                                <label class="form-label">Mês <span class="text-danger">*</span></label>
-                                                <select name="card[expiration_month]" class="form-select" required>
-                                                    <option value="">MM</option>
-                                                    @for($m = 1; $m <= 12; $m++)
-                                                        <option value="{{ $m }}">{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}</option>
-                                                    @endfor
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label class="form-label">Ano <span class="text-danger">*</span></label>
-                                                <select name="card[expiration_year]" class="form-select" required>
-                                                    <option value="">AAAA</option>
-                                                    @for($y = date('Y'); $y <= date('Y') + 10; $y++)
-                                                        <option value="{{ $y }}">{{ $y }}</option>
-                                                    @endfor
-                                                </select>
-                                            </div>
-                                            <div class="col-md-3 mb-3">
-                                                <label class="form-label">CVV <span class="text-danger">*</span></label>
-                                                <input type="text" name="card[security_code]" class="form-control" placeholder="123" maxlength="4" required>
-                                            </div>
-                                        </div>
+                        <!-- Formulário baseado no tipo de pagamento -->
+                        @if($link->tipo_pagamento === 'PIX')
+                            <!-- Formulário PIX -->
+                            <form id="pixForm">
+                                @csrf
+                                
+                                <!-- QR Code PIX -->
+                                <div class="pix-qr-container">
+                                    <div class="pix-qr-code">
+                                        <i class="fas fa-qrcode"></i>
                                     </div>
+                                    <h5 class="mb-2">Escaneie o QR Code</h5>
+                                    <p class="text-muted mb-3">Use o app do seu banco para escanear o código e finalizar o pagamento</p>
+                                    <button type="button" class="btn btn-outline-primary" onclick="gerarQRCode()">
+                                        <i class="fas fa-sync-alt me-2"></i>Gerar QR Code
+                                    </button>
                                 </div>
 
-                                <!-- Dados do Cliente e Endereço -->
-                                <div class="col-md-6">
+                                <!-- Dados do Cliente (opcionais para PIX) -->
+                                @if(isset($link->dados_cliente['preenchidos']) && $link->dados_cliente['preenchidos'])
                                     <div class="form-section">
                                         <h6 class="section-title">
                                             <i class="fas fa-user me-2"></i>
@@ -435,149 +442,205 @@
                                         </h6>
                                         
                                         <!-- Resumo dos dados preenchidos -->
-                                        @if($link->dados_cliente['preenchidos'] && 
-                                             $link->dados_cliente['preenchidos']['nome'] && 
-                                             $link->dados_cliente['preenchidos']['sobrenome'] &&
-                                             $link->dados_cliente['preenchidos']['email'] && 
-                                             $link->dados_cliente['preenchidos']['telefone'] && 
-                                             $link->dados_cliente['preenchidos']['documento'])
                                         <div class="data-summary mb-3">
                                             <small><strong>Dados pré-preenchidos:</strong></small><br>
-                                            <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] }}</small><br>
-                                            <small><strong>Sobrenome:</strong> {{ $link->dados_cliente['preenchidos']['sobrenome'] }}</small><br>
-                                            <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] }}</small><br>
-                                            <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] }}</small><br>
-                                            <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] }}</small>
-                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="toggleClientFields()">
-                                                <i class="fas fa-edit me-1"></i>Editar
-                                            </button>
+                                            <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] ?? '' }} {{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}</small><br>
+                                            <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] ?? '' }}</small><br>
+                                            <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}</small><br>
+                                            <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}</small>
                                         </div>
-                                        @endif
-                                        
-                                        <!-- Campos editáveis (mostrar se não preenchidos ou se clicou em editar) -->
-                                        <div id="clientFields" style="display: {{ ($link->dados_cliente['preenchidos'] && $link->dados_cliente['preenchidos']['nome'] && $link->dados_cliente['preenchidos']['email'] && $link->dados_cliente['preenchidos']['telefone'] && $link->dados_cliente['preenchidos']['documento']) ? 'none' : 'block' }};">
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Nome <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[first_name]" class="form-control" placeholder="Nome completo" value="{{ $link->dados_cliente['preenchidos']['nome'] ?? '' }}" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Sobrenome <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[last_name]" class="form-control" placeholder="Sobrenome" value="{{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Email <span class="text-danger">*</span></label>
-                                                    <input type="email" name="client[email]" class="form-control" placeholder="email@exemplo.com" value="{{ $link->dados_cliente['preenchidos']['email'] ?? '' }}" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Telefone <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[phone]" class="form-control" placeholder="(00) 00000-0000" value="{{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
-                                                <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" value="{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}" required>
-                                            </div>
+                                    </div>
+                                @endif
+
+                                <div class="text-center mt-4">
+                                    <button type="button" class="btn btn-payment" onclick="processarPIX()">
+                                        <i class="fas fa-qrcode me-2"></i>
+                                        Processar PIX
+                                    </button>
+                                </div>
+                            </form>
+
+                        @elseif($link->tipo_pagamento === 'BOLETO')
+                            <!-- Formulário Boleto -->
+                            <form id="boletoForm">
+                                @csrf
+                                
+                                <!-- Informações do Boleto -->
+                                <div class="boleto-info">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-file-invoice me-2"></i>
+                                        Informações do Boleto
+                                    </h6>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Data de Vencimento</label>
+                                            <p class="mb-0">{{ $link->data_vencimento ? $link->data_vencimento->format('d/m/Y') : 'Não informado' }}</p>
                                         </div>
-                                        
-                                        <!-- Resumo do endereço -->
-                                        @if($link->dados_cliente['preenchidos']['endereco'] && 
-                                             $link->dados_cliente['preenchidos']['endereco']['rua'] && 
-                                             $link->dados_cliente['preenchidos']['endereco']['numero'] && 
-                                             $link->dados_cliente['preenchidos']['endereco']['bairro'] && 
-                                             $link->dados_cliente['preenchidos']['endereco']['cidade'] && 
-                                             $link->dados_cliente['preenchidos']['endereco']['estado'] && 
-                                             $link->dados_cliente['preenchidos']['endereco']['cep'])
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Data Limite de Pagamento</label>
+                                            <p class="mb-0">{{ $link->data_limite_pagamento ? $link->data_limite_pagamento->format('d/m/Y') : 'Não informado' }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Código de Barras -->
+                                    <div class="boleto-barcode">
+                                        <div class="mb-2">
+                                            <small class="text-muted">Código de Barras:</small>
+                                        </div>
+                                        <div id="boletoBarcode">
+                                            <i class="fas fa-barcode fa-2x text-muted"></i>
+                                            <p class="mt-2 mb-0">Código será gerado após confirmação</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dados do Cliente (obrigatórios para Boleto) -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-user me-2"></i>
+                                        Dados do Cliente
+                                    </h6>
+                                    
+                                    <!-- Resumo dos dados preenchidos -->
+                                    @if(isset($link->dados_cliente['preenchidos']) && $link->dados_cliente['preenchidos'])
+                                        <div class="data-summary mb-3">
+                                            <small><strong>Dados pré-preenchidos:</strong></small><br>
+                                            <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] ?? '' }} {{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}</small><br>
+                                            <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] ?? '' }}</small><br>
+                                            <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}</small><br>
+                                            <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}</small>
+                                        </div>
+                                    @endif
+
+                                    <!-- Endereço (obrigatório para Boleto) -->
+                                    @if(isset($link->dados_cliente['preenchidos']['endereco']) && $link->dados_cliente['preenchidos']['endereco'])
                                         <div class="data-summary mb-3">
                                             <small><strong>Endereço pré-preenchido:</strong></small><br>
-                                            <small>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] }}</small><br>
-                                            <small>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] }}</small><br>
-                                            <small>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] }}</small>
-                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="toggleAddressFields()">
-                                                <i class="fas fa-edit me-1"></i>Editar
-                                            </button>
+                                            <small>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}</small><br>
+                                            <small>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] ?? '' }}</small><br>
+                                            <small>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}</small>
                                         </div>
-                                        @endif
-                                        
-                                        <!-- Campos de endereço editáveis (mostrar se não preenchidos ou se clicou em editar) -->
-                                        <div id="addressFields" style="display: {{ ($link->dados_cliente['preenchidos']['endereco'] && $link->dados_cliente['preenchidos']['endereco']['rua'] && $link->dados_cliente['preenchidos']['endereco']['numero'] && $link->dados_cliente['preenchidos']['endereco']['bairro'] && $link->dados_cliente['preenchidos']['endereco']['cidade'] && $link->dados_cliente['preenchidos']['endereco']['estado'] && $link->dados_cliente['preenchidos']['endereco']['cep']) ? 'none' : 'block' }};">
-                                            <div class="row">
-                                                <div class="col-md-8 mb-3">
-                                                    <label class="form-label">Rua <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[address][street]" class="form-control" placeholder="Nome da rua" value="{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label">Número <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[address][number]" class="form-control" placeholder="123" value="{{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label">Bairro <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[address][neighborhood]" class="form-control" placeholder="Bairro" value="{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }}" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label">Cidade <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[address][city]" class="form-control" placeholder="Cidade" value="{{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label">CEP <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[address][zip_code]" class="form-control" placeholder="00000-000" value="{{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Estado <span class="text-danger">*</span></label>
-                                                    <select name="client[address][state]" class="form-select" required>
+                                    @endif
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <button type="button" class="btn btn-payment" onclick="processarBoleto()">
+                                        <i class="fas fa-file-invoice me-2"></i>
+                                        Gerar Boleto
+                                    </button>
+                                </div>
+                            </form>
+
+                        @else
+                            <!-- Formulário Cartão (padrão) -->
+                            <form id="creditForm">
+                                @csrf
+                                
+                                <!-- Dados do Cartão e Cliente lado a lado -->
+                                <div class="row">
+                                    <!-- Dados do Cartão -->
+                                    <div class="col-md-6">
+                                        <div class="form-section">
+                                            <h6 class="section-title">
+                                                <i class="fas fa-credit-card me-2"></i>
+                                                Dados do Cartão
+                                            </h6>
+                                            
+                                            <!-- Parcelamento integrado -->
+                                            @if($link->parcelas > 1)
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <label class="form-label">
+                                                        Parcelas <span class="text-danger">*</span>
+                                                    </label>
+                                                    <select name="installments" class="form-select" required>
                                                         <option value="">Selecione...</option>
-                                                        <option value="AC" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'AC' ? 'selected' : '' }}>Acre</option>
-                                                        <option value="AL" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'AL' ? 'selected' : '' }}>Alagoas</option>
-                                                        <option value="AP" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'AP' ? 'selected' : '' }}>Amapá</option>
-                                                        <option value="AM" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'AM' ? 'selected' : '' }}>Amazonas</option>
-                                                        <option value="BA" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'BA' ? 'selected' : '' }}>Bahia</option>
-                                                        <option value="CE" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'CE' ? 'selected' : '' }}>Ceará</option>
-                                                        <option value="DF" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'DF' ? 'selected' : '' }}>Distrito Federal</option>
-                                                        <option value="ES" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'ES' ? 'selected' : '' }}>Espírito Santo</option>
-                                                        <option value="GO" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'GO' ? 'selected' : '' }}>Goiás</option>
-                                                        <option value="MA" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'MA' ? 'selected' : '' }}>Maranhão</option>
-                                                        <option value="MT" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'MT' ? 'selected' : '' }}>Mato Grosso</option>
-                                                        <option value="MS" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'MS' ? 'selected' : '' }}>Mato Grosso do Sul</option>
-                                                        <option value="MG" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'MG' ? 'selected' : '' }}>Minas Gerais</option>
-                                                        <option value="PA" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'PA' ? 'selected' : '' }}>Pará</option>
-                                                        <option value="PB" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'PB' ? 'selected' : '' }}>Paraíba</option>
-                                                        <option value="PR" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'PR' ? 'selected' : '' }}>Paraná</option>
-                                                        <option value="PE" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'PE' ? 'selected' : '' }}>Pernambuco</option>
-                                                        <option value="PI" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'PI' ? 'selected' : '' }}>Piauí</option>
-                                                        <option value="RJ" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'RJ' ? 'selected' : '' }}>Rio de Janeiro</option>
-                                                        <option value="RN" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'RN' ? 'selected' : '' }}>Rio Grande do Norte</option>
-                                                        <option value="RS" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'RS' ? 'selected' : '' }}>Rio Grande do Sul</option>
-                                                        <option value="RO" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'RO' ? 'selected' : '' }}>Rondônia</option>
-                                                        <option value="RR" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'RR' ? 'selected' : '' }}>Roraima</option>
-                                                        <option value="SC" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'SC' ? 'selected' : '' }}>Santa Catarina</option>
-                                                        <option value="SP" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'SP' ? 'selected' : '' }}>São Paulo</option>
-                                                        <option value="SE" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'SE' ? 'selected' : '' }}>Sergipe</option>
-                                                        <option value="TO" {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'TO' ? 'selected' : '' }}>Tocantins</option>
+                                                        @for($i = 1; $i <= $link->parcelas; $i++)
+                                                            <option value="{{ $i }}">{{ $i }}x de R$ {{ number_format($link->valor / $i, 2, ',', '.') }}</option>
+                                                        @endfor
                                                     </select>
                                                 </div>
+                                            </div>
+                                            @endif
+                                            
+                                            <div class="row">
                                                 <div class="col-md-6 mb-3">
-                                                    <label class="form-label">Complemento</label>
-                                                    <input type="text" name="client[address][complement]" class="form-control" placeholder="Apto, casa, etc." value="{{ $link->dados_cliente['preenchidos']['endereco']['complemento'] ?? '' }}">
+                                                    <label class="form-label">Nome do titular <span class="text-danger">*</span></label>
+                                                    <input type="text" name="card[holder_name]" class="form-control" placeholder="Nome completo" required>
+                                                </div>
+                                                <div class="col-md-6 mb-3">
+                                                    <label class="form-label">Número do cartão <span class="text-danger">*</span></label>
+                                                    <input type="text" name="card[card_number]" class="form-control" placeholder="0000 0000 0000 0000" required>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">Mês <span class="text-danger">*</span></label>
+                                                    <select name="card[expiration_month]" class="form-select" required>
+                                                        <option value="">MM</option>
+                                                        @for($m = 1; $m <= 12; $m++)
+                                                            <option value="{{ $m }}">{{ str_pad($m, 2, '0', STR_PAD_LEFT) }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">Ano <span class="text-danger">*</span></label>
+                                                    <select name="card[expiration_year]" class="form-select" required>
+                                                        <option value="">AAAA</option>
+                                                        @for($y = date('Y'); $y <= date('Y') + 10; $y++)
+                                                            <option value="{{ $y }}">{{ $y }}</option>
+                                                        @endfor
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3 mb-3">
+                                                    <label class="form-label">CVV <span class="text-danger">*</span></label>
+                                                    <input type="text" name="card[security_code]" class="form-control" placeholder="123" maxlength="4" required>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
 
-                            <div class="text-center mt-4">
-                                <button type="submit" class="btn btn-payment" style="width: auto; padding: 10px 40px; font-size: 0.9rem;">
-                                    <i class="fas fa-credit-card me-2"></i>
-                                    Finalizar Pagamento
-                                </button>
-                            </div>
-                        </form>
+                                    <!-- Dados do Cliente e Endereço -->
+                                    <div class="col-md-6">
+                                        <div class="form-section">
+                                            <h6 class="section-title">
+                                                <i class="fas fa-user me-2"></i>
+                                                Dados do Cliente
+                                            </h6>
+                                            
+                                            <!-- Resumo dos dados preenchidos -->
+                                            @if(isset($link->dados_cliente['preenchidos']) && $link->dados_cliente['preenchidos'])
+                                                <div class="data-summary mb-3">
+                                                    <small><strong>Dados pré-preenchidos:</strong></small><br>
+                                                    <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] ?? '' }} {{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}</small><br>
+                                                    <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] ?? '' }}</small><br>
+                                                    <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}</small><br>
+                                                    <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}</small>
+                                                </div>
+                                            @endif
+
+                                            <!-- Endereço (opcional para cartão) -->
+                                            @if(isset($link->dados_cliente['preenchidos']['endereco']) && $link->dados_cliente['preenchidos']['endereco'])
+                                                <div class="data-summary mb-3">
+                                                    <small><strong>Endereço pré-preenchido:</strong></small><br>
+                                                    <small>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}</small><br>
+                                                    <small>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] ?? '' }}</small><br>
+                                                    <small>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}</small>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <button type="submit" class="btn btn-payment">
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        Finalizar Pagamento
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -617,7 +680,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Create Particles (igual ao da Juntter)
+        // Create Particles
         function createParticles() {
             const container = document.getElementById('particles');
             if (container) {
@@ -638,20 +701,21 @@
             // Criar partículas
             createParticles();
             
-            // Máscaras
+            // Máscaras para cartão
             $('input[name="card[card_number]"]').mask('0000 0000 0000 0000');
             $('input[name="client[phone]"]').mask('(00) 00000-0000');
             $('input[name="client[document]"]').mask('000.000.000-00');
             $('input[name="client[address][zip_code]"]').mask('00000-000');
             
-            // Form submit
+            // Form submit para cartão
             $('#creditForm').submit(function(e) {
                 e.preventDefault();
-                processPayment($(this));
+                processarCartao($(this));
             });
         });
 
-        function processPayment(form) {
+        // Processar pagamento com cartão
+        function processarCartao(form) {
             $('#loading').show();
             
             const url = '{{ route("pagamento.cartao", $link->codigo_unico) }}';
@@ -677,33 +741,53 @@
                 });
         }
 
-        // Funções para mostrar/ocultar campos editáveis
-        function toggleClientFields() {
-            const clientFields = document.getElementById('clientFields');
-            if (clientFields) {
-                const isHidden = clientFields.style.display === 'none';
-                clientFields.style.display = isHidden ? 'block' : 'none';
-                
-                // Atualizar texto do botão
-                const button = event.target;
-                button.innerHTML = isHidden ? 
-                    '<i class="fas fa-times me-1"></i>Voltar' : 
-                    '<i class="fas fa-edit me-1"></i>Editar';
-            }
+        // Processar PIX
+        function processarPIX() {
+            $('#loading').show();
+            
+            // Simular processamento PIX
+            setTimeout(function() {
+                $('#loading').hide();
+                $('#successModal').modal('show');
+            }, 2000);
         }
 
-        function toggleAddressFields() {
-            const addressFields = document.getElementById('addressFields');
-            if (addressFields) {
-                const isHidden = addressFields.style.display === 'none';
-                addressFields.style.display = isHidden ? 'block' : 'none';
+        // Processar Boleto
+        function processarBoleto() {
+            $('#loading').show();
+            
+            // Simular geração de boleto
+            setTimeout(function() {
+                $('#loading').hide();
                 
-                // Atualizar texto do botão
-                const button = event.target;
-                button.innerHTML = isHidden ? 
-                    '<i class="fas fa-times me-1"></i>Voltar' : 
-                    '<i class="fas fa-edit me-1"></i>Editar';
-            }
+                // Mostrar código de barras simulado
+                const barcodeContainer = document.getElementById('boletoBarcode');
+                barcodeContainer.innerHTML = `
+                    <div class="mb-2">
+                        <small class="text-muted">Código de Barras:</small>
+                    </div>
+                    <div style="font-family: monospace; font-size: 0.7rem; letter-spacing: 1px;">
+                        12345.67890.12345.678901.23456.789012.3.45678901234567
+                    </div>
+                    <p class="mt-2 mb-0 text-success">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Boleto gerado com sucesso!
+                    </p>
+                `;
+                
+                $('#successModal').modal('show');
+            }, 2000);
+        }
+
+        // Gerar QR Code PIX
+        function gerarQRCode() {
+            const qrContainer = document.querySelector('.pix-qr-code');
+            qrContainer.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            
+            // Simular geração de QR Code
+            setTimeout(function() {
+                qrContainer.innerHTML = '<i class="fas fa-qrcode"></i>';
+            }, 1000);
         }
     </script>
 </body>
