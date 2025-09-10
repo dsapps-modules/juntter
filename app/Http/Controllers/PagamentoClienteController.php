@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LinkPagamento;
 use App\Services\TransacaoService;
 use App\Services\CreditoService;
+use App\Services\PixService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -12,13 +13,16 @@ class PagamentoClienteController extends Controller
 {
     protected $transacaoService;
     protected $creditoService;
+    protected $pixService;
 
     public function __construct(
         TransacaoService $transacaoService,
-        CreditoService $creditoService
+        CreditoService $creditoService,
+        PixService $pixService
     ) {
         $this->transacaoService = $transacaoService;
         $this->creditoService = $creditoService;
+        $this->pixService = $pixService;
     }
 
     /**
@@ -174,6 +178,122 @@ class PagamentoClienteController extends Controller
         } catch (\Exception $e) {
             Log::error('Erro ao processar pagamento com cartão: ' . $e->getMessage());
             return response()->json(['error' => 'Erro ao processar pagamento: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Processar pagamento PIX via link de pagamento
+     */
+    public function processarPix(Request $request, $codigoUnico)
+    {
+        try {
+            $link = LinkPagamento::where('codigo_unico', $codigoUnico)->first();
+
+            if (!$link || !$link->estaAtivo()) {
+                return response()->json(['error' => 'Link inválido ou inativo'], 400);
+            }
+
+            if ($link->tipo_pagamento !== 'PIX') {
+                return response()->json(['error' => 'Este link não é para PIX'], 400);
+            }
+
+            // Pegar dados diretamente do link (sem validação de request)
+            $dadosCliente = $link->dados_cliente['preenchidos'] ?? [];
+            
+            // Preparar dados para a API PIX (igual à cobrança única)
+            $dadosPix = [
+                'payment_type' => 'PIX',
+                'amount' => $link->valor_centavos,
+                'interest' => $link->juros,
+                'client' => [
+                    'first_name' => $dadosCliente['nome'] ?? 'Cliente',
+                    'last_name' => $dadosCliente['sobrenome'] ?? '',
+                    'email' => $dadosCliente['email'] ?? '',
+                    'phone' => $dadosCliente['telefone'] ?? '',
+                    'document' => $dadosCliente['documento'] ?? '',
+                ],
+                'extra_headers' => [
+                    'establishment_id' => $link->estabelecimento_id
+                ],
+                'session_id' => 'session_' . uniqid(),
+            ];
+
+            // Adicionar info_additional no formato correto (igual à cobrança única)
+            if (!empty($link->descricao)) {
+                $dadosPix['info_additional'] = [
+                    [
+                        'key' => 'info_adicional',
+                        'value' => $link->descricao
+                    ],
+                    [
+                        'key' => 'link_pagamento_id',
+                        'value' => (string) $link->id
+                    ],
+                    [
+                        'key' => 'codigo_unico',
+                        'value' => $link->codigo_unico ?: 'N/A'
+                    ]
+                ];
+            } else {
+                $dadosPix['info_additional'] = [
+                    [
+                        'key' => 'link_pagamento_id',
+                        'value' => (string) $link->id
+                    ],
+                    [
+                        'key' => 'codigo_unico',
+                        'value' => $link->codigo_unico ?: 'N/A'
+                    ]
+                ];
+            }
+
+            // Criar transação PIX
+            $transacao = $this->pixService->criarTransacaoPix($dadosPix);
+
+            Log::info('Resposta da transação PIX:', $transacao);
+
+            if (!$transacao) {
+                Log::error('Transação PIX retornou vazia ou falsa');
+                throw new \Exception('Falha ao criar transação PIX');
+            }
+
+            // Verificar se a transação tem ID válido
+            if (!isset($transacao['_id'])) {
+                Log::error('Transação PIX criada mas sem _id:', $transacao);
+                throw new \Exception('Transação criada mas sem ID válido');
+            }
+
+            // Obter QR Code com try-catch (igual à cobrança única)
+            $qrCode = null;
+            try {
+                $qrCode = $this->pixService->obterQrCodePix($transacao['_id']);
+                Log::info('QR Code obtido:', $qrCode);
+            } catch (\Exception $e) {
+                Log::warning('Erro ao buscar QR Code: ' . $e->getMessage());
+                // Continua sem QR Code
+            }
+
+            if (!$qrCode) {
+                Log::error('QR Code PIX retornou vazio ou falso');
+                throw new \Exception('Falha ao obter QR Code PIX');
+            }
+
+            // Atualizar status do link se necessário
+            if (isset($transacao['status']) && $transacao['status'] === 'PAID') {
+                $link->update(['status' => 'PAID']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'pix_data' => [
+                    'transacao' => $transacao,
+                    'qr_code' => $qrCode
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao processar PIX via link: ' . $e->getMessage());
+            return response()->json(['error' => 'Erro ao processar PIX: ' . $e->getMessage()], 500);
         }
     }
 

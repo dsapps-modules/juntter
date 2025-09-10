@@ -124,6 +124,7 @@
                             <div class="mb-3">
                                 <i class="fas fa-qrcode text-primary fs-1"></i>
                             </div>
+                            <p class="text-muted small mb-3">QR Code será gerado quando o cliente acessar o link</p>
                             <p class="text-muted small mb-3">Compartilhe este link com seus clientes para pagamentos PIX</p>
                             
                             <div class="input-group no-wrap mb-3">

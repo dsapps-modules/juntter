@@ -8,6 +8,7 @@ use App\Http\Controllers\LinkPagamentoBoletoController;
 use App\Http\Controllers\LinkPagamentoPixController;
 use App\Http\Controllers\LinkPagamentoController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PagamentoClienteController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -24,9 +25,9 @@ Route::get('/', function () {
 })->name('checkout');
 
 // Rotas públicas para pagamento do cliente (apenas cartão)
-Route::get('/pagamento/{codigoUnico}', [App\Http\Controllers\PagamentoClienteController::class, 'mostrarPagamento'])->name('pagamento.link');
-Route::post('/pagamento/{codigoUnico}/cartao', [App\Http\Controllers\PagamentoClienteController::class, 'processarCartao'])->name('pagamento.cartao');
-Route::get('/pagamento/{codigoUnico}/status', [App\Http\Controllers\PagamentoClienteController::class, 'verificarStatus'])->name('pagamento.status');
+Route::get('/pagamento/{codigoUnico}', [  PagamentoClienteController::class, 'mostrarPagamento'])->name('pagamento.link');
+Route::post('/pagamento/{codigoUnico}/cartao', [PagamentoClienteController::class, 'processarCartao'])->name('pagamento.cartao');
+Route::get('/pagamento/{codigoUnico}/status', [PagamentoClienteController::class, 'verificarStatus'])->name('pagamento.status');
 
 // Página de acesso não autorizado
 Route::get('/unauthorized', function () {
@@ -151,6 +152,9 @@ Route::middleware('auth')->group(function () {
         return view('profile.dashboard.password');
     })->name('profile.password');
 });
+
+// Rota pública para processar PIX via link de pagamento
+Route::post('/pagamento/{codigo}/pix', [PagamentoClienteController::class, 'processarPix'])->name('pagamento.pix');
 
 // Rotas de autenticação do Breeze
 require __DIR__.'/auth.php';

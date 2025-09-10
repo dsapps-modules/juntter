@@ -3,12 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\LinkPagamento;
+use App\Services\PixService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class LinkPagamentoPixController extends Controller
 {
+    protected $pixService;
+
+    public function __construct(PixService $pixService)
+    {
+        $this->pixService = $pixService;
+    }
     /**
      * Converte valor brasileiro para centavos
      * Aceita formatos: 1.100,00, 1100,00, 1100.00, 1100
