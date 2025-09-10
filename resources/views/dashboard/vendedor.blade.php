@@ -102,7 +102,7 @@
                                                 </div>
                                             </td>
                                             
-                                            <td>
+                                            <td data-order="{{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('Y-m-d H:i:s') }}">
                                                 <span class="text-muted">
                                                     {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
                                                 </span>

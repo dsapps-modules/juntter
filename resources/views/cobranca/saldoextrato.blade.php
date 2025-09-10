@@ -301,7 +301,7 @@
                                 @foreach($extrato['data'] as $transacao)
                                     <tr>
                                         <td></td>
-                                        <td>
+                                        <td data-order="{{ \Carbon\Carbon::parse($transacao['transaction_date'])->format('Y-m-d H:i:s') }}">
                                             <small class="text-muted">
                                                 {{ \Carbon\Carbon::parse($transacao['transaction_date'])->format('d/m/Y H:i') }}
                                             </small>
