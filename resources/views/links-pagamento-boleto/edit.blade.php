@@ -522,11 +522,11 @@
 
                     <div class="row">
                         <div class="col-12">
-                            <div class="d-flex justify-content-end gap-2">
+                            <div class="d-flex justify-content-end">
                                 <a href="{{ route('links-pagamento-boleto.show', $linkPagamento->id) }}" class="btn btn-secondary">
                                     <i class="fas fa-times mr-2"></i>Cancelar
                                 </a>
-                                <button type="submit" class="btn btn-primary">
+                                <button type="submit" class="btn btn-primary ml-2">
                                     <i class="fas fa-save mr-2"></i>Atualizar Link Boleto
                                 </button>
                             </div>

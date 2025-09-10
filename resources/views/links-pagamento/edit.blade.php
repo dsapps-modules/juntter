@@ -297,12 +297,14 @@
                     
                     <div class="row mt-4">
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary me-3">
-                                <i class="fas fa-save me-2 mr-2 d-inline-block"></i>Salvar Alterações
-                            </button>
-                            <a href="{{ route('links-pagamento.show', $linkPagamento->id) }}" class="btn btn-secondary">
-                                <i class="fas fa-times me-2 mr-2 d-inline-block"></i>Cancelar
-                            </a>
+                            <div class="d-flex justify-content-end">
+                                <a href="{{ route('links-pagamento.show', $linkPagamento->id) }}" class="btn btn-secondary">
+                                    <i class="fas fa-times mr-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary ml-2">
+                                    <i class="fas fa-save mr-2"></i>Salvar Alterações
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>

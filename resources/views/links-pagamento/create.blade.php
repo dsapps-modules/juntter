@@ -88,7 +88,8 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="mb-3">
+                            <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label for="juros" class="form-label fw-bold">
                                     Quem paga as taxas <span class="text-danger">*</span>
                                 </label>
@@ -104,8 +105,9 @@
                                 @error('juros')
                                 <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+
                             </div>
-                            <div class=" mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="data_expiracao" class="form-label fw-bold">Data de Expiração</label>
                                 <input type="date"
                                     class="form-control @error('data_expiracao') is-invalid @enderror"
@@ -121,6 +123,8 @@
                                     Deixe em branco para não expirar
                                 </small>
                             </div>
+                            </div>
+                        
                         </div>
                     </div>
                     
@@ -143,16 +147,19 @@
                                     <label for="email_cliente" class="form-label">Email do Cliente</label>
                                     <input type="email" class="form-control" id="email_cliente" name="dados_cliente_preenchidos[email]" value="{{ old('dados_cliente_preenchidos.email') }}" placeholder="email@exemplo.com">
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <label for="telefone_cliente" class="form-label">Telefone do Cliente</label>
-                                    <input type="text" class="form-control" id="telefone_cliente" name="dados_cliente_preenchidos[telefone]" value="{{ old('dados_cliente_preenchidos.telefone') }}" placeholder="(00) 00000-0000">
-                                </div>
-                                
-                                <div class="mb-3">
+
+                                <div class="row">
+                                <div class="col-md-6 mb-3">
                                     <label for="documento_cliente" class="form-label">CPF/CNPJ do Cliente</label>
                                     <input type="text" class="form-control" id="documento_cliente" name="dados_cliente_preenchidos[documento]" value="{{ old('dados_cliente_preenchidos.documento') }}" placeholder="000.000.000-00">
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="telefone_cliente" class="form-label">Telefone do Cliente</label>
+                                    <input type="text" class="form-control" id="telefone_cliente" name="dados_cliente_preenchidos[telefone]" value="{{ old('dados_cliente_preenchidos.telefone') }}" placeholder="(00) 00000-0000">
+                                </div>
+                                </div>
+                                
+                              
                                
                             </div>
                         </div>
@@ -270,12 +277,14 @@
 
                     <div class="row mt-4">
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary me-3">
-                                <i class="fas fa-plus-circle mr-2 d-inline-block"></i>Criar Link
-                            </button>
-                            <a href="{{ route('links-pagamento.index') }}" class="btn btn-secondary">
-                                <i class="fas fa-times mr-2 d-inline-block"></i>Cancelar
-                            </a>
+                            <div class="d-flex justify-content-end">
+                                <a href="{{ route('links-pagamento.index') }}" class="btn btn-secondary">
+                                    <i class="fas fa-times mr-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary ml-2">
+                                    <i class="fas fa-plus-circle mr-2"></i>Criar Link
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </form>
