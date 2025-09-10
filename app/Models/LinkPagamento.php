@@ -22,7 +22,11 @@ class LinkPagamento extends Model
         'juros',
         'status',
         'data_expiracao',
+        'data_vencimento',
+        'data_limite_pagamento',
         'dados_cliente',
+        'instrucoes_boleto',
+        'tipo_pagamento',
         'url_retorno',
         'url_webhook'
     ];
@@ -34,7 +38,11 @@ class LinkPagamento extends Model
         'is_avista' => 'boolean',
         'juros' => 'string',
         'data_expiracao' => 'datetime',
-        'dados_cliente' => 'array'
+        'data_vencimento' => 'datetime',
+        'data_limite_pagamento' => 'datetime',
+        'dados_cliente' => 'array',
+        'instrucoes_boleto' => 'array',
+        'tipo_pagamento' => 'string'
     ];
 
     /**
