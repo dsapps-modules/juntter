@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/select2/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css') }}">
     <link rel="stylesheet" href="{{ asset('adminlte/dist/css/adminlte.min.css') }}">
+    @stack('styles')
     
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="{{ asset('adminlte/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css') }}">
@@ -54,7 +55,17 @@
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ route('cobranca.index') }}"><i class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
                             <li><a class="dropdown-item" href="{{ route('cobranca.transacao.simular') }}"><i class="fas fa-calculator me-2"></i>Simular Transação</a></li>
-                            <li><a class="dropdown-item" href="{{ route('links-pagamento.index') }}"><i class="fas fa-link me-2"></i>Links de Pagamento - Cartão</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-submenu">
+                                <a class="dropdown-item dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-link me-2"></i>Links de Pagamento
+                                </a>
+                                <ul class="dropdown-menu dropdown-submenu">
+                                    <li><a class="dropdown-item" href="{{ route('links-pagamento.index') }}"><i class="fas fa-credit-card me-2"></i>Cartão</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('links-pagamento-pix.index') }}"><i class="fas fa-qrcode me-2"></i>PIX</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('links-pagamento-boleto.index') }}"><i class="fas fa-file-invoice me-2"></i>Boleto</a></li>
+                                </ul>
+                            </li>
                             {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li> --}}
                             <li><a class="dropdown-item" href="{{ route('cobranca.planos') }}"><i class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>
                             <li><hr class="dropdown-divider"></li>
