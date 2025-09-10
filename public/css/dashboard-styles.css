@@ -647,18 +647,15 @@ h1 i, h2 i, h3 i, h4 i, h5 i, h6 i,
         height: auto !important;
     }
     
-    .dropdown-submenu .dropdown-item {
-        padding: 8px 25px !important;
-        font-size: 0.9rem !important;
-        color: var(--dark-color) !important;
-        border-left: 3px solid transparent !important;
-    }
+ 
     
     .dropdown-submenu .dropdown-item:hover {
         background: rgba(255, 193, 7, 0.15) !important;
         color: var(--dark-color) !important;
         border-left-color: var(--primary-color) !important;
     }
+    
+  
     
     .dropdown-submenu .dropdown-toggle::after {
         transform: rotate(0deg) !important;
