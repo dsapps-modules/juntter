@@ -63,6 +63,7 @@ class ProcessPaytimeEstablishmentCreation implements ShouldQueue
                 'status' => 'ativo',
                 'telefone' => $data['phone_number'],
                 'endereco' => json_encode($data['address']),
+                'must_change_password' => true, 
             ]);
 
             Log::info("vendedor criado", [
