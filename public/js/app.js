@@ -184,8 +184,8 @@ $(document).ready(function() {
                 e.preventDefault();
                 return;
             }
-            if (password.length < 6) {
-                showAlert('A senha deve ter pelo menos 6 caracteres.', 'danger');
+            if (password.length < 1) {
+                showAlert('Por favor, digite sua senha.', 'danger');
                 e.preventDefault();
                 return;
             }
