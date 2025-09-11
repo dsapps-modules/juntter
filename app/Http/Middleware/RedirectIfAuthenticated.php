@@ -21,21 +21,13 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                $user = Auth::guard($guard)->user();
+                // Usuário está logado - fazer logout forçado por segurança
+                // (mesma lógica do AuthenticatedSessionController)
+                Auth::guard($guard)->logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
                 
-                // Redireciona baseado no nível de acesso
-                switch ($user->nivel_acesso) {
-                    case 'super_admin':
-                        return redirect()->route('super_admin.dashboard');
-                    case 'admin':
-                        return redirect()->route('admin.dashboard');
-                    case 'vendedor':
-                        return redirect()->route('vendedor.dashboard');
-                    case 'comprador':
-                        return redirect()->route('comprador.dashboard');
-                    default:
-                        return redirect(RouteServiceProvider::HOME);
-                }
+               
             }
         }
 

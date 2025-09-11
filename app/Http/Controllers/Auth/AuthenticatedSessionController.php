@@ -17,21 +17,6 @@ class AuthenticatedSessionController extends Controller
      */
     public function create(): View|RedirectResponse
     {
-        if (Auth::check()) {
-            $user = Auth::user();
-            switch ($user->nivel_acesso) {
-                case 'super_admin':
-                    return redirect()->route('super_admin.dashboard');
-                case 'admin':
-                    return redirect()->route('admin.dashboard');
-                case 'vendedor':
-                    return redirect()->route('vendedor.dashboard');
-                case 'comprador':
-                    return redirect()->route('comprador.dashboard');
-                default:
-                    return redirect()->route('dashboard');
-            }
-        }
         return view('auth.login');
     }
 

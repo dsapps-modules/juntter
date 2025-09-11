@@ -15,7 +15,7 @@
                 <li class="nav-item"><a id="faqlink" href="{{ route('checkout') }}#faq" class="nav-link">FAQ</a></li>
                 
                 <!-- Sempre mostrar apenas o botão de login na página pública -->
-                <li class="nav-item"><a id="login-navbar" href="{{ route('login.redirect') }}" class="btn btn-warning ml-2 px-4">Login</a></li>
+                <li class="nav-item"><a id="login-navbar" href="{{ route('login') }}" class="btn btn-warning ml-2 px-4">Login</a></li>
             </ul>
         </div>
     </div>
