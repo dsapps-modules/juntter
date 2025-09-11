@@ -7,7 +7,6 @@ use App\Http\Controllers\CobrancaController;
 use App\Http\Controllers\LinkPagamentoBoletoController;
 use App\Http\Controllers\LinkPagamentoPixController;
 use App\Http\Controllers\LinkPagamentoController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PagamentoClienteController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -36,7 +35,6 @@ Route::get('/unauthorized', function () {
 })->name('unauthorized');
 
 // Rota para login com logout forçado (segurança)
-Route::get('/login-redirect', [AuthController::class, 'loginRedirect'])->name('login.redirect');
 
 
 
