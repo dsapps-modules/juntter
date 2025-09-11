@@ -34,7 +34,9 @@ class PaytimeWebhookController extends Controller
 
     public function createEstablishment(Request $request)
     {
+       
         if (!$this->isAuthorized($request)) {
+            Log::info('Unauthorized: create establishment', $request->all());
             return response()->json(['message' => 'Unauthorized: create establishment'], 401);
         }
 
