@@ -11,6 +11,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PagamentoClienteController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PasswordController;
 
 // Rota dashboard dinâmica
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
@@ -47,15 +48,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])
         ->middleware('nivel.acesso:admin')
         ->name('admin.dashboard');
-    Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])
-        ->middleware('nivel.acesso:vendedor')
-        ->name('vendedor.dashboard');
-    Route::get('/comprador/dashboard', [DashboardController::class, 'compradorDashboard'])
-        ->middleware('nivel.acesso:comprador')
-        ->name('comprador.dashboard');
+   
+   
 
             
-    Route::middleware('nivel.acesso:vendedor')->group(function () {
+    Route::middleware(['nivel.acesso:vendedor', 'must.change.password'])->group(function () {
+    Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
     Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
     Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
     
@@ -151,6 +149,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/password', function() {
         return view('profile.dashboard.password');
     })->name('profile.password');
+});
+
+// Rotas para troca de senha obrigatória 
+Route::middleware('auth')->group(function () {
+    Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change');
+    Route::post('/password/change', [PasswordController::class, 'changePassword'])->name('password.change.post');
 });
 
 // Rotas públicas para processar pagamentos via link
