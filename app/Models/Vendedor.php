@@ -22,12 +22,14 @@ class Vendedor extends Model
         'meta_vendas',
         'telefone',
         'endereco',
-        'status'
+        'status',
+        'must_change_password'
     ];
 
     protected $casts = [
         'comissao' => 'decimal:2',
         'meta_vendas' => 'decimal:2',
+        'must_change_password' => 'boolean',
     ];
 
     /**
