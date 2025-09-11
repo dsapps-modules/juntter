@@ -45,6 +45,38 @@ class PaytimeWebhookController extends Controller
         return response()->json(['message' => 'Create establishment webhook received'], 200);
     }
 
+    public function testWebhook(Request $request)
+    {
+        if (!$this->isAuthorized($request)) {
+            Log::info(' TESTE WEBHOOK - UNAUTHORIZED!', [
+                'timestamp' => now(),
+                'headers' => $request->headers->all(),
+                'payload_completo' => $request->all(),
+                'auth_user' => $request->getUser(),
+                'auth_pass' => $request->getPassword(),
+                'expected_user' => env('PAYTIME_WEBHOOK_USER'),
+                'expected_pass' => env('PAYTIME_WEBHOOK_PASS'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent()
+            ]);
+            return response()->json(['message' => 'Unauthorized: test webhook'], 200);
+        }
+
+        Log::info(' TESTE WEBHOOK - AUTORIZADO!', [
+            'timestamp' => now(),
+            'headers' => $request->headers->all(),
+            'payload_completo' => $request->all(),
+            'event' => $request->input('event', 'SEM_EVENTO'),
+            'data' => $request->input('data', 'SEM_DADOS'),
+            'auth_user' => $request->getUser(),
+            'auth_pass' => $request->getPassword(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent()
+        ]);
+        
+        return response()->json(['message' => 'Test webhook received with auth'], 200);
+    }
+
     protected function isAuthorized(Request $request): bool
     {
         $user = env('PAYTIME_WEBHOOK_USER');
