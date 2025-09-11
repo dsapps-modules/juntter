@@ -104,7 +104,8 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="mb-3">
+                            <div class="row">
+                            <div class="col-md-6 mb-3">
                                 <label for="juros" class="form-label fw-bold">
                                     Quem paga as taxas <span class="text-danger">*</span>
                                 </label>
@@ -120,8 +121,9 @@
                                 @error('juros')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
+
                             </div>
-                            <div class="mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label for="data_expiracao" class="form-label fw-bold">Data de Expiração</label>
                                 <input type="date" 
                                        class="form-control @error('data_expiracao') is-invalid @enderror" 
@@ -137,13 +139,28 @@
                                     Deixe em branco para não expirar
                                 </small>
                             </div>
+                            </div>
                         </div>
                     </div>
                     
                     @if(!$linkPagamento->is_avista)
                     <div class="row">
                         <div class="col-md-6">
-                            <h5 class="fw-bold mb-3">Dados do Cliente (Opcional)</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="font-weight-bold mb-0">Dados do Cliente (Opcionais)</h5>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="toggleDadosCliente">
+                                    <label class="custom-control-label" for="toggleDadosCliente">
+                                        Preencher dados
+                                    </label>
+                                </div>
+                            </div>
+                           
+
+                            @php
+                                $dadosCliente = $linkPagamento->dados_cliente['preenchidos'] ?? [];
+                            @endphp
+                            <div id="dadosClienteSection" style="display: {{ !empty($dadosCliente) ? 'block' : 'none' }};">
                             <div class="mb-3">
                              
                                 
@@ -160,49 +177,66 @@
                                 
                                 <div class="mb-3">
                                     <label for="email_cliente" class="form-label">Email do Cliente</label>
-                                    <input type="email" class="form-control" id="email_cliente" name="dados_cliente_preenchidos[email]" value="{{ old('dados_cliente_preenchidos.email', $linkPagamento->dados_cliente['preenchidos']['email'] ?? '') }}" placeholder="email@exemplo.com ">
+                                    <input type="email" class="form-control" id="email_cliente" name="dados_cliente_preenchidos[email]" value="{{ old('dados_cliente_preenchidos.email', $linkPagamento->dados_cliente['preenchidos']['email'] ?? '') }}" placeholder="email@exemplo.com">
                                 </div>
-                                
-                                <div class="mb-3">
-                                    <label for="telefone_cliente" class="form-label">Telefone do Cliente</label>
-                                    <input type="text" class="form-control" id="telefone_cliente" name="dados_cliente_preenchidos[telefone]" value="{{ old('dados_cliente_preenchidos.telefone', $linkPagamento->dados_cliente['preenchidos']['telefone'] ?? '') }}" placeholder="(00) 00000-0000 ">
-                                </div>
-                                
-                                <div class="mb-3">
+
+                                <div class="row">
+                                <div class="col-md-6 mb-3">
                                     <label for="documento_cliente" class="form-label">CPF/CNPJ do Cliente</label>
-                                    <input type="text" class="form-control" id="documento_cliente" name="dados_cliente_preenchidos[documento]" value="{{ old('dados_cliente_preenchidos.documento', $linkPagamento->dados_cliente['preenchidos']['documento'] ?? '') }}" placeholder="000.000.000-00 ">
+                                    <input type="text" class="form-control" id="documento_cliente" name="dados_cliente_preenchidos[documento]" value="{{ old('dados_cliente_preenchidos.documento', $linkPagamento->dados_cliente['preenchidos']['documento'] ?? '') }}" placeholder="000.000.000-00">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="telefone_cliente" class="form-label">Telefone do Cliente</label>
+                                    <input type="text" class="form-control" id="telefone_cliente" name="dados_cliente_preenchidos[telefone]" value="{{ old('dados_cliente_preenchidos.telefone', $linkPagamento->dados_cliente['preenchidos']['telefone'] ?? '') }}" placeholder="(00) 00000-0000">
+                                </div>
                                 </div>
                                
                             </div>
                         </div>
 
+                        </div>
+
+                        
                         <div class="col-md-6">
-                       
-                    <h5 class="fw-bold  mb-3">Endereço (Opcional)</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="font-weight-bold mb-0">Endereço (Opcional)</h5>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="toggleEndereco">
+                                    <label class="custom-control-label" for="toggleEndereco">
+                                        Preencher endereço
+                                    </label>
+                                </div>
+                            </div>
+                         
+
+                            @php
+                                $enderecoCliente = $linkPagamento->dados_cliente['preenchidos']['endereco'] ?? [];
+                            @endphp
+                            <div id="enderecoSection" style="display: {{ !empty($enderecoCliente) ? 'block' : 'none' }};">
                                 
                                 <div class="row">
                                     <div class="col-md-8 mb-3">
                                         <label for="rua_cliente" class="form-label">Rua</label>
-                                        <input type="text" class="form-control" id="rua_cliente" name="dados_cliente_preenchidos[endereco][rua]" value="{{ old('dados_cliente_preenchidos.endereco.rua', $linkPagamento->dados_cliente['preenchidos']['endereco']['rua'] ?? '') }}" placeholder="Nome da rua ">
+                                        <input type="text" class="form-control" id="rua_cliente" name="dados_cliente_preenchidos[endereco][rua]" value="{{ old('dados_cliente_preenchidos.endereco.rua', $linkPagamento->dados_cliente['preenchidos']['endereco']['rua'] ?? '') }}" placeholder="Nome da rua">
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="numero_cliente" class="form-label">Número</label>
-                                        <input type="text" class="form-control" id="numero_cliente" name="dados_cliente_preenchidos[endereco][numero]" value="{{ old('dados_cliente_preenchidos.endereco.numero', $linkPagamento->dados_cliente['preenchidos']['endereco']['numero'] ?? '') }}" placeholder="123 ">
+                                        <input type="text" class="form-control" id="numero_cliente" name="dados_cliente_preenchidos[endereco][numero]" value="{{ old('dados_cliente_preenchidos.endereco.numero', $linkPagamento->dados_cliente['preenchidos']['endereco']['numero'] ?? '') }}" placeholder="123">
                                     </div>
                                 </div>
                                 
                                 <div class="row">
                                     <div class="col-md-4 mb-3">
                                         <label for="bairro_cliente" class="form-label">Bairro</label>
-                                        <input type="text" class="form-control" id="bairro_cliente" name="dados_cliente_preenchidos[endereco][bairro]" value="{{ old('dados_cliente_preenchidos.endereco.bairro', $linkPagamento->dados_cliente['preenchidos']['endereco']['bairro'] ?? '') }}" placeholder="Nome do bairro ">
+                                        <input type="text" class="form-control" id="bairro_cliente" name="dados_cliente_preenchidos[endereco][bairro]" value="{{ old('dados_cliente_preenchidos.endereco.bairro', $linkPagamento->dados_cliente['preenchidos']['endereco']['bairro'] ?? '') }}" placeholder="Nome do bairro">
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="cidade_cliente" class="form-label">Cidade</label>
-                                        <input type="text" class="form-control" id="cidade_cliente" name="dados_cliente_preenchidos[endereco][cidade]" value="{{ old('dados_cliente_preenchidos.endereco.cidade', $linkPagamento->dados_cliente['preenchidos']['endereco']['cidade'] ?? '') }}" placeholder="Nome da cidade ">
+                                        <input type="text" class="form-control" id="cidade_cliente" name="dados_cliente_preenchidos[endereco][cidade]" value="{{ old('dados_cliente_preenchidos.endereco.cidade', $linkPagamento->dados_cliente['preenchidos']['endereco']['cidade'] ?? '') }}" placeholder="Nome da cidade">
                                     </div>
                                     <div class="col-md-4 mb-3">
                                         <label for="cep_cliente" class="form-label">CEP</label>
-                                        <input type="text" class="form-control" id="cep_cliente" name="dados_cliente_preenchidos[endereco][cep]" value="{{ old('dados_cliente_preenchidos.endereco.cep', $linkPagamento->dados_cliente['preenchidos']['endereco']['cep'] ?? '') }}" placeholder="00000-000 ">
+                                        <input type="text" class="form-control" id="cep_cliente" name="dados_cliente_preenchidos[endereco][cep]" value="{{ old('dados_cliente_preenchidos.endereco.cep', $linkPagamento->dados_cliente['preenchidos']['endereco']['cep'] ?? '') }}" placeholder="00000-000">
                                     </div>
                                 </div>
                                 
@@ -237,19 +271,17 @@
                                             <option value="SC" {{ (old('dados_cliente_preenchidos.endereco.estado', $linkPagamento->dados_cliente['preenchidos']['endereco']['estado'] ?? '')) == 'SC' ? 'selected' : '' }}>Santa Catarina</option>
                                             <option value="SP" {{ (old('dados_cliente_preenchidos.endereco.estado', $linkPagamento->dados_cliente['preenchidos']['endereco']['estado'] ?? '')) == 'SP' ? 'selected' : '' }}>São Paulo</option>
                                             <option value="SE" {{ (old('dados_cliente_preenchidos.endereco.estado', $linkPagamento->dados_cliente['preenchidos']['endereco']['estado'] ?? '')) == 'SE' ? 'selected' : '' }}>Sergipe</option>
-                                            <option value="TO" {{ (old('dados_cliente_preenchidos.endereco.estado', $linkPagamento->dados_cliente['dados_cliente']['preenchidos']['endereco']['estado'] ?? '')) == 'TO' ? 'selected' : '' }}>Tocantins</option>
+                                            <option value="TO" {{ (old('dados_cliente_preenchidos.endereco.estado', $linkPagamento->dados_cliente['preenchidos']['endereco']['estado'] ?? '')) == 'TO' ? 'selected' : '' }}>Tocantins</option>
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label for="complemento_cliente" class="form-label">Complemento</label>
-                                        <input type="text" class="form-control" id="complemento_cliente" name="dados_cliente_preenchidos[endereco][complemento]" value="{{ old('dados_cliente_preenchidos.endereco.complemento', $linkPagamento->dados_cliente['preenchidos']['endereco']['complemento'] ?? '') }}" placeholder="Apto, casa, etc. ">
+                                        <input type="text" class="form-control" id="complemento_cliente" name="dados_cliente_preenchidos[endereco][complemento]" value="{{ old('dados_cliente_preenchidos.endereco.complemento', $linkPagamento->dados_cliente['preenchidos']['endereco']['complemento'] ?? '') }}" placeholder="Apto, casa, etc.">
                                     </div>
 
                                 </div>
                             </div>
-                       
-                       
-
+                         </div>
                     </div>
                     @endif
 
@@ -313,6 +345,19 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -429,6 +474,68 @@ $(document).ready(function() {
     if (valorAtual) {
         atualizarOpcoesParcelas($('#valor').val());
     }
+
+    // Verificar se há dados preenchidos nos campos do cliente
+    function verificarDadosCliente() {
+        const nome = $('#nome_cliente').val();
+        const email = $('#email_cliente').val();
+        const telefone = $('#telefone_cliente').val();
+        const documento = $('#documento_cliente').val();
+        
+        return nome || email || telefone || documento;
+    }
+
+    // Verificar se há dados preenchidos nos campos de endereço
+    function verificarEndereco() {
+        const rua = $('#rua_cliente').val();
+        const numero = $('#numero_cliente').val();
+        const bairro = $('#bairro_cliente').val();
+        const cidade = $('#cidade_cliente').val();
+        const cep = $('#cep_cliente').val();
+        const estado = $('#estado_cliente').val();
+        
+        return rua || numero || bairro || cidade || cep || estado;
+    }
+    
+    // Definir estado inicial do switch de dados do cliente
+    if (verificarDadosCliente()) {
+        $('#toggleDadosCliente').prop('checked', true);
+        $('#dadosClienteSection').show().addClass('fade-in');
+    } else {
+        $('#toggleDadosCliente').prop('checked', false);
+        $('#dadosClienteSection').hide().removeClass('fade-in');
+    }
+
+    // Definir estado inicial do switch de endereço
+    if (verificarEndereco()) {
+        $('#toggleEndereco').prop('checked', true);
+        $('#enderecoSection').show().addClass('fade-in');
+    } else {
+        $('#toggleEndereco').prop('checked', false);
+        $('#enderecoSection').hide().removeClass('fade-in');
+    }
+    
+    // Event listener para o switch de dados do cliente
+    $('#toggleDadosCliente').on('change', function() {
+        const $section = $('#dadosClienteSection');
+        
+        if ($(this).is(':checked')) {
+            $section.slideDown(300).addClass('fade-in');
+        } else {
+            $section.slideUp(300).removeClass('fade-in');
+        }
+    });
+
+    // Event listener para o switch de endereço
+    $('#toggleEndereco').on('change', function() {
+        const $section = $('#enderecoSection');
+        
+        if ($(this).is(':checked')) {
+            $section.slideDown(300).addClass('fade-in');
+        } else {
+            $section.slideUp(300).removeClass('fade-in');
+        }
+    });
 });
 </script>
 @endpush

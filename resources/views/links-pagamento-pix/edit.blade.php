@@ -145,7 +145,6 @@
                     @php
                         $dadosCliente = $linkPagamento->dados_cliente['preenchidos'] ?? [];
                     @endphp
-
                     <div id="dadosClienteSection" style="display: {{ !empty($dadosCliente) ? 'block' : 'none' }};">
 
                     <div class="row">
