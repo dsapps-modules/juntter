@@ -252,6 +252,67 @@ body {
     transition: all 0.2s ease;
     height: auto;
     min-height: 42px;
+    position: relative;
+}
+
+/* Container para ícones */
+.form-group {
+    position: relative;
+}
+
+.field-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1rem;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.card-type-icon {
+    position: absolute;
+    right: 2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    z-index: 9;
+    pointer-events: none;
+}
+
+
+
+
+/* Validação Visual */
+.form-control.is-valid,
+.form-select.is-valid {
+    border-color: var(--success-color);
+    background-image: none;
+    padding-right: 2.5rem;
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+    border-color: var(--danger-color);
+    background-image: none;
+    padding-right: 2.5rem;
+}
+
+
+.invalid-feedback,
+.valid-feedback {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
+}
+
+.valid-feedback {
+    color: var(--success-color);
+}
+
+.invalid-feedback {
+    color: var(--danger-color);
 }
 
 .form-control:focus,

@@ -309,6 +309,253 @@ function toggleAddressFields() {
     }
 }
 
+// Validação de Cartão de Crédito
+function validateCardNumber(cardNumber) {
+    // Remove espaços e caracteres não numéricos
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+    
+    // Verifica se tem apenas números
+    if (!/^\d+$/.test(cleanNumber)) {
+        return { valid: false, type: null, message: 'Número inválido' };
+    }
+    
+    // Verifica comprimento mínimo
+    if (cleanNumber.length < 13 || cleanNumber.length > 19) {
+        return { valid: false, type: null, message: 'Número muito curto' };
+    }
+    
+    // Algoritmo de Luhn
+    if (!luhnCheck(cleanNumber)) {
+        return { valid: false, type: null, message: 'Número inválido' };
+    }
+    
+    // Identifica bandeira
+    const cardType = identifyCardType(cleanNumber);
+    
+    return { valid: true, type: cardType, message: 'Válido' };
+}
+
+// Algoritmo de Luhn para validação
+function luhnCheck(cardNumber) {
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = cardNumber.length - 1; i >= 0; i--) {
+        let digit = parseInt(cardNumber.charAt(i));
+        
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) {
+                digit -= 9;
+            }
+        }
+        
+        sum += digit;
+        isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+}
+
+// Identifica tipo de cartão
+function identifyCardType(cardNumber) {
+    const patterns = {
+        visa: /^4/,
+        mastercard: /^5[1-5]/,
+        amex: /^3[47]/,
+        discover: /^6(?:011|5)/,
+        diners: /^3[0689]/,
+        elo: /^((((636368)|(438935)|(504175)|(451416)|(636297))[0-9]{0,10})|((5067)|(4576)|(4011))[0-9]{0,12})$/,
+        hipercard: /^(606282|3841)/,
+        jcb: /^35/
+    };
+    
+    for (const [type, pattern] of Object.entries(patterns)) {
+        if (pattern.test(cardNumber)) {
+            return type;
+        }
+    }
+    
+    return 'unknown';
+}
+
+// Validação de CVV
+function validateCVV(cvv, cardType) {
+    if (!/^\d+$/.test(cvv)) {
+        return { valid: false, message: 'CVV inválido' };
+    }
+    
+    const length = cardType === 'amex' ? 4 : 3;
+    if (cvv.length !== length) {
+        return { valid: false, message: `CVV deve ter ${length} dígitos` };
+    }
+    
+    return { valid: true, message: 'Válido' };
+}
+
+// Validação de data de validade
+function validateExpiryDate(month, year) {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    
+    const expYear = parseInt(year);
+    const expMonth = parseInt(month);
+    
+    if (expYear < currentYear || (expYear === currentYear && expMonth < currentMonth)) {
+        return { valid: false, message: 'Cartão expirado' };
+    }
+    
+    if (expYear > currentYear + 20) {
+        return { valid: false, message: 'Data muito distante' };
+    }
+    
+    return { valid: true, message: 'Válido' };
+}
+
+// Validação de CPF/CNPJ
+function validateDocument(document) {
+    const cleanDoc = document.replace(/\D/g, '');
+    
+    if (cleanDoc.length === 11) {
+        return validateCPF(cleanDoc);
+    } else if (cleanDoc.length === 14) {
+        return validateCNPJ(cleanDoc);
+    }
+    
+    return { valid: false, message: 'Documento inválido' };
+}
+
+function validateCPF(cpf) {
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+        return { valid: false, message: 'CPF inválido' };
+    }
+    
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let remainder = 11 - (sum % 11);
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf.charAt(9))) {
+        return { valid: false, message: 'CPF inválido' };
+    }
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    remainder = 11 - (sum % 11);
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpf.charAt(10))) {
+        return { valid: false, message: 'CPF inválido' };
+    }
+    
+    return { valid: true, message: 'CPF válido' };
+}
+
+function validateCNPJ(cnpj) {
+    if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) {
+        return { valid: false, message: 'CNPJ inválido' };
+    }
+    
+    let sum = 0;
+    let weight = 2;
+    for (let i = 11; i >= 0; i--) {
+        sum += parseInt(cnpj.charAt(i)) * weight;
+        weight = weight === 9 ? 2 : weight + 1;
+    }
+    let remainder = sum % 11;
+    let digit1 = remainder < 2 ? 0 : 11 - remainder;
+    if (digit1 !== parseInt(cnpj.charAt(12))) {
+        return { valid: false, message: 'CNPJ inválido' };
+    }
+    
+    sum = 0;
+    weight = 2;
+    for (let i = 12; i >= 0; i--) {
+        sum += parseInt(cnpj.charAt(i)) * weight;
+        weight = weight === 9 ? 2 : weight + 1;
+    }
+    remainder = sum % 11;
+    let digit2 = remainder < 2 ? 0 : 11 - remainder;
+    if (digit2 !== parseInt(cnpj.charAt(13))) {
+        return { valid: false, message: 'CNPJ inválido' };
+    }
+    
+    return { valid: true, message: 'CNPJ válido' };
+}
+
+// Validação de email
+function validateEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return {
+        valid: emailRegex.test(email),
+        message: emailRegex.test(email) ? 'Email válido' : 'Email inválido'
+    };
+}
+
+// Validação de telefone
+function validatePhone(phone) {
+    const cleanPhone = phone.replace(/\D/g, '');
+    return {
+        valid: cleanPhone.length === 11,
+        message: cleanPhone.length === 11 ? 'Telefone válido' : 'Telefone inválido'
+    };
+}
+
+// Mostrar feedback visual
+function showFieldValidation(field, isValid, message, type = null) {
+    const $field = $(field);
+    const $feedback = $field.siblings('.invalid-feedback, .valid-feedback');
+    
+    // Remove classes anteriores
+    $field.removeClass('is-valid is-invalid');
+    
+    // Remove ícones anteriores
+    $field.siblings('.field-icon').remove();
+    
+    if (isValid) {
+        $field.addClass('is-valid');
+        $feedback.removeClass('invalid-feedback').addClass('valid-feedback').text(message);
+        
+        // Adiciona ícone de sucesso
+        $field.after('<i class="fas fa-check-circle field-icon text-success"></i>');
+    } else {
+        $field.addClass('is-invalid');
+        $feedback.removeClass('valid-feedback').addClass('invalid-feedback').text(message);
+        
+        // Adiciona ícone de erro
+        $field.after('<i class="fas fa-exclamation-circle field-icon text-danger"></i>');
+    }
+    
+    // Atualiza ícone baseado no tipo de cartão
+    if (type && field.name === 'card[card_number]') {
+        updateCardTypeIcon(type);
+    }
+}
+
+// Atualiza ícone do tipo de cartão
+function updateCardTypeIcon(cardType) {
+    // Remove ícone anterior do tipo de cartão
+    $('.card-type-icon').remove();
+    
+    const icons = {
+        visa: 'fab fa-cc-visa',
+        mastercard: 'fab fa-cc-mastercard',
+        amex: 'fab fa-cc-amex',
+        discover: 'fab fa-cc-discover',
+        diners: 'fab fa-cc-diners-club',
+        elo: 'fas fa-credit-card',
+        hipercard: 'fas fa-credit-card',
+        jcb: 'fab fa-cc-jcb',
+        unknown: 'fas fa-credit-card'
+    };
+    
+    // Adiciona novo ícone
+    $('input[name="card[card_number]"]').after(`<i class="${icons[cardType] || icons.unknown} card-type-icon"></i>`);
+}
+
 // Inicialização quando o documento estiver pronto
 $(document).ready(function() {
     // Máscaras para cartão
@@ -319,21 +566,105 @@ $(document).ready(function() {
     $('input[name="client[document]"]').mask('000.000.000-00');
     $('input[name="client[address][zip_code]"]').mask('00000-000');
     
+    // Validação em tempo real do cartão
+    $('input[name="card[card_number]"]').on('input', function() {
+        const value = $(this).val();
+        const cleanValue = value.replace(/\s/g, '');
+        
+        // Só valida se tiver pelo menos 13 dígitos
+        if (cleanValue.length >= 13) {
+            const validation = validateCardNumber(value);
+            showFieldValidation(this, validation.valid, validation.message, validation.type);
+        } else {
+            // Remove validação se estiver muito curto
+            $(this).removeClass('is-valid is-invalid');
+            $(this).siblings('.field-icon, .card-type-icon').remove();
+        }
+    });
+    
+    // Validação do CVV
+    $('input[name="card[security_code]"]').on('input', function() {
+        const cvv = $(this).val();
+        const cardNumber = $('input[name="card[card_number]"]').val();
+        const cardType = identifyCardType(cardNumber.replace(/\s/g, ''));
+        
+        // Só valida se tiver pelo menos 3 dígitos
+        if (cvv.length >= 3) {
+            const validation = validateCVV(cvv, cardType);
+            showFieldValidation(this, validation.valid, validation.message);
+        } else {
+            // Remove validação se estiver muito curto
+            $(this).removeClass('is-valid is-invalid');
+            $(this).siblings('.field-icon').remove();
+        }
+    });
+    
+    // Validação da data de validade
+    $('select[name="card[expiry_month]"], select[name="card[expiry_year]"]').on('change', function() {
+        const month = $('select[name="card[expiry_month]"]').val();
+        const year = $('select[name="card[expiry_year]"]').val();
+        
+        if (month && year) {
+            const validation = validateExpiryDate(month, year);
+            showFieldValidation(this, validation.valid, validation.message);
+        }
+    });
+    
+    // Validação do documento
+    $('input[name="client[document]"]').on('blur', function() {
+        const value = $(this).val();
+        const validation = validateDocument(value);
+        showFieldValidation(this, validation.valid, validation.message);
+    });
+    
+    // Validação do email
+    $('input[name="client[email]"]').on('blur', function() {
+        const value = $(this).val();
+        const validation = validateEmail(value);
+        showFieldValidation(this, validation.valid, validation.message);
+    });
+    
+    // Validação do telefone
+    $('input[name="client[phone]"]').on('blur', function() {
+        const value = $(this).val();
+        const validation = validatePhone(value);
+        showFieldValidation(this, validation.valid, validation.message);
+    });
+    
     // Form submit para cartão
     $('#creditForm').submit(function(e) {
         e.preventDefault();
-        processarCartao($(this));
+        
+        // Validação final antes de enviar
+        let isValid = true;
+        const requiredFields = $(this).find('input[required], select[required]');
+        
+        requiredFields.each(function() {
+            const $field = $(this);
+            const value = $field.val().trim();
+            
+            if (value === '') {
+                $field.addClass('is-invalid');
+                isValid = false;
+            }
+        });
+        
+        if (isValid) {
+            processarCartao($(this));
+        } else {
+            showError('Por favor, preencha todos os campos obrigatórios');
+        }
     });
     
-    // Validação em tempo real
-    $('input[required]').on('blur', function() {
+    // Validação em tempo real para outros campos
+    $('input[required]:not([name="card[card_number]"], [name="card[cvv]"], [name="client[document]"], [name="client[email]"], [name="client[phone]"])').on('blur', function() {
         const $this = $(this);
         const value = $this.val().trim();
         
         if (value === '') {
-            $this.addClass('is-invalid');
+            $this.addClass('is-invalid').removeClass('is-valid');
         } else {
-            $this.removeClass('is-invalid').addClass('is-valid');
+            $this.addClass('is-valid').removeClass('is-invalid');
         }
     });
 });

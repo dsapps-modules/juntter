@@ -290,7 +290,9 @@
                                             </div>
                                             <div class="col-md-6 mb-4">
                                                 <label class="form-label">Número do cartão <span class="text-danger">*</span></label>
-                                                <input type="text" name="card[card_number]" class="form-control" placeholder="0000 0000 0000 0000" required>
+                                                <div class="form-group">
+                                                    <input type="text" name="card[card_number]" class="form-control" placeholder="0000 0000 0000 0000" required>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="row">
@@ -314,7 +316,9 @@
                                             </div>
                                             <div class="col-md-3 mb-4">
                                                 <label class="form-label">CVV <span class="text-danger">*</span></label>
-                                                <input type="text" name="card[security_code]" class="form-control" placeholder="123" maxlength="4" required>
+                                                <div class="form-group">
+                                                    <input type="text" name="card[security_code]" class="form-control" placeholder="123" maxlength="4" required>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -363,16 +367,22 @@
                                                 <div class="row">
                                                     <div class="col-md-6 mb-4">
                                                         <label class="form-label">Email <span class="text-danger">*</span></label>
-                                                        <input type="email" name="client[email]" class="form-control" placeholder="email@exemplo.com" value="{{ $link->dados_cliente['preenchidos']['email'] ?? '' }}" required>
+                                                        <div class="form-group">
+                                                            <input type="email" name="client[email]" class="form-control" placeholder="email@exemplo.com" value="{{ $link->dados_cliente['preenchidos']['email'] ?? '' }}" required>
+                                                        </div>
                                                     </div>
                                                     <div class="col-md-6 mb-4">
                                                         <label class="form-label">Telefone <span class="text-danger">*</span></label>
-                                                        <input type="text" name="client[phone]" class="form-control" placeholder="(00) 00000-0000" value="{{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}" required>
+                                                        <div class="form-group">
+                                                            <input type="text" name="client[phone]" class="form-control" placeholder="(00) 00000-0000" value="{{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}" required>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="mb-4">
                                                     <label class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
-                                                    <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" value="{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}" required>
+                                                    <div class="form-group">
+                                                        <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" value="{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}" required>
+                                                    </div>
                                                 </div>
                                             </div>
 
