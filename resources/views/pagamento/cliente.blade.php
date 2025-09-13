@@ -325,7 +325,7 @@
                                 </div>
 
                                 <!-- Dados do Cliente e Endereço -->
-                                <div class="row mt-4">
+                                
                                     <div class="col-12">
                                         <div class="form-section">
                                             <h6 class="section-title">
@@ -378,10 +378,12 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="mb-4">
-                                                    <label class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
-                                                    <div class="form-group">
-                                                        <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" value="{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}" required>
+                                                <div class="row">
+                                                    <div class="col-md-12 mb-4">
+                                                        <label class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
+                                                        <div class="form-group">
+                                                            <input type="text" name="client[document]" class="form-control" placeholder="000.000.000-00" value="{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}" required>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -428,7 +430,12 @@
                                                     </div>
                                                     <div class="col-md-4 mb-4">
                                                         <label class="form-label">CEP <span class="text-danger">*</span></label>
-                                                        <input type="text" name="client[address][zip_code]" class="form-control" placeholder="00000-000" value="{{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}" required>
+                                                        <div class="form-group">
+                                                            <input type="text" name="client[address][zip_code]" class="form-control" placeholder="00000-000" value="{{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}" required>
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-search me-1"></i>Digite o CEP para preenchimento automático
+                                                        </small>
                                                     </div>
                                                 </div>
                                                 <div class="row">
@@ -473,7 +480,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                
 
                                 <div class="text-center mt-4">
                                     <button type="submit" class="btn btn-payment">

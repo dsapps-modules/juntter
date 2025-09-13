@@ -556,6 +556,50 @@ function updateCardTypeIcon(cardType) {
     $('input[name="card[card_number]"]').after(`<i class="${icons[cardType] || icons.unknown} card-type-icon"></i>`);
 }
 
+// Busca CEP via ViaCEP
+function buscarCEP(cep) {
+    // Remove caracteres não numéricos
+    cep = cep.replace(/\D/g, '');
+    
+    // Verifica se CEP tem 8 dígitos
+    if (cep.length !== 8) {
+        return;
+    }
+    
+    // Mostra loading no campo CEP
+    const cepField = $('input[name="client[address][zip_code]"]');
+    cepField.addClass('is-loading');
+    
+    // Busca CEP na API ViaCEP
+    $.get(`https://viacep.com.br/ws/${cep}/json/`)
+        .done(function(data) {
+            if (data.erro) {
+                showFieldValidation(cepField[0], false, 'CEP não encontrado');
+                return;
+            }
+            
+            // Preenche os campos automaticamente
+            $('input[name="client[address][street]"]').val(data.logradouro);
+            $('input[name="client[address][neighborhood]"]').val(data.bairro);
+            $('input[name="client[address][city]"]').val(data.localidade);
+            $('select[name="client[address][state]"]').val(data.uf);
+            
+            // Valida CEP como válido
+            showFieldValidation(cepField[0], true, 'CEP encontrado');
+            
+            // Foca no campo número
+            $('input[name="client[address][number]"]').focus();
+            
+            showSuccess('Endereço preenchido automaticamente!');
+        })
+        .fail(function() {
+            showFieldValidation(cepField[0], false, 'Erro ao buscar CEP');
+        })
+        .always(function() {
+            cepField.removeClass('is-loading');
+        });
+}
+
 // Inicialização quando o documento estiver pronto
 $(document).ready(function() {
     // Máscaras para cartão
@@ -565,6 +609,14 @@ $(document).ready(function() {
     $('input[name="client[phone]"]').mask('(00) 00000-0000');
     $('input[name="client[document]"]').mask('000.000.000-00');
     $('input[name="client[address][zip_code]"]').mask('00000-000');
+    
+    // Busca CEP automaticamente
+    $('input[name="client[address][zip_code]"]').on('blur', function() {
+        const cep = $(this).val();
+        if (cep.length === 9) { // 00000-000
+            buscarCEP(cep);
+        }
+    });
     
     // Validação em tempo real do cartão
     $('input[name="card[card_number]"]').on('input', function() {
