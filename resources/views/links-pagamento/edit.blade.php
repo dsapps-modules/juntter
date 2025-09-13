@@ -518,22 +518,54 @@ $(document).ready(function() {
     // Event listener para o switch de dados do cliente
     $('#toggleDadosCliente').on('change', function() {
         const $section = $('#dadosClienteSection');
+        const $inputs = $section.find('input, select');
+        const $labels = $section.find('label');
         
         if ($(this).is(':checked')) {
             $section.slideDown(300).addClass('fade-in');
+            // Tornar todos os campos obrigatórios
+            $inputs.prop('required', true);
+            // Adicionar asterisco vermelho nos labels
+            $labels.each(function() {
+                if (!$(this).find('.text-danger').length) {
+                    $(this).append(' <span class="text-danger">*</span>');
+                }
+            });
         } else {
             $section.slideUp(300).removeClass('fade-in');
+            // Remover obrigatoriedade dos campos
+            $inputs.prop('required', false);
+            // Remover asterisco vermelho dos labels
+            $labels.find('.text-danger').remove();
+            // Limpar valores dos campos
+            $inputs.val('');
         }
     });
 
     // Event listener para o switch de endereço
     $('#toggleEndereco').on('change', function() {
         const $section = $('#enderecoSection');
+        const $inputs = $section.find('input, select');
+        const $labels = $section.find('label');
         
         if ($(this).is(':checked')) {
             $section.slideDown(300).addClass('fade-in');
+            // Tornar todos os campos obrigatórios
+            $inputs.prop('required', true);
+            // Adicionar asterisco vermelho nos labels
+            $labels.each(function() {
+                if (!$(this).find('.text-danger').length) {
+                    $(this).append(' <span class="text-danger">*</span>');
+                }
+            });
         } else {
             $section.slideUp(300).removeClass('fade-in');
+            // Remover obrigatoriedade dos campos
+            $inputs.prop('required', false);
+            // Remover asterisco vermelho dos labels
+            $labels.find('.text-danger').remove();
+            // Limpar valores dos campos
+            $inputs.val('');
         }
     });
 });
