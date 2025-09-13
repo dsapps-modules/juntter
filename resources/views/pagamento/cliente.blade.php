@@ -224,22 +224,63 @@
 
                                 <!-- Resumo dos dados preenchidos -->
                                 @if(isset($link->dados_cliente['preenchidos']) && $link->dados_cliente['preenchidos'])
-                                <div class="data-summary mb-3">
-                                    <small><strong>Dados pré-preenchidos:</strong></small><br>
-                                    <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] ?? '' }} {{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}</small><br>
-                                    <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] ?? '' }}</small><br>
-                                    <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}</small><br>
-                                    <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}</small>
+                                <div class="prefilled-data-card">
+                                    <div class="prefilled-header">
+                                        <div class="prefilled-icon">
+                                            <i class="fas fa-user-check"></i>
+                                        </div>
+                                        <div class="prefilled-title">
+                                            <h6>Dados Pré-preenchidos</h6>
+                                            <small>Informações já cadastradas</small>
+                                        </div>
+                                    </div>
+                                    <div class="prefilled-content">
+                                        <div class="data-item">
+                                            <i class="fas fa-user"></i>
+                                            <span>{{ $link->dados_cliente['preenchidos']['nome'] ?? '' }} {{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}</span>
+                                        </div>
+                                        <div class="data-item">
+                                            <i class="fas fa-envelope"></i>
+                                            <span>{{ $link->dados_cliente['preenchidos']['email'] ?? '' }}</span>
+                                        </div>
+                                        <div class="data-item">
+                                            <i class="fas fa-phone"></i>
+                                            <span>{{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}</span>
+                                        </div>
+                                        <div class="data-item">
+                                            <i class="fas fa-id-card"></i>
+                                            <span>{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 @endif
 
                                 <!-- Endereço (obrigatório para Boleto) -->
                                 @if(isset($link->dados_cliente['preenchidos']['endereco']) && $link->dados_cliente['preenchidos']['endereco'])
-                                <div class="data-summary mb-3">
-                                    <small><strong>Endereço pré-preenchido:</strong></small><br>
-                                    <small>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}</small><br>
-                                    <small>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] ?? '' }}</small><br>
-                                    <small>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}</small>
+                                <div class="prefilled-data-card">
+                                    <div class="prefilled-header">
+                                        <div class="prefilled-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="prefilled-title">
+                                            <h6>Endereço Pré-preenchido</h6>
+                                            <small>Informações de entrega já cadastradas</small>
+                                        </div>
+                                    </div>
+                                    <div class="prefilled-content">
+                                        <div class="data-item">
+                                            <i class="fas fa-road"></i>
+                                            <span>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}</span>
+                                        </div>
+                                        <div class="data-item">
+                                            <i class="fas fa-map-pin"></i>
+                                            <span>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] ?? '' }}</span>
+                                        </div>
+                                        <div class="data-item">
+                                            <i class="fas fa-mail-bulk"></i>
+                                            <span>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 @endif
                             </div>
@@ -340,15 +381,34 @@
                                             $link->dados_cliente['preenchidos']['email'] &&
                                             $link->dados_cliente['preenchidos']['telefone'] &&
                                             $link->dados_cliente['preenchidos']['documento'])
-                                            <div class="data-summary mb-3">
-                                                <small><strong>Dados pré-preenchidos:</strong></small><br>
-                                                <small><strong>Nome:</strong> {{ $link->dados_cliente['preenchidos']['nome'] }} {{ $link->dados_cliente['preenchidos']['sobrenome'] }}</small><br>
-                                                <small><strong>Email:</strong> {{ $link->dados_cliente['preenchidos']['email'] }}</small><br>
-                                                <small><strong>Telefone:</strong> {{ $link->dados_cliente['preenchidos']['telefone'] }}</small><br>
-                                                <small><strong>Documento:</strong> {{ $link->dados_cliente['preenchidos']['documento'] }}</small>
-                                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="toggleClientFields()">
-                                                    <i class="fas fa-edit me-1"></i>Editar
-                                                </button>
+                                            <div class="prefilled-data-card">
+                                                <div class="prefilled-header">
+                                                    <div class="prefilled-icon">
+                                                        <i class="fas fa-user-check"></i>
+                                                    </div>
+                                                    <div class="prefilled-title">
+                                                        <h6>Dados Pré-preenchidos</h6>
+                                                        <small>Informações já cadastradas</small>
+                                                    </div>
+                                                </div>
+                                                <div class="prefilled-content">
+                                                    <div class="data-item">
+                                                        <i class="fas fa-user"></i>
+                                                        <span>{{ $link->dados_cliente['preenchidos']['nome'] }} {{ $link->dados_cliente['preenchidos']['sobrenome'] }}</span>
+                                                    </div>
+                                                    <div class="data-item">
+                                                        <i class="fas fa-envelope"></i>
+                                                        <span>{{ $link->dados_cliente['preenchidos']['email'] }}</span>
+                                                    </div>
+                                                    <div class="data-item">
+                                                        <i class="fas fa-phone"></i>
+                                                        <span>{{ $link->dados_cliente['preenchidos']['telefone'] }}</span>
+                                                    </div>
+                                                    <div class="data-item">
+                                                        <i class="fas fa-id-card"></i>
+                                                        <span>{{ $link->dados_cliente['preenchidos']['documento'] }}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                             @endif
 
@@ -396,14 +456,30 @@
                                             $link->dados_cliente['preenchidos']['endereco']['cidade'] &&
                                             $link->dados_cliente['preenchidos']['endereco']['estado'] &&
                                             $link->dados_cliente['preenchidos']['endereco']['cep'])
-                                            <div class="data-summary mb-3">
-                                                <small><strong>Endereço pré-preenchido:</strong></small><br>
-                                                <small>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] }}</small><br>
-                                                <small>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] }}</small><br>
-                                                <small>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] }}</small>
-                                                <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="toggleAddressFields()">
-                                                    <i class="fas fa-edit me-1"></i>Editar
-                                                </button>
+                                            <div class="prefilled-data-card">
+                                                <div class="prefilled-header">
+                                                    <div class="prefilled-icon">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                    </div>
+                                                    <div class="prefilled-title">
+                                                        <h6>Endereço Pré-preenchido</h6>
+                                                        <small>Informações de entrega já cadastradas</small>
+                                                    </div>
+                                                </div>
+                                                <div class="prefilled-content">
+                                                    <div class="data-item">
+                                                        <i class="fas fa-road"></i>
+                                                        <span>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] }}, {{ $link->dados_cliente['preenchidos']['endereco']['numero'] }}</span>
+                                                    </div>
+                                                    <div class="data-item">
+                                                        <i class="fas fa-map-pin"></i>
+                                                        <span>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] }} - {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] }}</span>
+                                                    </div>
+                                                    <div class="data-item">
+                                                        <i class="fas fa-mail-bulk"></i>
+                                                        <span>CEP: {{ $link->dados_cliente['preenchidos']['endereco']['cep'] }}</span>
+                                                    </div>
+                                                </div>
                                             </div>
                                             @endif
 
