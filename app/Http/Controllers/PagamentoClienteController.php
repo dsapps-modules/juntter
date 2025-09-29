@@ -70,7 +70,7 @@ class PagamentoClienteController extends Controller
           
 
             $dados = $request->validate([
-                'installments' => 'required|integer|min:1|max:18',
+                'installments' => 'nullable|integer|min:1|max:18',
                 'client.first_name' => 'required|string|max:255',
                 'client.last_name' => 'nullable|string|max:255',
                 'client.document' => 'required|string|max:18',
@@ -103,9 +103,15 @@ class PagamentoClienteController extends Controller
             }
             
             // Converter campos para tipos corretos para a API
-            $dados['installments'] = (int)$dados['installments'];
+            $dados['installments'] = (int)($dados['installments'] ?? 1); // Default para 1 se não enviado
             $dados['card']['expiration_month'] = (int)$dados['card']['expiration_month'];
             $dados['card']['expiration_year'] = (int)$dados['card']['expiration_year'];
+
+            // Forçar parcela 1 para links à vista
+            if ($link->is_avista || $link->parcelas == 1) {
+                $dados['installments'] = 1;
+                
+            }
 
             // Verificar se o parcelamento é válido
             $parcelasPermitidas = is_array($link->parcelas) ? $link->parcelas : range(1, $link->parcelas ?: 1);
@@ -254,6 +260,13 @@ class PagamentoClienteController extends Controller
             // Criar transação PIX
             $transacao = $this->pixService->criarTransacaoPix($dadosPix);
 
+            Log::info('Transação PIX via link criada', [
+                'codigo_unico' => $codigoUnico,
+                'link_id' => $link->id,
+                'transacao_id' => $transacao['_id'] ?? null,
+                'status' => $transacao['status'] ?? null,
+                'amount' => $transacao['amount'] ?? null
+            ]);
 
             if (!$transacao) {
                 Log::error('Transação PIX retornou vazia ou falsa');
@@ -329,8 +342,8 @@ class PagamentoClienteController extends Controller
                     'first_name' => $dadosCliente['nome'] ?? 'Cliente',
                     'last_name' => $dadosCliente['sobrenome'] ?? '',
                     'email' => $dadosCliente['email'] ?? '',
-                    'phone' => $dadosCliente['telefone'] ?? '',
-                    'document' => $dadosCliente['documento'] ?? '',
+                    'phone' => preg_replace('/[^0-9]/', '', $dadosCliente['telefone'] ?? ''), // Remover máscara do telefone
+                    'document' => preg_replace('/[^0-9]/', '', $dadosCliente['documento'] ?? ''), // Remover máscara do documento
                     'address' => [
                         'street' => $dadosEndereco['rua'] ?? '',
                         'number' => $dadosEndereco['numero'] ?? '',
@@ -338,7 +351,7 @@ class PagamentoClienteController extends Controller
                         'neighborhood' => $dadosEndereco['bairro'] ?? '',
                         'city' => $dadosEndereco['cidade'] ?? '',
                         'state' => $dadosEndereco['estado'] ?? '',
-                        'zip_code' => $dadosEndereco['cep'] ?? '',
+                        'zip_code' => preg_replace('/[^0-9]/', '', $dadosEndereco['cep'] ?? ''), // Remover máscara do CEP
                     ]
                 ],
                 'instruction' => [
@@ -366,6 +379,30 @@ class PagamentoClienteController extends Controller
             // Garantir tipos booleanos corretos (igual à cobrança única)
             $dadosBoleto['recharge'] = false;
             $dadosBoleto['instruction']['booklet'] = false;
+
+            // Validar e corrigir formato da data de expiração
+            if (isset($dadosBoleto['expiration'])) {
+                try {
+                    $dataExpiracao = \Carbon\Carbon::parse($dadosBoleto['expiration']);
+                    $dadosBoleto['expiration'] = $dataExpiracao->format('Y-m-d');
+                } catch (\Exception $e) {
+                    Log::warning('Data de expiração inválida, usando data padrão', [
+                        'data_original' => $dadosBoleto['expiration'],
+                        'data_padrao' => now()->addDays(7)->format('Y-m-d')
+                    ]);
+                    $dadosBoleto['expiration'] = now()->addDays(7)->format('Y-m-d');
+                }
+            }
+
+            // Validar e corrigir CEP (máximo 8 caracteres)
+            if (isset($dadosBoleto['client']['address']['zip_code'])) {
+                $cepLimpo = preg_replace('/[^0-9]/', '', $dadosBoleto['client']['address']['zip_code']);
+                $dadosBoleto['client']['address']['zip_code'] = substr($cepLimpo, 0, 8);
+                
+                
+            }
+
+            
 
             // Criar boleto
             $boleto = $this->boletoService->gerarBoleto($dadosBoleto);

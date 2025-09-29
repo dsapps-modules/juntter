@@ -28,10 +28,22 @@
                                <h3 class="h4 mb-1 fw-bold">Estabelecimentos</h3>
                                <p class="text-muted mb-0">Gerencie os estabelecimentos cadastrados</p>
                            </div>
-                         {{--  <button class="btn btn-novo-pagamento shadow-sm">
-                               <i class="fas fa-plus me-2"></i>
-                               Novo Estabelecimento
-                           </button> --}}
+                           <div class="d-flex gap-2 align-items-center">
+                                <button class="btn btn-outline-primary btn-sm" onclick="atualizarDados(event)" title="Atualizar Dados">
+                                   <i class="fas fa-sync-alt me-1"></i>
+                                   Atualizar
+                               </button>
+                               @if(isset($ultima_atualizacao))
+                               <small class="text-muted">
+                                   <i class="fas fa-clock me-1"></i>
+                                   Atualizado há <span id="tempo-atualizacao">{{ $ultima_atualizacao }}</span>
+                               </small>
+                               @endif
+                               {{--  <button class="btn btn-novo-pagamento shadow-sm">
+                                   <i class="fas fa-plus me-2"></i>
+                                   Novo Estabelecimento
+                               </button> --}}
+                           </div>
                        </div>
                        
                        <!-- Tabela Juntter Style -->
@@ -120,6 +132,107 @@
 
 
 @endsection
+
+@push('scripts')
+<script>
+function atualizarDados(event) {
+    const $btn = $(event.target);
+    const originalText = $btn.html();
+    
+    // Mostrar loading
+    $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Atualizando...').prop('disabled', true);
+    
+    // Fazer requisição para limpar cache e recarregar
+    $.ajax({
+        url: '{{ route("admin.limpar-cache") }}',
+        method: 'POST',
+        data: {
+            mes: '{{ request("mes") }}',
+            ano: '{{ request("ano") }}'
+        },
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        success: function(data) {
+            // Mostrar "agora" imediatamente
+            $('#tempo-atualizacao').text('agora');
+            
+            // Mostrar sucesso
+            $btn.html('<i class="fas fa-check me-1"></i>Atualizado!')
+                .removeClass('btn-outline-primary')
+                .addClass('btn-success');
+            
+            // Recarregar página após 1 segundo
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        },
+        error: function(xhr, status, error) {
+            $btn.html('<i class="fas fa-exclamation-triangle me-1"></i>Erro!')
+                .removeClass('btn-outline-primary')
+                .addClass('btn-danger');
+            
+            // Restaurar botão após 3 segundos
+            setTimeout(() => {
+                $btn.html(originalText)
+                    .removeClass('btn-danger')
+                    .addClass('btn-outline-primary')
+                    .prop('disabled', false);
+            }, 3000);
+        }
+    });
+}
+
+// Atualizar tempo em tempo real usando jQuery
+function atualizarTempoAtualizacao() {
+    const $elemento = $('#tempo-atualizacao');
+    
+    if ($elemento.length && $elemento.text().trim() !== '') {
+        try {
+            const agora = new Date();
+            let tempoAtualizacao;
+            
+            const dataTexto = $elemento.text().trim();
+            if (dataTexto.includes('-') && dataTexto.includes(' ')) {
+                // Formato: 2025-09-16 14:31:20
+                tempoAtualizacao = new Date(dataTexto.replace(' ', 'T') + 'Z');
+            } else {
+                tempoAtualizacao = new Date(dataTexto);
+            }
+            
+            // Verificar se a data é válida
+            if (isNaN(tempoAtualizacao.getTime())) {
+                $elemento.text('agora');
+                return;
+            }
+            
+            const diffMs = agora - tempoAtualizacao;
+            const diffMinutos = Math.floor(diffMs / 60000);
+            
+            if (diffMinutos < 1) {
+                $elemento.text('agora');
+            } else if (diffMinutos < 60) {
+                $elemento.text(`${diffMinutos} min`);
+            } else {
+                const diffHoras = Math.floor(diffMinutos / 60);
+                $elemento.text(`${diffHoras}h ${diffMinutos % 60}min`);
+            }
+        } catch (e) {
+            $elemento.text('agora');
+        }
+    }
+}
+
+// Executar quando o documento estiver pronto
+$(document).ready(function() {
+    // Executar imediatamente
+    atualizarTempoAtualizacao();
+    
+    // Executar a cada minuto
+    setInterval(atualizarTempoAtualizacao, 60000);
+});
+</script>
+@endpush
 
 
 

@@ -7,6 +7,7 @@ use App\Services\EstabelecimentoService;
 use App\Services\TransacaoService;
 use App\Services\BoletoService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 
 class DashboardController extends Controller
@@ -150,12 +151,37 @@ class DashboardController extends Controller
             $estabelecimentos = [];
         }
 
-        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual'));
+        $ultima_atualizacao = $dadosConsolidados['ultima_atualizacao'] ?? null;
+        return view('dashboard.admin', compact('saldos', 'metricas', 'estabelecimentos', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual', 'ultima_atualizacao'));
     }
 
 
 
     private function buscarDadosConsolidados($mes = null, $ano = null)
+    {
+        // Criar chave única para o cache
+        $cacheKey = "dados_consolidados_{$mes}_{$ano}_" . date('Y-m-d-H');
+        
+        // Tentar buscar do cache primeiro
+        $cachedData = Cache::get($cacheKey);
+        if ($cachedData !== null) {
+            return $cachedData;
+        }
+        
+        // Se não estiver em cache, buscar dados
+        $dados = $this->buscarDadosConsolidadosSemCache($mes, $ano);
+        
+        // Adicionar timestamp de atualização
+        $dados['ultima_atualizacao'] = now()->format('Y-m-d H:i:s');
+        $dados['tempo_atualizacao'] = now();
+        
+        // Salvar no cache os dados completos
+        Cache::put($cacheKey, $dados, 3600); // Cache por 1 hora
+        
+        return $dados;
+    }
+
+    private function buscarDadosConsolidadosSemCache($mes = null, $ano = null)
     {
         try {
             // Buscar todos os estabelecimentos primeiro
@@ -591,6 +617,69 @@ class DashboardController extends Controller
         $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
         try {
+            // Buscar dados do vendedor com cache
+            $dadosVendedor = $this->buscarDadosVendedor($mesAtual, $anoAtual, $estabelecimentoId);
+
+            $saldos = $dadosVendedor['saldos'];
+            $metricas = $dadosVendedor['metricas'];
+            $estabelecimento = $dadosVendedor['estabelecimento'];
+            $transacoes = $dadosVendedor['transacoes'];
+            $metricasGeral = $dadosVendedor['metricasGeral'];
+            $metricasCartao = $dadosVendedor['metricasCartao'];
+            $metricasBoleto = $dadosVendedor['metricasBoleto'];
+
+            $ultima_atualizacao = $dadosVendedor['ultima_atualizacao'] ?? null;
+            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual', 'ultima_atualizacao'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
+
+            $saldos = [
+                'disponivel' => 'R$ 0,00',
+                'em_transito' => 'R$ 0,00',
+                'bloqueado_cartao' => 'R$ 0,00',
+                'bloqueado_boleto' => 'R$ 0,00',
+            ];
+
+            $metricas = [
+                [
+                    'valor' => '0',
+                    'label' => 'Erro ao carregar dados',
+                    'icone' => 'fas fa-exclamation-triangle',
+                    'cor' => 'metric-icon-red',
+                ],
+            ];
+
+            return view('dashboard.vendedor', compact('saldos', 'metricas'));
+        }
+    }
+
+    private function buscarDadosVendedor($mesAtual, $anoAtual, $estabelecimentoId)
+    {
+        // Criar chave única para o cache
+        $cacheKey = "vendedor_dashboard_{$estabelecimentoId}_{$mesAtual}_{$anoAtual}_" . date('Y-m-d-H');
+        
+        // Tentar buscar do cache primeiro
+        $cachedData = Cache::get($cacheKey);
+        if ($cachedData !== null) {
+            return $cachedData;
+        }
+        
+        // Se não estiver em cache, buscar dados
+        $dados = $this->buscarDadosVendedorSemCache($mesAtual, $anoAtual, $estabelecimentoId);
+        
+        // Adicionar timestamp de atualização
+        $dados['ultima_atualizacao'] = now()->format('Y-m-d H:i:s');
+        $dados['tempo_atualizacao'] = now();
+        
+        // Salvar no cache os dados completos
+        Cache::put($cacheKey, $dados, 3600); // Cache por 1 hora
+        
+        return $dados;
+    }
+
+    private function buscarDadosVendedorSemCache($mesAtual, $anoAtual, $estabelecimentoId)
+    {
+        try {
             // Buscar dados do estabelecimento
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
 
@@ -974,7 +1063,7 @@ class DashboardController extends Controller
             // Para compatibilidade, manter $metricas como geral
             $metricas = $metricasGeral;
 
-            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual'));
+            return compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual');
         } catch (\Exception $e) {
             Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
 
@@ -994,7 +1083,7 @@ class DashboardController extends Controller
                 ],
             ];
 
-            return view('dashboard.vendedor', compact('saldos', 'metricas'));
+            return compact('saldos', 'metricas');
         }
     }
 
@@ -1054,5 +1143,56 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard.comprador', compact('saldos', 'metricas', 'mesAtual', 'anoAtual'));
+    }
+
+    /**
+     * Limpar cache dos dados consolidados
+     */
+    public function limparCacheDadosConsolidados()
+    {
+        $mes = request('mes') ?? '';
+        $ano = request('ano') ?? '';
+        
+        // Limpar cache atual
+        $cacheKey = "dados_consolidados_{$mes}_{$ano}_" . date('Y-m-d-H');
+        Cache::forget($cacheKey);
+        
+        // Limpar cache de outros horários do mesmo dia
+        for ($h = 0; $h < 24; $h++) {
+            $hora = str_pad($h, 2, '0', STR_PAD_LEFT);
+            $key = "dados_consolidados_{$mes}_{$ano}_" . date('Y-m-d') . "-{$hora}";
+            Cache::forget($key);
+        }
+        
+        return response()->json(['message' => 'Cache limpo com sucesso!']);
+    }
+
+    /**
+     * Limpar cache do dashboard do vendedor
+     */
+    public function limparCacheVendedor()
+    {
+        $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+        
+        if (!$estabelecimentoId) {
+            return response()->json(['message' => 'Vendedor não encontrado!'], 400);
+        }
+        
+        // Limpar cache específico do vendedor
+        $mes = request('mes') ?? '';
+        $ano = request('ano') ?? '';
+        
+        // Limpar cache atual
+        $cacheKey = "vendedor_dashboard_{$estabelecimentoId}_{$mes}_{$ano}_" . date('Y-m-d-H');
+        Cache::forget($cacheKey);
+        
+        // Limpar cache de outros horários do mesmo dia
+        for ($h = 0; $h < 24; $h++) {
+            $hora = str_pad($h, 2, '0', STR_PAD_LEFT);
+            $key = "vendedor_dashboard_{$estabelecimentoId}_{$mes}_{$ano}_" . date('Y-m-d') . "-{$hora}";
+            Cache::forget($key);
+        }
+        
+        return response()->json(['message' => 'Cache do vendedor limpo com sucesso!']);
     }
 }
