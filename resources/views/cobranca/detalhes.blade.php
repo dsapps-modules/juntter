@@ -436,60 +436,7 @@
                 </div>
                 @endif
 
-                <!-- Payment Response -->
-                @if(isset($transacao['payment_response']))
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="info-card bg-light rounded-3 p-4">
-                            <h6 class="fw-bold text-primary mb-3">
-                                <i class="fas fa-reply me-2"></i>Resposta do Pagamento
-                            </h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    @if(isset($transacao['payment_response']['code']))
-                                    <div class="info-item mb-2">
-                                        <small class="text-muted d-block">Código</small>
-                                        <strong>{{ $transacao['payment_response']['code'] }}</strong>
-                                    </div>
-                                    @endif
-                                    @if(isset($transacao['payment_response']['message']))
-                                    <div class="info-item mb-2">
-                                        <small class="text-muted d-block">Mensagem</small>
-                                        <strong>{{ $transacao['payment_response']['message'] }}</strong>
-                                    </div>
-                                    @endif
-                                    @if(isset($transacao['payment_response']['reference']))
-                                    <div class="info-item mb-2">
-                                        <small class="text-muted d-block">Referência</small>
-                                        <strong>{{ $transacao['payment_response']['reference'] }}</strong>
-                                    </div>
-                                    @endif
-                                </div>
-                                <div class="col-md-6">
-                                    @if(isset($transacao['payment_response']['authorization_code']))
-                                    <div class="info-item mb-2">
-                                        <small class="text-muted d-block">Código de Autorização</small>
-                                        <strong>{{ $transacao['payment_response']['authorization_code'] }}</strong>
-                                    </div>
-                                    @endif
-                                    @if(isset($transacao['payment_response']['nsu']))
-                                    <div class="info-item mb-2">
-                                        <small class="text-muted d-block">NSU</small>
-                                        <strong>{{ $transacao['payment_response']['nsu'] }}</strong>
-                                    </div>
-                                    @endif
-                                    @if(isset($transacao['payment_response']['reason_code']))
-                                    <div class="info-item mb-2">
-                                        <small class="text-muted d-block">Código do Motivo</small>
-                                        <strong>{{ $transacao['payment_response']['reason_code'] }}</strong>
-                                    </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endif
+               
 
                 <!-- Split (se aplicável) -->
                 @if(isset($transacao['split']))
@@ -504,7 +451,7 @@
                                     <div class="info-item mb-2">
                                         <small class="text-muted d-block">Ativo</small>
                                         <strong>
-                                            @if($transacao['split']['active'])
+                                            @if(isset($transacao['split']['active']) && $transacao['split']['active'])
                                                 <span class="badge badge-success">Sim</span>
                                             @else
                                                 <span class="badge badge-secondary">Não</span>
@@ -516,7 +463,7 @@
                                     <div class="info-item mb-2">
                                         <small class="text-muted d-block">Transação Original</small>
                                         <strong>
-                                            @if($transacao['split']['is_origin'])
+                                            @if(isset($transacao['split']['is_origin']) && $transacao['split']['is_origin'])
                                                 <span class="badge badge-primary">Sim</span>
                                             @else
                                                 <span class="badge badge-secondary">Não</span>
@@ -528,7 +475,7 @@
                                     <div class="info-item mb-2">
                                         <small class="text-muted d-block">Em Processamento</small>
                                         <strong>
-                                            @if($transacao['split']['processing'])
+                                            @if(isset($transacao['split']['processing']) && $transacao['split']['processing'])
                                                 <span class="badge badge-warning">Sim</span>
                                             @else
                                                 <span class="badge badge-success">Não</span>
