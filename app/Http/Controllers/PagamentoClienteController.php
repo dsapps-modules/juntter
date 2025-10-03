@@ -157,19 +157,32 @@ class PagamentoClienteController extends Controller
       
             
             $transacao = $this->creditoService->criarTransacaoCredito($dadosTransacao);
-            
 
             if (!$transacao) {
                 Log::error('Transação retornou vazia ou falsa');
                 throw new \Exception('Falha ao criar transação');
             }
 
+            // Verificar se a transação requer autenticação 3DS
+            if (isset($transacao['antifraud']) && 
+                isset($transacao['antifraud']['analyse_required']) && 
+                $transacao['antifraud']['analyse_required'] === 'THREEDS' &&
+                isset($transacao['antifraud']['analyse_status']) && 
+                $transacao['antifraud']['analyse_status'] === 'WAITING_AUTH') {
+                
+                return response()->json([
+                    'success' => true,
+                    'requires_3ds' => true,
+                    'session_id' => $transacao['antifraud']['session_id'] ?? $dadosTransacao['session_id'],
+                    'transaction_id' => $transacao['_id'] ?? null,
+                    'message' => 'Transação criada, aguardando autenticação 3DS'
+                ]);
+            }
+
             // Atualizar status do link se necessário
             if (isset($transacao['status']) && $transacao['status'] === 'PAID') {
                 $link->update(['status' => 'PAID']);
             }
-
-            
 
             // Verificar se a transação tem um ID válido antes de retornar sucesso
             $transacaoId = $transacao['_id'] ?? null;
@@ -461,6 +474,42 @@ class PagamentoClienteController extends Controller
         } catch (\Exception $e) {
             Log::error('Erro ao verificar status: ' . $e->getMessage());
             return response()->json(['error' => 'Erro interno'], 500);
+        }
+    }
+
+    // Autenticar transação com 3DS
+    public function autenticarAntifraude(Request $request, $id)
+    {
+        try {
+            $dados = $request->validate([
+                'id' => 'required|string',
+                'status' => 'required|string|in:AUTH_FLOW_COMPLETED,AUTH_NOT_SUPPORTED,CHANGE_PAYMENT_METHOD',
+                'authentication_status' => 'required|string|in:AUTHENTICATED,NOT_AUTHENTICATED'
+            ]);
+
+            $resultado = $this->transacaoService->autenticarAntifraude($id, $dados);
+
+            if ($resultado) {
+             
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Autenticação 3DS processada com sucesso',
+                    'data' => $resultado
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao processar autenticação 3DS'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao autenticar antifraude (link): ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar autenticação: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

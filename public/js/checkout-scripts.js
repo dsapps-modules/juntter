@@ -69,11 +69,18 @@ function processarCartao(form) {
     $.post(url, data)
         .done(function(response) {
             if (response.success) {
-                // Atualizar steps
-                updateCheckoutSteps(2);
-                $('#successModal').modal('show');
+                // Verificar se precisa de autenticação 3DS
+                if (response.requires_3ds && response.session_id) {
+                    processar3DS(response.session_id, response.transaction_id, form, submitBtn, originalText);
+                } else {
+                    // Sucesso sem 3DS
+                    updateCheckoutSteps(2);
+                    $('#successModal').modal('show');
+                }
             } else {
                 showError(response.error || 'Erro ao processar pagamento');
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
             }
         })
         .fail(function(xhr) {
@@ -82,12 +89,163 @@ function processarCartao(form) {
                 error = xhr.responseJSON.error;
             }
             showError(error);
-        })
-        .always(function() {
-            // Restaurar botão
             submitBtn.html(originalText);
             submitBtn.prop('disabled', false);
         });
+}
+
+// Processar autenticação 3DS
+function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
+    try {
+        // Configurar SDK PagSeguro
+        PagSeguro.setUp({
+            session: sessionId,
+            env: 'SANDBOX' // ou 'PROD' para produção
+        });
+
+        // Coletar dados do formulário
+        const formData = new FormData(form[0]);
+        const data = {};
+        
+        // Converter dados do formulário
+        for (let [key, value] of formData.entries()) {
+            const keys = key.split(/[\[\]]/).filter(k => k !== '');
+            let current = data;
+            
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) {
+                    current[keys[i]] = {};
+                }
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = value;
+        }
+
+        // Montar payload
+        const request = {
+            data: {
+                customer: {
+                    name: data.client.first_name + ' ' + (data.client.last_name || ''),
+                    mail: data.client.email,
+                    phones: [
+                        {
+                            country: '55',
+                            area: data.client.phone.substring(0, 2),
+                            number: data.client.phone.substring(2),
+                            type: 'MOBILE'
+                        }
+                    ]
+                },
+                paymentMethod: {
+                    type: 'CREDIT_CARD',
+                    installments: parseInt(data.installments) || 1,
+                    card: {
+                        number: data.card.card_number.replace(/\s/g, ''),
+                        expMonth: data.card.expiration_month.toString().padStart(2, '0'),
+                        expYear: data.card.expiration_year.toString(),
+                        holder: {
+                            name: data.card.holder_name
+                        }
+                    }
+                },
+                amount: {
+                    value: getAmountFromForm(form),
+                    currency: 'BRL'
+                },
+                billingAddress: {
+                    street: data.client.address.street,
+                    number: data.client.address.number,
+                    complement: data.client.address.complement || '',
+                    regionCode: data.client.address.state,
+                    country: 'BRA',
+                    city: data.client.address.city,
+                    postalCode: data.client.address.zip_code.replace(/\D/g, '')
+                },
+                shippingAddress: {
+                    street: data.client.address.street,
+                    number: data.client.address.number,
+                    complement: data.client.address.complement || '',
+                    regionCode: data.client.address.state,
+                    country: 'BRA',
+                    city: data.client.address.city,
+                    postalCode: data.client.address.zip_code.replace(/\D/g, '')
+                },
+                dataOnly: false
+            }
+        };
+
+        // Executar autenticação 3DS
+        PagSeguro.authenticate3DS(request)
+            .then(function(result) {
+                // Enviar resultado para o endpoint
+                enviarResultado3DS(transactionId, result, submitBtn, originalText);
+            })
+            .catch(function(err) {
+                console.error('Erro no SDK 3DS:', err);
+                
+                if (err instanceof PagSeguro.PagSeguroError) {
+                    showError('Erro na autenticação 3DS: ' + err.message);
+                } else {
+                    showError('Erro na autenticação 3DS. Tente novamente.');
+                }
+                
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+            });
+
+    } catch (error) {
+        console.error('Erro ao configurar 3DS:', error);
+        showError('Erro ao configurar autenticação 3DS');
+        submitBtn.html(originalText);
+        submitBtn.prop('disabled', false);
+    }
+}
+
+// Enviar resultado do 3DS para o backend
+function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
+    const authData = {
+        id: result.id,
+        status: result.status,
+        authentication_status: result.authentication_status || 'NOT_AUTHENTICATED',
+        _token: $('meta[name="csrf-token"]').attr('content')
+    };
+
+    // Determinar URL baseada no contexto
+    const isCobrancaUnica = window.location.pathname.includes('/cobranca');
+    const url = isCobrancaUnica 
+        ? `/cobranca/transacao/${transactionId}/antifraud-auth`
+        : `/pagamento/${window.location.pathname.split('/')[2]}/antifraud-auth`;
+
+    $.post(url, authData)
+        .done(function(response) {
+            if (response.success) {
+                updateCheckoutSteps(2);
+                $('#successModal').modal('show');
+                showSuccess('Pagamento processado com sucesso!');
+            } else {
+                showError(response.message || 'Erro ao processar autenticação');
+                submitBtn.html(originalText);
+                submitBtn.prop('disabled', false);
+            }
+        })
+        .fail(function(xhr) {
+            console.error('Erro:', xhr);
+            showError('Erro ao processar autenticação. Tente novamente.');
+            submitBtn.html(originalText);
+            submitBtn.prop('disabled', false);
+        });
+}
+
+// Função auxiliar para obter valor em centavos
+function getAmountFromForm(form) {
+    const amountField = form.find('input[name*="amount"], .order-summary .total-value');
+    if (amountField.length > 0) {
+        const valueText = amountField.first().text() || amountField.first().val() || '0';
+        const value = parseFloat(valueText.replace(/[R$\s]/g, '').replace(',', '.'));
+        return Math.round(value * 100); 
+    }
+    
+    return 100; 
 }
 
 // Processar Boleto

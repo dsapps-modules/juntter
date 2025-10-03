@@ -1164,6 +1164,220 @@ function definirDataPadraoExpiracao() {
     }
 }
 
+// Função específica para processar cartão na cobrança única
+function processarCartaoCobranca(button) {
+    const form = button.closest('form');
+    const originalText = button.innerHTML;
+    
+    // Mostrar loading
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processando...';
+    button.disabled = true;
+    
+    // Coletar dados do formulário
+    const formData = new FormData(form);
+    const data = {};
+    
+    // Converter FormData para objeto
+    for (let [key, value] of formData.entries()) {
+        const keys = key.split(/[\[\]]/).filter(k => k !== '');
+        let current = data;
+        
+        for (let i = 0; i < keys.length - 1; i++) {
+            if (!current[keys[i]]) {
+                current[keys[i]] = {};
+            }
+            current = current[keys[i]];
+        }
+        current[keys[keys.length - 1]] = value;
+    }
+    
+    // Fazer requisição AJAX com jQuery
+    const $form = $(form);
+    const url = $form.attr('action') || window.location.href;
+    const data = $form.serialize();
+    
+    $.post(url, data)
+        .done(function(response) {
+            if (response.success) {
+                // Verificar se precisa de autenticação 3DS
+                if (response.requires_3ds && response.session_id) {
+                    processar3DSCobranca(response.session_id, response.transaction_id, form, button, originalText);
+                } else {
+                    // Sucesso sem 3DS
+                    alert('Transação criada com sucesso!');
+                    location.reload();
+                }
+            } else {
+                alert('Erro: ' + (response.error || 'Erro desconhecido'));
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .fail(function(xhr) {
+            let error = 'Erro ao processar transação. Tente novamente.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                error = xhr.responseJSON.error;
+            }
+            console.error('Erro:', xhr);
+            alert(error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+}
+
+// Processar autenticação 3DS para cobrança única
+function processar3DSCobranca(sessionId, transactionId, form, button, originalText) {
+    try {
+        // Configurar SDK PagSeguro
+        PagSeguro.setUp({
+            session: sessionId,
+            env: 'SANDBOX' // ou 'PROD' para produção
+        });
+
+        // Coletar dados do formulário
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            const keys = key.split(/[\[\]]/).filter(k => k !== '');
+            let current = data;
+            
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (!current[keys[i]]) {
+                    current[keys[i]] = {};
+                }
+                current = current[keys[i]];
+            }
+            current[keys[keys.length - 1]] = value;
+        }
+
+        // Montar payload
+        const request = {
+            data: {
+                customer: {
+                    name: data.client.first_name + ' ' + (data.client.last_name || ''),
+                    mail: data.client.email,
+                    phones: [
+                        {
+                            country: '55',
+                            area: data.client.phone.substring(0, 2),
+                            number: data.client.phone.substring(2),
+                            type: 'MOBILE'
+                        }
+                    ]
+                },
+                paymentMethod: {
+                    type: 'CREDIT_CARD',
+                    installments: parseInt(data.installments) || 1,
+                    card: {
+                        number: data.card.card_number.replace(/\s/g, ''),
+                        expMonth: data.card.expiration_month.toString().padStart(2, '0'),
+                        expYear: data.card.expiration_year.toString(),
+                        holder: {
+                            name: data.card.holder_name
+                        }
+                    }
+                },
+                amount: {
+                    value: getAmountFromCobrancaForm(form),
+                    currency: 'BRL'
+                },
+                billingAddress: {
+                    street: data.client.address.street,
+                    number: data.client.address.number,
+                    complement: data.client.address.complement || '',
+                    regionCode: data.client.address.state,
+                    country: 'BRA',
+                    city: data.client.address.city,
+                    postalCode: data.client.address.zip_code.replace(/\D/g, '')
+                },
+                shippingAddress: {
+                    street: data.client.address.street,
+                    number: data.client.address.number,
+                    complement: data.client.address.complement || '',
+                    regionCode: data.client.address.state,
+                    country: 'BRA',
+                    city: data.client.address.city,
+                    postalCode: data.client.address.zip_code.replace(/\D/g, '')
+                },
+                dataOnly: false
+            }
+        };
+
+        // Executar autenticação 3DS
+        PagSeguro.authenticate3DS(request)
+            .then(function(result) {
+                // Enviar resultado para o endpoint
+                enviarResultado3DSCobranca(transactionId, result, button, originalText);
+            })
+            .catch(function(err) {
+                console.error('Erro no SDK 3DS:', err);
+                
+                if (err instanceof PagSeguro.PagSeguroError) {
+                    alert('Erro na autenticação 3DS: ' + err.message);
+                } else {
+                    alert('Erro na autenticação 3DS. Tente novamente.');
+                }
+                
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+
+    } catch (error) {
+        console.error('Erro ao configurar 3DS:', error);
+        alert('Erro ao configurar autenticação 3DS');
+        button.innerHTML = originalText;
+        button.disabled = false;
+    }
+}
+
+// Enviar resultado do 3DS para o backend
+function enviarResultado3DSCobranca(transactionId, result, button, originalText) {
+    const authData = {
+        id: result.id,
+        status: result.status,
+        authentication_status: result.authentication_status || 'NOT_AUTHENTICATED',
+        _token: $('meta[name="csrf-token"]').attr('content')
+    };
+
+    const url = `/cobranca/transacao/${transactionId}/antifraud-auth`;
+
+    $.post(url, authData)
+        .done(function(response) {
+            if (response.success) {
+                alert('Pagamento processado com sucesso!');
+                location.reload();
+            } else {
+                alert(response.message || 'Erro ao processar autenticação');
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .fail(function(xhr) {
+            let error = 'Erro ao processar autenticação. Tente novamente.';
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+                error = xhr.responseJSON.error;
+            }
+            console.error('Erro:', xhr);
+            alert(error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+}
+
+// Função auxiliar para obter valor do formulário
+function getAmountFromCobrancaForm(form) {
+    const amountField = form.querySelector('input[name="amount"]');
+    if (amountField) {
+        const valueText = amountField.value;
+        const cleanValue = valueText.replace(/[R$\s]/g, '').replace(',', '.');
+        const value = parseFloat(cleanValue);
+        return Math.round(value * 100); // Converter para centavos
+    }
+    
+    return 100; 
+}
+
 </script>
 @endpush
 

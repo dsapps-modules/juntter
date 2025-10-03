@@ -658,6 +658,8 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- PagSeguro 3DS SDK -->
+    <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
     <!-- Checkout Scripts -->
     <script src="{{ asset('js/checkout-scripts.js') }}"></script>
     <!-- CSRF Token -->

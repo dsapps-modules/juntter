@@ -82,4 +82,12 @@ class TransacaoService
     {
         return $this->apiClient->get("marketplace/establishments/extract", $filtros);
     }
+
+    /**
+     * Autenticar transação com 3DS
+     */
+    public function autenticarAntifraude(string $idTransacao, array $dados)
+    {
+        return $this->apiClient->post("marketplace/transactions/{$idTransacao}/antifraud-auth", $dados);
+    }
 }

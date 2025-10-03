@@ -270,7 +270,32 @@ class CobrancaController extends Controller
 
             $transacao = $this->creditoService->criarTransacaoCredito($dados);
             
-        
+            // Verificar se a transação requer autenticação 3DS
+            if (isset($transacao['antifraud']) && 
+                isset($transacao['antifraud']['analyse_required']) && 
+                $transacao['antifraud']['analyse_required'] === 'THREEDS' &&
+                isset($transacao['antifraud']['analyse_status']) && 
+                $transacao['antifraud']['analyse_status'] === 'WAITING_AUTH') {
+                
+                // Se for requisição AJAX, retornar dados para 3DS
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'requires_3ds' => true,
+                        'session_id' => $transacao['antifraud']['session_id'] ?? $sessionId,
+                        'transaction_id' => $transacao['_id'] ?? null,
+                        'message' => 'Transação criada, aguardando autenticação 3DS'
+                    ]);
+                }
+                
+                // Para requisições não-AJAX, redirecionar com dados da sessão
+                return redirect()->route('cobranca.index')
+                    ->with('success', 'Transação criada, aguardando autenticação 3DS')
+                    ->with('3ds_data', [
+                        'session_id' => $transacao['antifraud']['session_id'] ?? $sessionId,
+                        'transaction_id' => $transacao['_id'] ?? null
+                    ]);
+            }
 
             return redirect()->route('cobranca.index')
                 ->with('success', 'Transação de crédito criada com sucesso!');
@@ -1057,5 +1082,44 @@ public function simularTransacao(Request $request)
         }
         
         return $resultado;
+    }
+
+    // Autenticar transação com 3DS
+    public function autenticarAntifraude(Request $request, $id)
+    {
+        try {
+            $dados = $request->validate([
+                'id' => 'required|string',
+                'status' => 'required|string|in:AUTH_FLOW_COMPLETED,AUTH_NOT_SUPPORTED,CHANGE_PAYMENT_METHOD',
+                'authentication_status' => 'required|string|in:AUTHENTICATED,NOT_AUTHENTICATED'
+            ]);
+
+            // Adicionar establishment_id
+            $dados['extra_headers'] = [
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+            ];
+
+            $resultado = $this->transacaoService->autenticarAntifraude($id, $dados);
+
+            if ($resultado) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Autenticação 3DS processada com sucesso',
+                    'data' => $resultado
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao processar autenticação 3DS'
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Erro ao autenticar antifraude: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao processar autenticação: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

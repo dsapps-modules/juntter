@@ -91,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/cobranca/boleto/{id}', [CobrancaController::class, 'detalhesBoleto'])->name('cobranca.boleto.detalhes');
     Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
     Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
+    Route::post('/cobranca/transacao/{id}/antifraud-auth', [CobrancaController::class, 'autenticarAntifraude'])->name('cobranca.transacao.antifraud-auth');
 
     // Rotas para Links de Pagamento - Cartão
         Route::get('/links-pagamento', [LinkPagamentoController::class, 'index'])->name('links-pagamento.index');
@@ -167,6 +168,7 @@ Route::middleware('auth')->group(function () {
 // Rotas públicas para processar pagamentos via link
 Route::post('/pagamento/{codigo}/pix', [PagamentoClienteController::class, 'processarPix'])->name('pagamento.pix');
 Route::post('/pagamento/{codigo}/boleto', [PagamentoClienteController::class, 'processarBoleto'])->name('pagamento.boleto');
+Route::post('/pagamento/{codigo}/antifraud-auth', [PagamentoClienteController::class, 'autenticarAntifraude'])->name('pagamento.antifraud-auth');
 
 // Rotas de autenticação do Breeze
 require __DIR__.'/auth.php';

@@ -246,6 +246,9 @@
         </div>
     </div>
     
+    <!-- PagSeguro 3DS SDK -->
+    <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
+    
     @stack('scripts')
 </body>
 </html>
