@@ -35,9 +35,9 @@ class VendedorSeeder extends Seeder
             'status' => 'ativo'
         ]);
 
-        // Criar usuário vendedor de loja DS Aplicativos
-        $vendedorLojaDS = User::create([
-            'name' => 'Vendedor DS Aplicativos',
+        /* Criar usuário vendedor de loja DS Aplicativos
+            $vendedorLojaDS = User::create([
+                'name' => 'Vendedor DS Aplicativos',
             'email' => 'vendedor-ds@teste.com',
             'password' => Hash::make('12345678'),
             'nivel_acesso' => 'vendedor',
@@ -53,7 +53,7 @@ class VendedorSeeder extends Seeder
             'telefone' => '(11) 88888-8888',
             'endereco' => 'Rua das Palmeiras, 456 - São Paulo/SP',
             'status' => 'ativo'
-        ]);
+        ]); */
 
         // Criar usuário admin de loja Juntter
         $adminLojaJuntter = User::create([
@@ -64,7 +64,7 @@ class VendedorSeeder extends Seeder
             'email_verified_at' => now()
         ]);
 
-        // Criar usuário vendedor da Juntter (não admin)
+        /* Criar usuário vendedor da Juntter (não admin)
         $vendedorJuntter = User::create([
             'name' => 'Vendedor Juntter',
             'email' => 'vendedor-juntter@teste.com',
@@ -82,7 +82,7 @@ class VendedorSeeder extends Seeder
             'telefone' => '(11) 96666-6666',
             'endereco' => 'Rua Projetos, 100 - Botucatu/SP',
             'status' => 'ativo'
-        ]);
+        ]); */
 
         Vendedor::create([
             'user_id' => $adminLojaJuntter->id,
@@ -97,8 +97,8 @@ class VendedorSeeder extends Seeder
 
         $this->command->info('Usuários vendedores criados com sucesso!');
         $this->command->info('Admin DS Aplicativos: admin-ds@teste.com / 12345678');
-        $this->command->info('Vendedor DS Aplicativos: vendedor-ds@teste.com / 12345678');
+        
         $this->command->info('Admin Juntter: admin-juntter@teste.com / 12345678');
-        $this->command->info('Vendedor Juntter: vendedor-juntter@teste.com / 12345678');
+        
     }
 }
