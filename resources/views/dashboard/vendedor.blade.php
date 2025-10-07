@@ -30,20 +30,8 @@
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
-                <div class="card-header">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0">Transações do Estabelecimento (últimos 30 dias)</h5>
-                        <button class="btn btn-outline-primary btn-sm" onclick="atualizarDadosVendedor(event)" title="Atualizar Dados">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            Atualizar
-                        </button>
-                    </div>
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <i class="fas fa-clock me-1"></i>
-                            Atualizado há <span id="tempo-atualizacao-vendedor">{{ $ultima_atualizacao ?? 'agora' }}</span>
-                        </small>
-                    </div>
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">Transações do Estabelecimento (últimos 30 dias)</h5>
                 </div>
                 <div class="card-body p-0">
                     @php
@@ -176,103 +164,6 @@
     </div>
 </div>
 @push('scripts')
-<script>
-function atualizarDadosVendedor(event) {
-    const $btn = $(event.target);
-    const originalText = $btn.html();
-    
-    // Mostrar loading
-    $btn.html('<i class="fas fa-spinner fa-spin me-1"></i>Atualizando...').prop('disabled', true);
-    
-    // Fazer requisição para limpar cache e recarregar
-    $.ajax({
-        url: '{{ route("vendedor.limpar-cache") }}',
-        method: 'POST',
-        data: {
-            mes: '{{ request("mes") }}',
-            ano: '{{ request("ano") }}'
-        },
-        headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        },
-        success: function(data) {
-            // Mostrar "agora" imediatamente
-            $('#tempo-atualizacao-vendedor').text('agora');
-            
-            // Mostrar sucesso
-            $btn.html('<i class="fas fa-check me-1"></i>Atualizado!')
-                .removeClass('btn-outline-primary')
-                .addClass('btn-success');
-            
-            // Recarregar página após 1 segundo
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        },
-        error: function(xhr, status, error) {
-            $btn.html('<i class="fas fa-exclamation-triangle me-1"></i>Erro!')
-                .removeClass('btn-outline-primary')
-                .addClass('btn-danger');
-            
-            // Restaurar botão após 3 segundos
-            setTimeout(() => {
-                $btn.html(originalText)
-                    .removeClass('btn-danger')
-                    .addClass('btn-outline-primary')
-                    .prop('disabled', false);
-            }, 3000);
-        }
-    });
-}
 
-// Atualizar tempo em tempo real usando jQuery
-function atualizarTempoAtualizacaoVendedor() {
-    const $elemento = $('#tempo-atualizacao-vendedor');
-    
-    if ($elemento.length && $elemento.text().trim() !== '') {
-        try {
-            const agora = new Date();
-            let tempoAtualizacao;
-            
-            const dataTexto = $elemento.text().trim();
-            if (dataTexto.includes('-') && dataTexto.includes(' ')) {
-                // Formato: 2025-09-16 14:31:20
-                tempoAtualizacao = new Date(dataTexto.replace(' ', 'T') + 'Z');
-            } else {
-                tempoAtualizacao = new Date(dataTexto);
-            }
-            
-            // Verificar se a data é válida
-            if (isNaN(tempoAtualizacao.getTime())) {
-                $elemento.text('agora');
-                return;
-            }
-            
-            const diffMs = agora - tempoAtualizacao;
-            const diffMinutos = Math.floor(diffMs / 60000);
-            
-            if (diffMinutos < 1) {
-                $elemento.text('agora');
-            } else if (diffMinutos < 60) {
-                $elemento.text(`${diffMinutos} min`);
-            } else {
-                const diffHoras = Math.floor(diffMinutos / 60);
-                $elemento.text(`${diffHoras}h ${diffMinutos % 60}min`);
-            }
-        } catch (e) {
-            $elemento.text('agora');
-        }
-    }
-}
-
-// Executar quando o documento estiver pronto
-$(document).ready(function() {
-    // Executar imediatamente
-    atualizarTempoAtualizacaoVendedor();
-    
-    // Executar a cada minuto
-    setInterval(atualizarTempoAtualizacaoVendedor, 60000);
-});
-</script>
 @endpush
 @endsection

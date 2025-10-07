@@ -46,21 +46,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])
         ->middleware('nivel.acesso:admin')
         ->name('admin.dashboard');
-    
-    // Rota para limpar cache (apenas admin)
-    Route::post('/admin/limpar-cache', [DashboardController::class, 'limparCacheDadosConsolidados'])
-        ->middleware('nivel.acesso:admin')
-        ->name('admin.limpar-cache');
    
    
 
             
     Route::middleware(['nivel.acesso:vendedor', 'must.change.password'])->group(function () {
     Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
-    
-    // Rota para limpar cache do vendedor
-    Route::post('/vendedor/limpar-cache', [DashboardController::class, 'limparCacheVendedor'])->name('vendedor.limpar-cache');
-    
     Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
     Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
     
