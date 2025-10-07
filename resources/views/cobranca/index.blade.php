@@ -985,7 +985,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showPixModal(pixData) {
-    console.log('Dados PIX recebidos:', pixData);
+    
     
     // Buscar QR Code em base64
     let qrCodeBase64 = '';
@@ -999,12 +999,11 @@ function showPixModal(pixData) {
     let pixCode = '';
     if (pixData.qr_code && pixData.qr_code.emv) {
         pixCode = pixData.qr_code.emv;
-    } else if (pixData.transacao && pixData.transacao.emv) {
-        pixCode = pixData.transacao.emv;
+    } else if (pixData.pix_code) {
+        pixCode = pixData.pix_code;
     }
     
-    console.log('QR Code base64 encontrado:', qrCodeBase64 ? 'Sim' : 'Não');
-    console.log('Código PIX encontrado:', pixCode);
+
     
     if (qrCodeBase64) {
         // Mostrar imagem base64 diretamente
@@ -1194,9 +1193,9 @@ function processarCartaoCobranca(button) {
     // Fazer requisição AJAX com jQuery
     const $form = $(form);
     const url = $form.attr('action') || window.location.href;
-    const data = $form.serialize();
+    const serializedData = $form.serialize();
     
-    $.post(url, data)
+    $.post(url, serializedData)
         .done(function(response) {
             if (response.success) {
                 // Verificar se precisa de autenticação 3DS
