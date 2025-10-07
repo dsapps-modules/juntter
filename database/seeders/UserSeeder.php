@@ -32,7 +32,7 @@ class UserSeeder extends Seeder
             'nivel_acesso' => 'admin',
         ]);
 
-        /* Criar usuário Vendedor
+        // Criar usuário Vendedor
         User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@juntter.com',
@@ -40,16 +40,5 @@ class UserSeeder extends Seeder
             'password' => Hash::make('12345678'),
             'nivel_acesso' => 'vendedor',
         ]);
-        */
-
-        /* Criar usuário Comprador
-        User::create([
-            'name' => 'Comprador',
-            'email' => 'comprador@juntter.com',
-            'email_verified_at' => now(),
-            'password' => Hash::make('12345678'),
-            'nivel_acesso' => 'comprador',
-        ]);
-        */
     }
 }

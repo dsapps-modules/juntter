@@ -38,10 +38,8 @@ class RouteServiceProvider extends ServiceProvider
                 return '/admin/dashboard';
             case 'vendedor':
                 return '/vendedor/dashboard';
-            case 'comprador':
-                return '/comprador/dashboard';
             default:
-                return '/comprador/dashboard';
+                return '/dashboard';
         }
     }
 

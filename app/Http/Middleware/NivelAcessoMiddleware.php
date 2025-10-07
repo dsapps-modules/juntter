@@ -46,11 +46,6 @@ class NivelAcessoMiddleware
                         return $next($request);
                     }
                     break;
-                case 'comprador':
-                    if ($user->isSuperAdminOrAdminOrVendedorOrComprador()) {
-                        return $next($request);
-                    }
-                    break;
             }
         }
 

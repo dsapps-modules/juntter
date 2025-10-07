@@ -40,8 +40,6 @@ class VerifyEmailController extends Controller
                 return redirect()->intended(route('admin.dashboard').'?verified=1');
             case 'vendedor':
                 return redirect()->intended(route('vendedor.dashboard').'?verified=1');
-            case 'comprador':
-                return redirect()->intended(route('comprador.dashboard').'?verified=1');
             default:
                 return redirect()->intended(RouteServiceProvider::HOME.'?verified=1');
         }

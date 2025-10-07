@@ -39,8 +39,6 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->intended(route('admin.dashboard'));
             case 'vendedor':
                 return redirect()->intended(route('vendedor.dashboard'));
-            case 'comprador':
-                return redirect()->intended(route('comprador.dashboard'));
             default:
         return redirect()->intended(RouteServiceProvider::HOME);
         }

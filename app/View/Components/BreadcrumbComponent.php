@@ -39,11 +39,6 @@ class BreadcrumbComponent extends Component
                     ['label' => 'Dashboard Vendedor']
                 ];
             
-            case 'comprador.dashboard':
-                return [
-                    ['label' => 'Dashboard Comprador']
-                ];
-            
             case 'cobranca.index':
                 return [
                     ['label' => 'Cobrança Única']

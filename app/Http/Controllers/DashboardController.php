@@ -1088,64 +1088,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * Dashboard do Comprador
-     */
-    public function compradorDashboard(Request $request)
-    {
-        // Obter mês e ano do filtro ou usar o mês/ano atual
-        $mesAtual = $request->input('mes', date('n')); // n retorna o mês sem zero à esquerda (1-12)
-        $anoAtual = $request->input('ano', date('Y'));
-        
-        $saldos = [
-            'disponivel' => 'R$ 1.500,00',
-            'transito' => 'R$ 300,00',
-            'bloqueado_cartao' => 'R$ 0,00',
-            'bloqueado_boleto' => 'R$ 150,00'
-        ];
-
-        $metricas = [
-            [
-                'valor' => '12',
-                'label' => 'Compras Realizadas',
-                'icone' => 'fas fa-shopping-cart',
-                'cor' => 'metric-icon-blue'
-            ],
-            [
-                'valor' => '8',
-                'label' => 'Produtos Favoritos',
-                'icone' => 'fas fa-heart',
-                'cor' => 'metric-icon-red'
-            ],
-            [
-                'valor' => '3',
-                'label' => 'Pedidos Pendentes',
-                'icone' => 'fas fa-clock',
-                'cor' => 'metric-icon-teal'
-            ],
-            [
-                'valor' => 'R$ 2.840,00',
-                'label' => 'Total Gasto',
-                'icone' => 'fas fa-money-bill-wave',
-                'cor' => 'metric-icon-cyan'
-            ],
-            [
-                'valor' => 'R$ 237,00',
-                'label' => 'Ticket Médio',
-                'icone' => 'fas fa-chart-bar',
-                'cor' => 'metric-icon-green'
-            ],
-            [
-                'valor' => '5',
-                'label' => 'Cashback Disponível',
-                'icone' => 'fas fa-gift',
-                'cor' => 'metric-icon-green'
-            ]
-        ];
-
-        return view('dashboard.comprador', compact('saldos', 'metricas', 'mesAtual', 'anoAtual'));
-    }
-
-    /**
      * Limpar cache dos dados consolidados
      */
     public function limparCacheDadosConsolidados()
