@@ -62,6 +62,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Verifica se o usuário tem nível super admin ou admin
+     */
+    public function isSuperAdminOrAdmin(): bool
+    {
+        return in_array($this->nivel_acesso, ['super_admin', 'admin']);
+    }
+
+    /**
      * Verifica se o usuário é vendedor
      */
     public function isVendedor(): bool
