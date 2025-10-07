@@ -95,7 +95,7 @@
                                 {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
 
                                 <li><a class="dropdown-item" href="{{ route('cobranca.saldoextrato') }}"><i
-                                            class="fas fa-wallet me-2"></i>Saldoixxxshshsh e Extratoishshsxxx</a></li>
+                                            class="fas fa-wallet me-2"></i>Saldo e Extrato</a></li>
                             </ul>
                         </div>
                     @endif
