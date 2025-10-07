@@ -311,12 +311,20 @@ class PagamentoClienteController extends Controller
                 $link->update(['status' => 'PAID']);
             }
 
+            // Filtrar apenas dados necessários para o frontend
+            $filteredPixData = [
+                'qr_code' => $qrCode ? [
+                    'qrcode' => $qrCode['qrcode'] ?? null,
+                    'emv' => $qrCode['emv'] ?? null
+                ] : null,
+                'pix_code' => $transacao['emv'] ?? null, // Código PIX para copiar e colar
+                'amount' => $transacao['amount'] ?? null,
+                'status' => $transacao['status'] ?? null
+            ];
+
             return response()->json([
                 'success' => true,
-                'pix_data' => [
-                    'transacao' => $transacao,
-                    'qr_code' => $qrCode
-                ]
+                'pix_data' => $filteredPixData
             ]);
 
         } catch (\Exception $e) {
@@ -437,13 +445,17 @@ class PagamentoClienteController extends Controller
                 $link->update(['status' => 'PAID']);
             }
 
+            // Filtrar apenas dados necessários para o frontend
+            $filteredBoletoData = [
+                'boleto_url' => $boleto['boleto_url'] ?? null,
+                'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
+                'amount' => $boleto['amount'] ?? null,
+                'status' => $boleto['status'] ?? null
+            ];
+
             return response()->json([
                 'success' => true,
-                'boleto_data' => [
-                    'transacao' => $boleto,
-                    'boleto_url' => $boleto['boleto_url'] ?? null,
-                    'boleto_barcode' => $boleto['boleto_barcode'] ?? null
-                ]
+                'boleto_data' => $filteredBoletoData
             ]);
 
         } catch (\Exception $e) {

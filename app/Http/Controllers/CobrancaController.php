@@ -363,12 +363,20 @@ class CobrancaController extends Controller
                 }
             }
 
+            // Filtrar apenas dados necessários para o frontend
+            $filteredPixData = [
+                'qr_code' => $qrCode ? [
+                    'qrcode' => $qrCode['qrcode'] ?? null,
+                    'emv' => $qrCode['emv'] ?? null
+                ] : null,
+                'pix_code' => $transacao['emv'] ?? null, // Código PIX para copiar e colar
+                'amount' => $transacao['amount'] ?? null,
+                'status' => $transacao['status'] ?? null
+            ];
+
             return redirect()->route('cobranca.index')
                 ->with('success', 'Transação PIX criada com sucesso!')
-                ->with('pix_data', [
-                    'transacao' => $transacao,
-                    'qr_code' => $qrCode
-                ]);
+                ->with('pix_data', $filteredPixData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar transação PIX', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return redirect()->route('cobranca.index')
@@ -430,9 +438,17 @@ class CobrancaController extends Controller
 
             $boleto = $this->boletoService->gerarBoleto($dados);
 
+            // Filtrar apenas dados necessários para o frontend
+            $filteredBoletoData = [
+                'boleto_url' => $boleto['boleto_url'] ?? null,
+                'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
+                'amount' => $boleto['amount'] ?? null,
+                'status' => $boleto['status'] ?? null
+            ];
+
             return redirect()->route('cobranca.index')
                 ->with('success', 'Boleto criado com sucesso!')
-                ->with('boleto_data', $boleto);
+                ->with('boleto_data', $filteredBoletoData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar boleto', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
             return redirect()->route('cobranca.index')
@@ -468,9 +484,21 @@ public function simularTransacao(Request $request)
 
             // Se for requisição AJAX, retornar JSON
             if ($request->ajax()) {
+                // Filtrar apenas dados necessários para o frontend
+                $filteredSimulation = [
+                    'debit' => $simulacao['debit'] ?? null,
+                    'pix' => $simulacao['pix'] ?? null,
+                    'credit' => $simulacao['credit'] ?? null,
+                    'amount' => $simulacao['amount'] ?? null,
+                    'fees' => $simulacao['fees'] ?? null,
+                    'installments' => $simulacao['installments'] ?? null,
+                    'interest' => $simulacao['interest'] ?? null,
+                    'flag_name' => $simulacao['flag_name'] ?? null
+                ];
+
                 return response()->json([
                     'success' => true,
-                    'simulation' => $simulacao
+                    'simulation' => $filteredSimulation
                 ]);
             }
 
@@ -1105,7 +1133,8 @@ public function simularTransacao(Request $request)
                 return response()->json([
                     'success' => true,
                     'message' => 'Autenticação 3DS processada com sucesso',
-                    'data' => $resultado
+                    'status' => $resultado['status'] ?? null,
+                    'transaction_id' => $resultado['transaction_id'] ?? null
                 ]);
             } else {
                 return response()->json([

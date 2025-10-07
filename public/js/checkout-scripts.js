@@ -355,12 +355,10 @@ function gerarQRCode() {
             let pixCode = '';
             if (response.pix_data && response.pix_data.qr_code && response.pix_data.qr_code.emv) {
                 pixCode = response.pix_data.qr_code.emv;
-            } else if (response.pix_data && response.pix_data.transacao && response.pix_data.transacao.emv) {
-                pixCode = response.pix_data.transacao.emv;
+            } else if (response.pix_data && response.pix_data.pix_code) {
+                pixCode = response.pix_data.pix_code;
             }
-            
-            console.log('QR Code base64 encontrado:', qrCodeBase64 ? 'Sim' : 'Não');
-            console.log('Código PIX encontrado:', pixCode);
+          
             
             if (qrCodeBase64) {
                 // Mostrar imagem base64 diretamente
