@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="_token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="{{ asset('img/favicon.png') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ asset('img/logo/juntter_png_256.png') }}" type="image/x-icon">
     <title>@yield('title', 'Dashboard') - Juntter</title>
 
     <!-- Google Font -->
@@ -37,7 +37,8 @@
         <div class="container">
             <!-- Logo -->
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <img src="{{ asset('logo/JUNTTER-MODELO-1-SF.webp') }}" alt="Juntter" height="45" class="logo-img">
+                <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" height="45"
+                    class="logo-img">
             </a>
 
             <!-- Mobile menu button -->
