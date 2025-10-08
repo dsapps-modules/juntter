@@ -1,3 +1,27 @@
+Admin geral
+----------------------------------
+email: admin@juntter.com 
+senha: 12345678
+
+
+Administradores de Loja
+----------------------------------
+DS Aplicativos (155161)
+admin-ds@teste.com
+12345678
+
+Juntter (155102)
+admin-juntter@teste.com
+12345678
+
+
+
+
+
+
+
+
+
     public function index(Request $request, $ano = null, $mes = null)
     {
 
