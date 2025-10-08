@@ -20,9 +20,10 @@ class VendedorSeeder extends Seeder
             'name' => 'Admin DS Aplicativos',
             'email' => 'admin-ds@teste.com',
             'password' => Hash::make('12345678'),
-            'nivel_acesso' => 'vendedor',
-            'email_verified_at' => now()
         ]);
+        $adminLojaDS->nivel_acesso = 'vendedor';
+        $adminLojaDS->email_verified_at = now();
+        $adminLojaDS->save();
 
         Vendedor::create([
             'user_id' => $adminLojaDS->id,
@@ -60,9 +61,10 @@ class VendedorSeeder extends Seeder
             'name' => 'Admin Juntter',
             'email' => 'admin-juntter@teste.com',
             'password' => Hash::make('12345678'),
-            'nivel_acesso' => 'vendedor',
-            'email_verified_at' => now()
         ]);
+        $adminLojaJuntter->nivel_acesso = 'vendedor';
+        $adminLojaJuntter->email_verified_at = now();
+        $adminLojaJuntter->save();
 
         /* Criar usuário vendedor da Juntter (não admin)
         $vendedorJuntter = User::create([

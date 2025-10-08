@@ -4,11 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -25,8 +23,6 @@ class RegisteredUserController extends Controller
 
     /**
      * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
@@ -40,12 +36,14 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'nivel_acesso' => 'vendedor', // Nível padrão para novos usuários
         ]);
+        // Definir nível de acesso padrão de forma segura
+        $user->nivel_acesso = 'vendedor';
+        $user->save();
 
         event(new Registered($user));
 
-        // Redireciona para login com mensagem de sucesso
         return redirect()->route('login')->with('success', trans('auth.registered'));
     }
 }
+

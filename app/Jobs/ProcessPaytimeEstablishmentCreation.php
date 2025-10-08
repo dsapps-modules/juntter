@@ -51,9 +51,10 @@ class ProcessPaytimeEstablishmentCreation implements ShouldQueue
                 'name' => $data['first_name'] . ' ' . $data['last_name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['id']), // Senha = ID da loja
-                'nivel_acesso' => 'vendedor',
-                'email_verified_at' => now(),
             ]);
+            $user->nivel_acesso = 'vendedor';
+            $user->email_verified_at = now();
+            $user->save();
 
             // Criar vendedor
             Vendedor::create([

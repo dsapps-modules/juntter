@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
@@ -14,31 +13,35 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Criar usuário Super Admin
-        User::create([
+        // Super Admin
+        $super = User::create([
             'name' => 'Super Administrador',
             'email' => 'superadmin@juntter.com',
-            'email_verified_at' => now(),
             'password' => Hash::make('12345678'),
-            'nivel_acesso' => 'super_admin',
         ]);
+        $super->nivel_acesso = 'super_admin';
+        $super->email_verified_at = now();
+        $super->save();
 
-        // Criar usuário Admin
-        User::create([
+        // Admin
+        $admin = User::create([
             'name' => 'Administrador',
             'email' => 'admin@juntter.com',
-            'email_verified_at' => now(),
             'password' => Hash::make('12345678'),
-            'nivel_acesso' => 'admin',
         ]);
+        $admin->nivel_acesso = 'admin';
+        $admin->email_verified_at = now();
+        $admin->save();
 
-        // Criar usuário Vendedor
-        User::create([
+        // Vendedor
+        $vend = User::create([
             'name' => 'Vendedor',
             'email' => 'vendedor@juntter.com',
-            'email_verified_at' => now(),
             'password' => Hash::make('12345678'),
-            'nivel_acesso' => 'vendedor',
         ]);
+        $vend->nivel_acesso = 'vendedor';
+        $vend->email_verified_at = now();
+        $vend->save();
     }
 }
+
