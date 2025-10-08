@@ -1,0 +1,132 @@
+{
+  "$schema": "https://raw.githubusercontent.com/continuedev/continue/main/schema/config.schema.json",
+  "models": {
+    "default": "openai:gpt-4o",
+    "quick": "openai:gpt-4o-mini",
+    "reasoning": "openai:o3-mini"
+  },
+  "apiKeys": {
+    "openai": "${env:OPENAI_API_KEY}"
+  },
+  "tabAutocompleteModel": "openai:gpt-4o-mini",
+
+  "context": {
+    "workspace": {
+      "enabled": true,
+      "maxFiles": 220,
+      "maxFileBytes": 600000
+    },
+    "relatedCode": {
+      "enabled": true,
+      "embeddingModel": "openai:text-embedding-3-large",
+      "index": {
+        "include": [
+          "app/**/*.php",
+          "bootstrap/app.php",
+          "config/**/*.php",
+          "routes/**/*.php",
+          "database/migrations/**/*.php",
+          "database/factories/**/*.php",
+          "database/seeders/**/*.php",
+          "resources/views/**/*.blade.php",
+          "resources/lang/**/*.php",
+          "composer.json",
+          "composer.lock",
+          "phpunit.xml",
+          "tests/**/*.php",
+          "artisan",
+          "vite.config.*",
+          ".env.example",
+          "README.md"
+        ],
+        "exclude": [
+          "vendor/**",
+          "node_modules/**",
+          "storage/**",
+          "public/build/**",
+          "public/storage/**",
+          ".git/**",
+          "docker/**",
+          "**/*.min.*",
+          "public/**/*.map"
+        ]
+      }
+    },
+    "openFiles": { "enabled": true, "maxBytesPerFile": 400000 },
+    "git": { "enabled": true, "diffContextLines": 160 },
+    "terminal": { "enabled": true, "maxLines": 1000 }
+  },
+
+  "skills": [
+    {
+      "name": "explicar",
+      "prompt": "Explique em PT-BR (curto e objetivo) o que este código Laravel faz, camadas afetadas (Controller/Service/Model/View), riscos, performance, segurança (auth/validação/SQL Injection) e melhorias sugeridas."
+    },
+    {
+      "name": "tests:pest-feature",
+      "prompt": "Crie testes de FEATURE com Pest para o código selecionado, cobrindo casos felizes/erros, validação, auth/policies e respostas JSON/HTML conforme aplicável."
+    },
+    {
+      "name": "refatorar",
+      "prompt": "Refatore o código selecionado seguindo boas práticas Laravel (SOLID, SRP, Services/Actions, Form Requests, Repositories se necessário). Mantenha compatibilidade. Explique mudanças."
+    },
+    {
+      "name": "auditar-seguranca",
+      "prompt": "Audite segurança no trecho: validação de inputs (FormRequest), autorização (Policies/Gates), mass assignment (fillable/guarded), rate limiting, exceptions/leaks, headers e SQL Injection."
+    }
+  ],
+
+  "slashCommands": [
+    {
+      "name": "crud",
+      "params": ["RecursoSingular", "campos"],
+      "prompt": "Gere Controller RESTful, rotas, Request de validação, Resource (API), Migration, Model (fillable, casts, relations), Factory e Seeder para {RecursoSingular} com campos: {campos}. Inclua exemplos de uso (artisan make, rotas) e testes FEATURE Pest."
+    },
+    {
+      "name": "request",
+      "params": ["NomeRequest", "regras"],
+      "prompt": "Crie um Form Request chamado {NomeRequest} com regras: {regras}. Inclua mensagens personalizadas e autorização. Mostre como usar no Controller."
+    },
+    {
+      "name": "policy",
+      "params": ["Model"],
+      "prompt": "Crie uma Policy para {Model} cobrindo viewAny, view, create, update, delete, restore, forceDelete com exemplos de Gate e registro no AuthServiceProvider."
+    },
+    {
+      "name": "job-queue",
+      "params": ["Tarefa"],
+      "prompt": "Crie um Job enfileirável para {Tarefa}, com tentativa, backoff e logging. Mostre dispatch síncrono/assíncrono, config de fila e teste básico."
+    },
+    {
+      "name": "evento-listener",
+      "params": ["Evento", "Listener"],
+      "prompt": "Crie um Event {Evento} e Listener {Listener}. Registre no EventServiceProvider, inclua payload relevante e exemplo de disparo + teste."
+    },
+    {
+      "name": "api-resource",
+      "params": ["Model"],
+      "prompt": "Crie um API Resource e ResourceCollection para {Model}, padronizando o envelope de resposta e paginação. Inclua exemplo de Controller e teste."
+    },
+    {
+      "name": "migration:alter",
+      "params": ["Tabela", "alteracoes"],
+      "prompt": "Crie uma Migration para alterar a tabela {Tabela} com: {alteracoes}. Inclua up/down corretos e notas de compatibilidade."
+    },
+    {
+      "name": "swagger",
+      "params": ["Rota"],
+      "prompt": "Gere documentação OpenAPI (YAML) para a rota {Rota} (métodos, params, bodies, responses, erros). Mostre onde colocar (docs/) e como validar."
+    },
+    {
+      "name": "livewire",
+      "params": ["Componente", "descricao"],
+      "prompt": "Crie um componente Livewire {Componente} para {descricao}, com validação, eventos, view Blade, exemplo de testes de componente e rotas."
+    }
+  ],
+
+  "ui": {
+    "language": "pt-BR",
+    "showWelcome": false
+  },
+  "telemetry": { "enabled": false }
+}
