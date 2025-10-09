@@ -3,27 +3,18 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<x-dashboard-main 
-    :title="'Dashboard Vendedor'"
-    :saldos="$saldos"
-    :metricas="$metricas"
-    :metricasGeral="$metricasGeral"
-    :metricasCartao="$metricasCartao"
-    :metricasBoleto="$metricasBoleto"
-    :mesAtual="$mesAtual"
-    :anoAtual="$anoAtual"
-    :breadcrumbItems="[
-        [
-            'label' => 'Vendas',
-            'icon' => 'fas fa-chart-line',
-            'url' => '#',
-          
-        ]
-        
-    ]"
-    :rightSub="isset($estabelecimento) ? (($estabelecimento['first_name'] ?? $estabelecimento['name'] ?? 'Estabelecimento') . ' • ID ' . ($estabelecimento['id'] ?? 'N/A')) : null"
-    :showSaldos="auth()->user()?->isAdminLoja()"
-/>
+    <x-dashboard-main :title="'Dashboard Vendedor'" :saldos="$saldos" :metricas="$metricas" :metricasGeral="$metricasGeral" :metricasCartao="$metricasCartao"
+        :metricasBoleto="$metricasBoleto" :mesAtual="$mesAtual" :anoAtual="$anoAtual" :breadcrumbItems="[
+            [
+                'label' => 'Vendas',
+                'icon' => 'fas fa-chart-line',
+                'url' => '#',
+            ],
+        ]" :rightSub="isset($estabelecimento)
+            ? ($estabelecimento['first_name'] ?? ($estabelecimento['name'] ?? 'Estabelecimento')) .
+                ' • ID ' .
+                ($estabelecimento['id'] ?? 'N/A')
+            : null" :showSaldos="auth()->user()?->isAdminLoja()" />
 
 
 
@@ -31,13 +22,13 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0">Transações do Estabelecimento (últimos 30 dias)</h5>
+                    <h5 class="mb-0">Transações do mês atual</h5>
                 </div>
                 <div class="card-body p-0">
                     @php
                         $lista = $transacoes['data'] ?? [];
                     @endphp
-                    @if(empty($lista))
+                    @if (empty($lista))
                         <div class="p-4 text-center text-muted">Nenhuma transação encontrada.</div>
                     @else
                         <div class="table-responsive">
@@ -48,14 +39,14 @@
                                         <th>ID</th>
                                         <th>Tipo</th>
                                         <th>Valor</th>
-                                      
+
                                         <th>Data</th>
                                         <th>Status</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($lista as $transacao)
+                                    @foreach ($lista as $transacao)
                                         <tr>
                                             <td></td>
                                             <td>
@@ -64,15 +55,15 @@
                                                 </small>
                                             </td>
                                             <td>
-                                                @if(isset($transacao['type']))
-                                                    @if($transacao['type'] === 'PIX')
+                                                @if (isset($transacao['type']))
+                                                    @if ($transacao['type'] === 'PIX')
                                                         <span class="badge badge-info">
                                                             <i class="fas fa-qrcode me-1"></i>PIX
                                                         </span>
                                                     @elseif($transacao['type'] === 'CREDIT')
                                                         <span class="badge badge-primary">
                                                             <i class="fas fa-credit-card me-1"></i>Crédito
-                                                            @if(isset($transacao['installments']) && $transacao['installments'] > 1)
+                                                            @if (isset($transacao['installments']) && $transacao['installments'] > 1)
                                                                 <small>({{ $transacao['installments'] }}x)</small>
                                                             @endif
                                                         </span>
@@ -94,22 +85,25 @@
                                             <td>
                                                 <div>
                                                     <strong class="text-success">
-                                                        R$ {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}
+                                                        R$
+                                                        {{ number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.') }}
                                                     </strong>
-                                                    @if(isset($transacao['fees']) && $transacao['fees'] > 0)
-                                                        <br><small class="text-muted">Taxa: R$ {{ number_format(($transacao['fees'] ?? 0) / 100, 2, ',', '.') }}</small>
+                                                    @if (isset($transacao['fees']) && $transacao['fees'] > 0)
+                                                        <br><small class="text-muted">Taxa: R$
+                                                            {{ number_format(($transacao['fees'] ?? 0) / 100, 2, ',', '.') }}</small>
                                                     @endif
                                                 </div>
                                             </td>
-                                            
-                                            <td data-order="{{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('Y-m-d H:i:s') }}">
+
+                                            <td
+                                                data-order="{{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('Y-m-d H:i:s') }}">
                                                 <span class="text-muted">
                                                     {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
                                                 </span>
                                             </td>
                                             <td>
-                                                @if(isset($transacao['status']))
-                                                    @if($transacao['status'] === 'PAID')
+                                                @if (isset($transacao['status']))
+                                                    @if ($transacao['status'] === 'PAID')
                                                         <span class="badge badge-success">
                                                             <i class="fas fa-check me-1"></i>Pago
                                                         </span>
@@ -134,7 +128,8 @@
                                                             <i class="fas fa-check-circle me-1"></i>Aprovado
                                                         </span>
                                                     @else
-                                                        <span class="badge badge-secondary">{{ $transacao['status'] }}</span>
+                                                        <span
+                                                            class="badge badge-secondary">{{ $transacao['status'] }}</span>
                                                     @endif
                                                 @else
                                                     <span class="badge badge-secondary">Desconhecido</span>
@@ -143,10 +138,10 @@
                                             <td>
                                                 <div class="btn-group" role="group">
 
-                                                    <a href=" {{ ($transacao['type'] ?? '') === 'BILLET' || ($transacao['type'] ?? '') === 'BOLETO' 
-                                                    ? route('cobranca.boleto.detalhes', $transacao['_id']) 
-                                                    : route('cobranca.transacao.detalhes', $transacao['_id']) }}"
-                                                       class="btn btn-sm btn-outline-info" title="Ver detalhes">
+                                                    <a href=" {{ ($transacao['type'] ?? '') === 'BILLET' || ($transacao['type'] ?? '') === 'BOLETO'
+                                                        ? route('cobranca.boleto.detalhes', $transacao['_id'])
+                                                        : route('cobranca.transacao.detalhes', $transacao['_id']) }}"
+                                                        class="btn btn-sm btn-outline-info" title="Ver detalhes">
                                                         <i class="fas fa-eye"></i>
                                                         Ver detalhes
                                                     </a>
@@ -162,8 +157,7 @@
             </div>
         </div>
     </div>
-</div>
-@push('scripts')
-
-@endpush
+    </div>
+    @push('scripts')
+    @endpush
 @endsection

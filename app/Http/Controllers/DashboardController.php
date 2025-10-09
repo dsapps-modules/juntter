@@ -585,9 +585,8 @@ class DashboardController extends Controller
     public function vendedorDashboard(Request $request)
     {
         // Obter mês e ano do filtro (podem vir vazios para representar "Todos")
-        $mesAtual = $request->input('mes');
-        $anoAtual = $request->input('ano');
-        
+        $mesAtual = $request->input('mes') ?? date('m');
+        $anoAtual = $request->input('ano') ?? date('Y');
         $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
         try {
@@ -610,9 +609,9 @@ class DashboardController extends Controller
                     $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, (int)$anoAtual));
                 }
             } else {
-                // Últimos 30 dias
-                $dataInicio = date('Y-m-d', strtotime('-30 days'));
-                $dataFim = date('Y-m-d');
+                // Apenas registros do mês atual
+                $dataInicio = date('Y-m-01');
+                $dataFim = date('Y-m-t');
             }
             
             $filtrosTransacoes = [
@@ -947,7 +946,7 @@ class DashboardController extends Controller
                 [ 'valor' => $qtdPix,     'label' => 'Transações PIX',     'icone' => 'fas fa-qrcode',       'cor' => 'metric-icon-green' ],
                 [ 'valor' => $qtdBoletos, 'label' => 'Transações Boleto',  'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-blue' ],
                 [ 'valor' => $qtdCartao,  'label' => 'Transações Cartão',  'icone' => 'fas fa-credit-card',  'cor' => 'metric-icon-blue' ],
-                [ 'valor' => ($totalTransacoes > 0 ? 'R$ ' . number_format(($volumeLiquidoTotal / $totalTransacoes) / 100, 2, ',', '.') : 'R$ 0,00'), 'label' => 'Ticket Médio (30 dias)', 'icone' => 'fas fa-ticket-alt', 'cor' => 'metric-icon-cyan' ],
+                [ 'valor' => ($totalTransacoes > 0 ? 'R$ ' . number_format(($volumeLiquidoTotal / $totalTransacoes) / 100, 2, ',', '.') : 'R$ 0,00'), 'label' => 'Ticket Médio', 'icone' => 'fas fa-ticket-alt', 'cor' => 'metric-icon-cyan' ],
             ];
 
             $metricasCartao = [
@@ -997,6 +996,4 @@ class DashboardController extends Controller
             return view('dashboard.vendedor', compact('saldos', 'metricas'));
         }
     }
-
-    
 }
