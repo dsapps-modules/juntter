@@ -67,13 +67,14 @@ class CobrancaController extends Controller
     {
         try {
             // Obter mês e ano do filtro
-            $mesAtual = $request->input('mes'); // pode ser vazio (Todos) ou um número
-            $anoAtual = $request->input('ano'); // pode ser vazio (Todos) ou um ano
+            $mesAtual = $request->input('mes') ?? date('m'); // pode ser vazio (Todos) ou um número
+            $anoAtual = $request->input('ano') ?? date('Y'); // pode ser vazio (Todos) ou um ano
             
             // Preparar filtros base
-            $filtrosData = [
-                'establishment.id' => auth()->user()?->vendedor?->estabelecimento_id
-            ];
+            $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+            $filtrosData = [ 'establishment.id' => $estabelecimentoId];
+            $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
+
             
             // Aplicar filtro de data baseado no que foi especificado
             if (!empty($mesAtual) || !empty($anoAtual)) {
@@ -93,6 +94,11 @@ class CobrancaController extends Controller
                     // Só ano especificado - usar todo o ano
                     $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $anoAtual));
                     $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $anoAtual));
+                }
+                else {
+                    // Apenas registros do mês atual
+                    $dataInicio = date('Y-m-01');
+                    $dataFim = date('Y-m-t');
                 }
                 
                 if ($dataInicio && $dataFim) {
@@ -188,9 +194,7 @@ class CobrancaController extends Controller
                 // Silenciar falhas de boletos para não quebrar a listagem principal
             }
 
-         
-
-            return view('cobranca.index', compact('transacoes', 'mesAtual', 'anoAtual'));
+            return view('cobranca.index', compact('transacoes', 'mesAtual', 'anoAtual', 'estabelecimento'));
         } catch (\Exception $e) {
             Log::error('Erro ao listar transações: ' . $e->getMessage());
             return view('cobranca.index')->with('error', 'Erro ao carregar transações.');
