@@ -30,3 +30,6 @@ Route::post('/webhook/paytime/new-sub-split', [PaytimeWebhookController::class, 
 
 // canceled-sub-split	Cancelamento de Split Sub
 Route::post('/webhook/paytime/canceled-sub-split', [PaytimeWebhookController::class, 'canceledSubSplit']);
+
+// just to serve as a test point
+Route::post('/ping', fn() => response()->json(['pong' => true]));
