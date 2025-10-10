@@ -24,7 +24,6 @@ Route::post('/webhook/paytime/new-billet', [PaytimeWebhookController::class, 'ne
 // updated-billet-status	Atualização do status de um boleto
 Route::post('/webhook/paytime/update-billet-status', [PaytimeWebhookController::class, 'updateBilletStatus']);
 
-
 // new-sub-split	Split de Transação Sub
 Route::post('/webhook/paytime/new-sub-split', [PaytimeWebhookController::class, 'newSubSplit']);
 
