@@ -32,3 +32,8 @@ Route::post('/webhook/paytime/canceled-sub-split', [PaytimeWebhookController::cl
 
 // just to serve as a test point
 Route::post('/ping', fn() => response()->json(['pong' => true]));
+
+
+// para testar a api online faça, no PowerShell:
+// curl.exe -u "DSapps@checkoutjuntter.com:MPfYGyiru13ibkQ6pEMT5Cxn4pCIzR3P" -H "Content-Type: application/json" 
+// -X POST "https://checkout.juntter.com.br/api/webhook/paytime/new-sub-transaction" --data '{"nome":"Regis"}'
