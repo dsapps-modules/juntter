@@ -117,15 +117,19 @@ class PaytimeWebhookController extends Controller
     }
 
 
-    protected function isAuthorized(Request $request): bool
+    protected function isAuthorized(Request $request)
     {
         $user = env('PAYTIME_WEBHOOK_USER');
         $pass = env('PAYTIME_WEBHOOK_PASS');
 
         $hasAuth = $request->getUser() && $request->getPassword();
+        $pass_key = $request->getPassword();
+        $user_key = $request->getUser();
+
+        return response()->json(['message' => "($user, $user_key) - ($pass, $pass_key)"], 200);
 
         return $hasAuth &&
-            $request->getUser() === $user &&
-            $request->getPassword() === $pass;
+            $user_key === $user &&
+            $pass_key === $pass;
     }
 }
