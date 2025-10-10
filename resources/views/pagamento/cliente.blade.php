@@ -548,40 +548,6 @@
                                             <div id="addressFields"
                                                 style="display: {{ isset($link->dados_cliente['preenchidos']['endereco']) && $link->dados_cliente['preenchidos']['endereco']['rua'] && $link->dados_cliente['preenchidos']['endereco']['numero'] && $link->dados_cliente['preenchidos']['endereco']['bairro'] && $link->dados_cliente['preenchidos']['endereco']['cidade'] && $link->dados_cliente['preenchidos']['endereco']['estado'] && $link->dados_cliente['preenchidos']['endereco']['cep'] ? 'none' : 'block' }};">
                                                 <div class="row">
-                                                    <div class="col-md-8 mb-4">
-                                                        <label class="form-label">Rua <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" name="client[address][street]"
-                                                            class="form-control" placeholder="Nome da rua"
-                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}"
-                                                            required>
-                                                    </div>
-                                                    <div class="col-md-4 mb-4">
-                                                        <label class="form-label">Número <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" name="client[address][number]"
-                                                            class="form-control" placeholder="123"
-                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}"
-                                                            required>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-4 mb-4">
-                                                        <label class="form-label">Bairro <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" name="client[address][neighborhood]"
-                                                            class="form-control" placeholder="Bairro"
-                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }}"
-                                                            required>
-                                                    </div>
-                                                    <div class="col-md-4 mb-4">
-                                                        <label class="form-label">Cidade <span
-                                                                class="text-danger">*</span></label>
-                                                        <input type="text" name="client[address][city]"
-                                                            class="form-control" placeholder="Cidade"
-                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}"
-                                                            required>
-                                                    </div>
                                                     <div class="col-md-4 mb-4">
                                                         <label class="form-label">CEP <span
                                                                 class="text-danger">*</span></label>
@@ -593,12 +559,52 @@
                                                         </div>
                                                         <small class="text-muted">
                                                             <i class="fas fa-search me-1"></i>Digite o CEP para
-                                                            preenchimento automático
+                                                            auto-preencher
                                                         </small>
+                                                    </div>
+                                                    <div class="col-md-8 mb-4">
+                                                        <label class="form-label">Rua <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="client[address][street]"
+                                                            class="form-control" placeholder="Nome da rua"
+                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }}"
+                                                            required>
                                                     </div>
                                                 </div>
                                                 <div class="row">
+                                                    <div class="col-md-3 mb-4">
+                                                        <label class="form-label">Número <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="client[address][number]"
+                                                            class="form-control" placeholder="123"
+                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}"
+                                                            required>
+                                                    </div>
+                                                    <div class="col-md-3 mb-4">
+                                                        <label class="form-label">Complemento</label>
+                                                        <input type="text" name="client[address][complement]"
+                                                            class="form-control" placeholder="Apto, casa, etc."
+                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['complemento'] ?? '' }}">
+                                                    </div>
                                                     <div class="col-md-6 mb-4">
+                                                        <label class="form-label">Bairro <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="client[address][neighborhood]"
+                                                            class="form-control" placeholder="Bairro"
+                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }}"
+                                                            required>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-8 mb-4">
+                                                        <label class="form-label">Cidade <span
+                                                                class="text-danger">*</span></label>
+                                                        <input type="text" name="client[address][city]"
+                                                            class="form-control" placeholder="Cidade"
+                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}"
+                                                            required>
+                                                    </div>
+                                                    <div class="col-md-4 mb-4">
                                                         <label class="form-label">Estado <span
                                                                 class="text-danger">*</span></label>
                                                         <select name="client[address][state]" class="form-select"
@@ -686,12 +692,6 @@
                                                                 {{ ($link->dados_cliente['preenchidos']['endereco']['estado'] ?? '') == 'TO' ? 'selected' : '' }}>
                                                                 Tocantins</option>
                                                         </select>
-                                                    </div>
-                                                    <div class="col-md-6 mb-4">
-                                                        <label class="form-label">Complemento</label>
-                                                        <input type="text" name="client[address][complement]"
-                                                            class="form-control" placeholder="Apto, casa, etc."
-                                                            value="{{ $link->dados_cliente['preenchidos']['endereco']['complemento'] ?? '' }}">
                                                     </div>
                                                 </div>
                                             </div>
