@@ -49,7 +49,7 @@ class PagamentoClienteController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Erro ao mostrar página de pagamento: ' . $e->getMessage());
-            abort(500, 'Erro interno do servidor');
+            abort(404, 'Link de pagamento inválido');
         }
     }
 
@@ -63,11 +63,7 @@ class PagamentoClienteController extends Controller
 
             if (!$link || !$link->estaAtivo()) {
                 return response()->json(['error' => 'Link inválido ou inativo'], 400);
-
-
             }
-
-          
 
             $dados = $request->validate([
                 'installments' => 'nullable|integer|min:1|max:18',
@@ -154,8 +150,6 @@ class PagamentoClienteController extends Controller
                 $dadosTransacao['card']['holder_document'] = '';
             }
 
-      
-            
             $transacao = $this->creditoService->criarTransacaoCredito($dadosTransacao);
 
             if (!$transacao) {

@@ -10,6 +10,18 @@ use App\Jobs\ProcessPaytimeEstablishmentCreation;
 
 class PaytimeWebhookController extends Controller
 {
+
+
+    public function transactionStateChanged(Request $request){
+        if (!$this->isAuthorized($request)) {
+            return response()->json(['message' => 'Unauthorized: update establishment'], 401);
+        }
+
+        Log::info('Paytime transaction status changed webhook received', $request->all());
+        // Queue::push(new ProcessPaytimeEstablishmentStatusChange($request->all()));
+        return response()->json(['message' => 'Transaction status changed webhook received'], 200);
+    }
+
     public function updateEstablishmentStatus(Request $request)
     {
         if (!$this->isAuthorized($request)) {
