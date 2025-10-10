@@ -488,21 +488,9 @@ public function simularTransacao(Request $request)
 
             // Se for requisição AJAX, retornar JSON
             if ($request->ajax()) {
-                // Filtrar apenas dados necessários para o frontend
-                $filteredSimulation = [
-                    'debit' => $simulacao['debit'] ?? null,
-                    'pix' => $simulacao['pix'] ?? null,
-                    'credit' => $simulacao['credit'] ?? null,
-                    'amount' => $simulacao['amount'] ?? null,
-                    'fees' => $simulacao['fees'] ?? null,
-                    'installments' => $simulacao['installments'] ?? null,
-                    'interest' => $simulacao['interest'] ?? null,
-                    'flag_name' => $simulacao['flag_name'] ?? null
-                ];
-
                 return response()->json([
                     'success' => true,
-                    'simulation' => $filteredSimulation
+                    'simulation' => $simulacao
                 ]);
             }
 
