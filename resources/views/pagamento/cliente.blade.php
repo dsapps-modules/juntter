@@ -25,20 +25,8 @@
     <header class="checkout-header">
         <div class="container">
             <div class="row align-items-center">
-                <div class="col-6">
+                <div class="col-4">
                     <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" class="checkout-logo">
-                </div>
-                <div class="col-6 text-end">
-                    <div class="security-badges">
-                        <div class="security-badge">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>SSL Seguro</span>
-                        </div>
-                        <div class="security-badge">
-                            <i class="fas fa-lock"></i>
-                            <span>Dados Protegidos</span>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div class="checkout-steps">
@@ -53,6 +41,16 @@
                 <div class="step pending">
                     <i class="fas fa-check-circle"></i>
                     <span>Confirmação</span>
+                </div>
+                <div class="security-badges">
+                    <div class="security-badge">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>SSL Seguro</span>
+                    </div>
+                    <div class="security-badge">
+                        <i class="fas fa-lock"></i>
+                        <span>Dados Protegidos</span>
+                    </div>
                 </div>
             </div>
         </div>
