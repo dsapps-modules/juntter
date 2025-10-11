@@ -45,34 +45,38 @@ class ProcessPaytimeEstablishmentCreation implements ShouldQueue
         }
 
         // Processar criação
-        DB::transaction(function () use ($data) {
-            // Criar usuário
-            $user = User::create([
-                'name' => $data['first_name'] . ' ' . $data['last_name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['id']), // Senha = ID da loja
-            ]);
-            $user->nivel_acesso = 'vendedor';
-            $user->email_verified_at = now();
-            $user->save();
-
-            // Criar vendedor
-            Vendedor::create([
-                'user_id' => $user->id,
-                'estabelecimento_id' => $data['id'],
-                'sub_nivel' => 'admin_loja',
-                'status' => 'ativo',
-                'telefone' => $data['phone_number'],
-                'endereco' => json_encode($data['address']),
-                'must_change_password' => true, 
-            ]);
-
-            Log::info("createEstablishment job finished succesfully", [
-                'estabelecimento_id' => $data['id'],
-                'user_id' => $user->id,
-                'email' => $data['email']
-            ]);
-        });
+        try{
+            DB::transaction(function () use ($data) {
+                // Criar usuário
+                $user = User::create([
+                    'name' => $data['first_name'] . ' ' . $data['last_name'],
+                    'email' => $data['email'],
+                    'password' => Hash::make($data['id']), // Senha = ID da loja
+                ]);
+                $user->nivel_acesso = 'vendedor';
+                $user->email_verified_at = now();
+                $user->save();
+    
+                // Criar vendedor
+                Vendedor::create([
+                    'user_id' => $user->id,
+                    'estabelecimento_id' => $data['id'],
+                    'sub_nivel' => 'admin_loja',
+                    'status' => 'ativo',
+                    'telefone' => $data['phone_number'],
+                    'endereco' => json_encode($data['address']),
+                    'must_change_password' => true, 
+                ]);
+    
+                Log::info("createEstablishment job finished succesfully", [
+                    'estabelecimento_id' => $data['id'],
+                    'user_id' => $user->id,
+                    'email' => $data['email']
+                ]);
+            });
+        } catch(\Throwable $e) {
+            Log::error('createEstablishment failed: ' . $e->getMessage());
+        }
     }
 }
 

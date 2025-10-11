@@ -13,17 +13,15 @@ class PaytimeWebhookController extends Controller
 
     public function createEstablishment(Request $request)
     {
-        Log::info('/webhook/paytime/create-establishment called');
         $data = $request->all();
 
-        if (!$this->isAuthorized($request)) {
+        if (! $this->isAuthorized($request)) {
             Log::info("createEstablishment request unauthorized with data: ", $data);
             return response()->json(['message' => 'Create establishment unauthorized'], 401);
         }
 
-        Log::info("createEstablishment request processed");
         Queue::push(new ProcessPaytimeEstablishmentCreation($data));
-        return response()->json(['message' => 'Create establishment job enqueued'], 200);
+        return response()->json(['message' => 'Create establishment webhook received'], 200);
     }
 
 
