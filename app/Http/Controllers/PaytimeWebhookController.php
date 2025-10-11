@@ -21,7 +21,7 @@ class PaytimeWebhookController extends Controller
             return response()->json(['message' => 'Create establishment unauthorized'], 401);
         }
 
-        Log::info("createEstablishment request processed with data: ", $data);
+        Log::info("createEstablishment request processed");
         Queue::push(new ProcessPaytimeEstablishmentCreation($data));
         return response()->json(['message' => 'Create establishment job enqueued'], 200);
     }
