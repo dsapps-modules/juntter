@@ -30,14 +30,14 @@ class ProcessPaytimeEstablishmentCreation implements ShouldQueue
         $data = $this->payload['data'] ?? [];
 
         if ($event !== 'new-establishment') {
-            Log::warning("Webhook ignorado: evento não reconhecido", ['event' => $event]);
+            Log::info("createEstablishment blocked: unknown event", ['event' => $event]);
             return;
         }
 
         // Verificação única: Estabelecimento já existe
         $vendedorExistente = Vendedor::where('estabelecimento_id', $data['id'])->first();
         if ($vendedorExistente) {
-            Log::info("Estabelecimento já processado", [
+            Log::info("createEstablishment blocked: user already exists", [
                 'estabelecimento_id' => $data['id'],
                 'vendedor_id' => $vendedorExistente->id
             ]);
@@ -67,7 +67,7 @@ class ProcessPaytimeEstablishmentCreation implements ShouldQueue
                 'must_change_password' => true, 
             ]);
 
-            Log::info("vendedor criado", [
+            Log::info("createEstablishment job finished succesfully", [
                 'estabelecimento_id' => $data['id'],
                 'user_id' => $user->id,
                 'email' => $data['email']
