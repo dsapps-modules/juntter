@@ -75,3 +75,54 @@ class ProcessPaytimeEstablishmentCreation implements ShouldQueue
         });
     }
 }
+
+/*
+
+Payload enviado via webhook quando um vendedor/estabelecimento é registrado no painel da Paytime
+
+{
+    "event":"new-establishment",
+    "event_date":"2025-10-11T15:09:12.356Z",
+    "data":{
+        "id":155463,
+        "type":"INDIVIDUAL",
+        "first_name":"SONIA DE CASSIA SANTOS PRADO",
+        "last_name":null,
+        "document":"25984303876",
+        "birthdate":"1976-03-24",
+        "phone_number":"11920012001",
+        "active":true,
+        "revenue":"10000000",
+        "format":null,
+        "email":"soneca@home.com",
+        "risk":"PENDING",
+        "status":"RISK_ANALYSIS",
+        "representative":null,
+        "address":{
+            "zip_code":"07174010",
+            "street":"Rua Senador Nilo Coelho",
+            "number":"111",
+            "neighborhood":"Residencial Parque Cumbica",
+            "city":"Guarulhos",
+            "state":"SP",
+            "complement":"(Cj Inocoop-Bonsucesso)"
+        },
+        "category":"Serviços Profissionais, Categorias Especiais - Outros",
+        "code":"SONL8YRB",
+        "created_at":"2025-10-11T15:09:00.000Z",
+        "updated_at":"2025-10-11T15:09:02.000Z",
+        "deleted_at":null,
+        "responsible":{
+            "id":433,
+            "first_name":"SONIA DE CASSIA SANTOS PRADO",
+            "email":"soneca@home.com",
+            "document":"25984303876",
+            "phone":"11920012001",
+            "birthdate":"1976-03-24"
+        },
+        "gateways":[],
+        "plans":[]
+    }
+} 
+
+*/

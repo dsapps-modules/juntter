@@ -13,13 +13,16 @@ class PaytimeWebhookController extends Controller
 
     public function createEstablishment(Request $request)
     {
+        Log::info('/webhook/paytime/create-establishment called');
+        $data = $request->all();
+
         if (!$this->isAuthorized($request)) {
-            Log::info('Unauthorized: create establishment', $request->all());
-            return response()->json(['message' => 'Unauthorized: create establishment'], 401);
+            Log::info('createEstablishment unauthorized with data:\n', $data);
+            return response()->json(['message' => 'Create establishment unauthorized'], 401);
         }
 
-        Log::info('Paytime create establishment webhook received', $request->all());
-        Queue::push(new ProcessPaytimeEstablishmentCreation($request->all()));
+        Log::info('createEstablishment call processed with data ', $data);
+        Queue::push(new ProcessPaytimeEstablishmentCreation($data));
         return response()->json(['message' => 'Create establishment webhook received'], 200);
     }
 
@@ -42,8 +45,9 @@ class PaytimeWebhookController extends Controller
             return response()->json(['message' => 'Unauthorized: update establishment data'], 401);
         }
 
-        Log::info('Paytime update establishment webhook received', $request->all());
-        // Queue::push(new ProcessPaytimeEstablishmentStatusChange($request->all()));
+        Log::info(__CLASS__.'#updateEstablishmentData');
+        Log::info('Paytime update establishment data webhook received', $request->all());
+        // Queue::push(new ProcessUpdatePaytimeEstablishmentData($request->all()));
         return response()->json(['message' => 'Update establishment data webhook received'], 200);
     }
 
