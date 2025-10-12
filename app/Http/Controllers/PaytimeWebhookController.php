@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use App\Jobs\ProcessPaytimeBilletStatusChange;
 use App\Jobs\ProcessPaytimeEstablishmentStatusChange;
-use App\Jobs\ProcessPaytimeEstablishmentCreation;
+use App\Jobs\ProcessCreatePaytimeEstablishment;
 
 class PaytimeWebhookController extends Controller
 {
@@ -20,7 +20,7 @@ class PaytimeWebhookController extends Controller
             return response()->json(['message' => 'Create establishment unauthorized'], 401);
         }
 
-        Queue::push(new ProcessPaytimeEstablishmentCreation($data));
+        Queue::push(new ProcessCreatePaytimeEstablishment($data));
         return response()->json(['message' => 'Create establishment webhook received'], 200);
     }
 

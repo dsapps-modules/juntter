@@ -30,9 +30,11 @@ Route::post('/webhook/paytime/new-sub-split', [PaytimeWebhookController::class, 
 // canceled-sub-split	Cancelamento de Split Sub
 Route::post('/webhook/paytime/canceled-sub-split', [PaytimeWebhookController::class, 'canceledSubSplit']);
 
-// just to serve as a test point
-Route::post('/ping', fn() => response()->json(['pong' => true]));
 
+if (app()->environment('local')) {
+    // The application is running in the local environment.
+    require __DIR__.'/test_helper.php';
+}
 
 // para testar a api online faça, no PowerShell:
 // curl.exe -u "DSapps@checkoutjuntter.com:MPfYGyiru13ibkQ6pEMT5Cxn4pCIzR3P" -H "Content-Type: application/json" 

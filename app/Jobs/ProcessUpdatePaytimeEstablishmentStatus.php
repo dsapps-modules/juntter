@@ -32,7 +32,7 @@ class ProcessPaytimeEstablishmentStatusChange implements ShouldQueue
             return;
         }
 
-        Log::info("🔔 Atualização de estabelecimento recebida via webhook Paytime", [
+        Log::info("🔔 Atualização de status do estabelecimento recebida via webhook Paytime", [
             'transaction_id' => $data['_id'] ?? null,
             'status' => $data['status'] ?? null,
             'valor' => $data['amount'] ?? null,

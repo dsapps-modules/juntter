@@ -13,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\User;
 use App\Models\Vendedor;
 
-class ProcessPaytimeEstablishmentCreation implements ShouldQueue
+class ProcessCreatePaytimeEstablishment implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     
