@@ -17,8 +17,6 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
     return redirect(RouteServiceProvider::home());
 })->name('dashboard');
 
-
-
 // Página principal (pública)
 Route::get('/', function () {
     return view('checkout');
@@ -34,9 +32,6 @@ Route::get('/unauthorized', function () {
     return view('auth.unauthorized');
 })->name('unauthorized');
 
-// Rota para login com logout forçado (segurança)
-
-
 
 // Rotas protegidas por nível de acesso
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -46,22 +41,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])
         ->middleware('nivel.acesso:admin')
         ->name('admin.dashboard');
-   
-   
 
-            
+
     Route::middleware(['nivel.acesso:vendedor', 'must.change.password'])->group(function () {
     Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
     Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
     Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
-    
-    // Route::get('/cobranca/recorrente', function () {
-//     return view('cobranca.recorrente');
-// })->name('cobranca.recorrente');
-    
     Route::get('/cobranca/planos', [CobrancaController::class, 'listarPlanos'])->name('cobranca.planos');
     Route::get('/cobranca/planos/{id}', [CobrancaController::class, 'detalhesPlano'])->name('cobranca.plano.detalhes');
-    
+    Route::get('/cobranca/saldoextrato', [CobrancaController::class, 'saldoExtrato'])->name('cobranca.saldoextrato');
+
     // Route::get('/cobranca/pix', function () {
     //     return view('cobranca.pix');
     // })->name('cobranca.pix');
@@ -70,7 +59,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //     return view('cobranca.pagarcontas');
     // })->name('cobranca.pagarcontas');
 
-    Route::get('/cobranca/saldoextrato', [CobrancaController::class, 'saldoExtrato'])->name('cobranca.saldoextrato');
+    // Route::get('/cobranca/recorrente', function () {
+    //     return view('cobranca.recorrente');
+    // })->name('cobranca.recorrente');
+
     
     // Rotas de API para transações
     Route::post('/cobranca/transacao/credito', [CobrancaController::class, 'criarTransacaoCredito'])->name('cobranca.transacao.credito');

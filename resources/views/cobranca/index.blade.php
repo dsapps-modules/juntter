@@ -769,8 +769,8 @@
                                                     <label class="form-label fw-bold">
                                                         CEP <span class="text-danger">*</span>
                                                     </label>
-                                                    <input type="text" name="client[address][zip_code]"
-                                                        class="form-control" placeholder="00000-000" required>
+                                                    <input type="text" name="client[address][zip_code]" id="zipcode"
+                                                        class="form-control" placeholder="00000000" required>
                                                 </div>
                                             </div>
                                             <div class="row">
@@ -890,7 +890,7 @@
                                                     Data limite para desconto <span class="text-danger">*</span>
                                                 </label>
                                                 <input type="date" name="instruction[discount][limit_date]"
-                                                    class="form-control" required>
+                                                    id="discount_limit_date" class="form-control" required>
                                             </div>
                                         </div>
                                     </div>
@@ -1439,5 +1439,55 @@
 
             return 100;
         }
+    </script>
+
+
+    <script>
+        $(document).ready(function() {
+
+            const $expiration = $('input[name="expiration"]').on('change', adjustDates);
+            const $paymentLimit = $('input[name="payment_limit_date"]').on('change', adjustDates);
+            const $discountLimit = $('input#discount_limit_date').on('change', adjustDates);
+
+            function toDate(value) {
+                return value ? new Date(value + 'T00:00:00') : null;
+            }
+
+            function toISODate(date) {
+                return date.toISOString().split('T')[0];
+            }
+
+            function adjustDates() {
+                const expiration = toDate($expiration.val());
+                let paymentLimit = toDate($paymentLimit.val());
+                let discountLimit = toDate($discountLimit.val());
+
+                if (!expiration) return;
+
+                // 1️⃣ Se payment_limit_date estiver vazio ou <= expiration → expiration + 1 dia
+                if (!paymentLimit || paymentLimit <= expiration) {
+                    const newDate = new Date(expiration);
+                    newDate.setDate(expiration.getDate() + 1);
+                    $paymentLimit.val(toISODate(newDate));
+                }
+
+                // 2️⃣ Se discount_limit_date >= expiration → expiration - 1 dia
+                if (!discountLimit && discountLimit >= expiration) {
+                    const newDate = new Date(expiration);
+                    newDate.setDate(expiration.getDate() - 1);
+                    $discountLimit.val(toISODate(newDate));
+                }
+            }
+
+            // 🔁 Verificação inicial
+            adjustDates();
+
+
+            $('#zipcode').on('input change keyup', function() {
+                const cleaned = $(this).val().replace(/[^0-9]/g, '');
+                $(this).val(cleaned);
+            });
+
+        });
     </script>
 @endpush
