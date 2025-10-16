@@ -386,7 +386,7 @@
 
                             <!-- Aba Cartão de Crédito -->
                             <div class="tab-pane fade" id="cartao-content" role="tabpanel">
-                                <form action="{{ route('cobranca.transacao.credito') }}" method="POST">
+                                <form action="{{ route('cobranca.transacao.credito') }}" method="POST" id="creditForm">
                                     @csrf
                                     <input type="hidden" name="payment_type" value="CREDIT">
                                     <input type="hidden" name="session_id" id="sessionIdAntifraude"
@@ -964,7 +964,8 @@
     <!-- Modal Crédito à Vista - Link de Pagamento -->
     <div class="modal fade" id="modalCreditoVista" tabindex="-1" aria-labelledby="modalCreditoVistaLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg" data-3ds-env="{{ app()->environment('local') ? 'SANDBOX' : 'PROD' }}"
+            id="credit-modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold" id="modalCreditoVistaLabel">Crédito à Vista - Link de Pagamento</h5>
@@ -1295,7 +1296,7 @@
                 // Configurar SDK PagSeguro
                 PagSeguro.setUp({
                     session: sessionId,
-                    env: 'SANDBOX' // ou 'PROD' para produção
+                    env: $('#credit-modal').data('3ds-env')
                 });
 
                 // Coletar dados do formulário
@@ -1320,7 +1321,7 @@
                     data: {
                         customer: {
                             name: data.client.first_name + ' ' + (data.client.last_name || ''),
-                            mail: data.client.email,
+                            email: data.client.email,
                             phones: [{
                                 country: '55',
                                 area: data.client.phone.substring(0, 2),

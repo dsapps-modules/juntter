@@ -63,7 +63,7 @@ function processarCartao(form) {
     submitBtn.html('<span class="loading-spinner"></span> Processando...');
     submitBtn.prop('disabled', true);
     
-    const url = form.data('url') || window.location.href;
+    const url = form.attr('action');
     const data = form.serialize();
     
     $.post(url, data)
@@ -100,7 +100,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
         // Configurar SDK PagSeguro
         PagSeguro.setUp({
             session: sessionId,
-            env: 'SANDBOX' // ou 'PROD' para produção
+            env: 'SANDBOX' // TODO ou 'PROD' para produção
         });
 
         // Coletar dados do formulário
@@ -126,7 +126,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
             data: {
                 customer: {
                     name: data.client.first_name + ' ' + (data.client.last_name || ''),
-                    mail: data.client.email,
+                    email: data.client.email,
                     phones: [
                         {
                             country: '55',
@@ -242,7 +242,7 @@ function getAmountFromForm(form) {
     if (amountField.length > 0) {
         const valueText = amountField.first().text() || amountField.first().val() || '0';
         const value = parseFloat(valueText.replace(/[R$\s]/g, '').replace(',', '.'));
-        return Math.round(value * 100); 
+        return parseInt(Math.round(value * 100), 10); 
     }
     
     return 100; 
