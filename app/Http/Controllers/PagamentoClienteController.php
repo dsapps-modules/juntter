@@ -54,7 +54,9 @@ class PagamentoClienteController extends Controller
     }
 
     /**
-     * Processar pagamento com cartão de crédito
+     * Processar pagamento com cartão de crédito.
+     * 
+     * @execution: método chamado, via POST, enviado pelo form do link de pagamento com cartão.
      */
     public function processarCartao(Request $request, $codigoUnico)
     {
@@ -106,7 +108,6 @@ class PagamentoClienteController extends Controller
             // Forçar parcela 1 para links à vista
             if ($link->is_avista || $link->parcelas == 1) {
                 $dados['installments'] = 1;
-                
             }
 
             // Verificar se o parcelamento é válido
@@ -150,7 +151,9 @@ class PagamentoClienteController extends Controller
                 $dadosTransacao['card']['holder_document'] = '';
             }
 
+            Log::info("Dados da transação:\n" . json_encode($dadosTransacao));
             $transacao = $this->creditoService->criarTransacaoCredito($dadosTransacao);
+            Log::info("Resposta da API:\n" . json_encode($transacao));
 
             if (!$transacao) {
                 Log::error('Transação retornou vazia ou falsa');
@@ -158,19 +161,19 @@ class PagamentoClienteController extends Controller
             }
 
             // Verificar se a transação requer autenticação 3DS
-            if (isset($transacao['antifraud']) && 
-                isset($transacao['antifraud']['analyse_required']) && 
-                $transacao['antifraud']['analyse_required'] === 'THREEDS' &&
-                isset($transacao['antifraud']['analyse_status']) && 
-                $transacao['antifraud']['analyse_status'] === 'WAITING_AUTH') {
-                
-                return response()->json([
+            if (($transacao['antifraud'][0]['analyse_required'] ?? null) === 'THREEDS' &&
+                ($transacao['antifraud'][0]['analyse_status'] ?? null) === 'WAITING_AUTH') {
+
+                $data = [
                     'success' => true,
                     'requires_3ds' => true,
-                    'session_id' => $transacao['antifraud']['session_id'] ?? $dadosTransacao['session_id'],
-                    'transaction_id' => $transacao['_id'] ?? null,
+                    'session_id' => $transacao['antifraud'][0]['session'],
+                    'transaction_id' => $transacao['antifraud'][0]['_id'],
                     'message' => 'Transação criada, aguardando autenticação 3DS'
-                ]);
+                ];
+
+                Log::info("Requer 3Ds...\n" . json_encode($data));
+                return response()->json($data);
             }
 
             // Atualizar status do link se necessário

@@ -63,13 +63,14 @@ function processarCartao(form) {
     submitBtn.html('<span class="loading-spinner"></span> Processando...');
     submitBtn.prop('disabled', true);
     
-    const url = form.attr('action');
+    const url = form.data('url');
     const data = form.serialize();
-    
+
     $.post(url, data)
+    // Verificar se precisa de autenticação 3DS
         .done(function(response) {
+            console.log(response)
             if (response.success) {
-                // Verificar se precisa de autenticação 3DS
                 if (response.requires_3ds && response.session_id) {
                     processar3DS(response.session_id, response.transaction_id, form, submitBtn, originalText);
                 } else {
@@ -121,6 +122,8 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
             current[keys[keys.length - 1]] = value;
         }
 
+        const phone = data.client.phone.replace(/[()\s-]+/g, '')
+
         // Montar payload
         const request = {
             data: {
@@ -130,8 +133,8 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
                     phones: [
                         {
                             country: '55',
-                            area: data.client.phone.substring(0, 2),
-                            number: data.client.phone.substring(2),
+                            area: parseInt(phone.substring(0, 2)),
+                            number: parseInt(phone.substring(2)),
                             type: 'MOBILE'
                         }
                     ]
@@ -143,9 +146,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
                         number: data.card.card_number.replace(/\s/g, ''),
                         expMonth: data.card.expiration_month.toString().padStart(2, '0'),
                         expYear: data.card.expiration_year.toString(),
-                        holder: {
-                            name: data.card.holder_name
-                        }
+                        holder: { name: data.card.holder_name }
                     }
                 },
                 amount: {
@@ -155,7 +156,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
                 billingAddress: {
                     street: data.client.address.street,
                     number: data.client.address.number,
-                    complement: data.client.address.complement || '',
+                    complement: data.client.address.complement || null,
                     regionCode: data.client.address.state,
                     country: 'BRA',
                     city: data.client.address.city,
@@ -164,7 +165,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
                 shippingAddress: {
                     street: data.client.address.street,
                     number: data.client.address.number,
-                    complement: data.client.address.complement || '',
+                    complement: data.client.address.complement || null,
                     regionCode: data.client.address.state,
                     country: 'BRA',
                     city: data.client.address.city,
@@ -174,10 +175,14 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
             }
         };
 
+
+        console.log(data)
+
         // Executar autenticação 3DS
         PagSeguro.authenticate3DS(request)
             .then(function(result) {
                 // Enviar resultado para o endpoint
+                console.log(result)
                 enviarResultado3DS(transactionId, result, submitBtn, originalText);
             })
             .catch(function(err) {
@@ -206,7 +211,7 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
     const authData = {
         id: result.id,
         status: result.status,
-        authentication_status: result.authentication_status || 'NOT_AUTHENTICATED',
+        authentication_status: result.authenticationStatus,
         _token: $('meta[name="csrf-token"]').attr('content')
     };
 
@@ -215,6 +220,9 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
     const url = isCobrancaUnica 
         ? `/cobranca/transacao/${transactionId}/antifraud-auth`
         : `/pagamento/${window.location.pathname.split('/')[2]}/antifraud-auth`;
+
+    console.log(url)
+    console.log(authData)
 
     $.post(url, authData)
         .done(function(response) {
