@@ -702,8 +702,8 @@ public function simularTransacao(Request $request)
     {
         try {
             // Obter mês e ano do filtro
-            $mesAtual = $request->input('mes'); // pode ser vazio (Todos) ou um número
-            $anoAtual = $request->input('ano'); // pode ser vazio (Todos) ou um ano
+            $mesAtual = $request->input('mes') ?? date('m'); // pode ser vazio (Todos) ou um número
+            $anoAtual = $request->input('ano') ?? date('Y'); // pode ser vazio (Todos) ou um ano
             
             // Preparar filtros para lançamentos futuros (saldo - apenas headers obrigatórios)
             $filtrosSaldo = [

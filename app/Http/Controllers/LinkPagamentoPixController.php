@@ -114,7 +114,7 @@ class LinkPagamentoPixController extends Controller
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
-                'parcelas' => 1, // PIX sempre à vista
+                'parcelas' => '{"installments":1}', // PIX sempre à vista
                 'juros' => $dados['juros'],
                 'data_expiracao' => $dados['data_expiracao'],
                 'dados_cliente' => $dadosCliente,
