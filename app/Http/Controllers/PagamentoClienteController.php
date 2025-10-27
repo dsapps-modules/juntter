@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\LinkPagamento;
 use App\Services\TransacaoService;
 use App\Services\CreditoService;
-use App\Services\PixService;
 use App\Services\BoletoService;
+use Illuminate\Validation\Rule;
+use App\Services\PixService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -151,9 +152,9 @@ class PagamentoClienteController extends Controller
                 $dadosTransacao['card']['holder_document'] = '';
             }
 
-            Log::info("Dados da transação:\n" . json_encode($dadosTransacao));
+            Log::info("1. Dados da transação:\n" . json_encode($dadosTransacao));
             $transacao = $this->creditoService->criarTransacaoCredito($dadosTransacao);
-            Log::info("Resposta da API:\n" . json_encode($transacao));
+            Log::info("2. Resposta da API:\n" . json_encode($transacao));
 
             if (!$transacao) {
                 Log::error('Transação retornou vazia ou falsa');
@@ -172,7 +173,7 @@ class PagamentoClienteController extends Controller
                     'message' => 'Transação criada, aguardando autenticação 3DS'
                 ];
 
-                Log::info("Requer 3Ds...\n" . json_encode($data));
+                Log::info("3. Requer 3Ds...\n" . json_encode($data));
                 return response()->json($data);
             }
 
@@ -199,6 +200,27 @@ class PagamentoClienteController extends Controller
             Log::error('Erro ao processar pagamento com cartão: ' . $e->getMessage());
             return response()->json(['error' => 'Erro ao processar pagamento: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function confirmar3ds(Request $request, $codigoUnico, $modo) {
+        $link = LinkPagamento::where('codigo_unico', $codigoUnico)->first();
+        if (!$link || !$link->estaAtivo()) {
+            return response()->json(['error' => 'Link inválido ou inativo'], 400);
+        }        
+
+        $data = $request->validate([
+            'id' => 'required|string|regex:/^3DS_[A-F0-9\-]{36}$/i',
+            'status' => 'required|string|'.Rule::in(['AUTH_FLOW_COMPLETED', 'AUTH_NOT_SUPPORTED', 'CHANGE_PAYMENT_METHOD']),
+            'authentication_status' => 'required|string|'.Rule::in(['AUTHENTICATED', 'NOT_AUTHENTICATED'])
+        ]);
+
+        // faz o post para a api
+        $data['extra_headers'] = ['establishment_id' => $link->estabelecimento_id];
+        $result = $this->creditoService->confirmar3ds($data, $codigoUnico, $modo);
+        Log::info("8. Confirmado 3Ds na API?\n" . json_encode($result));
+
+        // retorna o json de cofirmação
+        return response()->json($result);
     }
 
     /**
@@ -499,8 +521,6 @@ class PagamentoClienteController extends Controller
             $resultado = $this->transacaoService->autenticarAntifraude($id, $dados);
 
             if ($resultado) {
-             
-
                 return response()->json([
                     'success' => true,
                     'message' => 'Autenticação 3DS processada com sucesso',
@@ -512,8 +532,8 @@ class PagamentoClienteController extends Controller
                     'message' => 'Erro ao processar autenticação 3DS'
                 ], 500);
             }
-
-        } catch (\Exception $e) {
+        } 
+        catch (\Exception $e) {
             Log::error('Erro ao autenticar antifraude (link): ' . $e->getMessage());
             return response()->json([
                 'success' => false,

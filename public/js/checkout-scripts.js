@@ -69,6 +69,7 @@ function processarCartao(form) {
     $.post(url, data)
     // Verificar se precisa de autenticação 3DS
         .done(function(response) {
+            console.log('4. Solicita autenticação 3Ds com esses dados:')
             console.log(response)
             if (response.success) {
                 if (response.requires_3ds && response.session_id) {
@@ -175,7 +176,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
             }
         };
 
-
+        console.log('5. Obtém os dados do form para enviar ao PagSeguro')
         console.log(data)
 
         // Executar autenticação 3DS
@@ -215,13 +216,12 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
         _token: $('meta[name="csrf-token"]').attr('content')
     };
 
-    // Determinar URL baseada no contexto
     const isCobrancaUnica = window.location.pathname.includes('/cobranca');
-    const url = isCobrancaUnica 
-        ? `/cobranca/transacao/${transactionId}/antifraud-auth`
-        : `/pagamento/${window.location.pathname.split('/')[2]}/antifraud-auth`;
+    const code = window.location.pathname.split('/')[2];
+    const id = isCobrancaUnica ? transactionId : code;
+    const url = '/pagamento/confirmar3ds/'+id
 
-    console.log(url)
+    console.log('6. Faz post no url:' + url + ' com os dados abaixo, recebidos do PagSeguro:')
     console.log(authData)
 
     $.post(url, authData)
@@ -230,6 +230,8 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
                 updateCheckoutSteps(2);
                 $('#successModal').modal('show');
                 showSuccess('Pagamento processado com sucesso!');
+                console.log('9. Recebe a reposta da API com os dados:')
+                console.log(response)
             } else {
                 showError(response.message || 'Erro ao processar autenticação');
                 submitBtn.html(originalText);
