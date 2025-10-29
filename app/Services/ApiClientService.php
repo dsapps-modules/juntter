@@ -60,6 +60,7 @@ class ApiClientService
             }
             
             Log::info("9. Headers...\n" . json_encode($headers));
+            if(isset($options['json']))
             Log::info("9. Body...\n" . json_encode($options['json']));
             
             // Trata extra_headers para GET requests (query)
