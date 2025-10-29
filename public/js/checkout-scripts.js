@@ -216,24 +216,23 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
         _token: $('meta[name="csrf-token"]').attr('content')
     };
 
-    const isCobrancaUnica = window.location.pathname.includes('/cobranca');
     const code = window.location.pathname.split('/')[2];
-    const id = isCobrancaUnica ? transactionId : code;
-    const url = '/pagamento/confirmar3ds/'+id
+    const url = `/pagamento/confirmar3ds/${transactionId}/${code}`
 
     console.log('6. Faz post no url:' + url + ' com os dados abaixo, recebidos do PagSeguro:')
     console.log(authData)
 
     $.post(url, authData)
         .done(function(response) {
+            console.log(response)
+
             if (response.success) {
                 updateCheckoutSteps(2);
                 $('#successModal').modal('show');
                 showSuccess('Pagamento processado com sucesso!');
                 console.log('9. Recebe a reposta da API com os dados:')
-                console.log(response)
             } else {
-                showError(response.message || 'Erro ao processar autenticação');
+                showError('Erro: ' + response.message || 'Erro ao processar autenticação');
                 submitBtn.html(originalText);
                 submitBtn.prop('disabled', false);
             }

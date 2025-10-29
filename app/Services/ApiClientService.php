@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\ApiToken;
 use Exception;
 
@@ -55,15 +56,19 @@ class ApiClientService
                 foreach ($options['json']['extra_headers'] as $key => $value) {
                     $headers[$key] = $value;
                 }
+                unset($options['json']['extra_headers']);
             }
+            
+            Log::info("9. Headers...\n" . json_encode($headers));
+            Log::info("9. Body...\n" . json_encode($options['json']));
             
             // Trata extra_headers para GET requests (query)
             if (isset($options['query']['extra_headers'])) {
                 foreach ($options['query']['extra_headers'] as $key => $value) {
                     $headers[$key] = $value;
                 }
+                unset($options['query']['extra_headers']);
             }
-
 
             // dump('URL sendo chamada: ' . "{$this->baseUrl}/{$endpoint}");
             

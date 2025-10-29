@@ -21,7 +21,7 @@ class CreditoService
 
     public function confirmar3ds(array $dados, $id)
     {
-        Log::info("7. Envia confirmação 3Ds para a API...\n" . json_encode($dados));
+        Log::info("8. Envia confirmação 3Ds para a API usando a rota marketplace/transactions/{$id}/antifraud-auth\n" . json_encode($dados));
         return $this->apiClient->post("marketplace/transactions/{$id}/antifraud-auth", $dados);
     }
 

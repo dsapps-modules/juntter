@@ -126,7 +126,7 @@ class PagamentoClienteController extends Controller
                 'client' => $dados['client'],
                 'card' => $dados['card'],
                 'extra_headers' => [
-                    'establishment_id' => $link->estabelecimento_id
+                    'establishment_id' => (int) $link->estabelecimento_id
                 ],
                 'session_id' => 'session_' . uniqid(),
                 'info_additional' => [
@@ -202,7 +202,7 @@ class PagamentoClienteController extends Controller
         }
     }
 
-    public function confirmar3ds(Request $request, $codigoUnico) {
+    public function confirmar3ds(Request $request, $transid, $codigoUnico) {
         $link = LinkPagamento::where('codigo_unico', $codigoUnico)->first();
         if (!$link || !$link->estaAtivo()) {
             return response()->json(['error' => 'Link inválido ou inativo'], 400);
@@ -216,9 +216,9 @@ class PagamentoClienteController extends Controller
 
         // faz o post para a api
         $data['extra_headers'] = ['establishment_id' => $link->estabelecimento_id];
-        Log::info("8. Confirma 3Ds na API com esses dados?\n" . json_encode($data));
-        $result = $this->creditoService->confirmar3ds($data, $codigoUnico);
-        Log::info("(. Confirmada autenticação 3Ds na API com a resposta:\n" . json_encode($result));
+        Log::info("7. Confirma 3Ds na API com esses dados?\n" . json_encode($data));
+        $result = $this->creditoService->confirmar3ds($data, $transid);
+        Log::info("10. Recebe resposta da API Paytime sobre 3Ds:\n" . json_encode($result));
 
         // retorna o json de cofirmação
         return response()->json($result);
