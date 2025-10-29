@@ -169,7 +169,7 @@ class PagamentoClienteController extends Controller
                     'success' => true,
                     'requires_3ds' => true,
                     'session_id' => $transacao['antifraud'][0]['session'],
-                    'transaction_id' => $transacao['antifraud'][0]['_id'],
+                    'transaction_id' => $transacao['_id'],
                     'message' => 'Transação criada, aguardando autenticação 3DS'
                 ];
 
