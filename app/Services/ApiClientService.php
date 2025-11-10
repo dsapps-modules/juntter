@@ -62,6 +62,7 @@ class ApiClientService
             Log::info("9. Headers...\n" . json_encode($headers));
             if(isset($options['json']))
             Log::info("9. Body...\n" . json_encode($options['json']));
+            Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
             
             // Trata extra_headers para GET requests (query)
             if (isset($options['query']['extra_headers'])) {
@@ -70,8 +71,6 @@ class ApiClientService
                 }
                 unset($options['query']['extra_headers']);
             }
-
-            // dump('URL sendo chamada: ' . "{$this->baseUrl}/{$endpoint}");
             
             $response = Http::withHeaders($headers)
                 ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);

@@ -117,7 +117,7 @@
                                             <td></td>
                                             <td>
                                                 <small class="text-muted font-monospace">
-                                                    {{ substr($transacao['_id'] ?? 'N/A', 0, 8) }}...
+                                                    {{ $transacao['_id'] ?? 'N/A' }}
                                                 </small>
                                             </td>
                                             <td>
