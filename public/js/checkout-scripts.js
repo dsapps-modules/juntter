@@ -271,7 +271,7 @@ function processarBoleto() {
     
     // Dados mínimos para Boleto (dados vêm do link)
     const dados = {
-        _token: $('meta[name="csrf-token"]').attr('content')
+        _token: $('meta[name="_token"]').attr('content')
     };
     
     // Fazer requisição para criar boleto
@@ -347,7 +347,7 @@ function gerarQRCode() {
     
     // Dados mínimos para PIX (dados vêm do link)
     const dados = {
-        _token: $('meta[name="csrf-token"]').attr('content')
+        _token: $('meta[name="_token"]').attr('content')
     };
     
     // Fazer requisição para criar transação PIX

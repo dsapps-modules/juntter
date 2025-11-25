@@ -900,7 +900,7 @@
                 id: result.id,
                 status: result.status,
                 authentication_status: result.authentication_status || 'NOT_AUTHENTICATED',
-                _token: $('meta[name="csrf-token"]').attr('content')
+                _token: $('meta[name="_token"]').attr('content')
             };
 
             const url = `/cobranca/transacao/${transactionId}/antifraud-auth`;
