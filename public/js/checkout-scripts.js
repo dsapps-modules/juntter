@@ -78,6 +78,7 @@ function processarCartao(form) {
                     // Sucesso sem 3DS
                     updateCheckoutSteps(2);
                     $('#successModal').modal('show');
+                    location.href = '{{ route("pagamento.sucesso") }}';
                 }
             } else {
                 showError(response.error || 'Erro ao processar pagamento');
@@ -213,11 +214,12 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
         id: result.id,
         status: result.status,
         authentication_status: result.authenticationStatus,
-        _token: $('meta[name="csrf-token"]').attr('content')
+        _token: $('meta[name="_token"]').attr('content')
     };
 
-    const code = window.location.pathname.split('/')[2];
-    const url = `/pagamento/confirmar3ds/${transactionId}/${code}`
+    const cod = window.location.pathname.split('/')[2];
+    const cpl = cod ? `/${cod}` : '';
+    const url = `/pagamento/confirmar3ds/${transactionId}${cpl}`
 
     console.log('6. Faz post no url:' + url + ' com os dados abaixo, recebidos do PagSeguro:')
     console.log(authData)
@@ -226,11 +228,12 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
         .done(function(response) {
             console.log(response)
 
-            if (response.success) {
+            if (response.status == 'PENDING') {
                 updateCheckoutSteps(2);
                 $('#successModal').modal('show');
                 showSuccess('Pagamento processado com sucesso!');
-                console.log('9. Recebe a reposta da API com os dados:')
+                console.log('9. Recebe a confirmação da API');
+                location.reload();
             } else {
                 showError('Erro: ' + response.message || 'Erro ao processar autenticação');
                 submitBtn.html(originalText);

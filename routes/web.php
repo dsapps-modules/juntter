@@ -23,9 +23,10 @@ Route::get('/', function () {
 })->name('checkout');
 
 // Rotas públicas para pagamento do cliente (apenas cartão)
+Route::get('/pagamento/efetivado/sucesso', [PagamentoClienteController::class, 'pagamentoSucesso'])->name('pagamento.sucesso');
 Route::get('/pagamento/{codigoUnico}', [  PagamentoClienteController::class, 'mostrarPagamento'])->name('pagamento.link');
 Route::post('/pagamento/{codigoUnico}/cartao', [PagamentoClienteController::class, 'processarCartao'])->name('pagamento.cartao');
-Route::post('/pagamento/confirmar3ds/{transid}/{itemid}', [PagamentoClienteController::class, 'confirmar3ds'])->name('pagamento.confirmar3ds');
+Route::post('/pagamento/confirmar3ds/{transid}/{itemid?}', [PagamentoClienteController::class, 'confirmar3ds'])->name('pagamento.confirmar3ds');
 Route::get('/pagamento/{codigoUnico}/status', [PagamentoClienteController::class, 'verificarStatus'])->name('pagamento.status');
 
 // Página de acesso não autorizado
