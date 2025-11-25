@@ -357,7 +357,7 @@ class PagamentoClienteController extends Controller
             $dadosBoleto = [
                 'amount' => $link->valor_centavos,
                 'expiration' => $link->data_vencimento ?: now()->addDays(7)->format('Y-m-d'),
-                'payment_limit_date' => $link->data_limite_pagamento,
+                'payment_limit_date' => substr($link->data_limite_pagamento, 0, 10),
                 'recharge' => false, // Links de pagamento não são recarga
                 'client' => [
                     'first_name' => $dadosCliente['nome'] ?? 'Cliente',
@@ -419,15 +419,12 @@ class PagamentoClienteController extends Controller
             if (isset($dadosBoleto['client']['address']['zip_code'])) {
                 $cepLimpo = preg_replace('/[^0-9]/', '', $dadosBoleto['client']['address']['zip_code']);
                 $dadosBoleto['client']['address']['zip_code'] = substr($cepLimpo, 0, 8);
-                
-                
             }
 
-            
-
             // Criar boleto
+            Log::info('Solicitação de criação do boleto: '. json_encode($dadosBoleto));
             $boleto = $this->boletoService->gerarBoleto($dadosBoleto);
-
+            Log::info('Resposta na criação do boleto: '. json_encode($boleto));
 
             if (!$boleto) {
                 Log::error('Boleto retornou vazio ou falso');

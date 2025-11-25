@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LinkBoletoRequest;
 use App\Models\LinkPagamento;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -75,7 +76,7 @@ class LinkPagamentoBoletoController extends Controller
     /**
      * Salvar novo link de pagamento Boleto
      */
-    public function store(Request $request)
+    public function store(LinkBoletoRequest $request)
     {
         try {   
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
@@ -84,38 +85,7 @@ class LinkPagamentoBoletoController extends Controller
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
-            $dados = $request->validate([
-                'descricao' => 'nullable|string|max:1000',
-                'valor' => 'required|string|min:1',
-                'data_vencimento' => 'required|date|after:today',
-                'data_limite_pagamento' => 'nullable|date|after:data_vencimento',
-                'juros' => 'required|in:CLIENT,ESTABLISHMENT',
-                'data_expiracao' => 'nullable|date|after:today',
-                'dados_cliente_preenchidos' => 'required|array',
-                'dados_cliente_preenchidos.nome' => 'required|string|max:255',
-                'dados_cliente_preenchidos.sobrenome' => 'required|string|max:255',
-                'dados_cliente_preenchidos.email' => 'required|email|max:255',
-                'dados_cliente_preenchidos.telefone' => 'required|string|max:20',
-                'dados_cliente_preenchidos.documento' => 'required|string|max:20',
-                'dados_cliente_preenchidos.endereco' => 'required|array',
-                'dados_cliente_preenchidos.endereco.rua' => 'required|string|max:255',
-                'dados_cliente_preenchidos.endereco.numero' => 'required|string|max:20',
-                'dados_cliente_preenchidos.endereco.bairro' => 'required|string|max:255',
-                'dados_cliente_preenchidos.endereco.cidade' => 'required|string|max:255',
-                'dados_cliente_preenchidos.endereco.estado' => 'required|string|max:2',
-                'dados_cliente_preenchidos.endereco.cep' => 'required|string|max:10',
-                'dados_cliente_preenchidos.endereco.complemento' => 'nullable|string|max:255',
-                // Instruções do boleto
-                'instrucoes_boleto' => 'required|array',
-                'instrucoes_boleto.description' => 'nullable|string|max:500',
-                'instrucoes_boleto.late_fee' => 'required|array',
-                'instrucoes_boleto.late_fee.amount' => 'required|numeric|min:0',
-                'instrucoes_boleto.interest' => 'required|array',
-                'instrucoes_boleto.interest.amount' => 'required|numeric|min:0',
-                'instrucoes_boleto.discount' => 'required|array',
-                'instrucoes_boleto.discount.amount' => 'required|numeric|min:0',
-                'instrucoes_boleto.discount.limit_date' => 'required|date|before:data_vencimento',
-            ]);
+            $dados = $request->validated();
 
             // Converter valor para centavos
             $valorCentavos = $this->converterValorParaCentavos($dados['valor']);
@@ -152,7 +122,7 @@ class LinkPagamentoBoletoController extends Controller
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
-                'parcelas' => 1, // Boleto sempre à vista
+                'parcelas' => json_encode(['installments' => 1 ]), // Boleto sempre à vista
                 'juros' => $dados['juros'],
                 'data_expiracao' => $dados['data_expiracao'],
                 'data_vencimento' => $dados['data_vencimento'],
