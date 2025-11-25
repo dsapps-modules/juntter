@@ -1,5 +1,4 @@
 @extends('templates.dashboard-template')
-
 @section('title', 'Cobrança Única')
 
 @section('content')
@@ -10,19 +9,9 @@
             ($estabelecimento['id'] ?? 'N/A')
         : null" />
 
-
     @if (session('pix_data'))
         <div id="pix-data" data-pix-data="{{ json_encode(session('pix_data')) }}" style="display: none;"></div>
     @endif
-    <!-- Alert -->
-    {{-- <div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-warning bg-warning text-white border-0 rounded-3 shadow-sm">
-            <i class="fas fa-info-circle me-2"></i>
-            Gere links de pagamento para seus clientes.
-        </div>
-    </div>
-</div> --}}
 
     <!-- Header com botão -->
     <div class="row align-items-center mb-4">
@@ -267,6 +256,17 @@
                     <h5 class="modal-title fw-bold" id="modalCobrancaLabel">Cobrança única</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
+
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $erro)
+                                <li>{{ $erro }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <div class="modal-body">
                     <!-- Abas de pagamento -->
                     <div class="payment-tabs mb-4">
@@ -303,90 +303,37 @@
                                             <label class="form-label fw-bold">
                                                 Valor da transação <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" name="amount" class="form-control" placeholder="0,00"
-                                                required>
+                                            <input type="text" name="amount" value="{{ old('amount') }}"
+                                                class="form-control" placeholder="0,00" required>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold">
-                                                Quem paga as taxas <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="interest" class="form-select" required>
-                                                <option value="">Selecione...</option>
-                                                <option value="CLIENT">Cliente</option>
-                                                <option value="ESTABLISHMENT">Estabelecimento</option>
-                                            </select>
-                                        </div>
+                                        <x-form.quem-paga-taxa />
                                     </div>
 
                                     <!-- Dados do Cliente (OPCIONAL) -->
-                                    <div class="card bg-light border-0 mb-4">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                DADOS DO CLIENTE <span class="text-muted">(OPCIONAL)</span>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Nome do cliente</label>
-                                                    <input type="text" name="client[first_name]" class="form-control"
-                                                        placeholder="Nome completo">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Sobrenome</label>
-                                                    <input type="text" name="client[last_name]" class="form-control"
-                                                        placeholder="Sobrenome">
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">CPF/CNPJ</label>
-                                                    <input type="text" name="client[document]" class="form-control"
-                                                        placeholder="000.000.000-00">
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Telefone</label>
-                                                    <input type="text" name="client[phone]" class="form-control"
-                                                        placeholder="(00) 00000-0000">
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Email</label>
-                                                <input type="email" name="client[email]" class="form-control"
-                                                    placeholder="email@exemplo.com">
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <x-form.dados-cliente />
 
                                     <!-- Informações Adicionais (OPCIONAL) -->
                                     <div class="card bg-light border-0 mb-4">
                                         <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                INFORMAÇÕES ADICIONAIS <span class="text-muted">(OPCIONAL)</span>
-                                            </h6>
                                             <div class="row">
                                                 <div class="col-12 mb-3">
-                                                    <label class="form-label fw-bold">Informações Adicionais</label>
-                                                    <input type="text" name="info_additional" class="form-control"
-                                                        placeholder="Ex: ERP12345, Sistema de origem, etc.">
+                                                    <label class="form-label fw-bold">Observações</label>
+                                                    <input type="text" name="info_additional"
+                                                        value="{{ old('info_additional') }}" class="form-control">
                                                     <small class="text-muted">Informações extras sobre a transação</small>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Fechar</button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save me-2"></i>
-                                            Criar Transação PIX
-                                        </button>
-                                    </div>
+                                    <x-form.submit-row label="Criar Transação Pix" name="link-tab" />
                                 </form>
                             </div>
 
                             <!-- Aba Cartão de Crédito -->
                             <div class="tab-pane fade" id="cartao-content" role="tabpanel">
-                                <form action="{{ route('cobranca.transacao.credito') }}" method="POST" id="creditForm">
+                                <form data-url="{{ route('cobranca.transacao.credito') }}" method="POST"
+                                    id="creditForm">
                                     @csrf
                                     <input type="hidden" name="payment_type" value="CREDIT">
                                     <input type="hidden" name="session_id" id="sessionIdAntifraude"
@@ -397,8 +344,8 @@
                                             <label class="form-label fw-bold">
                                                 Valor da transação <span class="text-danger">*</span>
                                             </label>
-                                            <input type="text" name="amount" id="amount-credito"
-                                                class="form-control" placeholder="0,00" required>
+                                            <input type="text" name="amount" value="{{ old('amount') }}"
+                                                id="amount-credito" class="form-control" placeholder="0,00" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label fw-bold">
@@ -421,236 +368,19 @@
                                         </div>
                                     </div>
                                     <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold">
-                                                Quem paga as taxas <span class="text-danger">*</span>
-                                            </label>
-                                            <select name="interest" class="form-select" required>
-                                                <option value="">Selecione...</option>
-                                                <option value="CLIENT">Cliente</option>
-                                                <option value="ESTABLISHMENT">Estabelecimento</option>
-                                            </select>
-                                        </div>
+                                        <x-form.quem-paga-taxa />
                                     </div>
 
                                     <!-- Dados do Cliente (OBRIGATÓRIO) -->
-                                    <div class="card bg-light border-0 mb-4">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                DADOS DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Nome <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[first_name]" class="form-control"
-                                                        placeholder="Nome completo" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">Sobrenome</label>
-                                                    <input type="text" name="client[last_name]" class="form-control"
-                                                        placeholder="Sobrenome">
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        CPF/CNPJ <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[document]" class="form-control"
-                                                        placeholder="000.000.000-00" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Telefone <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[phone]" class="form-control"
-                                                        placeholder="(00) 00000-0000" required>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">
-                                                    Email <span class="text-danger">*</span>
-                                                </label>
-                                                <input type="email" name="client[email]" class="form-control"
-                                                    placeholder="email@exemplo.com" required>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <x-form.dados-cliente type="obrigatorio" />
 
                                     <!-- Endereço do Cliente (OBRIGATÓRIO) -->
-                                    <div class="card bg-light border-0 mb-4">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                ENDEREÇO DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-8 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Rua <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][street]"
-                                                        class="form-control" placeholder="Nome da rua" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Número <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][number]"
-                                                        class="form-control" placeholder="123" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">Complemento</label>
-                                                    <input type="text" name="client[address][complement]"
-                                                        class="form-control" placeholder="Apto 101">
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Bairro <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][neighborhood]"
-                                                        class="form-control" placeholder="Centro" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        CEP <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][zip_code]"
-                                                        class="form-control" placeholder="00000-000" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-8 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Cidade <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][city]"
-                                                        class="form-control" placeholder="Nome da cidade" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Estado <span class="text-danger">*</span>
-                                                    </label>
-                                                    <select name="client[address][state]" class="form-select" required>
-                                                        <option value="">Selecione...</option>
-                                                        <option value="AC">Acre</option>
-                                                        <option value="AL">Alagoas</option>
-                                                        <option value="AP">Amapá</option>
-                                                        <option value="AM">Amazonas</option>
-                                                        <option value="BA">Bahia</option>
-                                                        <option value="CE">Ceará</option>
-                                                        <option value="DF">Distrito Federal</option>
-                                                        <option value="ES">Espírito Santo</option>
-                                                        <option value="GO">Goiás</option>
-                                                        <option value="MA">Maranhão</option>
-                                                        <option value="MT">Mato Grosso</option>
-                                                        <option value="MS">Mato Grosso do Sul</option>
-                                                        <option value="MG">Minas Gerais</option>
-                                                        <option value="PA">Pará</option>
-                                                        <option value="PB">Paraíba</option>
-                                                        <option value="PR">Paraná</option>
-                                                        <option value="PE">Pernambuco</option>
-                                                        <option value="PI">Piauí</option>
-                                                        <option value="RJ">Rio de Janeiro</option>
-                                                        <option value="RN">Rio Grande do Norte</option>
-                                                        <option value="RS">Rio Grande do Sul</option>
-                                                        <option value="RO">Rondônia</option>
-                                                        <option value="RR">Roraima</option>
-                                                        <option value="SC">Santa Catarina</option>
-                                                        <option value="SP">São Paulo</option>
-                                                        <option value="SE">Sergipe</option>
-                                                        <option value="TO">Tocantins</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <x-form.endereco />
 
                                     <!-- Dados do Cartão (OBRIGATÓRIO) -->
-                                    <div class="card bg-light border-0 mb-4">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                DADOS DO CARTÃO <span class="text-danger">(OBRIGATÓRIO)</span>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Nome do titular <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="card[holder_name]" class="form-control"
-                                                        placeholder="Nome completo" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">CPF/CNPJ do titular</label>
-                                                    <input type="text" name="card[holder_document]"
-                                                        class="form-control" placeholder="000.000.000-00">
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Número do cartão <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="card[card_number]" class="form-control"
-                                                        placeholder="0000 0000 0000 0000" required>
-                                                </div>
-                                                <div class="col-md-2 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Mês <span class="text-danger">*</span>
-                                                    </label>
-                                                    <select name="card[expiration_month]" class="form-select" required>
-                                                        <option value="">MM</option>
-                                                        <option value="1">01</option>
-                                                        <option value="2">02</option>
-                                                        <option value="3">03</option>
-                                                        <option value="4">04</option>
-                                                        <option value="5">05</option>
-                                                        <option value="6">06</option>
-                                                        <option value="7">07</option>
-                                                        <option value="8">08</option>
-                                                        <option value="9">09</option>
-                                                        <option value="10">10</option>
-                                                        <option value="11">11</option>
-                                                        <option value="12">12</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-2 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Ano <span class="text-danger">*</span>
-                                                    </label>
-                                                    <select name="card[expiration_year]" class="form-select" required>
-                                                        <option value="">AAAA</option>
-                                                        <option value="2024">2024</option>
-                                                        <option value="2025">2025</option>
-                                                        <option value="2026">2026</option>
-                                                        <option value="2027">2027</option>
-                                                        <option value="2028">2028</option>
-                                                        <option value="2029">2029</option>
-                                                        <option value="2030">2030</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-2 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        CVV <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="card[security_code]" class="form-control"
-                                                        placeholder="000" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <x-form.dados-cartao />
 
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Fechar</button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save me-2"></i>
-                                            Criar Transação de Crédito
-                                        </button>
-                                    </div>
+                                    <x-form.submit-row label="Criar Transação de Crédito" name="cartao-tab" />
                                 </form>
                             </div>
 
@@ -690,135 +420,10 @@
                                     </div>
 
                                     <!-- Dados do Cliente (OBRIGATÓRIO) -->
-                                    <div class="card bg-light border-0 mb-4">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                DADOS DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Nome <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[first_name]" class="form-control"
-                                                        placeholder="Nome completo" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Sobrenome <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[last_name]" class="form-control"
-                                                        placeholder="Sobrenome" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        CPF/CNPJ <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[document]" class="form-control"
-                                                        placeholder="000.000.000-00" required>
-                                                </div>
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Email <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="email" name="client[email]" class="form-control"
-                                                        placeholder="email@exemplo.com" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <x-form.dados-cliente type="obrigatorio" :usePhone="false" />
 
                                     <!-- Endereço do Cliente (OBRIGATÓRIO) -->
-                                    <div class="card bg-light border-0 mb-4">
-                                        <div class="card-body">
-                                            <h6 class="fw-bold text-uppercase small text-muted mb-3">
-                                                ENDEREÇO DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-8 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Rua <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][street]"
-                                                        class="form-control" placeholder="Nome da rua" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Número <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][number]"
-                                                        class="form-control" placeholder="123" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">Complemento</label>
-                                                    <input type="text" name="client[address][complement]"
-                                                        class="form-control" placeholder="Apto 101">
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Bairro <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][neighborhood]"
-                                                        class="form-control" placeholder="Centro" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        CEP <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][zip_code]" id="zipcode"
-                                                        class="form-control" placeholder="00000000" required>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-8 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Cidade <span class="text-danger">*</span>
-                                                    </label>
-                                                    <input type="text" name="client[address][city]"
-                                                        class="form-control" placeholder="Nome da cidade" required>
-                                                </div>
-                                                <div class="col-md-4 mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Estado <span class="text-danger">*</span>
-                                                    </label>
-                                                    <select name="client[address][state]" class="form-select" required>
-                                                        <option value="">Selecione...</option>
-                                                        <option value="AC">Acre</option>
-                                                        <option value="AL">Alagoas</option>
-                                                        <option value="AP">Amapá</option>
-                                                        <option value="AM">Amazonas</option>
-                                                        <option value="BA">Bahia</option>
-                                                        <option value="CE">Ceará</option>
-                                                        <option value="DF">Distrito Federal</option>
-                                                        <option value="ES">Espírito Santo</option>
-                                                        <option value="GO">Goiás</option>
-                                                        <option value="MA">Maranhão</option>
-                                                        <option value="MT">Mato Grosso</option>
-                                                        <option value="MS">Mato Grosso do Sul</option>
-                                                        <option value="MG">Minas Gerais</option>
-                                                        <option value="PA">Pará</option>
-                                                        <option value="PB">Paraíba</option>
-                                                        <option value="PR">Paraná</option>
-                                                        <option value="PE">Pernambuco</option>
-                                                        <option value="PI">Piauí</option>
-                                                        <option value="RJ">Rio de Janeiro</option>
-                                                        <option value="RN">Rio Grande do Norte</option>
-                                                        <option value="RS">Rio Grande do Sul</option>
-                                                        <option value="RO">Rondônia</option>
-                                                        <option value="RR">Roraima</option>
-                                                        <option value="SC">Santa Catarina</option>
-                                                        <option value="SP">São Paulo</option>
-                                                        <option value="SE">Sergipe</option>
-                                                        <option value="TO">Tocantins</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <x-form.endereco />
 
                                     <!-- Instruções do Boleto (OBRIGATÓRIO) -->
                                     <div class="card bg-light border-0 mb-4">
@@ -895,14 +500,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary"
-                                            data-bs-dismiss="modal">Fechar</button>
-                                        <button type="submit" class="btn btn-primary">
-                                            <i class="fas fa-save me-2"></i>
-                                            Criar Boleto
-                                        </button>
-                                    </div>
+                                    <x-form.submit-row label="Criar Boleto" name="boleto-tab" />
                                 </form>
                             </div>
                         </div>
@@ -1046,10 +644,17 @@
 
             // Definir data padrão de expiração (7 dias)
             definirDataPadraoExpiracao();
+
+            @if ($errors->any())
+                setTimeout(() => {
+                    atualizarOpcoesParcelasCredito('{{ old('amount') }}');
+                    $('#modalCobranca').modal('show')
+                    $('#{{ old('submit') }}').trigger('click')
+                }, 1000);
+            @endif
         });
 
         function showPixModal(pixData) {
-
 
             // Buscar QR Code em base64
             let qrCodeBase64 = '';
@@ -1442,7 +1047,6 @@
         }
     </script>
 
-
     <script>
         $(document).ready(function() {
 
@@ -1491,4 +1095,8 @@
 
         });
     </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
+    <script src="{{ asset('js/checkout-scripts.js') }}"></script>
 @endpush
