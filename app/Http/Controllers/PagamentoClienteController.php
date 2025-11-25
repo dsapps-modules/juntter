@@ -54,6 +54,11 @@ class PagamentoClienteController extends Controller
         }
     }
 
+    public function pagamentoSucesso()
+    {
+        return view('pagamento.sucesso');
+    }
+
     /**
      * Processar pagamento com cartão de crédito.
      * 
@@ -90,21 +95,7 @@ class PagamentoClienteController extends Controller
                 'card.security_code' => 'required|string|min:3|max:4',
             ]);
 
-            // Limpar campos com máscara - manter apenas números
-            $dados['client']['document'] = preg_replace('/[^0-9]/', '', $dados['client']['document']);
-            $dados['client']['phone'] = preg_replace('/[^0-9]/', '', $dados['client']['phone']);
-            $dados['client']['address']['zip_code'] = preg_replace('/[^0-9]/', '', $dados['client']['address']['zip_code']);
-            $dados['card']['card_number'] = preg_replace('/[^0-9]/', '', $dados['card']['card_number']);
-            
-            // Limpar documento do portador do cartão se fornecido
-            if (!empty($dados['card']['holder_document'])) {
-                $dados['card']['holder_document'] = preg_replace('/[^0-9]/', '', $dados['card']['holder_document']);
-            }
-            
-            // Converter campos para tipos corretos para a API
-            $dados['installments'] = (int)($dados['installments'] ?? 1); // Default para 1 se não enviado
-            $dados['card']['expiration_month'] = (int)$dados['card']['expiration_month'];
-            $dados['card']['expiration_year'] = (int)$dados['card']['expiration_year'];
+            $dados = $this->creditoService->organiza($dados);
 
             // Forçar parcela 1 para links à vista
             if ($link->is_avista || $link->parcelas == 1) {
@@ -164,17 +155,7 @@ class PagamentoClienteController extends Controller
             // Verificar se a transação requer autenticação 3DS
             if (($transacao['antifraud'][0]['analyse_required'] ?? null) === 'THREEDS' &&
                 ($transacao['antifraud'][0]['analyse_status'] ?? null) === 'WAITING_AUTH') {
-
-                $data = [
-                    'success' => true,
-                    'requires_3ds' => true,
-                    'session_id' => $transacao['antifraud'][0]['session'],
-                    'transaction_id' => $transacao['_id'],
-                    'message' => 'Transação criada, aguardando autenticação 3DS'
-                ];
-
-                Log::info("3. Requer 3Ds...\n" . json_encode($data));
-                return response()->json($data);
+                return $this->creditoService->requer3DS($transacao);
             }
 
             // Atualizar status do link se necessário
@@ -182,18 +163,11 @@ class PagamentoClienteController extends Controller
                 $link->update(['status' => 'PAID']);
             }
 
-            // Verificar se a transação tem um ID válido antes de retornar sucesso
-            $transacaoId = $transacao['_id'] ?? null;
-            
-            if (!$transacaoId) {
-                Log::error('Transação criada mas sem ID válido');
-                throw new \Exception('erro no pagamento');
-            }
+            $this->creditoService->verificaSucesso($transacao);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Pagamento processado com sucesso',
-                
             ]);
 
         } catch (\Exception $e) {
@@ -202,20 +176,26 @@ class PagamentoClienteController extends Controller
         }
     }
 
-    public function confirmar3ds(Request $request, $transid, $codigoUnico) {
-        $link = LinkPagamento::where('codigo_unico', $codigoUnico)->first();
-        if (!$link || !$link->estaAtivo()) {
-            return response()->json(['error' => 'Link inválido ou inativo'], 400);
-        }        
-
+    public function confirmar3ds(Request $request, $transid, $codigoUnico = null) {     
         $data = $request->validate([
             'id' => 'required|string|regex:/^3DS_[A-F0-9\-]{36}$/i',
             'status' => 'required|string|'.Rule::in(['AUTH_FLOW_COMPLETED', 'AUTH_NOT_SUPPORTED', 'CHANGE_PAYMENT_METHOD']),
             'authentication_status' => 'required|string|'.Rule::in(['AUTHENTICATED', 'NOT_AUTHENTICATED'])
         ]);
 
-        // faz o post para a api
-        $data['extra_headers'] = ['establishment_id' => $link->estabelecimento_id];
+        if($codigoUnico){
+            $link = LinkPagamento::where('codigo_unico', $codigoUnico)->first();
+            if (!$link || !$link->estaAtivo()) {
+                return response()->json(['error' => 'Link inválido ou inativo'], 400);
+            } 
+            $data['extra_headers'] = ['establishment_id' => $link->estabelecimento_id];
+        }
+        else {
+            $data['extra_headers'] = [
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+            ];
+        }
+
         Log::info("7. Confirma 3Ds na API com esses dados?\n" . json_encode($data));
         $result = $this->creditoService->confirmar3ds($data, $transid);
         Log::info("10. Recebe resposta da API Paytime sobre 3Ds:\n" . json_encode($result));

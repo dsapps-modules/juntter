@@ -25,12 +25,10 @@ return new class extends Migration
             $table->timestamp('data_expiracao')->nullable();
             $table->json('dados_cliente')->nullable(); // Dados opcionais do cliente
             $table->string('url_retorno')->nullable(); // URL de retorno após pagamento
-            $table->string('url_webhook')->nullable(); // URL para webhook
-           
-            $table->timestamps();
-            
+            $table->string('url_webhook')->nullable(); // URL para webhook            
             $table->index(['estabelecimento_id', 'status']);
             $table->index('codigo_unico');
+            $table->timestamps();
         });
     }
 

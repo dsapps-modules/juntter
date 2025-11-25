@@ -59,9 +59,9 @@ class ApiClientService
                 unset($options['json']['extra_headers']);
             }
             
-            Log::info("9. Headers...\n" . json_encode($headers));
+            // Log::info("9. Headers...\n" . json_encode($headers));
             if(isset($options['json']))
-            Log::info("9. Body...\n" . json_encode($options['json']));
+            // Log::info("9. Body...\n" . json_encode($options['json']));
             Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
             
             // Trata extra_headers para GET requests (query)

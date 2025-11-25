@@ -82,8 +82,8 @@ class DashboardController extends Controller
     public function adminDashboard(Request $request)
     {
         // Obter mês e ano do filtro
-        $mesAtual = $request->input('mes'); // pode ser vazio (Todos) ou um número
-        $anoAtual = $request->input('ano'); // pode ser vazio (Todos) ou um ano
+        $mesAtual = $request->input('mes') ?? date('m'); // pode ser vazio (Todos) ou um número
+        $anoAtual = $request->input('ano') ?? date('Y'); // pode ser vazio (Todos) ou um ano
         
         try {
             // Buscar dados consolidados de todos os estabelecimentos com filtro de data

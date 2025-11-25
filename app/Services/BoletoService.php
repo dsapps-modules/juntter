@@ -37,4 +37,22 @@ class BoletoService
     {
         return $this->apiClient->delete("marketplace/billets/{$id}");
     }
+
+    public function organiza($dados){
+        $dados['client']['document'] = preg_replace('/[^0-9]/', '', $dados['client']['document']);
+        $dados['client']['address']['zip_code'] = preg_replace('/[^0-9]/', '', $dados['client']['address']['zip_code']);
+
+        // Adicionar os campos mode automaticamente (são sempre os mesmos para boleto)
+        $dados['instruction']['late_fee']['mode'] = 'PERCENTAGE';
+        $dados['instruction']['interest']['mode'] = 'MONTHLY_PERCENTAGE';
+        $dados['instruction']['discount']['mode'] = 'PERCENTAGE';
+
+        // Adicionar establishment_id
+        $dados['extra_headers'] = [
+            'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+        ];
+
+        return $dados;
+    }
+
 }

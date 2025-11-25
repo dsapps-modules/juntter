@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\BoletoRequest;
+use App\Http\Requests\CobrancaCartaoRequest;
+use App\Http\Requests\CobrancaPixRequest;
 use App\Services\TransacaoService;
 use App\Services\CreditoService;
 use App\Services\PixService;
@@ -118,6 +121,7 @@ class CobrancaController extends Controller
             ];
 
             $transacoes = $this->transacaoService->listarTransacoes($filtros);
+            // dd($transacoes);
 
             // Filtrar transações de crédito para mostrar apenas à vista (1x) antes de mesclar com boletos
             if (isset($transacoes['data']) && is_array($transacoes['data'])) {
@@ -144,6 +148,7 @@ class CobrancaController extends Controller
                     'filters' => json_encode($filtrosData)
                 ];
                 $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
+                // dd($boletos);
 
                 if (isset($boletos['data']) && is_array($boletos['data'])) {
                     // Adaptar estrutura dos boletos para o formato da tabela de transações
@@ -151,7 +156,7 @@ class CobrancaController extends Controller
                         return [
                             '_id' => $b['_id'] ?? ($b['id'] ?? null),
                             'type' => 'BOLETO',
-                            'amount' => $b['amount'] ?? 0,
+                            'amount' => ($b['original_amount'] - $b['fees']) ?? 0,
                             'fees' => $b['fees'] ?? 0,
                             'gateway_authorization' => $b['gateway_authorization'] ?? ($b['gateway_key'] ?? null),
                             'created_at' => $b['created_at'] ?? ($b['updated_at'] ?? null),
@@ -204,7 +209,7 @@ class CobrancaController extends Controller
     /**
      * Criar transação de crédito
      */
-    public function criarTransacaoCredito(Request $request)
+    public function criarTransacaoCredito(CobrancaCartaoRequest $request)
     {
         try {
             $valor = $this->converterValorParaCentavos($request->input('amount')) / 100;
@@ -220,38 +225,9 @@ class CobrancaController extends Controller
                 } 
             }
 
-            $dados = $request->validate([
-                'payment_type' => 'required|in:CREDIT',
-                'amount' => 'required|string',
-                'installments' => 'required|integer|min:1|max:18',
-                'interest' => 'required|in:CLIENT,ESTABLISHMENT',
-                'client.first_name' => 'required|string|max:255',
-                'client.last_name' => 'nullable|string|max:255',
-                'client.document' => 'required|string|max:18',
-                'client.phone' => 'required|string|max:20',
-                'client.email' => 'required|email',
-                'client.address.street' => 'required|string|max:255',
-                'client.address.number' => 'required|string|max:10',
-                'client.address.complement' => 'nullable|string|max:255',
-                'client.address.neighborhood' => 'required|string|max:255',
-                'client.address.city' => 'required|string|max:255',
-                'client.address.state' => 'required|string|size:2',
-                'client.address.zip_code' => 'required|string|size:8',
-                'card.holder_name' => 'required|string|max:255',
-                'card.holder_document' => 'nullable|string|max:18',
-                'card.card_number' => 'required|string|min:13|max:19',
-                'card.expiration_month' => 'required|integer|min:1|max:12',
-                'card.expiration_year' => 'required|integer|min:2024',
-                'card.security_code' => 'required|string|min:3|max:4',
-            ]);
-
-            // Converter valor para centavos usando função helper
+            $dados = $request->validated();
+            $dados = $this->creditoService->organiza($dados);
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
-            
-            // Converter campos para números inteiros
-            $dados['installments'] = (int)$dados['installments'];
-            $dados['card']['expiration_month'] = (int)$dados['card']['expiration_month'];
-            $dados['card']['expiration_year'] = (int)$dados['card']['expiration_year'];
             
             // Tratar campos opcionais que a API espera como string
             if (empty($dados['client']['last_name'])) {
@@ -271,62 +247,37 @@ class CobrancaController extends Controller
             
             $sessionId = $request->input('session_id', 'session_' . uniqid());
             $dados['session_id'] = $sessionId;
-
             $transacao = $this->creditoService->criarTransacaoCredito($dados);
-            
+
+            Log::info("CobrancaController.criarTransacaoCredito#255\n" . json_encode($transacao));
+
             // Verificar se a transação requer autenticação 3DS
-            if (isset($transacao['antifraud']) && 
-                isset($transacao['antifraud']['analyse_required']) && 
-                $transacao['antifraud']['analyse_required'] === 'THREEDS' &&
-                isset($transacao['antifraud']['analyse_status']) && 
-                $transacao['antifraud']['analyse_status'] === 'WAITING_AUTH') {
-                
-                // Se for requisição AJAX, retornar dados para 3DS
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'requires_3ds' => true,
-                        'session_id' => $transacao['antifraud']['session_id'] ?? $sessionId,
-                        'transaction_id' => $transacao['_id'] ?? null,
-                        'message' => 'Transação criada, aguardando autenticação 3DS'
-                    ]);
-                }
-                
-                // Para requisições não-AJAX, redirecionar com dados da sessão
-                return redirect()->route('cobranca.index')
-                    ->with('success', 'Transação criada, aguardando autenticação 3DS')
-                    ->with('3ds_data', [
-                        'session_id' => $transacao['antifraud']['session_id'] ?? $sessionId,
-                        'transaction_id' => $transacao['_id'] ?? null
-                    ]);
+            if (($transacao['antifraud'][0]['analyse_required'] ?? null) === 'THREEDS' &&
+                ($transacao['antifraud'][0]['analyse_status'] ?? null) === 'WAITING_AUTH') {
+
+                return $this->creditoService->requer3DS($transacao);
             }
 
-            return redirect()->route('cobranca.index')
-                ->with('success', 'Transação de crédito criada com sucesso!');
-        } catch (\Exception $e) {
-            Log::error('Erro ao criar transação de crédito', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
-            return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao criar transação de crédito: ' . $e->getMessage());
+            $this->creditoService->verificaSucesso($transacao);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pagamento processado com sucesso',
+            ]);
+        } 
+        catch (\Exception $e) {
+            Log::error('Erro ao processar pagamento com cartão: ' . $e->getMessage());
+            return response()->json(['error' => 'Erro ao processar pagamento: ' . $e->getMessage()], 500);
         }
     }
 
     /**
      * Criar transação PIX
      */
-    public function criarTransacaoPix(Request $request)
+    public function criarTransacaoPix(CobrancaPixRequest $request)
     {
         try {
-            $dados = $request->validate([
-                'payment_type' => 'required|in:PIX',
-                'amount' => 'required|string',
-                'interest' => 'required|in:CLIENT,ESTABLISHMENT',
-                'client.first_name' => 'nullable|string|max:255',
-                'client.last_name' => 'nullable|string|max:255',
-                'client.document' => 'nullable|string|max:18',
-                'client.phone' => 'nullable|string|max:20',
-                'client.email' => 'nullable|email',
-                'info_additional' => 'nullable|string|max:500',
-            ]);
+            $dados = $request->validated();
 
             // Converter valor para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
@@ -391,40 +342,15 @@ class CobrancaController extends Controller
     /**
      * Criar boleto
      */
-    public function criarBoleto(Request $request)
+    public function criarBoleto(BoletoRequest $request)
     {
         try {
-            $dados = $request->validate([
-                'amount' => 'required|string',
-                'expiration' => 'required|date_format:Y-m-d',
-                'payment_limit_date' => 'nullable|date_format:Y-m-d|after:expiration',
-                'recharge' => 'nullable|boolean',
-                'client.first_name' => 'required|string|max:255',
-                'client.last_name' => 'required|string|max:255',
-                'client.document' => 'required|string|max:18',
-                'client.email' => 'required|email',
-                'client.address.street' => 'required|string|max:255',
-                'client.address.number' => 'required|string|max:10',
-                'client.address.complement' => 'nullable|string|max:255',
-                'client.address.neighborhood' => 'required|string|max:255',
-                'client.address.city' => 'required|string|max:255',
-                'client.address.state' => 'required|string|size:2',
-                'client.address.zip_code' => 'required|string|size:8',
-                'instruction.booklet' => 'required|boolean',
-                'instruction.description' => 'nullable|string|max:255',
-                'instruction.late_fee.amount' => 'required|string',
-                'instruction.interest.amount' => 'required|string',
-                'instruction.discount.amount' => 'required|string',
-                'instruction.discount.limit_date' => 'required|date_format:Y-m-d|before:expiration',
-            ]);
+            $dados = $request->validated();
 
             // Converter valores para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
             
-            // Adicionar os campos mode automaticamente (são sempre os mesmos para boleto)
-            $dados['instruction']['late_fee']['mode'] = 'PERCENTAGE';
-            $dados['instruction']['interest']['mode'] = 'MONTHLY_PERCENTAGE';
-            $dados['instruction']['discount']['mode'] = 'PERCENTAGE';
+            $dados = $this->boletoService->organiza($dados);
             
             // Converter outros valores numéricos usando função helper
             $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavos($dados['instruction']['late_fee']['amount']) / 100.0;
@@ -435,12 +361,8 @@ class CobrancaController extends Controller
             $dados['recharge'] = $request->boolean('recharge');
             $dados['instruction']['booklet'] = $request->boolean('instruction.booklet');
 
-            // Adicionar establishment_id
-            $dados['extra_headers'] = [
-                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
-            ];
-
             $boleto = $this->boletoService->gerarBoleto($dados);
+            Log::info("CobrancaController.criarBoleto#363\n" . json_encode($boleto));
 
             // Filtrar apenas dados necessários para o frontend
             $filteredBoletoData = [
@@ -613,7 +535,6 @@ public function simularTransacao(Request $request)
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
-                'parcelas' => 1, // Apenas à vista
                 'is_avista' => true, // Marcar como à vista
                 'juros' => $dados['juros'],
                 'data_expiracao' => $dados['data_expiracao'],
@@ -714,8 +635,6 @@ public function simularTransacao(Request $request)
 
             $saldoDoEstabelecimento = $this->transacaoService->consultarSaldoEstabelecimento($filtrosSaldo);
             $extratoDoEstabelecimento = $this->transacaoService->consultarExtratoEstabelecimento($filtrosSaldo);
-
-           
 
             // Buscar lançamentos futuros (saldo) - sem filtros, apenas headers obrigatórios
             $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
