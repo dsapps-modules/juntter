@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\ApiToken;
-use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\Request;
+use App\Models\ApiToken;
+use Exception;
 
 class ApiClientService
 {
@@ -63,7 +64,7 @@ class ApiClientService
             // Log::info("9. Headers...\n" . json_encode($headers));
             if (isset($options['json'])) {
                 // Log::info("9. Body...\n" . json_encode($options['json']));
-                Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
+                // Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
             }
 
             // Trata extra_headers para GET requests (query)
@@ -74,9 +75,15 @@ class ApiClientService
                 unset($options['query']['extra_headers']);
             }
 
-            Log::info("Headers...\n".json_encode($headers));
+            // Log::info("Headers...\n".json_encode($headers));
             $response = Http::withHeaders($headers)
-                ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
+            ->beforeSending(function (Request $request) {
+                // Log::info('Headers enviados', ['headers' => $request->headers()]);
+                // Log::info('Query enviada',    ['query'   => $request->getUri()]);
+            })
+            ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
+
+            // Log::info('\n\nResposta recebida', ['response' => $response->json()]);
 
             if ($response->status() !== 401) {
                 return $response->json();

@@ -101,8 +101,7 @@ class DashboardController extends Controller
                 'column' => 'created_at',
                 'direction' => 'ASC',
             ]),
-            'perPage' => 1000,
-            'page' => 2,
+            'perPage' => 53500
         ];
 
         $response = $this->transacaoService->listarTransacoes($filtros);

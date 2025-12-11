@@ -13,9 +13,7 @@ class TransacaoService
 
     public function listarTransacoes(array $filtros = [])
     {
-        $options['extra_headers'] = $filtros;
-
-        return $this->apiClient->get('marketplace/transactions', $options);
+        return $this->apiClient->get('marketplace/transactions', $filtros);
     }
 
     public function detalhesTransacao(string $codigo)
