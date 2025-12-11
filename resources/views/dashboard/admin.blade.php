@@ -61,59 +61,57 @@
         <div class="card-header d-flex align-items-center">
             <h5 class="mb-0">Distribuição por meio de pagamento</h5>
             <button class="btn btn-sm btn-outline-secondary ml-auto" type="button" data-toggle="collapse"
-                data-target="#painel-distribuicao-pagamento" aria-expanded="true" aria-controls="painel-distribuicao-pagamento">
+                data-target="#painel-distribuicao-pagamento" aria-expanded="true"
+                aria-controls="painel-distribuicao-pagamento">
                 <i class="fas fa-chevron-up"></i>
             </button>
         </div>
         <div id="painel-distribuicao-pagamento" class="collapse show pt-3 px-3">
             <div class="row" id="linha_3">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['CREDIT']" icon="fas fa-credit-card"
-                        iconClass="bg-primary text-dark" label="Cartão de Crédito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
+                        label="Cartão de Crédito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['DEBIT'] ?? null" icon="fas fa-university"
-                        iconClass="bg-success text-white" label="Cartão de Débito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
+                        label="Cartão de Débito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['PIX'] ?? null" icon="fas fa-bolt"
-                        iconClass="bg-info text-white" label="Pix" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
                 </div>
             </div>
 
             <div class="row" id="linha_4">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['CREDIT']" icon="fas fa-percent"
-                        iconClass="bg-primary text-dark" label="Cartão de Crédito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
+                        label="Cartão de Crédito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['DEBIT'] ?? null" icon="fas fa-chart-pie"
-                        iconClass="bg-success text-white" label="Cartão de Débito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
+                        label="Cartão de Débito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['PIX'] ?? null" icon="fas fa-bolt"
-                        iconClass="bg-info text-white" label="Pix" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
                 </div>
             </div>
 
             <div class="row" id="linha_5">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_type']['CREDIT']" icon="fas fa-credit-card"
-                        iconClass="bg-primary text-dark" label="Cartão de Crédito" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
+                        label="Cartão de Crédito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_type']['DEBIT'] ?? null" icon="fas fa-university"
-                        iconClass="bg-success text-white" label="Cartão de Débito" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
+                        label="Cartão de Débito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_type']['PIX'] ?? null" icon="fas fa-bolt"
-                        iconClass="bg-info text-white" label="Pix" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
                 </div>
             </div>
         </div>
@@ -130,35 +128,35 @@
         <div id="painel-status-pagamentos" class="collapse show pt-3 px-3">
             <div class="row" id="linha_6">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_status']['PAID']" icon="fas fa-check-circle"
-                        iconClass="bg-success text-white" label="Pagamento Efetivado" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_status']['PAID']" icon="fas fa-check-circle" iconClass="bg-success text-white"
+                        label="Pagamento Efetivado" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_status']['FAILED'] ?? null" icon="fas fa-times-circle"
-                        iconClass="bg-danger text-white" label="Pagamento Cancelado" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_status']['FAILED'] ?? null" icon="fas fa-times-circle" iconClass="bg-danger text-white"
+                        label="Pagamento Cancelado" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_status']['REFUNDED'] ?? null" icon="fas fa-undo"
-                        iconClass="bg-warning text-dark" label="Pagamento Devolvido" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_status']['REFUNDED'] ?? null" icon="fas fa-undo" iconClass="bg-warning text-dark"
+                        label="Pagamento Devolvido" />
                 </div>
             </div>
 
             <div class="row" id="linha_7">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['PAID']" icon="fas fa-check-circle"
-                        iconClass="bg-success text-white" label="Pagamento Efetivado" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['PAID']" icon="fas fa-check-circle" iconClass="bg-success text-white"
+                        label="Pagamento Efetivado" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['FAILED'] ?? null" icon="fas fa-times-circle"
-                        iconClass="bg-danger text-white" label="Pagamento Cancelado" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['FAILED'] ?? null" icon="fas fa-times-circle" iconClass="bg-danger text-white"
+                        label="Pagamento Cancelado" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['REFUNDED'] ?? null" icon="fas fa-undo"
-                        iconClass="bg-warning text-dark" label="Pagamento Devolvido" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['REFUNDED'] ?? null" icon="fas fa-undo" iconClass="bg-warning text-dark"
+                        label="Pagamento Devolvido" />
                 </div>
             </div>
         </div>
