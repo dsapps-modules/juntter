@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\ApiClientService;
-
 class TransacaoService
 {
     protected $apiClient;
@@ -15,7 +13,9 @@ class TransacaoService
 
     public function listarTransacoes(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/transactions", $filtros);
+        $options['extra_headers'] = $filtros;
+
+        return $this->apiClient->get('marketplace/transactions', $options);
     }
 
     public function detalhesTransacao(string $codigo)
@@ -25,7 +25,7 @@ class TransacaoService
 
     public function simularTransacao(array $dados)
     {
-        return $this->apiClient->post("marketplace/transactions/simulate", $dados);
+        return $this->apiClient->post('marketplace/transactions/simulate', $dados);
     }
 
     public function aplicarSplit(string $idTransacao, array $dados)
@@ -45,27 +45,27 @@ class TransacaoService
 
     public function lancamentosFuturos(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/transactions/future_releases", $filtros);
+        return $this->apiClient->get('marketplace/transactions/future_releases', $filtros);
     }
+
     public function lancamentosFuturosDiarios(array $filtros = [])
     {
-        
-        
-        return $this->apiClient->get("marketplace/transactions/future_releases_daily", $filtros);
+
+        return $this->apiClient->get('marketplace/transactions/future_releases_daily', $filtros);
     }
 
     public function estornarTransacao(string $id)
     {
         $dados = [
-            'use_account' => true
+            'use_account' => true,
         ];
-        
+
         return $this->apiClient->post("marketplace/transactions/{$id}/reversal", $dados);
     }
 
     public function listarPlanosComerciais(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/plans", $filtros);
+        return $this->apiClient->get('marketplace/plans', $filtros);
     }
 
     public function detalhesPlanoComercial(int $id)
@@ -73,14 +73,14 @@ class TransacaoService
         return $this->apiClient->get("marketplace/plans/{$id}");
     }
 
-    public function consultarSaldoEstabelecimento( array $filtros = [])
+    public function consultarSaldoEstabelecimento(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/establishments/balance", $filtros);
+        return $this->apiClient->get('marketplace/establishments/balance', $filtros);
     }
 
     public function consultarExtratoEstabelecimento(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/establishments/extract", $filtros);
+        return $this->apiClient->get('marketplace/establishments/extract', $filtros);
     }
 
     /**

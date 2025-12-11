@@ -2,14 +2,15 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use App\Models\ApiToken;
 use Exception;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ApiClientService
 {
     protected string $baseUrl;
+
     protected int $maxRetries = 10;
 
     public function __construct()
@@ -58,12 +59,13 @@ class ApiClientService
                 }
                 unset($options['json']['extra_headers']);
             }
-            
+
             // Log::info("9. Headers...\n" . json_encode($headers));
-            if(isset($options['json']))
-            // Log::info("9. Body...\n" . json_encode($options['json']));
-            Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
-            
+            if (isset($options['json'])) {
+                // Log::info("9. Body...\n" . json_encode($options['json']));
+                Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
+            }
+
             // Trata extra_headers para GET requests (query)
             if (isset($options['query']['extra_headers'])) {
                 foreach ($options['query']['extra_headers'] as $key => $value) {
@@ -71,7 +73,8 @@ class ApiClientService
                 }
                 unset($options['query']['extra_headers']);
             }
-            
+
+            Log::info("Headers...\n".json_encode($headers));
             $response = Http::withHeaders($headers)
                 ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
 
@@ -103,7 +106,7 @@ class ApiClientService
 
         $headers = [
             'Accept' => 'application/json',
-            'Content-Type' => 'application/json'
+            'Content-Type' => 'application/json',
         ];
 
         $body = [
@@ -114,22 +117,22 @@ class ApiClientService
 
         $response = Http::withHeaders($headers)->post("{$this->baseUrl}/auth/login", $body);
 
-        if (!$response->successful()) {
-            throw new Exception('Falha ao renovar token: ' . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Falha ao renovar token: '.$response->body());
         }
 
         // echo "\n\nToken renovado com sucesso!\n";
         $accessToken = $response->json()['token'];
 
-        try{
+        try {
             ApiToken::updateOrCreate(
                 ['key' => 'paytime_token'],
                 ['access_token' => $accessToken, 'updated_at' => now()]
             );
+
             return $accessToken;
-        }
-        catch (Exception $e) {
-            throw new Exception('Erro ao atualizar token: ' . $e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception('Erro ao atualizar token: '.$e->getMessage());
         }
     }
 }

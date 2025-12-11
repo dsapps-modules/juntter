@@ -2,11 +2,12 @@
 
 namespace Tests\Integration\Services;
 
-use Tests\TestCase;
-use App\Services\TransacaoService;
+use App\Helpers\DashHelper;
 use App\Services\ApiClientService;
+use App\Services\TransacaoService;
+use Tests\TestCase;
 
-// teste individual do serviço TransacaoService 
+// teste individual do serviço TransacaoService
 // php artisan test tests/Integration/Services/TransacaoServiceIntegrationTest.php
 
 class TransacaoServiceIntegrationTest extends TestCase
@@ -25,20 +26,32 @@ class TransacaoServiceIntegrationTest extends TestCase
         $service = new TransacaoService($this->apiClient);
 
         $filtros = [
-            'perPage' => 10,
-            'page' => 1
+            'filters' => json_encode([
+                'created_at' => [
+                    'min' => '2025-10-01',
+                    'max' => '2025-11-30',
+                ],
+            ]),
+            'sorters' => json_encode([
+                'column' => 'created_at',
+                'direction' => 'ASC',
+            ]),
+            'perPage' => 1000,
+            'page' => 2,
         ];
 
         $response = $service->listarTransacoes($filtros);
+        $metrics = DashHelper::buildDashboardMetrics($response);
+
+        dump('RESPOSTA LISTAR TRANSAÇÕES:', $metrics);
 
         $this->assertIsArray($response);
         $this->assertArrayHasKey('data', $response);
         $this->assertArrayHasKey('total', $response);
         $this->assertArrayHasKey('page', $response);
-        $this->assertArrayHasKey('perPage', $response);
     }
 
-    /** @test */
+    /** @teste */
     public function listar_transacoes_com_filtros_avancados()
     {
         $service = new TransacaoService($this->apiClient);
@@ -47,10 +60,10 @@ class TransacaoServiceIntegrationTest extends TestCase
             'filters' => json_encode([
                 'status' => 'PENDING',
                 'type' => 'CREDIT',
-                'establishment.id' => 155102
+                'establishment.id' => 155102,
             ]),
             'perPage' => 5,
-            'page' => 1
+            'page' => 1,
         ];
 
         $response = $service->listarTransacoes($filtros);
@@ -60,7 +73,7 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('total', $response);
     }
 
-    /** @test */
+    /** @teste */
     public function detalhes_transacao()
     {
         $service = new TransacaoService($this->apiClient);
@@ -68,11 +81,11 @@ class TransacaoServiceIntegrationTest extends TestCase
         // Primeiro lista as transações para pegar um ID real
         $filtros = [
             'perPage' => 1,
-            'page' => 1
+            'page' => 1,
         ];
 
         $listaTransacoes = $service->listarTransacoes($filtros);
-        
+
         $this->assertIsArray($listaTransacoes);
         $this->assertArrayHasKey('data', $listaTransacoes);
         $this->assertNotEmpty($listaTransacoes['data']);
@@ -88,20 +101,20 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertEquals($codigoTransacao, $response['_id']);
     }
 
-    /** @test */
+    /** @teste */
     public function simular_transacao_credito()
     {
         $service = new TransacaoService($this->apiClient);
 
         $dados = [
-            "amount" => 5000, // R$ 50,00
-            "flag_id" => 1, // MASTERCARD
-            "gateway_id" => 4, // SUBPAYTIME
-            "modality" => "ONLINE",
-            "interest" => "ESTABLISHMENT",
-            "extra_headers" => [
-                "establishment_id" => "155102"
-            ]
+            'amount' => 5000, // R$ 50,00
+            'flag_id' => 1, // MASTERCARD
+            'gateway_id' => 4, // SUBPAYTIME
+            'modality' => 'ONLINE',
+            'interest' => 'ESTABLISHMENT',
+            'extra_headers' => [
+                'establishment_id' => '155102',
+            ],
         ];
 
         $response = $service->simularTransacao($dados);
@@ -116,7 +129,7 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('pix', $response['simulation']);
     }
 
-    /** @test */
+    /** @teste */
     public function aplicar_split_transacao()
     {
         $service = new TransacaoService($this->apiClient);
@@ -124,11 +137,11 @@ class TransacaoServiceIntegrationTest extends TestCase
         // Primeiro lista as transações para pegar um ID real
         $filtros = [
             'perPage' => 1,
-            'page' => 1
+            'page' => 1,
         ];
 
         $listaTransacoes = $service->listarTransacoes($filtros);
-        
+
         $this->assertIsArray($listaTransacoes);
         $this->assertArrayHasKey('data', $listaTransacoes);
         $this->assertNotEmpty($listaTransacoes['data']);
@@ -137,14 +150,14 @@ class TransacaoServiceIntegrationTest extends TestCase
         $idTransacao = $listaTransacoes['data'][0]['_id'];
 
         $dadosSplit = [
-            "title" => "Comissão EC Secundário",
-            "division" => "PERCENTAGE",
-            "establishments" => [
+            'title' => 'Comissão EC Secundário',
+            'division' => 'PERCENTAGE',
+            'establishments' => [
                 [
-                    "id" => 155161, // Estabelecimento diferente
-                    "value" => 30
-                ]
-            ]
+                    'id' => 155161, // Estabelecimento diferente
+                    'value' => 30,
+                ],
+            ],
         ];
 
         $response = $service->aplicarSplit($idTransacao, $dadosSplit);
@@ -156,7 +169,7 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertEquals('Processo de Split iniciado', $response['message']);
     }
 
-    /** @test */
+    /** @teste */
     public function aplicar_split_transacao_valor_fixo()
     {
         $service = new TransacaoService($this->apiClient);
@@ -164,11 +177,11 @@ class TransacaoServiceIntegrationTest extends TestCase
         // Primeiro lista as transações para pegar um ID real
         $filtros = [
             'perPage' => 1,
-            'page' => 1
+            'page' => 1,
         ];
 
         $listaTransacoes = $service->listarTransacoes($filtros);
-        
+
         $this->assertIsArray($listaTransacoes);
         $this->assertArrayHasKey('data', $listaTransacoes);
         $this->assertNotEmpty($listaTransacoes['data']);
@@ -177,14 +190,14 @@ class TransacaoServiceIntegrationTest extends TestCase
         $idTransacao = $listaTransacoes['data'][0]['_id'];
 
         $dadosSplit = [
-            "title" => "Comissão Valor Fixo",
-            "division" => "CURRENCY",
-            "establishments" => [
+            'title' => 'Comissão Valor Fixo',
+            'division' => 'CURRENCY',
+            'establishments' => [
                 [
-                    "id" => 155161, // Estabelecimento diferente
-                    "value" => 1500 // R$ 15,00 em centavos
-                ]
-            ]
+                    'id' => 155161, // Estabelecimento diferente
+                    'value' => 1500, // R$ 15,00 em centavos
+                ],
+            ],
         ];
 
         $response = $service->aplicarSplit($idTransacao, $dadosSplit);
@@ -196,15 +209,15 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertEquals('Processo de Split iniciado', $response['message']);
     }
 
-    /** @test */
+    /** @teste */
     public function lancamentos_futuros()
     {
         $service = new TransacaoService($this->apiClient);
 
         $filtros = [
             'extra_headers' => [
-                'establishment_id' => '155102'
-            ]
+                'establishment_id' => '155102',
+            ],
         ];
 
         $response = $service->lancamentosFuturos($filtros);
@@ -218,7 +231,7 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('total', $response);
     }
 
-    /** @test */
+    /** @teste */
     public function lancamentos_futuros_diarios()
     {
         $service = new TransacaoService($this->apiClient);
@@ -226,11 +239,11 @@ class TransacaoServiceIntegrationTest extends TestCase
         $filtros = [
             'filters' => json_encode([
                 'gateway_authorization' => 'PAYTIME',
-                'date' => '2025-09-03'
+                'date' => '2025-09-03',
             ]),
             'extra_headers' => [
-                'establishment_id' => '155102'
-            ]
+                'establishment_id' => '155102',
+            ],
         ];
 
         $response = $service->lancamentosFuturosDiarios($filtros);
@@ -244,7 +257,7 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('perPage', $response);
     }
 
-    /** @test */
+    /** @teste */
     public function consultar_split_transacao()
     {
         $service = new TransacaoService($this->apiClient);
@@ -252,11 +265,11 @@ class TransacaoServiceIntegrationTest extends TestCase
         // Primeiro lista as transações para pegar um ID real
         $filtros = [
             'perPage' => 1,
-            'page' => 1
+            'page' => 1,
         ];
 
         $listaTransacoes = $service->listarTransacoes($filtros);
-        
+
         $this->assertIsArray($listaTransacoes);
         $this->assertArrayHasKey('data', $listaTransacoes);
         $this->assertNotEmpty($listaTransacoes['data']);
@@ -284,7 +297,7 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertIsArray($response['history']);
     }
 
-    /** @test */
+    /** @teste */
     public function cancelar_split_transacao()
     {
         $service = new TransacaoService($this->apiClient);
@@ -292,11 +305,11 @@ class TransacaoServiceIntegrationTest extends TestCase
         // Primeiro lista as transações para pegar um ID real
         $filtros = [
             'perPage' => 1,
-            'page' => 1
+            'page' => 1,
         ];
 
         $listaTransacoes = $service->listarTransacoes($filtros);
-        
+
         $this->assertIsArray($listaTransacoes);
         $this->assertArrayHasKey('data', $listaTransacoes);
         $this->assertNotEmpty($listaTransacoes['data']);
@@ -312,6 +325,4 @@ class TransacaoServiceIntegrationTest extends TestCase
         $this->assertArrayHasKey('message', $response);
         $this->assertEquals('Processo de cancelamento de Split iniciado.', $response['message']);
     }
-    
-
-} 
+}

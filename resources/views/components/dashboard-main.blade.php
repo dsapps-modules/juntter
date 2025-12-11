@@ -1,29 +1,25 @@
 @props([
-  'title' => 'Dashboard',
-  'saldos' => [],
-  'metricas' => [],
-  'metricasGeral' => null,
-  'metricasCartao' => null,
-  'metricasBoleto' => null,
-  'breadcrumbItems' => [],
-  'showSaldos' => true,
-  'rightSub' => null,
-  'filtroMesAno' => null,
-  'mesAtual' => null,
-  'anoAtual' => null
+    'title' => 'Dashboard',
+    'saldos' => [],
+    'metricas' => [],
+    'metricasGeral' => null,
+    'metricasCartao' => null,
+    'metricasBoleto' => null,
+    'breadcrumbItems' => [],
+    'showSaldos' => true,
+    'rightSub' => null,
+    'filtroMesAno' => null,
+    'mesAtual' => null,
+    'anoAtual' => null,
 ])
 
 <!-- Breadcrumb -->
-<x-breadcrumb 
-    :items="$breadcrumbItems" 
-    :rightSub="$rightSub"
-    :filtroData="[
-        'mesAtual' => $mesAtual,
-        'anoAtual' => $anoAtual
-    ]"
-/>
+<x-breadcrumb :items="$breadcrumbItems" :rightSub="$rightSub" :filtroData="[
+    'mesAtual' => $mesAtual,
+    'anoAtual' => $anoAtual,
+]" />
 
-@if($showSaldos)
+@if ($showSaldos)
     <!-- Saldo Cards -->
     <div class="row mb-4">
         <div class="col-lg-4 col-md-6 mb-3">
@@ -40,7 +36,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4 col-md-6 mb-3">
             <div class="saldo-card saldo-transito fade-in-up" data-delay="0.2s">
                 <div class="saldo-content">
@@ -55,7 +51,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-lg-4 col-md-6 mb-3">
             <div class="saldo-card saldo-processamento fade-in-up" data-delay="0.3s">
                 <div class="saldo-content">
@@ -70,7 +66,6 @@
                 </div>
             </div>
         </div>
-        
     </div>
 
     <!-- Segunda linha: 2 cards -->
@@ -117,11 +112,11 @@
                 <button class="tab-btn" onclick="switchTab('cartao')">Cartão</button>
                 <button class="tab-btn" onclick="switchTab('boleto')">Boleto</button>
             </div>
-            
+
             <!-- Metrics Grid por abas -->
 
             <div id="tab-content-geral" class="metrics-grid">
-                @foreach(($metricasGeral ?? $metricas ?? []) as $metrica)
+                @foreach ($metricasGeral ?? ($metricas ?? []) as $metrica)
                     <div class="metric-card">
                         <div class="metric-value">{{ $metrica['valor'] }}</div>
                         <div class="metric-label">
@@ -173,23 +168,33 @@
 </div>
 
 @push('scripts')
-<script>
-  window.switchTab = function(tab){
-    const map = {
-      'geral':  {btn: '.analytics-tabs .tab-btn:nth-child(1)', div: '#tab-content-geral'},
-      'cartao': {btn: '.analytics-tabs .tab-btn:nth-child(2)', div: '#tab-content-cartao'},
-      'boleto': {btn: '.analytics-tabs .tab-btn:nth-child(3)', div: '#tab-content-boleto'}
-    };
-    // esconder todos
-    ['#tab-content-geral','#tab-content-cartao','#tab-content-boleto'].forEach(id=>$(id).hide());
-    $('.analytics-tabs .tab-btn').removeClass('active');
-    // mostrar o selecionado
-    const cfg = map[tab] || map.geral;
-    $(cfg.div).show();
-    $(cfg.btn).addClass('active');
-  };
-  // garantir estado inicial
-  $(function(){ switchTab('geral'); });
-</script>
+    <script>
+        window.switchTab = function(tab) {
+            const map = {
+                'geral': {
+                    btn: '.analytics-tabs .tab-btn:nth-child(1)',
+                    div: '#tab-content-geral'
+                },
+                'cartao': {
+                    btn: '.analytics-tabs .tab-btn:nth-child(2)',
+                    div: '#tab-content-cartao'
+                },
+                'boleto': {
+                    btn: '.analytics-tabs .tab-btn:nth-child(3)',
+                    div: '#tab-content-boleto'
+                }
+            };
+            // esconder todos
+            ['#tab-content-geral', '#tab-content-cartao', '#tab-content-boleto'].forEach(id => $(id).hide());
+            $('.analytics-tabs .tab-btn').removeClass('active');
+            // mostrar o selecionado
+            const cfg = map[tab] || map.geral;
+            $(cfg.div).show();
+            $(cfg.btn).addClass('active');
+        };
+        // garantir estado inicial
+        $(function() {
+            switchTab('geral');
+        });
+    </script>
 @endpush
-

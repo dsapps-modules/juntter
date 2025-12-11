@@ -1,132 +1,168 @@
 @extends('templates.dashboard-template')
-
 @section('title', 'Dashboard')
 
-@section('content')
-<x-dashboard-main 
-    :title="'Dashboard Admin'"
-    :saldos="$saldos"
-    :metricas="$metricas"
-    :metricasGeral="$metricasGeral"
-    :metricasCartao="$metricasCartao"
-    :metricasBoleto="$metricasBoleto"
-    :mesAtual="$mesAtual"
-    :anoAtual="$anoAtual"
-    :breadcrumbItems="[
-        ['label' => 'Administração', 'icon' => 'fas fa-cogs', 'url' => '#']
-    ]"
-/>
+@php
+    $breadcrumbItems = [['label' => 'Administração', 'icon' => 'fas fa-cogs', 'url' => '#']];
+@endphp
 
-       <!-- Seção de Estabelecimentos -->
-       <div class="row mt-4">
-           <div class="col-12">
-               <div class="card border-0 shadow-lg rounded-4">
-                   <div class="card-body p-3">
-                       <!-- Título da seção -->
-                       <div class="d-flex justify-content-between align-items-center mb-3">
-                           <div>
-                               <h3 class="h4 mb-1 fw-bold">Estabelecimentos</h3>
-                               <p class="text-muted mb-0">Gerencie os estabelecimentos cadastrados</p>
-                           </div>
-                         {{--  <button class="btn btn-novo-pagamento shadow-sm">
-                               <i class="fas fa-plus me-2"></i>
-                               Novo Estabelecimento
-                           </button> --}}
-                       </div>
-                       
-                       <!-- Tabela Juntter Style -->
-                       <div class="table-responsive">
-                           <table id="estabelecimentos-table" class="table table-hover table-striped">
-                               <thead>
-                                   <tr class="table-header-juntter">
-                                       <th></th>
-                                       <th>ID</th>
-                                       <th>Nome</th>
-                                       <th>Documento</th>
-                                       <th>Email</th>
-                                       <th>Telefone</th>
-                                       <th>Cidade/UF</th>
-                                       <th>Status</th>
-                                       <th>Risco</th>
-                                       <th>Ações</th>
-                                   </tr>
-                               </thead>
-                               <tbody>
-                                   @foreach($estabelecimentos['data'] ?? [] as $estabelecimento)
-                                       <tr>
-                                           <td></td>
-                                           <td><strong>{{ $estabelecimento['id'] ?? 'N/A' }}</strong></td>
-                                           <td>
-                                               <strong>{{ $estabelecimento['first_name'] ?? $estabelecimento['name1'] ?? 'N/A' }}</strong>
-                                               @if(isset($estabelecimento['last_name']))
-                                                   <br><small class="text-muted">{{ $estabelecimento['last_name'] }}</small>
-                                               @endif
-                                           </td>
-                                           <td><span class="text-muted">{{ $estabelecimento['document'] ?? 'N/A' }}</span></td>
-                                           <td><span class="text-muted">{{ $estabelecimento['email'] ?? 'N/A' }}</span></td>
-                                           <td><span class="text-muted">{{ $estabelecimento['phone_number'] ?? 'N/A' }}</span></td>
-                                           <td><span class="text-muted">{{ $estabelecimento['address']['city'] ?? 'N/A' }}/{{ $estabelecimento['address']['state'] ?? 'N/A' }}</span></td>
-                                           <td>
-                                               @if(isset($estabelecimento['status']))
-                                                   @if($estabelecimento['status'] === 'APPROVED')
-                                                       <span class="badge badge-success">Aprovado</span>
-                                                   @elseif($estabelecimento['status'] === 'PENDING')
-                                                       <span class="badge badge-warning">Pendente</span>
-                                                   @elseif($estabelecimento['status'] === 'REJECTED')
-                                                       <span class="badge badge-danger">Rejeitado</span>
-                                                   @else
-                                                       <span class="badge badge-secondary">{{ $estabelecimento['status'] }}</span>
-                                                   @endif
-                                               @else
-                                                   <span class="badge badge-secondary">N/A</span>
-                                               @endif
-                                           </td>
-                                           <td>
-                                               @if(isset($estabelecimento['risk']))
-                                                   @if($estabelecimento['risk'] === 'LOW')
-                                                       <span class="badge badge-success">Baixo</span>
-                                                   @elseif($estabelecimento['risk'] === 'MEDIUM')
-                                                       <span class="badge badge-warning">Médio</span>
-                                                   @elseif($estabelecimento['risk'] === 'HIGH')
-                                                       <span class="badge badge-danger">Alto</span>
-                                                   @else
-                                                       <span class="badge badge-secondary">{{ $estabelecimento['risk'] }}</span>
-                                                   @endif
-                                               @else
-                                                   <span class="badge badge-secondary">N/A</span>
-                                               @endif
-                                           </td>
-                                           <td>
-                                               <div class="btn-group" role="group">
-                                                   <a href="{{ route('estabelecimentos.show', $estabelecimento['id']) }}" 
-                                                      class="btn btn-sm btn-outline-info mr-1" title="Visualizar">
-                                                       <i class="fas fa-eye"></i>
-                                                   </a>
-                                                   <a href="{{ route('estabelecimentos.edit', $estabelecimento['id']) }}" 
-                                                      class="btn btn-sm btn-outline-warning" title="Editar">
-                                                       <i class="fas fa-edit"></i>
-                                                   </a>
-                                               </div>
-                                           </td>
-                                       </tr>
-                                   @endforeach
-                               </tbody>
-                    </table>
-                                       </div>
-                   </div>
-               </div>
-           </div>
-       </div>
+@section('content')
+
+    <x-breadcrumb :items="$breadcrumbItems" :filtroData="[
+        'mesAtual' => $mes,
+        'anoAtual' => $ano,
+    ]" />
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="mb-0">Visão geral de transações</h5>
+            <button class="btn btn-sm btn-outline-secondary ml-auto" type="button" data-toggle="collapse"
+                data-target="#painel-visao-geral" aria-expanded="true" aria-controls="painel-visao-geral">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+        <div id="painel-visao-geral" class="collapse show pt-3 px-3">
+            <div class="row mb-2" id="linha_1">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['total_amount_formatted']" icon="fas fa-wallet" iconClass="bg-primary text-dark"
+                        label="Faturamento Líquido" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['total_original_amount_formatted'] ?? null" icon="fas fa-clock" iconClass="bg-info text-white"
+                        label="Faturamento Bruto" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['total_fees_formatted'] ?? null" icon="fas fa-spinner" iconClass="bg-warning text-dark"
+                        label="Descontos / Taxas" />
+                </div>
+            </div>
+
+            <div class="row" id="linha_2">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['total_transactions']" icon="fas fa-receipt" iconClass="bg-secondary text-white"
+                        label="Total de Transações" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['average_ticket_formatted'] ?? null" icon="fas fa-ticket-alt" iconClass="bg-success text-white"
+                        label="Ticket Médio" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['average_installments'] ?? null" icon="fas fa-layer-group" iconClass="bg-dark text-white"
+                        label="Média de parcelas" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="mb-0">Distribuição por meio de pagamento</h5>
+            <button class="btn btn-sm btn-outline-secondary ml-auto" type="button" data-toggle="collapse"
+                data-target="#painel-distribuicao-pagamento" aria-expanded="true" aria-controls="painel-distribuicao-pagamento">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+        <div id="painel-distribuicao-pagamento" class="collapse show pt-3 px-3">
+            <div class="row" id="linha_3">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['CREDIT']" icon="fas fa-credit-card"
+                        iconClass="bg-primary text-dark" label="Cartão de Crédito" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['DEBIT'] ?? null" icon="fas fa-university"
+                        iconClass="bg-success text-white" label="Cartão de Débito" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['PIX'] ?? null" icon="fas fa-bolt"
+                        iconClass="bg-info text-white" label="Pix" />
+                </div>
+            </div>
+
+            <div class="row" id="linha_4">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['CREDIT']" icon="fas fa-percent"
+                        iconClass="bg-primary text-dark" label="Cartão de Crédito" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['DEBIT'] ?? null" icon="fas fa-chart-pie"
+                        iconClass="bg-success text-white" label="Cartão de Débito" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['PIX'] ?? null" icon="fas fa-bolt"
+                        iconClass="bg-info text-white" label="Pix" />
+                </div>
+            </div>
+
+            <div class="row" id="linha_5">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['CREDIT']" icon="fas fa-credit-card"
+                        iconClass="bg-primary text-dark" label="Cartão de Crédito" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['DEBIT'] ?? null" icon="fas fa-university"
+                        iconClass="bg-success text-white" label="Cartão de Débito" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['PIX'] ?? null" icon="fas fa-bolt"
+                        iconClass="bg-info text-white" label="Pix" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header d-flex align-items-center">
+            <h5 class="mb-0">Visão de status de pagamentos</h5>
+            <button class="btn btn-sm btn-outline-secondary ml-auto" type="button" data-toggle="collapse"
+                data-target="#painel-status-pagamentos" aria-expanded="true" aria-controls="painel-status-pagamentos">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+        </div>
+        <div id="painel-status-pagamentos" class="collapse show pt-3 px-3">
+            <div class="row" id="linha_6">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_status']['PAID']" icon="fas fa-check-circle"
+                        iconClass="bg-success text-white" label="Pagamento Efetivado" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_status']['FAILED'] ?? null" icon="fas fa-times-circle"
+                        iconClass="bg-danger text-white" label="Pagamento Cancelado" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_status']['REFUNDED'] ?? null" icon="fas fa-undo"
+                        iconClass="bg-warning text-dark" label="Pagamento Devolvido" />
+                </div>
+            </div>
+
+            <div class="row" id="linha_7">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['PAID']" icon="fas fa-check-circle"
+                        iconClass="bg-success text-white" label="Pagamento Efetivado" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['FAILED'] ?? null" icon="fas fa-times-circle"
+                        iconClass="bg-danger text-white" label="Pagamento Cancelado" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['transactions_by_status_percent']['REFUNDED'] ?? null" icon="fas fa-undo"
+                        iconClass="bg-warning text-dark" label="Pagamento Devolvido" />
+                </div>
+            </div>
+        </div>
+    </div>
 
 
 @endsection
-
-
-
-
-
-
-
-
-
-
