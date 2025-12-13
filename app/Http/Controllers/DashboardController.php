@@ -90,7 +90,7 @@ class DashboardController extends Controller
         $ano = $request->input('ano') ?? date('Y'); // pode ser vazio (Todos) ou um ano
         $dia = new DateTime("$ano-$mes-01");
 
-        $filtros = [
+        $filtro1 = [
             'filters' => json_encode([
                 'created_at' => [
                     'min' => "$ano-$mes-01",
@@ -101,11 +101,14 @@ class DashboardController extends Controller
                 'column' => 'created_at',
                 'direction' => 'ASC',
             ]),
-            'perPage' => 53500
+            'perPage' => 100
         ];
 
-        $response = $this->transacaoService->listarTransacoes($filtros);
-        $metrics = DashHelper::buildDashboardMetrics($response);
+        $filtro2 = ['perPage' => 100, 'page' => 1 ];
+
+        $boletos = $this->boletoService->listarBoletos($filtro2);
+        $transacoes = $this->transacaoService->listarTransacoes($filtro1);
+        $metrics = DashHelper::buildDashboardMetrics($boletos, $transacoes);
 
         return view('dashboard.admin', compact('metrics', 'mes', 'ano'));
     }

@@ -74,19 +74,20 @@
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
-                        label="Cartão de Débito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
+                        label="Cartão de Crédito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
+                        label="Cartão de Crédito" />
                 </div>
             </div>
 
             <div class="row" id="linha_4">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
-                        label="Cartão de Crédito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
+                        label="Cartão de Débito" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
@@ -95,23 +96,36 @@
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
+                    <x-util.dash-card :amount="$metrics['transactions_by_type']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
+                        label="Cartão de Débito" />
                 </div>
             </div>
 
             <div class="row" id="linha_5">
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_type']['CREDIT']" icon="fas fa-credit-card" iconClass="bg-primary text-dark"
-                        label="Cartão de Crédito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_formatted']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
-                    <x-util.dash-card :amount="$metrics['transactions_by_type']['DEBIT'] ?? null" icon="fas fa-university" iconClass="bg-success text-white"
-                        label="Cartão de Débito" />
+                    <x-util.dash-card :amount="$metrics['amount_by_type_percent_formatted']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
                 </div>
 
                 <div class="col-lg-4 col-md-6 mb-3">
                     <x-util.dash-card :amount="$metrics['transactions_by_type']['PIX'] ?? null" icon="fas fa-bolt" iconClass="bg-info text-white" label="Pix" />
+                </div>
+            </div>
+
+            <div class="row" id="linha_51">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['billets_total_amount_formatted']" icon="fas fa-file-invoice-dollar" iconClass="bg-warning text-dark" label="Boleto" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['billets_total_original_amount_formatted']" icon="fas fa-file-invoice-dollar" iconClass="bg-warning text-dark" label="Boleto" />
+                </div>
+
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <x-util.dash-card :amount="$metrics['billets_total_fees_formatted']" icon="fas fa-file-invoice-dollar" iconClass="bg-warning text-dark" label="Boleto" />
                 </div>
             </div>
         </div>
