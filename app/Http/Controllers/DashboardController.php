@@ -100,8 +100,8 @@ class DashboardController extends Controller
             // 1. Agregações Gerais
             // Precisamos separar Boletos de Transações (Outros) para manter a estrutura do dashboard antigo
 
-            // --- TRANSAÇÕES (Type != BOLETO) ---
-            $queryTransacoes = (clone $queryBase)->where('type', '!=', 'BOLETO');
+            // --- TRANSAÇÕES (Type != BILLET) ---
+            $queryTransacoes = (clone $queryBase)->where('type', '!=', 'BILLET');
 
             $agregadoTrans = $queryTransacoes->selectRaw('
                 COUNT(*) as count,
@@ -142,8 +142,8 @@ class DashboardController extends Controller
                 $transactionsByStatus[$s] = $transByStatus[$s] ?? 0;
             }
 
-            // --- BOLETOS (Type == BOLETO) ---
-            $queryBoletos = (clone $queryBase)->where('type', 'BOLETO');
+            // --- BOLETOS (Type == BILLET) ---
+            $queryBoletos = (clone $queryBase)->where('type', 'BILLET');
 
             $agregadoBoletos = $queryBoletos->selectRaw('
                 COUNT(*) as count,
@@ -287,8 +287,8 @@ class DashboardController extends Controller
         $volumeBruto = 0;
         $volumeLiquido = 0;
         $totalTaxas = 0;
-        $volumePorMetodo = ['CREDIT' => 0, 'DEBIT' => 0, 'PIX' => 0, 'BOLETO' => 0];
-        $taxasPorMetodo = ['CREDIT' => 0, 'DEBIT' => 0, 'PIX' => 0, 'BOLETO' => 0];
+        $volumePorMetodo = ['CREDIT' => 0, 'DEBIT' => 0, 'PIX' => 0, 'BILLET' => 0];
+        $taxasPorMetodo = ['CREDIT' => 0, 'DEBIT' => 0, 'PIX' => 0, 'BILLET' => 0];
         $transacoesHoje = 0;
         $transacoesPagas = 0;
         $transacoesFalhadas = 0;
@@ -297,7 +297,7 @@ class DashboardController extends Controller
             'CREDIT' => 0,
             'DEBIT' => 0,
             'PIX' => 0,
-            'BOLETO' => 0,
+            'BILLET' => 0,
         ];
         $transacoesPorStatus = [
             'PAID' => 0,
@@ -582,9 +582,9 @@ class DashboardController extends Controller
                             $volumeBruto += $valorOriginalBoleto;
                             $volumeLiquido += $valor; // assumir amount como líquido para boletos
                             $totalTaxas += $taxa;
-                            $volumePorMetodo['BOLETO'] += $valor;
-                            $taxasPorMetodo['BOLETO'] += $taxa;
-                            $transacoesPorTipo['BOLETO']++;
+                            $volumePorMetodo['BILLET'] += $valor;
+                            $taxasPorMetodo['BILLET'] += $taxa;
+                            $transacoesPorTipo['BILLET']++;
                             $totalTransacoes++;
 
                             // De hoje
@@ -647,7 +647,7 @@ class DashboardController extends Controller
             ['valor' => 'R$ ' . number_format($volumePorMetodo['PIX'] / 100, 2, ',', '.'), 'label' => 'Volume PIX (30 dias)', 'icone' => 'fas fa-qrcode', 'cor' => 'metric-icon-green', 'tipo' => 'GERAL', 'metodo' => 'PIX'],
 
             ['valor' => $transacoesPorTipo['PIX'], 'label' => 'Transações PIX', 'icone' => 'fas fa-qrcode', 'cor' => 'metric-icon-green', 'tipo' => 'GERAL', 'metodo' => 'PIX'],
-            ['valor' => $transacoesPorTipo['BOLETO'], 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => 'BOLETO'],
+            ['valor' => $transacoesPorTipo['BILLET'], 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => 'BILLET'],
             ['valor' => $transacoesPorTipo['CREDIT'] + $transacoesPorTipo['DEBIT'], 'label' => 'Transações Cartão', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue', 'tipo' => 'GERAL', 'metodo' => 'CREDIT'],
 
             // CARTÃO
@@ -659,9 +659,9 @@ class DashboardController extends Controller
             ['valor' => 'R$ ' . number_format(($taxasPorMetodo['CREDIT'] + $taxasPorMetodo['DEBIT']) / 100, 2, ',', '.'), 'label' => 'Taxas Cartão (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red', 'tipo' => 'CARTAO', 'metodo' => null],
 
             // BOLETO (se houver)
-            ['valor' => $transacoesPorTipo['BOLETO'] ?? 0, 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-orange', 'tipo' => 'BOLETO', 'metodo' => 'BOLETO'],
-            ['valor' => 'R$ ' . number_format(($volumePorMetodo['BOLETO'] ?? 0) / 100, 2, ',', '.'), 'label' => 'Volume Boleto (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-orange', 'tipo' => 'BOLETO', 'metodo' => 'BOLETO'],
-            ['valor' => 'R$ ' . number_format(($taxasPorMetodo['BOLETO'] ?? 0) / 100, 2, ',', '.'), 'label' => 'Taxas Boleto (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red', 'tipo' => 'BOLETO', 'metodo' => 'BOLETO'],
+            ['valor' => $transacoesPorTipo['BILLET'] ?? 0, 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-orange', 'tipo' => 'BOLETO', 'metodo' => 'BILLET'],
+            ['valor' => 'R$ ' . number_format(($volumePorMetodo['BILLET'] ?? 0) / 100, 2, ',', '.'), 'label' => 'Volume Boleto (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-orange', 'tipo' => 'BOLETO', 'metodo' => 'BILLET'],
+            ['valor' => 'R$ ' . number_format(($taxasPorMetodo['BILLET'] ?? 0) / 100, 2, ',', '.'), 'label' => 'Taxas Boleto (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red', 'tipo' => 'BOLETO', 'metodo' => 'BILLET'],
         ];
 
         return [
@@ -768,8 +768,8 @@ class DashboardController extends Controller
             $qtdPix = $dadosPix->qtd ?? 0;
             $volumePix = $dadosPix->total_liquido ?? 0;
 
-            // BOLETO
-            $dadosBoleto = $porTipo->get('BOLETO');
+            // BILLET
+            $dadosBoleto = $porTipo->get('BILLET');
             $qtdBoletos = $dadosBoleto->qtd ?? 0;
             $volumeBoletos = $dadosBoleto->total_liquido ?? 0;
             $taxasBoletos = $dadosBoleto->total_taxas ?? 0;
@@ -796,12 +796,12 @@ class DashboardController extends Controller
             $cartaoPagas = (clone $queryBase)->whereIn('type', ['CREDIT', 'DEBIT'])->where('status', 'PAID')->count();
             $cartaoPendentes = (clone $queryBase)->whereIn('type', ['CREDIT', 'DEBIT'])->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count();
 
-            $boletosPagos = (clone $queryBase)->where('type', 'BOLETO')->where('status', 'PAID')->count();
-            $boletosPendentes = (clone $queryBase)->where('type', 'BOLETO')->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count();
+            $boletosPagos = (clone $queryBase)->where('type', 'BILLET')->where('status', 'PAID')->count();
+            $boletosPendentes = (clone $queryBase)->where('type', 'BILLET')->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count();
 
             // Boletos Vencidos
             $boletosVencidosValor = (clone $queryBase)
-                ->where('type', 'BOLETO')
+                ->where('type', 'BILLET')
                 ->whereIn('status', ['PENDING', 'PROCESSING'])
                 ->where('expiration_at', '<', now())
                 ->sum('amount');

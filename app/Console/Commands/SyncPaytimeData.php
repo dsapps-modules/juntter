@@ -28,10 +28,32 @@ class SyncPaytimeData extends Command
 
     public function handle()
     {
-        $months = explode(',', $this->option('months') ?? '11,12');
-        $year = $this->option('year') ?? '2025';
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+        $previousMonth = now()->subMonth()->month;
+        $previousYear = now()->subMonth()->year;
+
+        $defaultMonths = $currentMonth;
+        if ($currentMonth != $previousMonth) {
+            $defaultMonths = "$previousMonth,$currentMonth";
+        }
+
+        $months = explode(',', $this->option('months') ?? $defaultMonths);
+        $year = $this->option('year') ?? $currentYear;
+
+        // Ensure months are sorted to handle range correctly
+        sort($months);
 
         $this->info("Starting global sync for months: " . implode(', ', $months) . " of $year");
+
+        // Calculate global start and end for billets if multiple months are provided
+        $firstMonth = reset($months);
+        $lastMonth = end($months);
+        $globalStart = Carbon::createFromDate($year, $firstMonth, 1)->startOfMonth()->format('Y-m-d');
+        $globalEnd = Carbon::createFromDate($year, $lastMonth, 1)->endOfMonth()->format('Y-m-d');
+
+        $this->info("Syncing billets from $globalStart to $globalEnd...");
+        $this->syncBillets($globalStart, $globalEnd);
 
         foreach ($months as $month) {
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
@@ -39,7 +61,6 @@ class SyncPaytimeData extends Command
 
             $this->info("Syncing $month/$year...");
             $this->syncTransactions($startDate, $endDate);
-            $this->syncBillets($startDate, $endDate);
         }
 
         $this->newLine();
@@ -93,16 +114,19 @@ class SyncPaytimeData extends Command
         } while (!empty($items));
     }
 
-    private function syncBillets($startDate, $endDate)
+    private function syncBillets($startDate = null, $endDate = null)
     {
         $page = 1;
         do {
+            $queryFilter = [];
+            if ($startDate && $endDate) {
+                $queryFilter['created_at'] = ['min' => $startDate, 'max' => $endDate];
+            }
+
             $filters = [
                 'perPage' => 100,
                 'page' => $page,
-                'filters' => json_encode([
-                    'created_at' => ['min' => $startDate, 'max' => $endDate]
-                ])
+                'filters' => json_encode($queryFilter)
             ];
 
             try {
@@ -114,7 +138,7 @@ class SyncPaytimeData extends Command
                         ['external_id' => $item['_id'] ?? $item['id']],
                         [
                             'establishment_id' => $item['establishment']['id'] ?? ($item['establishment_id'] ?? 'UNKNOWN'),
-                            'type' => 'BOLETO',
+                            'type' => $item['type'] ?? 'BILLET',
                             'status' => $item['status'] ?? 'UNKNOWN',
                             'amount' => $item['amount'] ?? 0,
                             'original_amount' => $item['original_amount'] ?? ($item['amount'] ?? 0),

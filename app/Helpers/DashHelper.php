@@ -4,16 +4,16 @@ namespace App\Helpers;
 
 class DashHelper
 {
-    public static function buildDashboardMetrics(array $boletos, array $transacoes): array
+    public static function buildDashboardMetrics(array $boletos, array $transacoes = []): array
     {
         // -----------------------------
         // Helpers
         // -----------------------------
-        $toReais = fn ($value) => ($value ?? 0) / 100;
+        $toReais = fn($value) => ($value ?? 0) / 100;
 
-        $formatMoney = fn ($value) => 'R$ ' . number_format((float)$value, 2, ',', '.');
+        $formatMoney = fn($value) => 'R$ ' . number_format((float) $value, 2, ',', '.');
 
-        $formatPercent = fn ($value) => number_format((float)$value, 2, ',', '.') . '%';
+        $formatPercent = fn($value) => number_format((float) $value, 2, ',', '.') . '%';
 
         $requiredStatuses = ['PAID', 'FAILED', 'REFUNDED'];
 
@@ -21,7 +21,7 @@ class DashHelper
             $counts = array_fill_keys($requiredStatuses, 0);
 
             $found = $items->groupBy('status')
-                ->map(fn ($g) => $g->count())
+                ->map(fn($g) => $g->count())
                 ->toArray();
 
             foreach ($found as $status => $count) {
@@ -48,22 +48,22 @@ class DashHelper
         // -----------------------------
         $transactions = collect($transacoes['data'] ?? []);
 
-        $totalTransactions    = $transacoes['total'] ?? 0;
-        $transactionsOnPage   = $transactions->count();
+        $totalTransactions = $transacoes['total'] ?? 0;
+        $transactionsOnPage = $transactions->count();
 
-        $t_totalAmountCents         = (int) $transactions->sum('amount');
+        $t_totalAmountCents = (int) $transactions->sum('amount');
         $t_totalOriginalAmountCents = (int) $transactions->sum('original_amount');
-        $t_totalFeesCents           = (int) $transactions->sum('fees');
+        $t_totalFeesCents = (int) $transactions->sum('fees');
 
-        $t_totalAmount         = $toReais($t_totalAmountCents);
+        $t_totalAmount = $toReais($t_totalAmountCents);
         $t_totalOriginalAmount = $toReais($t_totalOriginalAmountCents);
-        $t_totalFees           = $toReais($t_totalFeesCents);
+        $t_totalFees = $toReais($t_totalFeesCents);
 
         $t_averageTicket = $toReais($transactions->avg('amount') ?? 0);
 
         $t_averageTakeRate = $transactions
-            ->filter(fn ($t) => ($t['original_amount'] ?? 0) > 0)
-            ->avg(fn ($t) => $t['fees'] / $t['original_amount']) ?? 0;
+            ->filter(fn($t) => ($t['original_amount'] ?? 0) > 0)
+            ->avg(fn($t) => $t['fees'] / $t['original_amount']) ?? 0;
 
         $t_averageTakeRatePercent = $t_averageTakeRate * 100;
 
@@ -72,12 +72,12 @@ class DashHelper
 
         $transactionsByType = $transactions
             ->groupBy('type')
-            ->map(fn ($group) => $group->count())
+            ->map(fn($group) => $group->count())
             ->toArray();
 
         $amountByTypeCents = $transactions
             ->groupBy('type')
-            ->map(fn ($group) => (int)$group->sum('amount'))
+            ->map(fn($group) => (int) $group->sum('amount'))
             ->toArray();
 
         $amountByTypeFormatted = [];
@@ -99,22 +99,22 @@ class DashHelper
         // -----------------------------
         $billets = collect($boletos['data'] ?? []);
 
-        $totalBillets     = $boletos['total'] ?? 0;
-        $billetsOnPage    = $billets->count();
+        $totalBillets = $boletos['total'] ?? 0;
+        $billetsOnPage = $billets->count();
 
-        $b_totalAmountCents         = (int) $billets->sum('amount');
+        $b_totalAmountCents = (int) $billets->sum('amount');
         $b_totalOriginalAmountCents = (int) $billets->sum('original_amount');
-        $b_totalFeesCents           = (int) $billets->sum('fees');
+        $b_totalFeesCents = (int) $billets->sum('fees');
 
         // Total efetivamente pago (somente PAID) usando payment_amount (se existir), senão original_amount
         $b_totalPaidCents = (int) $billets
-            ->filter(fn ($b) => ($b['status'] ?? null) === 'PAID')
-            ->sum(fn ($b) => (int)($b['payment_amount'] ?? $b['original_amount'] ?? 0));
+            ->filter(fn($b) => ($b['status'] ?? null) === 'PAID')
+            ->sum(fn($b) => (int) ($b['payment_amount'] ?? $b['original_amount'] ?? 0));
 
-        $b_totalAmount         = $toReais($b_totalAmountCents);
+        $b_totalAmount = $toReais($b_totalAmountCents);
         $b_totalOriginalAmount = $toReais($b_totalOriginalAmountCents);
-        $b_totalFees           = $toReais($b_totalFeesCents);
-        $b_totalPaid           = $toReais($b_totalPaidCents);
+        $b_totalFees = $toReais($b_totalFeesCents);
+        $b_totalPaid = $toReais($b_totalPaidCents);
 
         $billetsByStatus = $buildStatusCounts($billets, $requiredStatuses);
         $billetsByStatusPercent = $buildStatusPercents($billetsByStatus, $billetsOnPage);
@@ -122,13 +122,13 @@ class DashHelper
         // -----------------------------
         // Totais combinados (Transações + Boletos)
         // -----------------------------
-        $c_totalAmountCents         = $t_totalAmountCents + $b_totalAmountCents;
+        $c_totalAmountCents = $t_totalAmountCents + $b_totalAmountCents;
         $c_totalOriginalAmountCents = $t_totalOriginalAmountCents + $b_totalOriginalAmountCents;
-        $c_totalFeesCents           = $t_totalFeesCents + $b_totalFeesCents;
+        $c_totalFeesCents = $t_totalFeesCents + $b_totalFeesCents;
 
-        $c_totalAmount         = $toReais($c_totalAmountCents);
+        $c_totalAmount = $toReais($c_totalAmountCents);
         $c_totalOriginalAmount = $toReais($c_totalOriginalAmountCents);
-        $c_totalFees           = $toReais($c_totalFeesCents);
+        $c_totalFees = $toReais($c_totalFeesCents);
 
         // -----------------------------
         // Retorno (mantém compatibilidade com sua view)
@@ -140,14 +140,14 @@ class DashHelper
              * 1) (Transações) — mantém suas chaves atuais
              * ========================= */
             /* linha 1 */
-            'total_amount_formatted'          => $formatMoney($t_totalAmount),
-            'total_fees_formatted'            => $formatMoney($t_totalFees),
+            'total_amount_formatted' => $formatMoney($t_totalAmount),
+            'total_fees_formatted' => $formatMoney($t_totalFees),
             'total_original_amount_formatted' => $formatMoney($t_totalOriginalAmount),
 
             /* linha 2 */
-            'total_transactions'        => $totalTransactions,
-            'average_ticket_formatted'  => $formatMoney($t_averageTicket),
-            'average_installments'      => $transactions->avg('installments') ?? 0,
+            'total_transactions' => $totalTransactions,
+            'average_ticket_formatted' => $formatMoney($t_averageTicket),
+            'average_installments' => $transactions->avg('installments') ?? 0,
 
             /* linha 3 */
             'amount_by_type_formatted' => $amountByTypeFormatted,
@@ -172,22 +172,22 @@ class DashHelper
              * ========================= */
             'billets_total' => $totalBillets,
 
-            'billets_total_amount_formatted'          => $formatMoney($b_totalAmount),
+            'billets_total_amount_formatted' => $formatMoney($b_totalAmount),
             'billets_total_original_amount_formatted' => $formatMoney($b_totalOriginalAmount),
-            'billets_total_fees_formatted'            => $formatMoney($b_totalFees),
+            'billets_total_fees_formatted' => $formatMoney($b_totalFees),
 
             // Total efetivamente pago em boletos (somente PAID)
-            'billets_total_paid_formatted'            => $formatMoney($b_totalPaid),
+            'billets_total_paid_formatted' => $formatMoney($b_totalPaid),
 
-            'billets_by_status'         => $billetsByStatus,
+            'billets_by_status' => $billetsByStatus,
             'billets_by_status_percent' => $billetsByStatusPercent,
 
             /* =========================
              * 3) Consolidado — transações + boletos
              * ========================= */
-            'combined_total_amount_formatted'          => $formatMoney($c_totalAmount),
+            'combined_total_amount_formatted' => $formatMoney($c_totalAmount),
             'combined_total_original_amount_formatted' => $formatMoney($c_totalOriginalAmount),
-            'combined_total_fees_formatted'            => $formatMoney($c_totalFees),
+            'combined_total_fees_formatted' => $formatMoney($c_totalFees),
         ];
     }
 }
