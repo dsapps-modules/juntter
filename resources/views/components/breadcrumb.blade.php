@@ -37,7 +37,7 @@
         </ol>
 
         <div id="balance-link" role="button">
-            <a href="#" class="small">Saldo em Conta</a>
+            <a href="#" class="small">Acessar Conta Bancária</a>
         </div>
         <x-util.modal-orienta-saldo />
 

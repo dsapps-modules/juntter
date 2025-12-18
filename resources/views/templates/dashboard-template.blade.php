@@ -37,8 +37,7 @@
         <div class="container">
             <!-- Logo -->
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" height="45"
-                    class="logo-img">
+                <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" height="45" class="logo-img">
             </a>
 
             <!-- Mobile menu button -->
@@ -81,22 +80,41 @@
                                                     class="fas fa-credit-card me-2"></i>Cartão</a></li>
                                         <li><a class="dropdown-item" href="{{ route('links-pagamento-pix.index') }}"><i
                                                     class="fas fa-qrcode me-2"></i>PIX</a></li>
-                                        <li><a class="dropdown-item"
-                                                href="{{ route('links-pagamento-boleto.index') }}"><i
+                                        <li><a class="dropdown-item" href="{{ route('links-pagamento-boleto.index') }}"><i
                                                     class="fas fa-file-invoice me-2"></i>Boleto</a></li>
                                     </ul>
                                 </li>
-                                {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li> --}}
+                                {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i
+                                            class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li> --}}
                                 <li><a class="dropdown-item" href="{{ route('cobranca.planos') }}"><i
                                             class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pix') }}"><i class="fas fa-paper-plane me-2"></i>Enviar Pix</a></li> --}}
-                                {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
+                                {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pix') }}"><i
+                                            class="fas fa-paper-plane me-2"></i>Enviar Pix</a></li> --}}
+                                {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i
+                                            class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
 
                                 <li><a class="dropdown-item" href="{{ route('cobranca.saldoextrato') }}"><i
                                             class="fas fa-wallet me-2"></i>Saldo e Extrato</a></li>
+                            </ul>
+                        </div>
+                    @endif
+
+                    <!-- Menu Vendedores (Visível apenas para Admin/SuperAdmin) -->
+                    @if (Auth::user()->isSuperAdminOrAdmin())
+                        <div class="dropdown">
+                            <button class="nav-link dropdown-toggle menu-item btn" type="button" id="vendedoresDropdown"
+                                data-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-users me-2"></i>
+                                <span>Vendedores</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-modern" aria-labelledby="vendedoresDropdown">
+                                <li><a class="dropdown-item" href="{{ route('vendedores.faturamento') }}"><i
+                                            class="fas fa-chart-line me-2"></i>Faturamento por Vendedor</a></li>
+                                <li><a class="dropdown-item" href="{{ route('vendedores.acesso') }}"><i
+                                            class="fas fa-key me-2"></i>Acesso do Vendedor</a></li>
                             </ul>
                         </div>
                     @endif
@@ -117,12 +135,11 @@
                                 </div>
                             </div>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-modern dropdown-menu-end"
-                            aria-labelledby="userDropdown">
+                        <ul class="dropdown-menu dropdown-menu-modern dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a id="editar-perfil" class="dropdown-item" href="{{ route('profile.edit') }}"><i
                                         class="fas fa-user me-2"></i>Editar Perfil</a></li>
-                            <li><a id="alterar-senha" class="dropdown-item"
-                                    href="{{ route('profile.password') }}"><i class="fas fa-key me-2"></i>Alterar
+                            <li><a id="alterar-senha" class="dropdown-item" href="{{ route('profile.password') }}"><i
+                                        class="fas fa-key me-2"></i>Alterar
                                     Senha</a></li>
                             <li>
                                 <hr class="dropdown-divider">
@@ -214,8 +231,8 @@
                             <label for="fabValor" class="form-label">Valor da Transação</label>
                             <div class="input-wrapper">
                                 <span class="input-group-text">R$</span>
-                                <input type="text" class="form-control" id="fabValor" name="valor"
-                                    placeholder="0,00" required>
+                                <input type="text" class="form-control" id="fabValor" name="valor" placeholder="0,00"
+                                    required>
                             </div>
                         </div>
 
