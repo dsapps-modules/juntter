@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DashHelper;
+use App\Services\BalanceService;
 use App\Services\BoletoService;
 use App\Services\EstabelecimentoService;
 use App\Services\TransacaoService;
@@ -18,11 +19,18 @@ class DashboardController extends Controller
 
     protected $boletoService;
 
-    public function __construct(EstabelecimentoService $estabelecimentoService, TransacaoService $transacaoService, BoletoService $boletoService)
-    {
+    protected $balanceService;
+
+    public function __construct(
+        EstabelecimentoService $estabelecimentoService,
+        TransacaoService $transacaoService,
+        BoletoService $boletoService,
+        BalanceService $balanceService
+    ) {
         $this->estabelecimentoService = $estabelecimentoService;
         $this->transacaoService = $transacaoService;
         $this->boletoService = $boletoService;
+        $this->balanceService = $balanceService;
     }
 
     /**
@@ -813,7 +821,7 @@ class DashboardController extends Controller
                 'billets_total_amount_formatted' => $fmtMoney($b_totalAmountCents),
                 'billets_total_original_amount_formatted' => $fmtMoney($b_totalOriginalAmountCents),
                 'billets_total_fees_formatted' => $fmtMoney($b_totalFeesCents),
-                'balance' => 'Consultar Extrato',
+                'balance' => 'R$ 0,00',
             ];
 
             // 2. Saldos (API)
@@ -822,6 +830,16 @@ class DashboardController extends Controller
                     'establishment_id' => $estabelecimentoId,
                 ],
             ];
+
+            // Busca Saldo em Conta via BalanceService
+            try {
+                $saldoAtualRes = $this->balanceService->saldoAtual($filtrosSaldo);
+                if (isset($saldoAtualRes['balance'])) {
+                    $metrics['balance'] = $fmtMoney($saldoAtualRes['balance']);
+                }
+            } catch (\Exception $e) {
+                Log::error('Erro ao buscar saldo atual: ' . $e->getMessage());
+            }
 
             try {
                 $saldoApi = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
