@@ -98,12 +98,11 @@ class DashboardController extends Controller
             $queryBase = \App\Models\PaytimeTransaction::whereBetween('created_at', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59']);
 
             // 1. Agregações Gerais
-            // Precisamos separar Boletos de Transações (Outros) para manter a estrutura do dashboard antigo
+            $queryTransacoesBase = clone $queryBase;
+            $queryTransacoesBase->where('type', '!=', 'BILLET');
 
-            // --- TRANSAÇÕES (Type != BILLET) ---
-            $queryTransacoes = (clone $queryBase)->where('type', '!=', 'BILLET');
-
-            $agregadoTrans = $queryTransacoes->selectRaw('
+            // --- TOTAIS GERAIS (Summary Cards) ---
+            $agregadoTrans = (clone $queryTransacoesBase)->selectRaw('
                 COUNT(*) as count,
                 SUM(amount) as amount,
                 SUM(original_amount) as original_amount,
@@ -119,33 +118,42 @@ class DashboardController extends Controller
             $t_averageTicketCents = $agregadoTrans->avg_ticket ?? 0;
             $t_averageInstallments = $agregadoTrans->avg_installments ?? 0;
 
-            // Por Tipo
-            $transByType = $queryTransacoes->clone()
+            // --- POR TIPO (Distribution Cards) ---
+            $transByType = (clone $queryTransacoesBase)
                 ->selectRaw('type, COUNT(*) as count, SUM(amount) as amount')
                 ->groupBy('type')
-                ->get();
+                ->get()
+                ->keyBy('type');
 
-            $transactionsByType = $transByType->pluck('count', 'type')->toArray();
-            $amountByTypeCents = $transByType->pluck('amount', 'type')->toArray();
+            $expectedTypes = ['CREDIT', 'DEBIT', 'PIX'];
+            $transactionsByType = [];
+            $amountByTypeCents = [];
 
-            // Por Status
-            $transByStatus = $queryTransacoes->clone()
+            foreach ($expectedTypes as $type) {
+                $item = $transByType->get($type);
+                $transactionsByType[$type] = $item->count ?? 0;
+                $amountByTypeCents[$type] = $item->amount ?? 0;
+            }
+
+            // --- POR STATUS ---
+            $transByStatusRaw = (clone $queryTransacoesBase)
                 ->selectRaw('status, COUNT(*) as count')
                 ->groupBy('status')
                 ->get()
                 ->pluck('count', 'status')
                 ->toArray();
 
-            $requiredStatuses = ['PAID', 'FAILED', 'REFUNDED']; // Do DashHelper
+            $requiredStatuses = ['PAID', 'FAILED', 'REFUNDED', 'PENDING', 'APPROVED', 'PROCESSING', 'CANCELED', 'DISPUTED', 'CHARGEBACK'];
             $transactionsByStatus = [];
             foreach ($requiredStatuses as $s) {
-                $transactionsByStatus[$s] = $transByStatus[$s] ?? 0;
+                $transactionsByStatus[$s] = $transByStatusRaw[$s] ?? 0;
             }
 
             // --- BOLETOS (Type == BILLET) ---
-            $queryBoletos = (clone $queryBase)->where('type', 'BILLET');
+            $queryBoletosBase = clone $queryBase;
+            $queryBoletosBase->where('type', 'BILLET');
 
-            $agregadoBoletos = $queryBoletos->selectRaw('
+            $agregadoBoletos = (clone $queryBoletosBase)->selectRaw('
                 COUNT(*) as count,
                 SUM(amount) as amount,
                 SUM(original_amount) as original_amount,
@@ -158,12 +166,12 @@ class DashboardController extends Controller
             $b_totalFeesCents = $agregadoBoletos->fees ?? 0;
 
             // Total pago em boletos (Status = PAID)
-            $b_totalPaidCents = $queryBoletos->clone()
+            $b_totalPaidCents = (clone $queryBoletosBase)
                 ->where('status', 'PAID')
-                ->sum('amount'); // Usando amount liquido como base, ou original se preferir (DashHelper usava logica complexa payment/original)
+                ->sum('amount');
 
             // Por Status Boletos
-            $boletosByStatusRaw = $queryBoletos->clone()
+            $boletosByStatusRaw = (clone $queryBoletosBase)
                 ->selectRaw('status, COUNT(*) as count')
                 ->groupBy('status')
                 ->get()
@@ -184,12 +192,13 @@ class DashboardController extends Controller
             $fmtMoney = fn($val) => 'R$ ' . number_format(($val ?? 0) / 100, 2, ',', '.');
             $fmtPercent = fn($val) => number_format((float) $val, 2, ',', '.') . '%';
 
-            // --- CONSTRUÇÃO DO ARRAY $metrics (Manual, substituindo DashHelper) ---
+            // --- CONSTRUÇÃO DO ARRAY $metrics ---
 
-            // Calculos percentuais
+            // Calculos percentuais por tipo
             $amountByTypePercentFormatted = [];
             $amountByTypeFormatted = [];
-            foreach ($amountByTypeCents as $type => $amt) {
+            foreach ($expectedTypes as $type) {
+                $amt = $amountByTypeCents[$type] ?? 0;
                 $amountByTypeFormatted[$type] = $fmtMoney($amt);
                 $pct = $t_totalAmountCents > 0 ? ($amt / $t_totalAmountCents) * 100 : 0;
                 $amountByTypePercentFormatted[$type] = $fmtPercent($pct);
@@ -207,8 +216,12 @@ class DashboardController extends Controller
                 $billetsByStatusPercent[$st] = $fmtPercent($pct);
             }
 
+            // Saldo - Em um dashboard admin real, isso viria de uma API de Gateway ou tabela de saldos.
+            // Para manter a compatibilidade com a view que espera 'balance':
+            $balanceFormatted = 'Consultar Extrato';
+
             $metrics = [
-                // Transações
+                // Transações (Cartão + Pix)
                 'total_amount_formatted' => $fmtMoney($t_totalAmountCents),
                 'total_fees_formatted' => $fmtMoney($t_totalFeesCents),
                 'total_original_amount_formatted' => $fmtMoney($t_totalOriginalAmountCents),
@@ -216,7 +229,7 @@ class DashboardController extends Controller
                 'total_transactions' => $t_totalTransactions,
                 'average_ticket_formatted' => $fmtMoney($t_averageTicketCents),
                 'average_installments' => round($t_averageInstallments, 1),
-                'average_take_rate_formatted' => '0,00%', // Complicado calcular em SQL aggregate puro sem subquery, deixando zerado ou removendo
+                'balance' => $balanceFormatted,
 
                 'amount_by_type_formatted' => $amountByTypeFormatted,
                 'amount_by_type_percent_formatted' => $amountByTypePercentFormatted,
@@ -233,7 +246,7 @@ class DashboardController extends Controller
                 'billets_by_status' => $billetsByStatus,
                 'billets_by_status_percent' => $billetsByStatusPercent,
 
-                // Combinado
+                // Combinado (Tudo incluindo Boletos)
                 'combined_total_amount_formatted' => $fmtMoney($c_totalAmountCents),
                 'combined_total_original_amount_formatted' => $fmtMoney($c_totalOriginalAmountCents),
                 'combined_total_fees_formatted' => $fmtMoney($c_totalFeesCents),
@@ -675,142 +688,135 @@ class DashboardController extends Controller
      */
     public function vendedorDashboard(Request $request)
     {
-        // Obter mês e ano do filtro (podem vir vazios para representar "Todos")
-        $mesAtual = $request->input('mes') ?? date('m');
-        $anoAtual = $request->input('ano') ?? date('Y');
+        // Obter mês e ano do filtro
+        $mes = $request->input('mes') ?? date('m');
+        $ano = $request->input('ano') ?? date('Y');
         $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
         try {
             // Buscar dados do estabelecimento
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
 
-            // Definição de datas (mantendo lógica original)
-            $dataInicio = null;
-            $dataFim = null;
-            if (!empty($mesAtual) || !empty($anoAtual)) {
-                if (!empty($mesAtual) && !empty($anoAtual)) {
-                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, (int) $mesAtual, 1, (int) $anoAtual));
-                    $dataFim = date('Y-m-t', mktime(0, 0, 0, (int) $mesAtual, 1, (int) $anoAtual));
-                } elseif (!empty($mesAtual)) {
-                    $anoTemp = (int) date('Y');
-                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, (int) $mesAtual, 1, $anoTemp));
-                    $dataFim = date('Y-m-t', mktime(0, 0, 0, (int) $mesAtual, 1, $anoTemp));
-                } elseif (!empty($anoAtual)) {
-                    $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, (int) $anoAtual));
-                    $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, (int) $anoAtual));
-                }
-            } else {
-                // Apenas registros do mês atual
-                $dataInicio = date('Y-m-01');
-                $dataFim = date('Y-m-t');
-            }
+            $dataInicio = date('Y-m-d', mktime(0, 0, 0, (int) $mes, 1, (int) $ano));
+            $dataFim = date('Y-m-t', mktime(0, 0, 0, (int) $mes, 1, (int) $ano));
 
             // Base Query com filtros de data e estabelecimento
             $queryBase = \App\Models\PaytimeTransaction::where('establishment_id', $estabelecimentoId)
                 ->whereBetween('created_at', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59']);
 
-            // 1. Buscar Lista de Transações (Apenas as últimas 100 para a tabela)
-            $transacoesDb = (clone $queryBase)
-                ->orderBy('created_at', 'DESC')
-                ->limit(100)
-                ->get();
+            // 1. Agregações Gerais
+            $queryTransacoesBase = clone $queryBase;
+            $queryTransacoesBase->where('type', '!=', 'BILLET');
 
-            $transacoesData = $transacoesDb->map(function ($t) {
-                return [
-                    '_id' => $t->external_id,
-                    'type' => $t->type,
-                    'status' => $t->status,
-                    'amount' => $t->amount,
-                    'original_amount' => $t->original_amount,
-                    'fees' => $t->fees,
-                    'created_at' => $t->created_at->toIso8601String(),
-                    'expiration_at' => $t->expiration_at?->toIso8601String(),
-                    'installments' => $t->installments,
-                ];
-            })->toArray();
-
-            $transacoes = [
-                'data' => $transacoesData,
-                'total' => (clone $queryBase)->count() // Total real para paginação se necessário (aqui só exibimos count)
-            ];
-
-            // 2. Calcular Agregações no Banco de Dados (Muito mais eficiente)
-
-            // Agregação Geral
-            $agregadoGeral = (clone $queryBase)->selectRaw('
-                COUNT(*) as total_qtd,
-                SUM(amount) as total_liquido,
-                SUM(original_amount) as total_bruto,
-                SUM(fees) as total_taxas
+            // --- TOTAIS GERAIS (Summary Cards) ---
+            $agregadoTrans = (clone $queryTransacoesBase)->selectRaw('
+                COUNT(*) as count,
+                SUM(amount) as amount,
+                SUM(original_amount) as original_amount,
+                SUM(fees) as fees,
+                AVG(amount) as avg_ticket,
+                AVG(installments) as avg_installments
             ')->first();
 
-            $totalTransacoes = $agregadoGeral->total_qtd ?? 0;
-            $volumeLiquidoTotal = $agregadoGeral->total_liquido ?? 0;
-            $volumeBrutoTotal = $agregadoGeral->total_bruto ?? 0;
-            $totalTaxas = $agregadoGeral->total_taxas ?? 0;
+            $t_totalTransactions = $agregadoTrans->count ?? 0;
+            $t_totalAmountCents = $agregadoTrans->amount ?? 0;
+            $t_totalOriginalAmountCents = $agregadoTrans->original_amount ?? 0;
+            $t_totalFeesCents = $agregadoTrans->fees ?? 0;
+            $t_averageTicketCents = $agregadoTrans->avg_ticket ?? 0;
 
-            // Transações Hoje
-            $transacoesHoje = \App\Models\PaytimeTransaction::where('establishment_id', $estabelecimentoId)
-                ->whereDate('created_at', date('Y-m-d'))
-                ->count();
+            // --- POR TIPO (Distribution Cards) ---
+            $transByType = (clone $queryTransacoesBase)
+                ->selectRaw('type, COUNT(*) as count, SUM(amount) as amount')
+                ->groupBy('type')
+                ->get()
+                ->keyBy('type');
 
-            // Agregação por Tipo (PIX, CARTAO, BOLETO)
-            $porTipo = (clone $queryBase)->selectRaw('
-                type,
-                COUNT(*) as qtd,
-                SUM(amount) as total_liquido,
-                SUM(original_amount) as total_bruto,
-                SUM(fees) as total_taxas
-            ')->groupBy('type')->get()->keyBy('type');
+            $expectedTypes = ['CREDIT', 'DEBIT', 'PIX'];
+            $transactionsByType = [];
+            $amountByTypeCents = [];
 
-            // PIX
-            $dadosPix = $porTipo->get('PIX');
-            $qtdPix = $dadosPix->qtd ?? 0;
-            $volumePix = $dadosPix->total_liquido ?? 0;
+            foreach ($expectedTypes as $type) {
+                $item = $transByType->get($type);
+                $transactionsByType[$type] = $item->count ?? 0;
+                $amountByTypeCents[$type] = $item->amount ?? 0;
+            }
 
-            // BILLET
-            $dadosBoleto = $porTipo->get('BILLET');
-            $qtdBoletos = $dadosBoleto->qtd ?? 0;
-            $volumeBoletos = $dadosBoleto->total_liquido ?? 0;
-            $taxasBoletos = $dadosBoleto->total_taxas ?? 0;
+            // --- POR STATUS ---
+            $transByStatusRaw = (clone $queryTransacoesBase)
+                ->selectRaw('status, COUNT(*) as count')
+                ->groupBy('status')
+                ->get()
+                ->pluck('count', 'status')
+                ->toArray();
 
-            // CARTAO (CREDIT + DEBIT)
-            $dadosCredit = $porTipo->get('CREDIT');
-            $dadosDebit = $porTipo->get('DEBIT');
+            $requiredStatuses = ['PAID', 'FAILED', 'REFUNDED', 'PENDING', 'APPROVED', 'PROCESSING', 'CANCELED', 'DISPUTED', 'CHARGEBACK'];
+            $transactionsByStatus = [];
+            foreach ($requiredStatuses as $s) {
+                $transactionsByStatus[$s] = $transByStatusRaw[$s] ?? 0;
+            }
 
-            $qtdCredito = $dadosCredit->qtd ?? 0;
-            $volumeCredito = $dadosCredit->total_liquido ?? 0;
-            $qtdDebito = $dadosDebit->qtd ?? 0;
-            $volumeDebito = $dadosDebit->total_liquido ?? 0;
+            // --- BOLETOS (Type == BILLET) ---
+            $queryBoletosBase = clone $queryBase;
+            $queryBoletosBase->where('type', 'BILLET');
 
-            $qtdCartao = $qtdCredito + $qtdDebito;
-            $taxasCartao = ($dadosCredit->total_taxas ?? 0) + ($dadosDebit->total_taxas ?? 0);
+            $agregadoBoletos = (clone $queryBoletosBase)->selectRaw('
+                COUNT(*) as count,
+                SUM(amount) as amount,
+                SUM(original_amount) as original_amount,
+                SUM(fees) as fees
+            ')->first();
 
-            // Status Específicos (Pagos, Pendentes) - Simplificado
-            $statusCounts = (clone $queryBase)->selectRaw('status, COUNT(*) as qtd')->groupBy('status')->pluck('qtd', 'status')->toArray();
+            $b_totalBillets = $agregadoBoletos->count ?? 0;
+            $b_totalAmountCents = $agregadoBoletos->amount ?? 0;
+            $b_totalOriginalAmountCents = $agregadoBoletos->original_amount ?? 0;
+            $b_totalFeesCents = $agregadoBoletos->fees ?? 0;
 
-            // Para cartões (Aproximado, pois o statusCounts é global, mas serve para métricas gerais)
-            // Se precisar ser exato por tipo, precisaríamos de mais queries, mas vamos manter simples para performance.
-            // Vou fazer queries específicas leves para os counts de status por tipo onde é crítico.
+            // --- TOTAIS COMBINADOS ---
+            $c_totalAmountCents = $t_totalAmountCents + $b_totalAmountCents;
+            $c_totalOriginalAmountCents = $t_totalOriginalAmountCents + $b_totalOriginalAmountCents;
+            $c_totalFeesCents = $t_totalFeesCents + $b_totalFeesCents;
 
-            $cartaoPagas = (clone $queryBase)->whereIn('type', ['CREDIT', 'DEBIT'])->where('status', 'PAID')->count();
-            $cartaoPendentes = (clone $queryBase)->whereIn('type', ['CREDIT', 'DEBIT'])->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count();
+            // Helpers de formatação
+            $fmtMoney = fn($val) => 'R$ ' . number_format(($val ?? 0) / 100, 2, ',', '.');
+            $fmtPercent = fn($val) => number_format((float) $val, 2, ',', '.') . '%';
 
-            $boletosPagos = (clone $queryBase)->where('type', 'BILLET')->where('status', 'PAID')->count();
-            $boletosPendentes = (clone $queryBase)->where('type', 'BILLET')->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count();
+            // --- CONSTRUÇÃO DO ARRAY $metrics ---
+            $amountByTypePercentFormatted = [];
+            $amountByTypeFormatted = [];
+            foreach ($expectedTypes as $type) {
+                $amt = $amountByTypeCents[$type] ?? 0;
+                $amountByTypeFormatted[$type] = $fmtMoney($amt);
+                $amountByTypePercentFormatted[$type] = $t_totalAmountCents > 0
+                    ? $fmtPercent(($amt / $t_totalAmountCents) * 100)
+                    : '0,00%';
+            }
 
-            // Boletos Vencidos
-            $boletosVencidosValor = (clone $queryBase)
-                ->where('type', 'BILLET')
-                ->whereIn('status', ['PENDING', 'PROCESSING'])
-                ->where('expiration_at', '<', now())
-                ->sum('amount');
+            $transactionsByStatusPercent = [];
+            foreach ($requiredStatuses as $s) {
+                $count = $transactionsByStatus[$s] ?? 0;
+                $transactionsByStatusPercent[$s] = $t_totalTransactions > 0
+                    ? $fmtPercent(($count / $t_totalTransactions) * 100)
+                    : '0,00%';
+            }
 
+            $metrics = [
+                'total_transactions' => number_format($t_totalTransactions, 0, ',', '.'),
+                'total_amount_formatted' => $fmtMoney($t_totalAmountCents),
+                'total_original_amount_formatted' => $fmtMoney($t_totalOriginalAmountCents),
+                'total_fees_formatted' => $fmtMoney($t_totalFeesCents),
+                'average_ticket_formatted' => $fmtMoney($t_averageTicketCents),
+                'transactions_by_type' => $transactionsByType,
+                'amount_by_type_formatted' => $amountByTypeFormatted,
+                'amount_by_type_percent_formatted' => $amountByTypePercentFormatted,
+                'transactions_by_status' => $transactionsByStatus,
+                'transactions_by_status_percent' => $transactionsByStatusPercent,
+                'billets_total_amount_formatted' => $fmtMoney($b_totalAmountCents),
+                'billets_total_original_amount_formatted' => $fmtMoney($b_totalOriginalAmountCents),
+                'billets_total_fees_formatted' => $fmtMoney($b_totalFeesCents),
+                'balance' => 'Consultar Extrato',
+            ];
 
-            // Buscar saldos do estabelecimento (Mantém lógica original de API ou simula?)
-            // A lógica de saldos "Futuros" geralmente vem da API pois envolve regras de liquidação complexas.
-            // Vou manter a chamada da API para saldos apenas se ela for leve, ou zerar se for o gargalo.
-            // O erro original era no ->get() das transações. Vamos manter a API de saldos por enquanto.
+            // 2. Saldos (API)
             $filtrosSaldo = [
                 'extra_headers' => [
                     'establishment_id' => $estabelecimentoId,
@@ -818,121 +824,56 @@ class DashboardController extends Controller
             ];
 
             try {
-                $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
+                $saldoApi = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
                 $lancamentosDiarios = $this->transacaoService->lancamentosFuturosDiarios($filtrosSaldo);
             } catch (\Exception $e) {
-                // Se falhar saldo, não quebra o resto
-                $saldo = [];
+                $saldoApi = [];
                 $lancamentosDiarios = [];
             }
 
-            // ... (Lógica de processamento de saldo mantém-se igual, mas com variáveis locais) ...
-            // [REPLICAÇÃO DA LÓGICA DE SALDO DISPONIVEL DO CÓDIGO ORIGINAL - simplificada para brevidade mas funcional]
-            $saldoDisponivel = 0;
-            if (isset($saldo['total']['amount'])) {
-                if (empty($mesAtual) && empty($anoAtual)) {
-                    $saldoDisponivel = $saldo['total']['amount'];
-                } else {
-                    // Lógica de filtro de mês/ano para saldo (simplificada)
-                    // Se quiser a lógica exata, teria que copiar todo aquele bloco foreach enorme.
-                    // Dado o risco de erro, vou assumir o total geral se o filtro for complexo, ou tentar replicar o basico.
-                    // Vou usar o valor 'total' padrão para evitar complexidade excessiva neste fix de memória.
-                    // O usuário reclamou de memória, não de valor de saldo incorreto.
-                    $saldoDisponivel = $saldo['total']['amount'];
-                }
-            }
-
-            $saldos = [
-                'disponivel' => 'R$ ' . number_format($saldoDisponivel / 100, 2, ',', '.'),
-                'transito' => 'R$ 0,00', // Calculado abaixo se possível
-                'processamento' => 'R$ 0,00',
-                'bloqueado_cartao' => 'R$ 0,00',
-                'bloqueado_boleto' => 'R$ 0,00',
-            ];
-
-            // Recalcular Transito (Simples soma dos próximos 7 dias do lancamentosDiarios)
+            $saldoDisponivel = $saldoApi['total']['amount'] ?? 0;
+            $valorTransito = 0;
             if (isset($lancamentosDiarios['data'])) {
-                $valorTransito = 0;
                 foreach ($lancamentosDiarios['data'] as $item) {
                     $dataLancamento = strtotime($item['date'] ?? '');
                     if ($dataLancamento && $dataLancamento <= strtotime('+7 days') && $dataLancamento >= time()) {
                         $valorTransito += ($item['amount'] ?? 0);
                     }
                 }
-                $saldos['transito'] = 'R$ ' . number_format($valorTransito / 100, 2, ',', '.');
             }
-
-            // Valor em processamento (baseado no count do banco que já fizemos?)
-            // O original iterava transações. Vamos fazer sum no banco.
             $valorProcessamento = (clone $queryBase)->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->sum('amount');
-            $saldos['processamento'] = 'R$ ' . number_format($valorProcessamento / 100, 2, ',', '.');
-
-
-            $metricasGeral = [
-                ['valor' => $transacoesHoje, 'label' => 'Transações Hoje', 'icone' => 'fas fa-exchange-alt', 'cor' => 'metric-icon-green'],
-                ['valor' => 'R$ ' . number_format($volumeBrutoTotal / 100, 2, ',', '.'), 'label' => 'Volume Bruto (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal'],
-                ['valor' => 'R$ ' . number_format($volumeLiquidoTotal / 100, 2, ',', '.'), 'label' => 'Volume Líquido (30 dias)', 'icone' => 'fas fa-chart-bar', 'cor' => 'metric-icon-blue'],
-                ['valor' => 'R$ ' . number_format($totalTaxas / 100, 2, ',', '.'), 'label' => 'Taxas (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red'],
-                ['valor' => 'R$ ' . number_format($volumePix / 100, 2, ',', '.'), 'label' => 'Volume PIX (30 dias)', 'icone' => 'fas fa-qrcode', 'cor' => 'metric-icon-green'],
-                ['valor' => $qtdPix, 'label' => 'Transações PIX', 'icone' => 'fas fa-qrcode', 'cor' => 'metric-icon-green'],
-                ['valor' => $qtdBoletos, 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-blue'],
-                ['valor' => $qtdCartao, 'label' => 'Transações Cartão', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue'],
-                ['valor' => ($totalTransacoes > 0 ? 'R$ ' . number_format(($volumeLiquidoTotal / $totalTransacoes) / 100, 2, ',', '.') : 'R$ 0,00'), 'label' => 'Ticket Médio', 'icone' => 'fas fa-ticket-alt', 'cor' => 'metric-icon-cyan'],
-            ];
-
-            $metricasCartao = [
-                ['valor' => $qtdCartao, 'label' => 'Transações Cartão', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue'],
-                ['valor' => $qtdCredito, 'label' => 'Transações Crédito', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-blue'],
-                ['valor' => $qtdDebito, 'label' => 'Transações Débito', 'icone' => 'fas fa-credit-card', 'cor' => 'metric-icon-teal'],
-                ['valor' => 'R$ ' . number_format($volumeCredito / 100, 2, ',', '.'), 'label' => 'Volume Crédito (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal'],
-                ['valor' => 'R$ ' . number_format($volumeDebito / 100, 2, ',', '.'), 'label' => 'Volume Débito (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-teal'],
-                ['valor' => 'R$ ' . number_format($taxasCartao / 100, 2, ',', '.'), 'label' => 'Taxas Cartão (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red'],
-                ['valor' => $cartaoPagas, 'label' => 'Cartão Pagas', 'icone' => 'fas fa-check-circle', 'cor' => 'metric-icon-green'],
-                ['valor' => $cartaoPendentes, 'label' => 'Cartão Pendentes', 'icone' => 'fas fa-clock', 'cor' => 'metric-icon-orange'],
-                ['valor' => ($qtdCartao > 0 ? 'R$ ' . number_format((($volumeCredito + $volumeDebito) / $qtdCartao) / 100, 2, ',', '.') : 'R$ 0,00'), 'label' => 'Ticket Médio Cartão', 'icone' => 'fas fa-ticket-alt', 'cor' => 'metric-icon-cyan'],
-            ];
-
-            $metricasBoleto = [
-                ['valor' => $qtdBoletos, 'label' => 'Transações Boleto', 'icone' => 'fas fa-file-invoice', 'cor' => 'metric-icon-orange'],
-                ['valor' => 'R$ ' . number_format($volumeBoletos / 100, 2, ',', '.'), 'label' => 'Volume Boleto (30 dias)', 'icone' => 'fas fa-chart-line', 'cor' => 'metric-icon-orange'],
-                ['valor' => 'R$ ' . number_format($taxasBoletos / 100, 2, ',', '.'), 'label' => 'Taxas Boleto (30 dias)', 'icone' => 'fas fa-percentage', 'cor' => 'metric-icon-red'],
-                ['valor' => 'R$ ' . number_format($boletosVencidosValor / 100, 2, ',', '.'), 'label' => 'Boletos Vencidos (valor)', 'icone' => 'fas fa-exclamation-triangle', 'cor' => 'metric-icon-red'],
-                ['valor' => $boletosPagos, 'label' => 'Boletos Pagos', 'icone' => 'fas fa-check-circle', 'cor' => 'metric-icon-green'],
-                ['valor' => $boletosPendentes, 'label' => 'Boletos Pendentes', 'icone' => 'fas fa-clock', 'cor' => 'metric-icon-orange'],
-            ];
-
-            // Para compatibilidade
-            $metricas = $metricasGeral;
-
-            return view('dashboard.vendedor', compact('saldos', 'metricas', 'estabelecimento', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'mesAtual', 'anoAtual'));
-
-        } catch (\Exception $e) {
-            Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
 
             $saldos = [
-                'disponivel' => 'R$ 0,00',
-                'transito' => 'R$ 0,00',
+                'disponivel' => $fmtMoney($saldoDisponivel),
+                'transito' => $fmtMoney($valorTransito),
+                'processamento' => $fmtMoney($valorProcessamento),
                 'bloqueado_cartao' => 'R$ 0,00',
                 'bloqueado_boleto' => 'R$ 0,00',
             ];
 
-            $metricas = [
-                [
-                    'valor' => '0',
-                    'label' => 'Erro ao carregar dados',
-                    'icone' => 'fas fa-exclamation-triangle',
-                    'cor' => 'metric-icon-red',
-                ],
+            // 3. Buscar Lista de Transações (Tabela)
+            $transacoesDb = (clone $queryBase)
+                ->orderBy('created_at', 'DESC')
+                ->limit(100)
+                ->get();
+
+            $transacoes = [
+                'data' => $transacoesDb->toArray(),
+                'total' => (clone $queryBase)->count()
             ];
 
-            // Variáveis vazias para evitar erro na view
-            $transacoes = ['data' => [], 'total' => 0];
-            $metricasGeral = [];
-            $metricasCartao = [];
-            $metricasBoleto = [];
-            $estabelecimento = null;
+            return view('dashboard.vendedor', [
+                'metrics' => $metrics,
+                'saldos' => $saldos,
+                'estabelecimento' => $estabelecimento,
+                'transacoes' => $transacoes,
+                'mes' => $mes,
+                'ano' => $ano,
+            ]);
 
-            return view('dashboard.vendedor', compact('saldos', 'metricas', 'transacoes', 'metricasGeral', 'metricasCartao', 'metricasBoleto', 'estabelecimento', 'mesAtual', 'anoAtual'));
+        } catch (\Exception $e) {
+            Log::error('Erro ao carregar dashboard vendedor: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Erro ao carregar os dados do dashboard.');
         }
     }
 }
