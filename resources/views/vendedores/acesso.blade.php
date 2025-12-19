@@ -18,12 +18,7 @@
                     <div class="col-md-12 mb-3">
                         <label for="select_vendedor">Selecione o Vendedor (API)</label>
                         <select id="select_vendedor" class="form-control select2" required>
-                            <option value="">Selecione...</option>
-                            @foreach ($disponiveis as $v)
-                                <option value="{{ $v['id'] }}" data-name="{{ $v['name'] }}" data-email="{{ $v['email'] }}">
-                                    {{ $v['name'] }} ({{ $v['id'] }})
-                                </option>
-                            @endforeach
+                            <option value="">Busque pelo nome...</option>
                         </select>
                         <input type="hidden" name="establishment_id" id="establishment_id">
                     </div>
@@ -154,22 +149,57 @@
 @push('scripts')
     <script>
         $(document).ready(function () {
-            // Inicializar Select2
-            $('.select2').select2({
+            // Inicializar Select2 com AJAX
+            $('#select_vendedor').select2({
                 theme: 'bootstrap4',
-                placeholder: 'Busque pelo nome...'
+                placeholder: 'Busque pelo nome, documento ou email...',
+                allowClear: true,
+                minimumInputLength: 3,
+                ajax: {
+                    url: '{{ route('vendedores.acesso.search') }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                }
             });
 
             // Preencher inputs ao selecionar vendedor
-            $('#select_vendedor').on('change', function () {
-                var selected = $(this).find(':selected');
-                var id = $(this).val();
-                var name = selected.data('name');
-                var email = selected.data('email');
+            $('#select_vendedor').on('select2:select', function (e) {
+                var data = e.params.data;
+                
+                $('#establishment_id').val(data.id);
+                
+                if(data.name_clean) {
+                    $('#input_name').val(data.name_clean);
+                } else {
+                    // Fallback se não vier limpo
+                     var fullText = data.text; 
+                     var namePart = fullText.substring(0, fullText.lastIndexOf('(')).trim();
+                     $('#input_name').val(namePart);
+                }
+                
+                if(data.email) {
+                    $('#input_email').val(data.email);
+                } else {
+                     $('#input_email').val(''); // Limpa ou deixa user digitar
+                }
+            });
 
-                $('#establishment_id').val(id);
-                $('#input_name').val(name);
-                $('#input_email').val(email);
+            // Se limpar, limpa os campos
+            $('#select_vendedor').on('select2:clear', function (e) {
+                $('#establishment_id').val('');
+                $('#input_name').val('');
+                $('#input_email').val('');
             });
         });
     </script>

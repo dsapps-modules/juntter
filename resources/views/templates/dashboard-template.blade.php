@@ -113,6 +113,8 @@
                             <ul class="dropdown-menu dropdown-menu-modern" aria-labelledby="vendedoresDropdown">
                                 <li><a class="dropdown-item" href="{{ route('vendedores.faturamento') }}"><i
                                             class="fas fa-chart-line me-2"></i>Faturamento por Vendedor</a></li>
+                                <li><a class="dropdown-item" href="{{ route('estabelecimentos.index') }}"><i
+                                            class="fas fa-store me-2"></i>Estabelecimentos</a></li>
                                 <li><a class="dropdown-item" href="{{ route('vendedores.acesso') }}"><i
                                             class="fas fa-key me-2"></i>Acesso do Vendedor</a></li>
                             </ul>

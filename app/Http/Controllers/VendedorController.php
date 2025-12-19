@@ -29,58 +29,48 @@ class VendedorController extends Controller
         $dataInicio = "$ano-$mes-01";
         $dataFim = date('Y-m-t', strtotime($dataInicio));
 
-        // Buscar lista de estabelecimentos na API (Fonte de verdade)
-        try {
-            $response = $this->estabelecimentoService->listarEstabelecimentos();
-            $estabelecimentos = $response['data'] ?? []; // Ajuste conforme estrutura real de resposta da API
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('VendedorController: Erro API', ['msg' => $e->getMessage()]);
-            $estabelecimentos = [];
-        }
+        // Consulta otimizada: JOIN entre estabelecimentos e transações
+        // Agrupa por estabelecimento e calcula os totais
+        $query = DB::table('paytime_establishments as e')
+            ->join('paytime_transactions as t', 'e.id', '=', 't.establishment_id')
+            ->whereBetween('t.created_at', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59'])
+            ->select(
+                'e.id as estabelecimento_id',
+                'e.fantasy_name',
+                'e.first_name',
+                'e.last_name',
+                'e.email',
+                'e.document',
+                DB::raw('SUM(t.amount) as total_liquido'),
+                DB::raw('SUM(t.original_amount) as total_bruto'),
+                DB::raw('SUM(t.fees) as total_taxas'),
+                DB::raw('COUNT(t.id) as qtd')
+            )
+            ->groupBy('e.id', 'e.fantasy_name', 'e.first_name', 'e.last_name', 'e.email', 'e.document')
+            ->having('total_liquido', '>', 0)
+            ->orderByDesc('total_liquido');
 
-        $dados = [];
+        $resultados = $query->get();
 
-        foreach ($estabelecimentos as $est) {
-            // A API retorna id como inteiro e nome em first_name/last_name
-            $estId = $est['id'] ?? ($est['_id'] ?? null);
-
-            // Construir nome completo
-            $firstName = $est['first_name'] ?? '';
-            $lastName = $est['last_name'] ?? '';
-            $nomeFantasia = trim("$firstName $lastName");
-
-            // Se não tiver nome, tentar email ou documento
+        // Mapear para o formato da view
+        $dados = $resultados->map(function ($item) {
+            // Lógica de nome similar ao anterior
+            $nomeFantasia = $item->fantasy_name;
             if (empty($nomeFantasia)) {
-                $nomeFantasia = $est['email'] ?? ($est['document'] ?? 'Sem Nome');
+                $nomeFantasia = trim("{$item->first_name} {$item->last_name}");
+            }
+            if (empty($nomeFantasia)) {
+                $nomeFantasia = $item->email ?? ($item->document ?? 'Sem Nome');
             }
 
-            if (!$estId)
-                continue;
-
-            // Agregar dados do estabelecimento neste mês (Banco Local)
-            $stats = PaytimeTransaction::where('establishment_id', (string) $estId)
-                ->whereBetween('created_at', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59'])
-                ->selectRaw('
-                    SUM(amount) as total_liquido,
-                    SUM(original_amount) as total_bruto,
-                    SUM(fees) as total_taxas,
-                    COUNT(*) as qtd
-                ')
-                ->first();
-
-            $dados[] = [
+            return [
                 'nome' => $nomeFantasia,
-                'estabelecimento_id' => $estId,
-                'total_liquido' => $stats->total_liquido ?? 0,
-                'total_bruto' => $stats->total_bruto ?? 0,
-                'total_taxas' => $stats->total_taxas ?? 0,
-                'qtd' => $stats->qtd ?? 0,
+                'estabelecimento_id' => $item->estabelecimento_id,
+                'total_liquido' => $item->total_liquido,
+                'total_bruto' => $item->total_bruto,
+                'total_taxas' => $item->total_taxas,
+                'qtd' => $item->qtd,
             ];
-        }
-
-        // Ordenar por faturamento liquido decrescente
-        usort($dados, function ($a, $b) {
-            return $b['total_liquido'] <=> $a['total_liquido'];
         });
 
         // Breadcrumb
@@ -104,54 +94,56 @@ class VendedorController extends Controller
             ->with('vendedor') // Eager load success relationship
             ->get();
 
-        // IDs de estabelecimentos já cadastrados
-        $estabelecimentosCadastradosIds = $usuariosLocais->pluck('vendedor.estabelecimento_id')->toArray();
-
-        // 2. Buscar lista de estabelecimentos na API
-        try {
-            $response = $this->estabelecimentoService->listarEstabelecimentos();
-            $todosEstabelecimentos = $response['data'] ?? [];
-        } catch (\Exception $e) {
-            $todosEstabelecimentos = [];
-            session()->flash('error', 'Erro ao carregar lista de estabelecimentos da API.');
-        }
-
-        // 3. Filtrar apenas os disponíveis (que não estão cadastrados localmente) e formatar
-        $disponiveis = [];
-        foreach ($todosEstabelecimentos as $est) {
-            $estId = $est['id'] ?? ($est['_id'] ?? null);
-            if (!$estId)
-                continue;
-
-            // Se já cadastrado, pular
-            if (in_array((string) $estId, $estabelecimentosCadastradosIds))
-                continue;
-
-            $firstName = $est['first_name'] ?? '';
-            $lastName = $est['last_name'] ?? '';
-            $nome = trim("$firstName $lastName");
-            if (empty($nome))
-                $nome = $est['fantasy_name'] ?? 'Sem Nome';
-
-            $email = $est['email'] ?? '';
-
-            $disponiveis[] = [
-                'id' => $estId,
-                'name' => $nome,
-                'email' => $email
-            ];
-        }
-
-        // Ordenar por nome
-        usort($disponiveis, fn($a, $b) => strcmp($a['name'], $b['name']));
-
         // Breadcrumb
         $breadcrumbItems = [
             ['label' => 'Vendedores', 'url' => '#'],
             ['label' => 'Acesso', 'url' => route('vendedores.acesso')],
         ];
 
-        return view('vendedores.acesso', compact('disponiveis', 'usuariosLocais', 'breadcrumbItems'));
+        return view('vendedores.acesso', compact('usuariosLocais', 'breadcrumbItems'));
+    }
+
+    /**
+     * Busca estabelecimentos disponíveis para vinculação (Select2 AJAX)
+     */
+    public function searchEstabelecimentosAvailable(Request $request)
+    {
+        $term = $request->get('q');
+
+        // IDs já em uso
+        $usedIds = \App\Models\User::where('nivel_acesso', 'vendedor')
+            ->with('vendedor')
+            ->get()
+            ->pluck('vendedor.estabelecimento_id')
+            ->filter()
+            ->toArray();
+
+        $query = \App\Models\PaytimeEstablishment::whereNotIn('id', $usedIds);
+
+        if ($term) {
+            $query->where(function ($q) use ($term) {
+                $q->where('fantasy_name', 'like', "%{$term}%")
+                    ->orWhere('first_name', 'like', "%{$term}%")
+                    ->orWhere('last_name', 'like', "%{$term}%")
+                    ->orWhere('document', 'like', "%{$term}%")
+                    ->orWhere('email', 'like', "%{$term}%");
+            });
+        }
+
+        $results = $query->limit(20)->get()->map(function ($item) {
+            $nome = $item->display_name;
+            if (empty($nome) || $nome === 'Sem Nome') {
+                $nome = $item->document ?? $item->email;
+            }
+            return [
+                'id' => $item->id,
+                'text' => $nome . " (ID: {$item->id})",
+                'email' => $item->email,
+                'name_clean' => $nome
+            ];
+        });
+
+        return response()->json(['results' => $results]);
     }
 
     /**

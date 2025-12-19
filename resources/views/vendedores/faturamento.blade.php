@@ -14,6 +14,7 @@
             <table class="table table-hover text-nowrap">
                 <thead>
                     <tr>
+                        <th style="width: 50px">#</th>
                         <th>Vendedor</th>
                         <th>Estabelecimento ID</th>
                         <th>Qtd. Transações</th>
@@ -25,6 +26,7 @@
                 <tbody>
                     @forelse($dados as $dado)
                         <tr>
+                            <td>{{ $loop->iteration }}º</td>
                             <td><span title="{{ $dado['nome'] }}">{{ \Illuminate\Support\Str::limit($dado['nome'], 25) }}</span>
                             </td>
                             <td>{{ $dado['estabelecimento_id'] }}</td>

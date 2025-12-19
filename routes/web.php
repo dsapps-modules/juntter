@@ -113,6 +113,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Rotas de Estabelecimentos (apenas admin e super admin)
 Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function () {
+    Route::get('/estabelecimentos', [EstabelecimentoController::class, 'index'])->name('estabelecimentos.index');
+    Route::get('/estabelecimentos/search', [EstabelecimentoController::class, 'search'])->name('estabelecimentos.search');
+
     Route::get('/estabelecimentos/{id}', [EstabelecimentoController::class, 'show'])
         ->name('estabelecimentos.show');
 
@@ -133,6 +136,7 @@ Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function ()
     // Rotas de Vendedores (Gestão Admin)
     Route::get('/vendedores/faturamento', [\App\Http\Controllers\VendedorController::class, 'faturamento'])->name('vendedores.faturamento');
     Route::get('/vendedores/acesso', [\App\Http\Controllers\VendedorController::class, 'acesso'])->name('vendedores.acesso');
+    Route::get('/vendedores/acesso/search', [\App\Http\Controllers\VendedorController::class, 'searchEstabelecimentosAvailable'])->name('vendedores.acesso.search');
     Route::post('/vendedores/acesso', [\App\Http\Controllers\VendedorController::class, 'storeAcesso'])->name('vendedores.acesso.store');
     Route::patch('/vendedores/acesso/{id}/senha', [\App\Http\Controllers\VendedorController::class, 'updateSenha'])->name('vendedores.acesso.update-senha');
     Route::delete('/vendedores/acesso/{id}', [\App\Http\Controllers\VendedorController::class, 'destroyAcesso'])->name('vendedores.acesso.destroy');

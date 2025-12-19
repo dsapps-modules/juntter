@@ -18,17 +18,51 @@ class EstabelecimentoController extends Controller
         $this->splitPreService = $splitPreService;
     }
 
+    public function index()
+    {
+        $estabelecimentos = \App\Models\PaytimeEstablishment::paginate(15);
+        return view('estabelecimentos.index', compact('estabelecimentos'));
+    }
+
+    public function search(Request $request)
+    {
+        $term = $request->get('q');
+
+        $query = \App\Models\PaytimeEstablishment::query();
+
+        if ($term) {
+            $query->where(function ($q) use ($term) {
+                $q->where('fantasy_name', 'like', "%{$term}%")
+                    ->orWhere('first_name', 'like', "%{$term}%")
+                    ->orWhere('last_name', 'like', "%{$term}%")
+                    ->orWhere('document', 'like', "%{$term}%");
+            });
+        }
+
+        // Limita a 20 resultados para o select2
+        $estabelecimentos = $query->limit(20)->get();
+
+        $results = $estabelecimentos->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'text' => $item->display_name . ' (' . $item->document . ')'
+            ];
+        });
+
+        return response()->json(['results' => $results]);
+    }
+
     public function show($id)
     {
         try {
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($id);
-            
+
             // Buscar regras de split pré
             $regrasSplit = $this->splitPreService->listarRegrasSplitPre($id);
-            
+
             // Buscar lista de estabelecimentos para o select
             $estabelecimentos = $this->estabelecimentoService->listarEstabelecimentos();
-            
+
             return view('estabelecimentos.show', compact('estabelecimento', 'regrasSplit', 'estabelecimentos'));
         } catch (\Exception $e) {
             Log::error('Erro ao buscar estabelecimento: ' . $e->getMessage());
@@ -71,9 +105,9 @@ class EstabelecimentoController extends Controller
             }
 
             $resultado = $this->estabelecimentoService->atualizarEstabelecimento($id, $dados);
-            
+
             return redirect()->route('estabelecimentos.show', $id)
-                           ->with('success', 'Estabelecimento atualizado com sucesso!');
+                ->with('success', 'Estabelecimento atualizado com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar estabelecimento: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Erro ao atualizar estabelecimento.');
@@ -88,21 +122,21 @@ class EstabelecimentoController extends Controller
                 'modality' => 'required|in:ALL,CREDIT,DEBIT,PIX',
                 'channel' => 'required|in:ALL,CHIP,TAP,SMART,ONLINE',
                 'division' => 'required|in:PERCENTAGE,CURRENCY',
-                'active' => 'nullable', 
+                'active' => 'nullable',
                 'installment' => 'nullable|integer|min:1|max:12',
                 'establishments' => 'required|array|min:1',
                 'establishments.*.id' => 'required|integer',
                 'establishments.*.value' => 'required|integer|min:1',
-                'establishments.*.active' => 'nullable', 
+                'establishments.*.active' => 'nullable',
             ]);
 
             // Tratar dados após validação
             $dados = $this->tratarDadosSplit($dados);
-            
+
             $resultado = $this->splitPreService->criarRegraSplitPre($id, $dados);
-            
+
             return redirect()->route('estabelecimentos.show', $id)
-                           ->with('success', 'Regra de split criada com sucesso!');
+                ->with('success', 'Regra de split criada com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao criar regra de split: ' . $e->getMessage());
             return back()->withInput()->with('error', 'Erro ao criar regra de split: ' . $e->getMessage());
@@ -116,19 +150,19 @@ class EstabelecimentoController extends Controller
     {
         // Tratar campo active
         $dados['active'] = isset($dados['active']) ? true : false;
-        
+
         // Tratar installment
         if (empty($dados['installment'])) {
             unset($dados['installment']);
         }
-        
+
         // Tratar establishments
         foreach ($dados['establishments'] as $key => $establishment) {
             $dados['establishments'][$key]['active'] = isset($establishment['active']) ? true : false;
             $dados['establishments'][$key]['id'] = (int) $establishment['id'];
             $dados['establishments'][$key]['value'] = (int) $establishment['value'];
         }
-        
+
         return $dados;
     }
 
@@ -137,12 +171,12 @@ class EstabelecimentoController extends Controller
         try {
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($id);
             $regra = $this->splitPreService->consultarRegraSplitPre($id, $splitId);
-            
+
             return view('estabelecimentos.regra-detalhes', compact('estabelecimento', 'regra'));
         } catch (\Exception $e) {
             Log::error('Erro ao consultar regra de split: ' . $e->getMessage());
             return redirect()->route('estabelecimentos.show', $id)
-                           ->with('error', 'Erro ao consultar regra de split.');
+                ->with('error', 'Erro ao consultar regra de split.');
         }
     }
 
@@ -150,12 +184,12 @@ class EstabelecimentoController extends Controller
     {
         try {
             $this->splitPreService->deletarRegraSplitPre($id, $splitId);
-            
+
             return redirect()->route('estabelecimentos.show', $id)
-                           ->with('success', 'Regra de split excluída com sucesso!');
+                ->with('success', 'Regra de split excluída com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao deletar regra de split: ' . $e->getMessage());
             return back()->with('error', 'Erro ao excluir regra de split.');
         }
     }
-} 
+}
