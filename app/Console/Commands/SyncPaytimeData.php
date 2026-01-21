@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\PaytimeTransaction;
+use App\Models\PaytimeEstablishment;
 use App\Services\BoletoService;
 use App\Services\TransacaoService;
 use Carbon\Carbon;
@@ -46,21 +47,29 @@ class SyncPaytimeData extends Command
 
         $this->info("Starting global sync for months: " . implode(', ', $months) . " of $year");
 
-        // Calculate global start and end for billets if multiple months are provided
-        $firstMonth = reset($months);
-        $lastMonth = end($months);
-        $globalStart = Carbon::createFromDate($year, $firstMonth, 1)->startOfMonth()->format('Y-m-d');
-        $globalEnd = Carbon::createFromDate($year, $lastMonth, 1)->endOfMonth()->format('Y-m-d');
-
-        $this->info("Syncing billets from $globalStart to $globalEnd...");
-        $this->syncBillets($globalStart, $globalEnd);
+        $establishments = PaytimeEstablishment::select('id')->get();
+        $this->info("Found " . $establishments->count() . " establishments to sync billets.");
 
         foreach ($months as $month) {
             $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
             $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
 
             $this->info("Syncing $month/$year...");
+
+            // Sync Transactions (Global fetch usually works for these)
             $this->syncTransactions($startDate, $endDate);
+
+            // Sync Billets (Required per-establishment for completeness)
+            $this->info("Syncing billets for " . $establishments->count() . " establishments ($month/$year)...");
+            $bar = $this->output->createProgressBar($establishments->count());
+            $bar->start();
+
+            foreach ($establishments as $establishment) {
+                $this->syncBillets($startDate, $endDate, $establishment->id);
+                $bar->advance();
+            }
+            $bar->finish();
+            $this->newLine();
         }
 
         $this->newLine();
@@ -114,7 +123,7 @@ class SyncPaytimeData extends Command
         } while (!empty($items));
     }
 
-    private function syncBillets($startDate = null, $endDate = null)
+    private function syncBillets($startDate = null, $endDate = null, $establishmentId = null)
     {
         $page = 1;
         do {
@@ -129,6 +138,11 @@ class SyncPaytimeData extends Command
                 'filters' => json_encode($queryFilter)
             ];
 
+            if ($establishmentId) {
+                // The API requires establishment_id in header to see all records
+                $filters['extra_headers'] = ['establishment_id' => $establishmentId];
+            }
+
             try {
                 $response = $this->boletoService->listarBoletos($filters);
                 $items = $response['data'] ?? [];
@@ -137,7 +151,7 @@ class SyncPaytimeData extends Command
                     PaytimeTransaction::updateOrCreate(
                         ['external_id' => $item['_id'] ?? $item['id']],
                         [
-                            'establishment_id' => $item['establishment']['id'] ?? ($item['establishment_id'] ?? 'UNKNOWN'),
+                            'establishment_id' => $item['establishment']['id'] ?? ($item['establishment_id'] ?? $establishmentId ?? 'UNKNOWN'),
                             'type' => $item['type'] ?? 'BILLET',
                             'status' => $item['status'] ?? 'UNKNOWN',
                             'amount' => $item['amount'] ?? 0,
@@ -151,10 +165,10 @@ class SyncPaytimeData extends Command
                     );
                 }
 
-                $this->info("Synced " . count($items) . " billets (Page $page) for period $startDate");
+                // $this->info("Synced " . count($items) . " billets (Page $page) for period $startDate");
                 $page++;
             } catch (\Exception $e) {
-                Log::error("Error syncing billets: " . $e->getMessage());
+                Log::error("Error syncing billets for establishment $establishmentId: " . $e->getMessage());
                 break;
             }
         } while (!empty($items));
