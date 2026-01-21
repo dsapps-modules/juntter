@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class SyncPaytimeData extends Command
 {
-    protected $signature = 'paytime:sync {--months= : Months to sync (comma separated, e.g. 11,12)} {--year=2025}';
+    protected $signature = 'paytime:sync {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
     protected $description = 'Sync transactions and billets from Paytime to local database';
 
     protected $transacaoService;
@@ -32,35 +32,79 @@ class SyncPaytimeData extends Command
         $currentMonth = now()->month;
         $currentYear = now()->year;
         $previousMonth = now()->subMonth()->month;
-        $previousYear = now()->subMonth()->year;
 
-        $defaultMonths = $currentMonth;
+        $defaultMonths = (string) $currentMonth;
         if ($currentMonth != $previousMonth) {
             $defaultMonths = "$previousMonth,$currentMonth";
         }
 
-        $months = explode(',', $this->option('months') ?? $defaultMonths);
-        $year = $this->option('year') ?? $currentYear;
+        if ($this->option('months') || $this->option('year')) {
+            $months = explode(',', $this->option('months') ?? $currentMonth);
+            $year = $this->option('year') ?? $currentYear;
+            sort($months);
 
-        // Ensure months are sorted to handle range correctly
-        sort($months);
+            $this->info("Starting manual sync for months: " . implode(', ', $months) . " of $year");
+            $periods = [];
+            foreach ($months as $m) {
+                $periods[] = [
+                    'month' => (int) $m,
+                    'year' => (int) $year,
+                    'start' => Carbon::createFromDate((int) $year, (int) $m, 1)->startOfMonth()->format('Y-m-d H:i:s'),
+                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d H:i:s')
+                ];
+            }
+        } else {
+            // Incremental sync
+            $lastRecord = PaytimeTransaction::max('created_at');
 
-        $this->info("Starting global sync for months: " . implode(', ', $months) . " of $year");
+            if ($lastRecord) {
+                $start = Carbon::parse($lastRecord);
+                $end = now();
+
+                $this->info("Starting incremental sync from " . $start->toDateTimeString() . " to " . $end->toDateTimeString());
+
+                $periods = [];
+                $tempDate = $start->copy()->startOfMonth();
+                while ($tempDate <= $end) {
+                    $periods[] = [
+                        'month' => $tempDate->month,
+                        'year' => $tempDate->year,
+                        'start' => ($tempDate->format('Y-m') === $start->format('Y-m')) ? $start->format('Y-m-d H:i:s') : $tempDate->startOfMonth()->format('Y-m-d H:i:s'),
+                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d H:i:s') : $tempDate->copy()->endOfMonth()->format('Y-m-d H:i:s')
+                    ];
+                    $tempDate->addMonth();
+                }
+            } else {
+                $this->info("No records found. Falling back to default sync (current and previous month).");
+                $months = explode(',', $defaultMonths);
+                $periods = [];
+                foreach ($months as $m) {
+                    $periods[] = [
+                        'month' => (int) $m,
+                        'year' => $currentYear,
+                        'start' => Carbon::createFromDate($currentYear, (int) $m, 1)->startOfMonth()->format('Y-m-d H:i:s'),
+                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d H:i:s')
+                    ];
+                }
+            }
+        }
 
         $establishments = PaytimeEstablishment::select('id')->get();
         $this->info("Found " . $establishments->count() . " establishments to sync billets.");
 
-        foreach ($months as $month) {
-            $startDate = Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
-            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->format('Y-m-d');
+        foreach ($periods as $period) {
+            $month = $period['month'];
+            $y = $period['year'];
+            $startDate = $period['start'];
+            $endDate = $period['end'];
 
-            $this->info("Syncing $month/$year...");
+            $this->info("Syncing $month/$y (from $startDate to $endDate)...");
 
             // Sync Transactions (Global fetch usually works for these)
             $this->syncTransactions($startDate, $endDate);
 
             // Sync Billets (Required per-establishment for completeness)
-            $this->info("Syncing billets for " . $establishments->count() . " establishments ($month/$year)...");
+            $this->info("Syncing billets for " . $establishments->count() . " establishments ($month/$y)...");
             $bar = $this->output->createProgressBar($establishments->count());
             $bar->start();
 
