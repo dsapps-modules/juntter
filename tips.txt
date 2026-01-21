@@ -1,0 +1,11 @@
+Validação Forte: Certifique-se de que os Controllers ou Services estejam usando FormRequests do Laravel para validar dados de entrada. 
+Com pagamentos, qualquer dado inválido pode gerar prejuízo.
+
+Testes Automatizados: Vi que existe a pasta tests. É vital garantir que os testes de checkout e webhook cubram cenários de falha 
+(ex: o que o sistema faz se a Paytime cair?).
+
+Filas (Queues): Se o envio de e-mails ou processamento de postbacks da Paytime demorar, mova isso para Jobs/Queues do Laravel 
+(php artisan make:job) para não deixar o usuário esperando na tela de carregamento.
+
+Padronização do Frontend: Como usa Tailwind, extraia botões, inputs e cards repetitivos para Componentes Blade (x-button, x-card). 
+Isso evita que o HTML fique gigante e difícil de ler (como vi no checkout.blade.php que tem bastante código repetido nos cards de preço).
