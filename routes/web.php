@@ -53,19 +53,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cobranca/planos/{id}', [CobrancaController::class, 'detalhesPlano'])->name('cobranca.plano.detalhes');
         Route::get('/cobranca/saldoextrato', [CobrancaController::class, 'saldoExtrato'])->name('cobranca.saldoextrato');
 
-        // Route::get('/cobranca/pix', function () {
-        //     return view('cobranca.pix');
-        // })->name('cobranca.pix');
-
-        // Route::get('/cobranca/pagarcontas', function () {
-        //     return view('cobranca.pagarcontas');
-        // })->name('cobranca.pagarcontas');
-
-        // Route::get('/cobranca/recorrente', function () {
-        //     return view('cobranca.recorrente');
-        // })->name('cobranca.recorrente');
-
-
         // Rotas de API para transações
         Route::post('/cobranca/transacao/credito', [CobrancaController::class, 'criarTransacaoCredito'])->name('cobranca.transacao.credito');
         Route::post('/cobranca/transacao/pix', [CobrancaController::class, 'criarTransacaoPix'])->name('cobranca.transacao.pix');
@@ -168,3 +155,16 @@ Route::post('/pagamento/{codigo}/antifraud-auth', [PagamentoClienteController::c
 
 // Rotas de autenticação do Breeze
 require __DIR__ . '/auth.php';
+
+
+// Route::get('/cobranca/pix', function () {
+//     return view('cobranca.pix');
+// })->name('cobranca.pix');
+
+// Route::get('/cobranca/pagarcontas', function () {
+//     return view('cobranca.pagarcontas');
+// })->name('cobranca.pagarcontas');
+
+// Route::get('/cobranca/recorrente', function () {
+//     return view('cobranca.recorrente');
+// })->name('cobranca.recorrente');
