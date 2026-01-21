@@ -19,27 +19,26 @@
 
                 <div class="step-item">
                     <div class="step-number">2</div>
-                    <div class="step-text">Depois digite o seu e-mail que utilizou para cadastrar conosco na Juntter.
+                    <div class="step-text">Depois digite o e-mail que utilizou para se cadastrar conosco na Juntter.
                     </div>
                 </div>
 
                 <div class="step-item">
                     <div class="step-number">3</div>
-                    <div class="step-text">Em poucos segundos você receberá um link via e-mail (fique atento para ver se
-                        não caiu no Spam ou Lixo Eletrônico!) para definir sua senha de acesso ao sistema de consulta de
-                        saldo.</div>
+                    <div class="step-text">Em poucos segundos você receberá um link por e-mail para definir sua senha de
+                        acesso ao sistema de consulta de saldo.</div>
                 </div>
 
                 <div class="step-item">
                     <div class="step-number">4</div>
                     <div class="step-text">Após definir sua senha, você terá acesso liberado ao sistema utilizando a
-                        nova senha criada e o e-mail da Juntter.</div>
+                        nova senha e seu e-mail.</div>
                 </div>
             </div>
 
             <div class="alert-box">
                 <i class="fas fa-lightbulb"></i>
-                <span>Dica: Verifique sua pasta de Spam ou Lixo Eletrônico se não receber o e-mail dentro de alguns
+                <span>Dica: verifique sua pasta de Spam ou Lixo Eletrônico se não receber o e-mail dentro de alguns
                     minutos.</span>
             </div>
         </div>

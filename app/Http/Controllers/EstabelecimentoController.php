@@ -20,7 +20,7 @@ class EstabelecimentoController extends Controller
 
     public function index()
     {
-        $estabelecimentos = \App\Models\PaytimeEstablishment::paginate(15);
+        $estabelecimentos = \App\Models\PaytimeEstablishment::orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")->paginate(15);
         return view('estabelecimentos.index', compact('estabelecimentos'));
     }
 
@@ -40,7 +40,7 @@ class EstabelecimentoController extends Controller
         }
 
         // Limita a 20 resultados para o select2
-        $estabelecimentos = $query->limit(20)->get();
+        $estabelecimentos = $query->orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")->limit(20)->get();
 
         $results = $estabelecimentos->map(function ($item) {
             return [
