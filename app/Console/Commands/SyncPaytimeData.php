@@ -49,8 +49,8 @@ class SyncPaytimeData extends Command
                 $periods[] = [
                     'month' => (int) $m,
                     'year' => (int) $year,
-                    'start' => Carbon::createFromDate((int) $year, (int) $m, 1)->startOfMonth()->format('Y-m-d H:i:s'),
-                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d H:i:s')
+                    'start' => Carbon::createFromDate((int) $year, (int) $m, 1)->startOfMonth()->format('Y-m-d'),
+                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d')
                 ];
             }
         } else {
@@ -69,8 +69,8 @@ class SyncPaytimeData extends Command
                     $periods[] = [
                         'month' => $tempDate->month,
                         'year' => $tempDate->year,
-                        'start' => ($tempDate->format('Y-m') === $start->format('Y-m')) ? $start->format('Y-m-d H:i:s') : $tempDate->startOfMonth()->format('Y-m-d H:i:s'),
-                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d H:i:s') : $tempDate->copy()->endOfMonth()->format('Y-m-d H:i:s')
+                        'start' => ($tempDate->format('Y-m') === $start->format('Y-m')) ? $start->format('Y-m-d') : $tempDate->startOfMonth()->format('Y-m-d'),
+                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d') : $tempDate->copy()->endOfMonth()->format('Y-m-d')
                     ];
                     $tempDate->addMonth();
                 }
@@ -82,8 +82,8 @@ class SyncPaytimeData extends Command
                     $periods[] = [
                         'month' => (int) $m,
                         'year' => $currentYear,
-                        'start' => Carbon::createFromDate($currentYear, (int) $m, 1)->startOfMonth()->format('Y-m-d H:i:s'),
-                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d H:i:s')
+                        'start' => Carbon::createFromDate($currentYear, (int) $m, 1)->startOfMonth()->format('Y-m-d'),
+                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d')
                     ];
                 }
             }
@@ -190,6 +190,9 @@ class SyncPaytimeData extends Command
             try {
                 $response = $this->boletoService->listarBoletos($filters);
                 $items = $response['data'] ?? [];
+                if (count($items) > 0) {
+                    // Check establishments
+                }
 
                 foreach ($items as $item) {
                     PaytimeTransaction::updateOrCreate(
