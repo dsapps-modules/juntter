@@ -10,6 +10,7 @@ use App\Services\TransacaoService;
 use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Process;
 
 class DashboardController extends Controller
 {
@@ -93,6 +94,13 @@ class DashboardController extends Controller
     public function adminDashboard(Request $request)
     {
         set_time_limit(0);
+
+        // Disparar sincronização em background
+        try {
+            Process::path(base_path())->start('php artisan paytime:sync');
+        } catch (\Exception $e) {
+            Log::warning('Não foi possível disparar a sincronização em background: ' . $e->getMessage());
+        }
 
         try {
             $mes = $request->input('mes') ?? date('m');
