@@ -77,11 +77,16 @@ class ApiClientService
 
             // Log::info("Headers...\n".json_encode($headers));
             $response = Http::withHeaders($headers)
-            ->beforeSending(function (Request $request) {
-                // Log::info('Headers enviados', ['headers' => $request->headers()]);
-                // Log::info('Query enviada',    ['query'   => $request->getUri()]);
-            })
-            ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
+                        ->withOptions([
+                            'force_ip_resolve' => 'v4',
+                            'connect_timeout' => 10,
+                            'timeout' => 30,
+                        ])
+                        ->beforeSending(function (Request $request) {
+                            // Log::info('Headers enviados', ['headers' => $request->headers()]);
+                            // Log::info('Query enviada',    ['query'   => $request->getUri()]);
+                        })
+                ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
 
             // Log::info('\n\nResposta recebida', ['response' => $response->json()]);
 
@@ -122,10 +127,16 @@ class ApiClientService
             'x-token' => config('services.paytime.x_token'),
         ];
 
-        $response = Http::withHeaders($headers)->post("{$this->baseUrl}/auth/login", $body);
+        $response = Http::withHeaders($headers)
+            ->withOptions([
+                'force_ip_resolve' => 'v4',
+                'connect_timeout' => 10,
+                'timeout' => 30,
+            ])
+            ->post("{$this->baseUrl}/auth/login", $body);
 
-        if (! $response->successful()) {
-            throw new Exception('Falha ao renovar token: '.$response->body());
+        if (!$response->successful()) {
+            throw new Exception('Falha ao renovar token: ' . $response->body());
         }
 
         // echo "\n\nToken renovado com sucesso!\n";
@@ -139,7 +150,7 @@ class ApiClientService
 
             return $accessToken;
         } catch (Exception $e) {
-            throw new Exception('Erro ao atualizar token: '.$e->getMessage());
+            throw new Exception('Erro ao atualizar token: ' . $e->getMessage());
         }
     }
 }
