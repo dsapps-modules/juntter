@@ -27,11 +27,11 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label>Nome</label>
-                        <input type="text" name="name" id="input_name" class="form-control" readonly required>
+                        <input type="text" name="name" id="input_name" class="form-control" required>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label>E-mail (Login)</label>
-                        <input type="email" name="email" id="input_email" class="form-control" readonly required>
+                        <input type="email" name="email" id="input_email" class="form-control" required>
                     </div>
                 </div>
 
@@ -80,6 +80,11 @@
                             </td>
                             <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
                             <td class="text-right">
+                                <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
+                                    data-target="#modalEdit{{ $user->id }}" title="Editar Dados">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+
                                 <button type="button" class="btn btn-sm btn-warning" data-toggle="modal"
                                     data-target="#modalSenha{{ $user->id }}" title="Alterar Senha">
                                     <i class="fas fa-key"></i>
@@ -96,6 +101,44 @@
                                 </form>
                             </td>
                         </tr>
+
+                        <!-- Modal Editar Dados -->
+                        <div class="modal fade" id="modalEdit{{ $user->id }}" tabindex="-1" role="dialog"
+                            aria-labelledby="modalEditLabel{{ $user->id }}" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <form action="{{ route('vendedores.acesso.update', $user->id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="modalEditLabel{{ $user->id }}">Editar Vendedor -
+                                                {{ $user->name }}
+                                            </h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="form-group">
+                                                <label>Nome</label>
+                                                <input type="text" name="name" class="form-control" value="{{ $user->name }}"
+                                                    required>
+                                            </div>
+                                            <div class="form-group">
+                                                <label>E-mail</label>
+                                                <input type="email" name="email" class="form-control" value="{{ $user->email }}"
+                                                    required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
 
                         <!-- Modal Alterar Senha -->
                         <div class="modal fade" id="modalSenha{{ $user->id }}" tabindex="-1" role="dialog"
@@ -176,22 +219,22 @@
             // Preencher inputs ao selecionar vendedor
             $('#select_vendedor').on('select2:select', function (e) {
                 var data = e.params.data;
-                
+
                 $('#establishment_id').val(data.id);
-                
-                if(data.name_clean) {
+
+                if (data.name_clean) {
                     $('#input_name').val(data.name_clean);
                 } else {
                     // Fallback se não vier limpo
-                     var fullText = data.text; 
-                     var namePart = fullText.substring(0, fullText.lastIndexOf('(')).trim();
-                     $('#input_name').val(namePart);
+                    var fullText = data.text;
+                    var namePart = fullText.substring(0, fullText.lastIndexOf('(')).trim();
+                    $('#input_name').val(namePart);
                 }
-                
-                if(data.email) {
+
+                if (data.email) {
                     $('#input_email').val(data.email);
                 } else {
-                     $('#input_email').val(''); // Limpa ou deixa user digitar
+                    $('#input_email').val(''); // Limpa ou deixa user digitar
                 }
             });
 

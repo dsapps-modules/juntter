@@ -29,11 +29,22 @@ class VendedorController extends Controller
         $dataInicio = "$ano-$mes-01";
         $dataFim = date('Y-m-t', strtotime($dataInicio));
 
-        // Consulta otimizada: JOIN entre estabelecimentos e transações
-        // Agrupa por estabelecimento e calcula os totais
-        $query = DB::table('paytime_establishments as e')
-            ->join('paytime_transactions as t', 'e.id', '=', 't.establishment_id')
+        // Consulta otimizada: Agrupa transações primeiro, depois faz o JOIN com estabelecimentos
+        $transacoesAgrupadas = DB::table('paytime_transactions as t')
+            ->select(
+                't.establishment_id',
+                DB::raw('SUM(t.amount) as total_liquido'),
+                DB::raw('SUM(t.original_amount) as total_bruto'),
+                DB::raw('SUM(t.fees) as total_taxas'),
+                DB::raw('COUNT(t.id) as qtd')
+            )
             ->whereBetween('t.created_at', [$dataInicio . ' 00:00:00', $dataFim . ' 23:59:59'])
+            ->groupBy('t.establishment_id');
+
+        $resultados = DB::table('paytime_establishments as e')
+            ->joinSub($transacoesAgrupadas, 't', function ($join) {
+                $join->on('e.id', '=', 't.establishment_id');
+            })
             ->select(
                 'e.id as estabelecimento_id',
                 'e.fantasy_name',
@@ -41,16 +52,14 @@ class VendedorController extends Controller
                 'e.last_name',
                 'e.email',
                 'e.document',
-                DB::raw('SUM(t.amount) as total_liquido'),
-                DB::raw('SUM(t.original_amount) as total_bruto'),
-                DB::raw('SUM(t.fees) as total_taxas'),
-                DB::raw('COUNT(t.id) as qtd')
+                't.total_liquido',
+                't.total_bruto',
+                't.total_taxas',
+                't.qtd'
             )
-            ->groupBy('e.id', 'e.fantasy_name', 'e.first_name', 'e.last_name', 'e.email', 'e.document')
-            ->having('total_liquido', '>', 0)
-            ->orderByDesc('total_liquido');
-
-        $resultados = $query->get();
+            ->where('t.total_liquido', '>', 0)
+            ->orderByDesc('t.total_liquido')
+            ->get();
 
         // Mapear para o formato da view
         $dados = $resultados->map(function ($item) {
@@ -184,6 +193,30 @@ class VendedorController extends Controller
             DB::rollBack();
             return back()->with('error', 'Erro ao criar acesso: ' . $e->getMessage())->withInput();
         }
+    }
+
+    /**
+     * Atualiza dados básicos do vendedor (Nome e Email)
+     */
+    public function updateAcesso(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        if (!$user->isVendedor()) {
+            return back()->with('error', 'Ação não permitida para este usuário.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return redirect()->route('vendedores.acesso')->with('success', 'Dados do vendedor atualizados com sucesso.');
     }
 
     /**

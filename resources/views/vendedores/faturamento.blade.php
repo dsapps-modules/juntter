@@ -39,7 +39,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center">Nenhum registro encontrado para este período.</td>
+                            <td colspan="7" class="text-center">Nenhum registro encontrado para este período.</td>
                         </tr>
                     @endforelse
                 </tbody>

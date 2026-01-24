@@ -9,3 +9,17 @@ Filas (Queues): Se o envio de e-mails ou processamento de postbacks da Paytime d
 
 Padronização do Frontend: Como usa Tailwind, extraia botões, inputs e cards repetitivos para Componentes Blade (x-button, x-card). 
 Isso evita que o HTML fique gigante e difícil de ler (como vi no checkout.blade.php que tem bastante código repetido nos cards de preço).
+
+
+APP_URL=https://checkout.juntter.com.br/
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=srv1937.hstgr.io
+DB_PORT=3306
+DB_DATABASE=u709248946_checkout
+DB_USERNAME=u709248946_dsapps
+DB_PASSWORD=@5224106rP

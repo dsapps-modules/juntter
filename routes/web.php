@@ -125,6 +125,7 @@ Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function ()
     Route::get('/vendedores/acesso', [\App\Http\Controllers\VendedorController::class, 'acesso'])->name('vendedores.acesso');
     Route::get('/vendedores/acesso/search', [\App\Http\Controllers\VendedorController::class, 'searchEstabelecimentosAvailable'])->name('vendedores.acesso.search');
     Route::post('/vendedores/acesso', [\App\Http\Controllers\VendedorController::class, 'storeAcesso'])->name('vendedores.acesso.store');
+    Route::put('/vendedores/acesso/{id}', [\App\Http\Controllers\VendedorController::class, 'updateAcesso'])->name('vendedores.acesso.update');
     Route::patch('/vendedores/acesso/{id}/senha', [\App\Http\Controllers\VendedorController::class, 'updateSenha'])->name('vendedores.acesso.update-senha');
     Route::delete('/vendedores/acesso/{id}', [\App\Http\Controllers\VendedorController::class, 'destroyAcesso'])->name('vendedores.acesso.destroy');
 
