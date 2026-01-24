@@ -13,12 +13,9 @@ class EstabelecimentoService
         $this->apiClient = $apiClient;
     }
 
-    public function listarEstabelecimentos(int $page = 1, int $limit = 20)
+    public function listarEstabelecimentos(array $filtros = [])
     {
-        return $this->apiClient->get("marketplace/establishments", [
-            'page' => $page,
-            'limit' => $limit
-        ]);
+        return $this->apiClient->get("marketplace/establishments", $filtros);
     }
 
     public function buscarEstabelecimento(string $id)
