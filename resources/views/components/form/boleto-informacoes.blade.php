@@ -5,7 +5,7 @@
                 Valor do boleto <span class="text-danger">*</span>
             </label>
             <input type="text" name="amount" value="{{ old('amount') }}" class="form-control" placeholder="0,00"
-                required>
+                min="10.00" required>
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label fw-bold">
@@ -17,8 +17,7 @@
     <div class="row">
         <div class="col-md-6 mb-3">
             <label class="form-label fw-bold">Data limite para pagamento</label>
-            <input type="date" name="payment_limit_date" value="{{ old('payment_limit_date') }}"
-                class="form-control">
+            <input type="date" name="payment_limit_date" value="{{ old('payment_limit_date') }}" class="form-control">
             <small class="text-muted">Opcional - Data limite após o vencimento</small>
         </div>
         <div class="col-md-6 mb-3">
