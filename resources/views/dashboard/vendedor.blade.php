@@ -239,7 +239,7 @@
                                                             </td>
                                                             <td>
                                                                 <span class="text-muted">
-                                                                    {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->setTimezone('America/Sao_Paulo')->format('d/m/Y H:i') }}
+                                                                    {{ \Carbon\Carbon::parse($transacao['created_at'] ?? now())->format('d/m/Y H:i') }}
                                                                 </span>
                                                             </td>
                                                             <td>
