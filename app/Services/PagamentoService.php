@@ -15,12 +15,12 @@ class PagamentoService
 
     public function criarPagamento(array $dados)
     {
-        return $this->apiClient->post("/v1/payment", $dados);
+        return $this->apiClient->post("payment", $dados);
     }
 
     public function consultarPagamento(string $codigo)
     {
-        return $this->apiClient->get("/v1/payment/{$codigo}");
+        return $this->apiClient->get("payment/{$codigo}");
     }
 
 }

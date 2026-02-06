@@ -37,7 +37,7 @@ class SyncPaytimeEstablishments extends Command
             // O EstabelecimentoService::listarEstabelecimentos chama GET marketplace/establishments
 
             $page = 1;
-            $limit = 100; // Aumentar limite para eficiência
+            $limit = 100;
             $totalSynced = 0;
 
             $this->info("Iniciando sincronização (limit {$limit}/pág)...");
@@ -45,8 +45,17 @@ class SyncPaytimeEstablishments extends Command
             do {
                 $this->info("Buscando página {$page}...");
 
-                $response = $service->listarEstabelecimentos($page, $limit);
-                $items = $response['data'] ?? []; // Ajuste conforme estrutura real
+                $filters = [
+                    'page' => $page,
+                    'limit' => $limit,
+                    'sorters' => json_encode([
+                        'column' => 'created_at',
+                        'direction' => 'DESC',
+                    ]),
+                ];
+
+                $response = $service->listarEstabelecimentos($filters);
+                $items = $response['data'] ?? [];
 
                 // Se a API retornar "data" vazio ou não retornar data, paramos
                 if (empty($items)) {

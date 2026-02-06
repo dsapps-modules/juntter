@@ -15,7 +15,7 @@ class RelatorioService
 
     public function gerarRelatorio(array $filtros)
     {
-        return $this->apiClient->post("/v1/report?" . http_build_query($filtros));
+        return $this->apiClient->post("report?" . http_build_query($filtros));
     }
 
 }

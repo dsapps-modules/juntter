@@ -78,7 +78,7 @@ function processarCartao(form) {
                     // Sucesso sem 3DS
                     updateCheckoutSteps(2);
                     $('#successModal').modal('show');
-                    location.href = '{{ route("pagamento.sucesso") }}';
+                    location.href = window.JuntterRoutes.pagamento_sucesso;
                 }
             } else {
                 showError(response.error || 'Erro ao processar pagamento');

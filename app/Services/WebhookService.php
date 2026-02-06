@@ -15,12 +15,12 @@ class WebhookService
 
     public function listarWebhooks()
     {
-        return $this->apiClient->get("/v1/webhook");
+        return $this->apiClient->get("webhook");
     }
 
-    public function cadastrarWebhook(array $dados)
+    public function criarWebhook(array $dados)
     {
-        return $this->apiClient->post("/v1/webhook", $dados);
+        return $this->apiClient->post("webhook", $dados);
     }
 
 }

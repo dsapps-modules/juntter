@@ -15,7 +15,7 @@ class ReembolsoService
 
     public function criarReembolso(array $dados)
     {
-        return $this->apiClient->post("/v1/refund", $dados);
+        return $this->apiClient->post("refund", $dados);
     }
 
 }

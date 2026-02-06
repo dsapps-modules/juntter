@@ -15,7 +15,7 @@ class BalanceService
 
     public function saldoAtual(array $filtros)
     {
-        return $this->apiClient->get("/v1/marketplace/establishments/balance", $filtros);
+        return $this->apiClient->get("marketplace/establishments/balance", $filtros);
     }
 
 }

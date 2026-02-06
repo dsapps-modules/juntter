@@ -45,22 +45,22 @@ class CobrancaController extends Controller
     {
         // Remover símbolos de moeda e espaços
         $valor = preg_replace('/[R$\s]/', '', $valor);
-        
+
         // Se tem vírgula, é formato brasileiro (1.100,00)
         if (strpos($valor, ',') !== false) {
             // Remover pontos (separadores de milhares) e trocar vírgula por ponto
             $valor = str_replace('.', '', $valor);
             $valor = str_replace(',', '.', $valor);
         }
-        
-        $valorFloat = (float)$valor;
-        
+
+        $valorFloat = (float) $valor;
+
         // Validar valor mínimo (1 centavo = R$ 0,01)
         if ($valorFloat < 0.01) {
             throw new \Exception('O valor deve ser pelo menos R$ 0,01');
         }
-        
-        return (int)($valorFloat * 100);
+
+        return (int) ($valorFloat * 100);
     }
 
     /**
@@ -72,18 +72,18 @@ class CobrancaController extends Controller
             // Obter mês e ano do filtro
             $mesAtual = $request->input('mes') ?? date('m'); // pode ser vazio (Todos) ou um número
             $anoAtual = $request->input('ano') ?? date('Y'); // pode ser vazio (Todos) ou um ano
-            
+
             // Preparar filtros base
             $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
-            $filtrosData = [ 'establishment.id' => $estabelecimentoId];
+            $filtrosData = ['establishment.id' => $estabelecimentoId];
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
 
-            
+
             // Aplicar filtro de data baseado no que foi especificado
             if (!empty($mesAtual) || !empty($anoAtual)) {
                 $dataInicio = null;
                 $dataFim = null;
-                
+
                 if (!empty($mesAtual) && !empty($anoAtual)) {
                     // Mês e ano específicos
                     $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
@@ -97,13 +97,12 @@ class CobrancaController extends Controller
                     // Só ano especificado - usar todo o ano
                     $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $anoAtual));
                     $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $anoAtual));
-                }
-                else {
+                } else {
                     // Apenas registros do mês atual
                     $dataInicio = date('Y-m-01');
                     $dataFim = date('Y-m-t');
                 }
-                
+
                 if ($dataInicio && $dataFim) {
                     $filtrosData['created_at'] = [
                         'min' => $dataInicio,
@@ -112,7 +111,7 @@ class CobrancaController extends Controller
                 }
             }
             // Se ambos estiverem vazios (Todos), não aplica filtro de data
-            
+
             // Buscar todas as transações do estabelecimento atual
             $filtros = [
                 'filters' => json_encode($filtrosData),
@@ -125,17 +124,17 @@ class CobrancaController extends Controller
 
             // Filtrar transações de crédito para mostrar apenas à vista (1x) antes de mesclar com boletos
             if (isset($transacoes['data']) && is_array($transacoes['data'])) {
-                $transacoes['data'] = array_filter($transacoes['data'], function($transacao) {
+                $transacoes['data'] = array_filter($transacoes['data'], function ($transacao) {
                     // Se não for transação de crédito, manter
                     if (!isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
                         return true;
                     }
-                    
+
                     // Se for crédito, verificar se é à vista (1x)
                     $installments = $transacao['installments'] ?? 1;
                     return $installments == 1;
                 });
-                
+
                 // Recalcular total após filtragem
                 $transacoes['total'] = count($transacoes['data']);
             }
@@ -152,7 +151,7 @@ class CobrancaController extends Controller
 
                 if (isset($boletos['data']) && is_array($boletos['data'])) {
                     // Adaptar estrutura dos boletos para o formato da tabela de transações
-                    $boletosAdaptados = array_map(function($b) {
+                    $boletosAdaptados = array_map(function ($b) {
                         return [
                             '_id' => $b['_id'] ?? ($b['id'] ?? null),
                             'type' => 'BOLETO',
@@ -173,20 +172,20 @@ class CobrancaController extends Controller
 
                     // Mesclar e ordenar por data desc
                     $transacoes['data'] = array_merge($transacoes['data'], $boletosAdaptados);
-                    
+
                     // Filtrar transações de crédito para mostrar apenas à vista (1x)
-                    $transacoes['data'] = array_filter($transacoes['data'], function($transacao) {
+                    $transacoes['data'] = array_filter($transacoes['data'], function ($transacao) {
                         // Se não for transação de crédito, manter
                         if (!isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
                             return true;
                         }
-                        
+
                         // Se for crédito, verificar se é à vista (1x)
                         $installments = $transacao['installments'] ?? 1;
                         return $installments == 1;
                     });
-                    
-                    usort($transacoes['data'], function($a, $b) {
+
+                    usort($transacoes['data'], function ($a, $b) {
                         $da = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
                         $db = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
                         return $db <=> $da;
@@ -215,20 +214,20 @@ class CobrancaController extends Controller
             $valor = $this->converterValorParaCentavos($request->input('amount')) / 100;
             $parcelas = (int) $request->input('installments');
 
-            if($parcelas > 1) {
+            if ($parcelas > 1) {
                 $valorMinimoParcela = 5.00;
                 $valorParcela = $valor / $parcelas;
 
-                if($valorParcela < $valorMinimoParcela) {
+                if ($valorParcela < $valorMinimoParcela) {
                     return redirect()->route('cobranca.index')
                         ->with('error', 'O valor mínimo de cada parcela é de R$ 5,00');
-                } 
+                }
             }
 
             $dados = $request->validated();
             $dados = $this->creditoService->organiza($dados);
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
-            
+
             // Tratar campos opcionais que a API espera como string
             if (empty($dados['client']['last_name'])) {
                 $dados['client']['last_name'] = '';
@@ -239,12 +238,12 @@ class CobrancaController extends Controller
             if (empty($dados['card']['holder_document'])) {
                 $dados['card']['holder_document'] = '';
             }
-            
+
             // Adicionar establishment_id
             $dados['extra_headers'] = [
                 'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
             ];
-            
+
             $sessionId = $request->input('session_id', 'session_' . uniqid());
             $dados['session_id'] = $sessionId;
             $transacao = $this->creditoService->criarTransacaoCredito($dados);
@@ -252,8 +251,10 @@ class CobrancaController extends Controller
             Log::info("CobrancaController.criarTransacaoCredito#255\n" . json_encode($transacao));
 
             // Verificar se a transação requer autenticação 3DS
-            if (($transacao['antifraud'][0]['analyse_required'] ?? null) === 'THREEDS' &&
-                ($transacao['antifraud'][0]['analyse_status'] ?? null) === 'WAITING_AUTH') {
+            if (
+                ($transacao['antifraud'][0]['analyse_required'] ?? null) === 'THREEDS' &&
+                ($transacao['antifraud'][0]['analyse_status'] ?? null) === 'WAITING_AUTH'
+            ) {
 
                 return $this->creditoService->requer3DS($transacao);
             }
@@ -264,8 +265,7 @@ class CobrancaController extends Controller
                 'success' => true,
                 'message' => 'Pagamento processado com sucesso',
             ]);
-        } 
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             Log::error('Erro ao processar pagamento com cartão: ' . $e->getMessage());
             return response()->json(['error' => 'Erro ao processar pagamento: ' . $e->getMessage()], 500);
         }
@@ -349,9 +349,9 @@ class CobrancaController extends Controller
 
             // Converter valores para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
-            
+
             $dados = $this->boletoService->organiza($dados);
-            
+
             // Converter outros valores numéricos usando função helper
             $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavos($dados['instruction']['late_fee']['amount']) / 100.0;
             $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavos($dados['instruction']['interest']['amount']) / 100.0;
@@ -385,7 +385,7 @@ class CobrancaController extends Controller
     /**
      * Simular transação
      */
-public function simularTransacao(Request $request)
+    public function simularTransacao(Request $request)
     {
         try {
 
@@ -398,7 +398,7 @@ public function simularTransacao(Request $request)
             // Converter valor para centavos usando função helper
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
 
-            $dados['flag_id'] = (int)$dados['flag_id'];
+            $dados['flag_id'] = (int) $dados['flag_id'];
             $dados['gateway_id'] = 4; // SUBPAYTIME
             $dados['modality'] = 'ONLINE';
 
@@ -420,7 +420,7 @@ public function simularTransacao(Request $request)
                 ->with('success', 'Simulação realizada com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao simular transação: ' . $e->getMessage());
-            
+
             // Se for requisição AJAX, retornar JSON de erro
             if ($request->ajax()) {
                 return response()->json([
@@ -428,7 +428,7 @@ public function simularTransacao(Request $request)
                     'message' => 'Erro ao simular transação: ' . $e->getMessage()
                 ], 422);
             }
-            
+
             return redirect()->route('cobranca.transacao.simular')
                 ->with('error', 'Erro ao simular transação: ' . $e->getMessage());
         }
@@ -469,11 +469,11 @@ public function simularTransacao(Request $request)
             $breadcrumbItems = [
                 ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')]
             ];
-            
-            if(request('from') == 'saldoextrato') {
+
+            if (request('from') == 'saldoextrato') {
                 $breadcrumbItems[] = ['label' => 'Saldo e Extrato', 'icon' => 'fas fa-chart-bar', 'url' => route('cobranca.saldoextrato')];
             }
-            
+
             $breadcrumbItems[] = ['label' => 'Detalhes da Transação', 'icon' => 'fas fa-eye', 'url' => '#'];
 
             return view('cobranca.detalhes', compact('transacao', 'breadcrumbItems'));
@@ -519,7 +519,7 @@ public function simularTransacao(Request $request)
             ]);
 
             $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
-            
+
             if (!$estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
@@ -594,7 +594,7 @@ public function simularTransacao(Request $request)
             if ($resultado && isset($resultado['status'])) {
                 $valorFormatado = number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.');
                 $acao = ($transacao['status'] ?? '') === 'PENDING' ? 'cancelada' : 'estornada';
-                
+
                 return redirect()->route('cobranca.index')
                     ->with('success', "Transação de R$ {$valorFormatado} {$acao} com sucesso!");
             } else {
@@ -625,7 +625,7 @@ public function simularTransacao(Request $request)
             // Obter mês e ano do filtro
             $mesAtual = $request->input('mes') ?? date('m'); // pode ser vazio (Todos) ou um número
             $anoAtual = $request->input('ano') ?? date('Y'); // pode ser vazio (Todos) ou um ano
-            
+
             // Preparar filtros para lançamentos futuros (saldo - apenas headers obrigatórios)
             $filtrosSaldo = [
                 'extra_headers' => [
@@ -644,30 +644,15 @@ public function simularTransacao(Request $request)
                 $saldo = $this->aplicarFiltrosDataSaldo($saldo, $mesAtual, $anoAtual);
             }
 
-            // Preparar filtros para extrato detalhado
-            $filtrosExtrato = [
-                'extra_headers' => [
-                    'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
-                ]
-            ];
-
-            // Filtros para extrato detalhado (campos obrigatórios da API)
-            $filtrosExtratoData = [];
-            
             // Gateway é obrigatório - se não foi especificado, usa PAYTIME como padrão
-            $filtrosExtratoData['gateway_authorization'] = $request->gateway_authorization ?? 'PAYTIME';
-            
+            $filtrosExtrato['gateway_authorization'] = $request->gateway_authorization ?? 'PAYTIME';
+
             // Data de liberação (date) - se especificada
             if ($request->filled('data_inicio')) {
-                $filtrosExtratoData['date'] = $request->data_inicio;
+                $filtrosExtrato['date'] = $request->data_inicio;
             } else {
-                $filtrosExtratoData['date'] = date('Y-m-d');
+                $filtrosExtrato['date'] = date('Y-m-d');
             }
-
-
-
-            // Sempre adiciona filters pois os campos são obrigatórios para extrato
-            $filtrosExtrato['filters'] = json_encode($filtrosExtratoData);
 
             // Adicionar busca livre
             if ($request->filled('search')) {
@@ -724,33 +709,35 @@ public function simularTransacao(Request $request)
         }
 
         $saldoFiltrado = $saldo;
-        
+
         if (!empty($mes) && !empty($ano)) {
             // Filtro completo: mês + ano específicos
-            $mesFiltro = (int)$mes;
-            $anoFiltro = (int)$ano;
-            
+            $mesFiltro = (int) $mes;
+            $anoFiltro = (int) $ano;
+
             // Procurar no array de meses
             if (isset($saldo['months']) && is_array($saldo['months'])) {
                 $valorFiltrado = 0;
                 foreach ($saldo['months'] as $mesLancamento) {
-                    if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
-                        $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoFiltro) {
+                    if (
+                        isset($mesLancamento['month']) && isset($mesLancamento['year']) &&
+                        $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoFiltro
+                    ) {
                         $valorFiltrado = $mesLancamento['amount'];
                         break;
                     }
                 }
                 $saldoFiltrado['total']['amount'] = $valorFiltrado;
             }
-            
+
             // Para filtro completo, calcular períodos relativos
             $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoFiltro, 30);
             $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoFiltro, 7);
-            
+
         } elseif (!empty($ano)) {
             // Apenas ano: somar todos os meses daquele ano
-            $anoFiltro = (int)$ano;
-            
+            $anoFiltro = (int) $ano;
+
             if (isset($saldo['months']) && is_array($saldo['months'])) {
                 $valorFiltrado = 0;
                 foreach ($saldo['months'] as $mesLancamento) {
@@ -760,28 +747,30 @@ public function simularTransacao(Request $request)
                 }
                 $saldoFiltrado['total']['amount'] = $valorFiltrado;
             }
-            
+
             // Para filtro de ano, usar mês atual como referência
             $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, date('n'), $anoFiltro, 30);
             $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, date('n'), $anoFiltro, 7);
-            
+
         } elseif (!empty($mes)) {
             // Apenas mês: usar ano atual
-            $mesFiltro = (int)$mes;
-            $anoAtual = (int)date('Y');
-            
+            $mesFiltro = (int) $mes;
+            $anoAtual = (int) date('Y');
+
             if (isset($saldo['months']) && is_array($saldo['months'])) {
                 $valorFiltrado = 0;
                 foreach ($saldo['months'] as $mesLancamento) {
-                    if (isset($mesLancamento['month']) && isset($mesLancamento['year']) && 
-                        $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoAtual) {
+                    if (
+                        isset($mesLancamento['month']) && isset($mesLancamento['year']) &&
+                        $mesLancamento['month'] == $mesFiltro && $mesLancamento['year'] == $anoAtual
+                    ) {
                         $valorFiltrado = $mesLancamento['amount'];
                         break;
                     }
                 }
                 $saldoFiltrado['total']['amount'] = $valorFiltrado;
             }
-            
+
             // Para filtro de mês, calcular períodos relativos
             $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoAtual, 30);
             $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoAtual, 7);
@@ -802,10 +791,10 @@ public function simularTransacao(Request $request)
         $valorTotal = 0;
         $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mes, 1, $ano));
         $dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
-        
+
         // Calcular data limite baseada no período
         $dataLimite = date('Y-m-d', strtotime($dataInicio . " +{$dias} days"));
-        
+
         // Se a data limite ultrapassa o mês, usar o final do mês
         if ($dataLimite > $dataFim) {
             $dataLimite = $dataFim;
@@ -815,7 +804,7 @@ public function simularTransacao(Request $request)
         foreach ($saldo['calendar'] as $lancamento) {
             if (isset($lancamento['date']) && isset($lancamento['amount'])) {
                 $dataLancamento = $lancamento['date'];
-                
+
                 // Verificar se a data está dentro do período
                 if ($dataLancamento >= $dataInicio && $dataLancamento <= $dataLimite) {
                     $valorTotal += $lancamento['amount'];
@@ -823,7 +812,7 @@ public function simularTransacao(Request $request)
             }
         }
 
-        return (int)$valorTotal;
+        return (int) $valorTotal;
     }
 
     /**
@@ -834,13 +823,13 @@ public function simularTransacao(Request $request)
         // Se não há filtro, usar mês/ano atual
         $mesAtual = $mesFiltro ?: date('n'); // Mês atual (1-12)
         $anoAtual = $anoFiltro ?: date('Y'); // Ano atual
-        
+
         // Criar array com 5 meses: 2 para trás, atual, 2 para frente
         $mesesExibir = [];
         for ($i = -2; $i <= 2; $i++) {
             $mesCalculado = $mesAtual + $i;
             $anoCalculado = $anoAtual;
-            
+
             // Ajustar mês e ano se necessário
             if ($mesCalculado < 1) {
                 $mesCalculado += 12;
@@ -849,7 +838,7 @@ public function simularTransacao(Request $request)
                 $mesCalculado -= 12;
                 $anoCalculado++;
             }
-            
+
             $mesesExibir[] = [
                 'month' => $mesCalculado,
                 'year' => $anoCalculado,
@@ -859,7 +848,7 @@ public function simularTransacao(Request $request)
                 'formatted_amount' => 'R$ 0,00'
             ];
         }
-        
+
         // Preencher com valores reais da API
         if (isset($saldo['months']) && is_array($saldo['months'])) {
             foreach ($saldo['months'] as $mesApi) {
@@ -872,7 +861,7 @@ public function simularTransacao(Request $request)
                 }
             }
         }
-        
+
         return $mesesExibir;
     }
 
@@ -884,9 +873,9 @@ public function simularTransacao(Request $request)
         try {
             // Obter ID do estabelecimento do usuário logado
             $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
-            
-            
-            
+
+
+
             if (!$estabelecimentoId) {
                 return view('cobranca.planos')->with('error', 'Estabelecimento não encontrado - Usuário: ' . (auth()->user()?->id ?? 'não logado'));
             }
@@ -898,7 +887,7 @@ public function simularTransacao(Request $request)
                 Log::error('Erro ao buscar estabelecimento: ' . $e->getMessage());
                 return view('cobranca.planos')->with('error', 'Erro ao buscar estabelecimento: ' . $e->getMessage());
             }
-            
+
             if (!$estabelecimento) {
                 Log::warning('Estabelecimento não encontrado', [
                     'estabelecimento_id' => $estabelecimentoId,
@@ -910,15 +899,15 @@ public function simularTransacao(Request $request)
 
             // Se o estabelecimento tem um plano contratado, buscar detalhes do plano
             $planoContratado = null;
-            
+
             // Verificar se tem planos ativos
             if (isset($estabelecimento['plans']) && is_array($estabelecimento['plans']) && count($estabelecimento['plans']) > 0) {
                 // Pegar o primeiro plano ativo
                 $planoAtivo = collect($estabelecimento['plans'])->firstWhere('active', true);
-                
+
                 if ($planoAtivo) {
                     $planoId = $planoAtivo['id'];
-                    
+
                     // Buscar detalhes do plano
                     try {
                         $planoContratado = $this->transacaoService->detalhesPlanoComercial($planoId);
@@ -942,7 +931,7 @@ public function simularTransacao(Request $request)
     {
         try {
             $plano = $this->transacaoService->detalhesPlanoComercial($id);
-            
+
             if (!$plano) {
                 return redirect()->route('cobranca.planos')
                     ->with('error', 'Plano não encontrado.');
@@ -973,12 +962,12 @@ public function simularTransacao(Request $request)
         $resultado = [];
         $taxaAnterior = null;
         $inicioRange = null;
-        
+
         // Agrupar parcelas com taxas iguais
         for ($i = 1; $i <= 18; $i++) {
-            if (isset($parcelas[$i.'x'])) {
-                $taxaAtual = $parcelas[$i.'x'];
-                
+            if (isset($parcelas[$i . 'x'])) {
+                $taxaAtual = $parcelas[$i . 'x'];
+
                 if ($taxaAtual === $taxaAnterior) {
                     // Continua o range
                     $inicioRange = $inicioRange ?? $i;
@@ -987,39 +976,39 @@ public function simularTransacao(Request $request)
                     if ($inicioRange !== null) {
                         if ($inicioRange === $i - 1) {
                             $resultado[] = [
-                                'parcela' => $inicioRange.'x',
+                                'parcela' => $inicioRange . 'x',
                                 'taxa' => $taxaAnterior
                             ];
                         } else {
                             $resultado[] = [
-                                'parcela' => $inicioRange.'x-'.($i-1).'x',
+                                'parcela' => $inicioRange . 'x-' . ($i - 1) . 'x',
                                 'taxa' => $taxaAnterior
                             ];
                         }
                     }
-                    
+
                     // Inicia novo range
                     $inicioRange = $i;
                     $taxaAnterior = $taxaAtual;
                 }
             }
         }
-        
+
         // Finaliza o último range
         if ($inicioRange !== null) {
             if ($inicioRange === 18) {
                 $resultado[] = [
-                    'parcela' => $inicioRange.'x',
+                    'parcela' => $inicioRange . 'x',
                     'taxa' => $taxaAnterior
                 ];
             } else {
                 $resultado[] = [
-                    'parcela' => $inicioRange.'x-18x',
+                    'parcela' => $inicioRange . 'x-18x',
                     'taxa' => $taxaAnterior
                 ];
             }
         }
-        
+
         return $resultado;
     }
 

@@ -15,7 +15,7 @@ class CheckoutService
 
     public function criarCheckout(array $dados)
     {
-        return $this->apiClient->post("/v1/checkout", $dados);
+        return $this->apiClient->post("checkout", $dados);
     }
 
 }

@@ -301,6 +301,13 @@
     <!-- PagSeguro 3DS SDK -->
     <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
 
+    <!-- Juntter Routes -->
+    <script>
+        window.JuntterRoutes = {
+            pagamento_sucesso: "{{ route('pagamento.sucesso') }}"
+        };
+    </script>
+
     @stack('scripts')
 </body>
 
