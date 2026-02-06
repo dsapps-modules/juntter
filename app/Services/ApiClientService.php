@@ -61,11 +61,12 @@ class ApiClientService
                 unset($options['json']['extra_headers']);
             }
 
-            // Log::info("9. Headers...\n" . json_encode($headers));
-            if (isset($options['json'])) {
-                // Log::info("9. Body...\n" . json_encode($options['json']));
-                // Log::info("9. Endpoint...\n: {$this->baseUrl}/{$endpoint}");
-            }
+            Log::info("Paytime API Request", [
+                'method' => $method,
+                'endpoint' => "{$this->baseUrl}/{$endpoint}",
+                'headers' => $headers,
+                'payload' => $options[$method === 'GET' ? 'query' : 'json'] ?? []
+            ]);
 
             // Trata extra_headers para GET requests (query)
             if (isset($options['query']['extra_headers'])) {
@@ -75,7 +76,6 @@ class ApiClientService
                 unset($options['query']['extra_headers']);
             }
 
-            // Log::info("Headers...\n".json_encode($headers));
             $response = Http::withHeaders($headers)
                         ->withOptions([
                             'force_ip_resolve' => 'v4',
@@ -88,7 +88,10 @@ class ApiClientService
                         })
                 ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
 
-            // Log::info('\n\nResposta recebida', ['response' => $response->json()]);
+            Log::info('Paytime API Response', [
+                'status' => $response->status(),
+                'body' => $response->json()
+            ]);
 
             if ($response->status() !== 401) {
                 return $response->json();
