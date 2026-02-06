@@ -16,11 +16,10 @@
                 </select>
             </div>
             <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Descrição</label>
+                <label class="form-label fw-bold">Descrição <span class="text-danger">*</span></label>
                 <input type="text" name="instruction[description]" value="{{ old('instruction.description') }}"
-                    class="form-control" placeholder="Descrição do boleto">
-                <small class="text-muted">Opcional - Descrição exibida no
-                    boleto</small>
+                    class="form-control" placeholder="Descrição do boleto" required>
+                <small class="text-muted">Descrição exibida no boleto</small>
             </div>
         </div>
         <div class="row">

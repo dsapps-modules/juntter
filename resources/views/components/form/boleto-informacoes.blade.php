@@ -5,7 +5,10 @@
                 Valor do boleto <span class="text-danger">*</span>
             </label>
             <input type="text" name="amount" value="{{ old('amount') }}" class="form-control" placeholder="0,00"
-                min="10.00" required>
+                min="10.00" id="billet-amount" required>
+            <div class="invalid-feedback">
+                O valor do boleto deve ser no mínimo R$ 10,00.
+            </div>
         </div>
         <div class="col-md-6 mb-3">
             <label class="form-label fw-bold">
