@@ -287,15 +287,16 @@ class PagamentoClienteController extends Controller
             }
 
             // Verificar se a transação tem ID válido
-            if (!isset($transacao['_id'])) {
-                Log::error('Transação PIX criada mas sem _id');
+            $transId = $transacao['_id'] ?? $transacao['id'] ?? null;
+            if (!$transId) {
+                Log::error('Transação PIX criada mas sem ID');
                 throw new \Exception('Transação criada mas sem ID válido');
             }
 
             // Obter QR Code com try-catch (igual à cobrança única)
             $qrCode = null;
             try {
-                $qrCode = $this->pixService->obterQrCodePix($transacao['_id']);
+                $qrCode = $this->pixService->obterQrCodePix($transId);
             } catch (\Exception $e) {
                 Log::warning('Erro ao buscar QR Code: ' . $e->getMessage());
                 // Continua sem QR Code
@@ -432,8 +433,9 @@ class PagamentoClienteController extends Controller
             }
 
             // Verificar se o boleto tem ID válido
-            if (!isset($boleto['_id'])) {
-                Log::error('Boleto criado mas sem _id');
+            $transId = $boleto['_id'] ?? $boleto['id'] ?? null;
+            if (!$transId) {
+                Log::error('Boleto criado mas sem ID');
                 throw new \Exception('Boleto criado mas sem ID válido');
             }
 
