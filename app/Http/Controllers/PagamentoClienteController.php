@@ -89,7 +89,7 @@ class PagamentoClienteController extends Controller
                 'client.address.neighborhood' => 'required|string|max:255',
                 'client.address.city' => 'required|string|max:255',
                 'client.address.state' => 'required|string|size:2',
-                'client.address.zip_code' => 'required|string|size:9 ',
+                'client.address.zip_code' => 'required|string|size:9',
                 'card.holder_name' => 'required|string|max:255',
                 'card.holder_document' => 'nullable|string|max:18',
                 'card.card_number' => 'required|string|min:13|max:19',
