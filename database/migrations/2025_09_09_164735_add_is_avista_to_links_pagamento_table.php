@@ -6,21 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        if (! Schema::hasTable('links_pagamento') || Schema::hasColumn('links_pagamento', 'is_avista')) {
+            return;
+        }
+
         Schema::table('links_pagamento', function (Blueprint $table) {
             $table->boolean('is_avista')->default(false)->after('parcelas');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (! Schema::hasTable('links_pagamento') || ! Schema::hasColumn('links_pagamento', 'is_avista')) {
+            return;
+        }
+
         Schema::table('links_pagamento', function (Blueprint $table) {
             $table->dropColumn('is_avista');
         });

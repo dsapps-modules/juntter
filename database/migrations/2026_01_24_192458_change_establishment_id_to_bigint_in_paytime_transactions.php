@@ -2,47 +2,62 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration
+{
     public function up(): void
     {
-        // 1. Garantir que não existam índices que bloqueiem a alteração (caso existam com nomes diferentes)
-        try {
-            Schema::table('paytime_transactions', function (Blueprint $table) {
-                // Removemos o índice criado anteriormente para trocar o tipo da coluna com segurança
-                $table->dropIndex(['establishment_id']);
-            });
-        } catch (\Exception $e) {
-            // Se o índice não existir com esse nome, apenas prossegue
+        if (! Schema::hasTable('paytime_transactions') || ! Schema::hasColumn('paytime_transactions', 'establishment_id')) {
+            return;
         }
 
-        // 2. Alterar o tipo da coluna para BIGINT UNSIGNED para casar com paytime_establishments.id
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE paytime_transactions MODIFY establishment_id BIGINT(20) UNSIGNED');
+        $this->removerIndiceEstablishmentId();
 
-        // 3. Re-adicionar o índice para performance
-        Schema::table('paytime_transactions', function (Blueprint $table) {
-            $table->index('establishment_id');
-        });
+        match (DB::getDriverName()) {
+            'mysql' => DB::statement('ALTER TABLE paytime_transactions MODIFY establishment_id BIGINT(20) UNSIGNED NULL'),
+            'pgsql' => DB::statement('ALTER TABLE paytime_transactions ALTER COLUMN establishment_id TYPE BIGINT USING NULLIF(establishment_id, \'\')::BIGINT'),
+            default => null,
+        };
+
+        $this->adicionarIndiceEstablishmentId();
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('paytime_transactions', function (Blueprint $table) {
-            $table->dropIndex(['establishment_id']);
-        });
+        if (! Schema::hasTable('paytime_transactions') || ! Schema::hasColumn('paytime_transactions', 'establishment_id')) {
+            return;
+        }
 
-        // Retorna para Varchar
-        \Illuminate\Support\Facades\DB::statement('ALTER TABLE paytime_transactions MODIFY establishment_id VARCHAR(255)');
+        $this->removerIndiceEstablishmentId();
 
-        Schema::table('paytime_transactions', function (Blueprint $table) {
-            $table->index('establishment_id');
-        });
+        match (DB::getDriverName()) {
+            'mysql' => DB::statement('ALTER TABLE paytime_transactions MODIFY establishment_id VARCHAR(255) NULL'),
+            'pgsql' => DB::statement('ALTER TABLE paytime_transactions ALTER COLUMN establishment_id TYPE VARCHAR(255)'),
+            default => null,
+        };
+
+        $this->adicionarIndiceEstablishmentId();
+    }
+
+    private function adicionarIndiceEstablishmentId(): void
+    {
+        try {
+            Schema::table('paytime_transactions', function (Blueprint $table) {
+                $table->index('establishment_id');
+            });
+        } catch (\Throwable) {
+        }
+    }
+
+    private function removerIndiceEstablishmentId(): void
+    {
+        try {
+            Schema::table('paytime_transactions', function (Blueprint $table) {
+                $table->dropIndex(['establishment_id']);
+            });
+        } catch (\Throwable) {
+        }
     }
 };

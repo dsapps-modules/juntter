@@ -6,26 +6,49 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        if (! Schema::hasTable('links_pagamento')) {
+            return;
+        }
+
         Schema::table('links_pagamento', function (Blueprint $table) {
-            $table->string('tipo_pagamento')->default('CARTAO')->after('status');
-            $table->date('data_vencimento')->nullable()->after('data_expiracao');
-            $table->date('data_limite_pagamento')->nullable()->after('data_vencimento');
-            $table->json('instrucoes_boleto')->nullable()->after('dados_cliente');
+            if (! Schema::hasColumn('links_pagamento', 'tipo_pagamento')) {
+                $table->string('tipo_pagamento')->default('CARTAO')->after('status');
+            }
+
+            if (! Schema::hasColumn('links_pagamento', 'data_vencimento')) {
+                $table->date('data_vencimento')->nullable()->after('data_expiracao');
+            }
+
+            if (! Schema::hasColumn('links_pagamento', 'data_limite_pagamento')) {
+                $table->date('data_limite_pagamento')->nullable()->after('data_vencimento');
+            }
+
+            if (! Schema::hasColumn('links_pagamento', 'instrucoes_boleto')) {
+                $table->json('instrucoes_boleto')->nullable()->after('dados_cliente');
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (! Schema::hasTable('links_pagamento')) {
+            return;
+        }
+
         Schema::table('links_pagamento', function (Blueprint $table) {
-            $table->dropColumn(['tipo_pagamento', 'data_vencimento', 'data_limite_pagamento', 'instrucoes_boleto']);
+            $columnsToDrop = [];
+
+            foreach (['tipo_pagamento', 'data_vencimento', 'data_limite_pagamento', 'instrucoes_boleto'] as $column) {
+                if (Schema::hasColumn('links_pagamento', $column)) {
+                    $columnsToDrop[] = $column;
+                }
+            }
+
+            if ($columnsToDrop !== []) {
+                $table->dropColumn($columnsToDrop);
+            }
         });
     }
 };

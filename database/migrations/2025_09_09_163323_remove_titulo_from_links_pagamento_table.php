@@ -6,21 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        if (! Schema::hasTable('links_pagamento') || ! Schema::hasColumn('links_pagamento', 'titulo')) {
+            return;
+        }
+
         Schema::table('links_pagamento', function (Blueprint $table) {
             $table->dropColumn('titulo');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        if (! Schema::hasTable('links_pagamento') || Schema::hasColumn('links_pagamento', 'titulo')) {
+            return;
+        }
+
         Schema::table('links_pagamento', function (Blueprint $table) {
             $table->string('titulo')->after('codigo_unico');
         });
