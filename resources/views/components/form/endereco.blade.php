@@ -4,6 +4,13 @@
             ENDEREÇO DO CLIENTE <span class="text-danger">(OBRIGATÓRIO)</span>
         </h6>
         <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">
+                    CEP <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="client[address][zip_code]" value="{{ old('client.address.zip_code') }}"
+                    class="form-control" placeholder="00000-000" required>
+            </div>
             <div class="col-md-8 mb-3">
                 <label class="form-label fw-bold">
                     Rua <span class="text-danger">*</span>
@@ -11,6 +18,8 @@
                 <input type="text" name="client[address][street]" value="{{ old('client.address.street') }}"
                     class="form-control" placeholder="Nome da rua" required>
             </div>
+        </div>
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label class="form-label fw-bold">
                     Número <span class="text-danger">*</span>
@@ -18,8 +27,6 @@
                 <input type="text" name="client[address][number]" value="{{ old('client.address.number') }}"
                     class="form-control" placeholder="123" required>
             </div>
-        </div>
-        <div class="row">
             <div class="col-md-4 mb-3">
                 <label class="form-label fw-bold">Complemento</label>
                 <input type="text" name="client[address][complement]" value="{{ old('client.address.complement') }}"
@@ -31,13 +38,6 @@
                 </label>
                 <input type="text" name="client[address][neighborhood]"
                     value="{{ old('client.address.neighborhood') }}" class="form-control" placeholder="Centro" required>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">
-                    CEP <span class="text-danger">*</span>
-                </label>
-                <input type="text" name="client[address][zip_code]" value="{{ old('client.address.zip_code') }}"
-                    class="form-control" placeholder="00000-000" required>
             </div>
         </div>
         <div class="row">
