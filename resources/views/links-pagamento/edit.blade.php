@@ -59,9 +59,9 @@
                             <div class="mb-3">
                                 <label for="parcelas" class="form-label">Número máximo de parcelas:</label>
                                 <select class="form-select" id="parcelas" name="parcelas">
-                                    <option value="1" {{ old('parcelas', $linkPagamento->parcelas) == '1' ? 'selected' : '' }}>À vista (1x)</option>
+                                    <option value="1" {{ old('parcelas', $linkPagamento->parcelas_maximas) == '1' ? 'selected' : '' }}>À vista (1x)</option>
                                     @for($i = 2; $i <= 18; $i++)
-                                        <option value="{{ $i }}" {{ old('parcelas', $linkPagamento->parcelas) == $i ? 'selected' : '' }}>Até {{ $i }}x sem juros</option>
+                                        <option value="{{ $i }}" {{ old('parcelas', $linkPagamento->parcelas_maximas) == $i ? 'selected' : '' }}>Até {{ $i }}x sem juros</option>
                                     @endfor
                                 </select>
                                 

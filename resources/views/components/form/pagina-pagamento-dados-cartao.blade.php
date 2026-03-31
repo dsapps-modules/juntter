@@ -13,7 +13,7 @@
                 </h6>
 
                 <!-- Parcelamento integrado -->
-                @if ($link->parcelas > 1)
+                @if ($link->parcelas_maximas > 1)
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <label class="form-label">
@@ -21,12 +21,12 @@
                             </label>
                             <select name="installments" class="form-select" required>
                                 <option value="">Selecione...</option>
-                                @for ($i = 1; $i <= $link->parcelas; $i++)
-                                    <option value="{{ $i }}">
-                                        {{ $i }}x de R$
-                                        {{ number_format($link->valor / $i, 2, ',', '.') }}
+                                @foreach ($link->parcelas_permitidas as $parcela)
+                                    <option value="{{ $parcela }}">
+                                        {{ $parcela }}x de R$
+                                        {{ number_format($link->valor / $parcela, 2, ',', '.') }}
                                     </option>
-                                @endfor
+                                @endforeach
                             </select>
                         </div>
                     </div>

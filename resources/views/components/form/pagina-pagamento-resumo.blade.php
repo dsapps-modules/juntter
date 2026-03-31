@@ -8,17 +8,17 @@
         </div>
         <div class="order-summary-body">
             <div class="order-item">
-                <span class="order-item-label">Produto/Serviço</span>
+                <span class="order-item-label">Produto/Servico</span>
                 <span class="order-item-value">{{ $link->descricao ?: 'Pagamento' }}</span>
             </div>
             <div class="order-item">
                 <span class="order-item-label">Valor</span>
                 <span class="order-item-value">{{ $link->valor_formatado }}</span>
             </div>
-            @if ($link->tipo_pagamento === 'CREDIT' && $link->parcelas > 1)
+            @if ($link->tipo_pagamento === 'CARTAO' && $link->parcelas_maximas > 1)
                 <div class="order-item">
                     <span class="order-item-label">Parcelamento</span>
-                    <span class="order-item-value">Até {{ $link->parcelas }}x</span>
+                    <span class="order-item-value">Ate {{ $link->parcelas_maximas }}x</span>
                 </div>
             @endif
             <div class="order-item">
@@ -29,7 +29,7 @@
                     @elseif($link->tipo_pagamento === 'BOLETO')
                         <i class="fas fa-file-invoice me-1"></i>Boleto
                     @else
-                        <i class="fas fa-credit-card me-1"></i>Cartão
+                        <i class="fas fa-credit-card me-1"></i>Cartao
                     @endif
                 </span>
             </div>
@@ -41,7 +41,6 @@
                 </div>
             </div>
 
-            <!-- Security Info -->
             <div class="mt-3 text-center">
                 <small class="text-muted">
                     <i class="fas fa-shield-alt me-1"></i>

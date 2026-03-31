@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\LinkPagamento;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class LinkPagamentoController extends Controller
 {
@@ -17,22 +17,22 @@ class LinkPagamentoController extends Controller
     {
         // Remover símbolos de moeda e espaços
         $valor = preg_replace('/[R$\s]/', '', $valor);
-        
+
         // Se tem vírgula, é formato brasileiro (1.100,00)
         if (strpos($valor, ',') !== false) {
             // Remover pontos (separadores de milhares) e trocar vírgula por ponto
             $valor = str_replace('.', '', $valor);
             $valor = str_replace(',', '.', $valor);
         }
-        
-        $valorFloat = (float)$valor;
-        
+
+        $valorFloat = (float) $valor;
+
         // Validar valor mínimo (1 centavo = R$ 0,01)
         if ($valorFloat < 0.01) {
             throw new \Exception('O valor deve ser pelo menos R$ 0,01');
         }
-        
-        return (int)($valorFloat * 100);
+
+        return (int) ($valorFloat * 100);
     }
 
     /**
@@ -41,12 +41,12 @@ class LinkPagamentoController extends Controller
     public function index()
     {
         $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-        
-        if (!$estabelecimentoId) {
+
+        if (! $estabelecimentoId) {
             return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
         }
 
-        $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId) 
+        $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId)
             ->where('tipo_pagamento', 'CARTAO')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
@@ -67,30 +67,25 @@ class LinkPagamentoController extends Controller
      */
     public function store(Request $request)
     {
-        try {   
+        try {
 
             $valor = $this->converterValorParaCentavos($request->input('valor')) / 100;
             $parcelas = (int) $request->input('parcelas');
-            
-           
+
             // Validar parcelas antes da validação
-            if($parcelas > 1) {
+            if ($parcelas > 1) {
                 $valorMinimoParcela = 5.00;
                 $valorParcela = $valor / $parcelas;
-                
-              
 
-                if($valorParcela < $valorMinimoParcela) {
-                  
+                if ($valorParcela < $valorMinimoParcela) {
+
                     return redirect()->back()->with('error', 'O valor mínimo de cada parcela é de R$ 5,00');
                 }
             }
 
-         
-
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
-            if (!$estabelecimentoId) {
+
+            if (! $estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
@@ -144,23 +139,24 @@ class LinkPagamentoController extends Controller
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
-                'parcelas' => $dados['parcelas'],
+                'parcelas' => LinkPagamento::parcelasAte((int) $dados['parcelas']),
                 'juros' => $dados['juros'],
                 'data_expiracao' => $dados['data_expiracao'],
                 'dados_cliente' => $dadosCliente,
                 'url_retorno' => $dados['url_retorno'],
-                'url_webhook' => $dados['url_webhook'], 
+                'url_webhook' => $dados['url_webhook'],
                 'status' => 'ATIVO',
-                'tipo_pagamento' => 'CARTAO'
+                'tipo_pagamento' => 'CARTAO',
             ]);
 
             return redirect()->route('links-pagamento.show', $link->id)
                 ->with('success', 'Link de pagamento criado com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao criar link de pagamento: ' . $e->getMessage());
+            Log::error('Erro ao criar link de pagamento: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Erro ao criar link de pagamento: ' . $e->getMessage())
+                ->with('error', 'Erro ao criar link de pagamento: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -172,7 +168,7 @@ class LinkPagamentoController extends Controller
     {
         // Verificar se o usuário tem acesso a este link
         $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-        
+
         if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
             abort(403, 'Acesso negado');
         }
@@ -187,7 +183,7 @@ class LinkPagamentoController extends Controller
     {
         // Verificar se o usuário tem acesso a este link
         $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-        
+
         if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
             abort(403, 'Acesso negado');
         }
@@ -201,26 +197,23 @@ class LinkPagamentoController extends Controller
     public function update(Request $request, LinkPagamento $linkPagamento)
     {
         try {
-            $valor = $this->converterValorParaCentavos($request->input('valor'))/ 100;
+            $valor = $this->converterValorParaCentavos($request->input('valor')) / 100;
             $parcelas = (int) $request->input('parcelas');
-            
-          
-            
+
             // Validar parcelas antes da validação
-            if($parcelas > 1) {
+            if ($parcelas > 1) {
                 $valorMinimoParcela = 5.00;
                 $valorParcela = $valor / $parcelas;
-               
 
-                if($valorParcela < $valorMinimoParcela) {
-                  
+                if ($valorParcela < $valorMinimoParcela) {
+
                     return redirect()->back()->with('error', 'O valor mínimo de cada parcela é de R$ 5,00');
                 }
             }
 
             // Verificar se o usuário tem acesso a este link
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
+
             if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
                 abort(403, 'Acesso negado');
             }
@@ -273,22 +266,23 @@ class LinkPagamentoController extends Controller
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
-                'parcelas' => $dados['parcelas'],
+                'parcelas' => LinkPagamento::parcelasAte((int) $dados['parcelas']),
                 'juros' => $dados['juros'],
                 'data_expiracao' => $dados['data_expiracao'],
                 'dados_cliente' => $dadosCliente,
                 'url_retorno' => $dados['url_retorno'],
                 'url_webhook' => $dados['url_webhook'],
-                'tipo_pagamento' => 'CARTAO'
+                'tipo_pagamento' => 'CARTAO',
             ]);
 
             return redirect()->route('links-pagamento.show', $linkPagamento->id)
                 ->with('success', 'Link de pagamento atualizado com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar link de pagamento: ' . $e->getMessage());
+            Log::error('Erro ao atualizar link de pagamento: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Erro ao atualizar link de pagamento: ' . $e->getMessage())
+                ->with('error', 'Erro ao atualizar link de pagamento: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -301,14 +295,14 @@ class LinkPagamentoController extends Controller
         try {
             // Verificar se o usuário tem acesso a este link
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
+
             if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
                 abort(403, 'Acesso negado');
             }
 
             $status = $request->input('status');
-            
-            if (!in_array($status, ['ATIVO', 'INATIVO'])) {
+
+            if (! in_array($status, ['ATIVO', 'INATIVO'])) {
                 return response()->json(['error' => 'Status inválido'], 400);
             }
 
@@ -317,11 +311,12 @@ class LinkPagamentoController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Status alterado com sucesso',
-                'status' => $status
+                'status' => $status,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao alterar status do link: ' . $e->getMessage());
+            Log::error('Erro ao alterar status do link: '.$e->getMessage());
+
             return response()->json(['error' => 'Erro ao alterar status'], 500);
         }
     }
@@ -334,7 +329,7 @@ class LinkPagamentoController extends Controller
         try {
             // Verificar se o usuário tem acesso a este link
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
+
             if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
                 abort(403, 'Acesso negado');
             }
@@ -345,9 +340,10 @@ class LinkPagamentoController extends Controller
                 ->with('success', 'Link de pagamento excluído com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao excluir link de pagamento: ' . $e->getMessage());
+            Log::error('Erro ao excluir link de pagamento: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Erro ao excluir link de pagamento: ' . $e->getMessage());
+                ->with('error', 'Erro ao excluir link de pagamento: '.$e->getMessage());
         }
     }
 }

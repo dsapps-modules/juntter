@@ -192,11 +192,11 @@
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label text-muted small">Parcelamento</label>
                                         <p class="mb-0">
-                                            @if (empty($linkPagamento->parcelas) || $linkPagamento->parcelas == 1)
+                                            @if ($linkPagamento->parcelas_maximas === 1)
                                                 <span class="badge badge-secondary">Apenas à vista</span>
                                             @else
                                                 <span class="badge badge-primary">Até
-                                                    {{ $linkPagamento->parcelas }}x</span>
+                                                    {{ $linkPagamento->parcelas_maximas }}x</span>
                                             @endif
                                         </p>
                                     </div>
