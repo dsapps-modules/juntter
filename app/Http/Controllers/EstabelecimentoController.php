@@ -7,6 +7,7 @@ use App\Services\EstabelecimentoService;
 use App\Services\SplitPreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class EstabelecimentoController extends Controller
 {
@@ -32,11 +33,15 @@ class EstabelecimentoController extends Controller
         $estabelecimentos = PaytimeEstablishment::query()
             ->orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")
             ->get();
+        $estabelecimentoColumnWidth = max(
+            18,
+            $estabelecimentos->max(fn (PaytimeEstablishment $estabelecimento): int => Str::length($estabelecimento->display_name))
+        );
 
         $fileName = 'estabelecimentos-'.now()->format('Y-m-d').'.xls';
 
         return response()
-            ->view('estabelecimentos.export', compact('estabelecimentos'))
+            ->view('estabelecimentos.export', compact('estabelecimentos', 'estabelecimentoColumnWidth'))
             ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
             ->header('Content-Disposition', "attachment; filename=\"{$fileName}\"");
     }
