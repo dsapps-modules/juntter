@@ -1,16 +1,16 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\CobrancaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EstabelecimentoController;
-use App\Http\Controllers\CobrancaController;
 use App\Http\Controllers\LinkPagamentoBoletoController;
-use App\Http\Controllers\LinkPagamentoPixController;
 use App\Http\Controllers\LinkPagamentoController;
+use App\Http\Controllers\LinkPagamentoPixController;
 use App\Http\Controllers\PagamentoClienteController;
+use App\Http\Controllers\PasswordController;
+use App\Http\Controllers\ProfileController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PasswordController;
 
 // Rota dashboard dinâmica
 Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
@@ -34,7 +34,6 @@ Route::get('/unauthorized', function () {
     return view('auth.unauthorized');
 })->name('unauthorized');
 
-
 // Rotas protegidas por nível de acesso
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/superadmin/dashboard', [DashboardController::class, 'superAdminDashboard'])
@@ -43,7 +42,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'adminDashboard'])
         ->middleware('nivel.acesso:admin')
         ->name('admin.dashboard');
-
 
     Route::middleware(['nivel.acesso:vendedor', 'must.change.password'])->group(function () {
         Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
@@ -101,6 +99,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 // Rotas de Estabelecimentos (apenas admin e super admin)
 Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function () {
     Route::get('/estabelecimentos', [EstabelecimentoController::class, 'index'])->name('estabelecimentos.index');
+    Route::get('/estabelecimentos/export', [EstabelecimentoController::class, 'export'])->name('estabelecimentos.export');
     Route::get('/estabelecimentos/search', [EstabelecimentoController::class, 'search'])->name('estabelecimentos.search');
 
     Route::get('/estabelecimentos/{id}', [EstabelecimentoController::class, 'show'])
@@ -143,7 +142,7 @@ Route::middleware('auth')->group(function () {
     })->name('profile.password');
 });
 
-// Rotas para troca de senha obrigatória 
+// Rotas para troca de senha obrigatória
 Route::middleware('auth')->group(function () {
     Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change');
     Route::post('/password/change', [PasswordController::class, 'changePassword'])->name('password.change.post');
@@ -155,8 +154,7 @@ Route::post('/pagamento/{codigo}/boleto', [PagamentoClienteController::class, 'p
 Route::post('/pagamento/{codigo}/antifraud-auth', [PagamentoClienteController::class, 'autenticarAntifraude'])->name('pagamento.antifraud-auth');
 
 // Rotas de autenticação do Breeze
-require __DIR__ . '/auth.php';
-
+require __DIR__.'/auth.php';
 
 // Route::get('/cobranca/pix', function () {
 //     return view('cobranca.pix');

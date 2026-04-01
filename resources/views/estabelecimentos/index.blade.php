@@ -19,7 +19,11 @@
 @section('content')
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Buscar Estabelecimento</h3>
+            <h3 class="card-title">
+                <a href="{{ route('estabelecimentos.export') }}" title="Exportar estabelecimentos para Excel">
+                    <i class="fas fa-file-excel" style="color: #217346;"></i>
+                </a>
+            </h3>
             <div class="card-tools">
                 <!-- Select2 Search Box -->
                 <div style="width: 300px;">

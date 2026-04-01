@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PaytimeEstablishment;
 use App\Services\EstabelecimentoService;
 use App\Services\SplitPreService;
 use Illuminate\Http\Request;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class EstabelecimentoController extends Controller
 {
     protected $estabelecimentoService;
+
     protected $splitPreService;
 
     public function __construct(EstabelecimentoService $estabelecimentoService, SplitPreService $splitPreService)
@@ -20,15 +22,30 @@ class EstabelecimentoController extends Controller
 
     public function index()
     {
-        $estabelecimentos = \App\Models\PaytimeEstablishment::orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")->paginate(15);
+        $estabelecimentos = PaytimeEstablishment::orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")->paginate(15);
+
         return view('estabelecimentos.index', compact('estabelecimentos'));
+    }
+
+    public function export(): \Illuminate\Http\Response
+    {
+        $estabelecimentos = PaytimeEstablishment::query()
+            ->orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")
+            ->get();
+
+        $fileName = 'estabelecimentos-'.now()->format('Y-m-d').'.xls';
+
+        return response()
+            ->view('estabelecimentos.export', compact('estabelecimentos'))
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', "attachment; filename=\"{$fileName}\"");
     }
 
     public function search(Request $request)
     {
         $term = $request->get('q');
 
-        $query = \App\Models\PaytimeEstablishment::query();
+        $query = PaytimeEstablishment::query();
 
         if ($term) {
             $query->where(function ($q) use ($term) {
@@ -45,7 +62,7 @@ class EstabelecimentoController extends Controller
         $results = $estabelecimentos->map(function ($item) {
             return [
                 'id' => $item->id,
-                'text' => $item->display_name . ' (' . $item->document . ')'
+                'text' => $item->display_name.' ('.$item->document.')',
             ];
         });
 
@@ -65,7 +82,8 @@ class EstabelecimentoController extends Controller
 
             return view('estabelecimentos.show', compact('estabelecimento', 'regrasSplit', 'estabelecimentos'));
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar estabelecimento: ' . $e->getMessage());
+            Log::error('Erro ao buscar estabelecimento: '.$e->getMessage());
+
             return redirect()->route('admin.dashboard')->with('error', 'Erro ao carregar dados do estabelecimento.');
         }
     }
@@ -74,9 +92,11 @@ class EstabelecimentoController extends Controller
     {
         try {
             $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($id);
+
             return view('estabelecimentos.edit', compact('estabelecimento'));
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar estabelecimento para edição: ' . $e->getMessage());
+            Log::error('Erro ao buscar estabelecimento para edição: '.$e->getMessage());
+
             return redirect()->route('admin.dashboard')->with('error', 'Erro ao carregar dados do estabelecimento.');
         }
     }
@@ -98,7 +118,7 @@ class EstabelecimentoController extends Controller
 
             // Converter revenue e gmv para números
             $dados['revenue'] = (float) $dados['revenue'];
-            if (!empty($dados['gmv'])) {
+            if (! empty($dados['gmv'])) {
                 $dados['gmv'] = (float) $dados['gmv'];
             } else {
                 unset($dados['gmv']); // Remove se estiver vazio
@@ -109,7 +129,8 @@ class EstabelecimentoController extends Controller
             return redirect()->route('estabelecimentos.show', $id)
                 ->with('success', 'Estabelecimento atualizado com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar estabelecimento: ' . $e->getMessage());
+            Log::error('Erro ao atualizar estabelecimento: '.$e->getMessage());
+
             return back()->withInput()->with('error', 'Erro ao atualizar estabelecimento.');
         }
     }
@@ -138,8 +159,9 @@ class EstabelecimentoController extends Controller
             return redirect()->route('estabelecimentos.show', $id)
                 ->with('success', 'Regra de split criada com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao criar regra de split: ' . $e->getMessage());
-            return back()->withInput()->with('error', 'Erro ao criar regra de split: ' . $e->getMessage());
+            Log::error('Erro ao criar regra de split: '.$e->getMessage());
+
+            return back()->withInput()->with('error', 'Erro ao criar regra de split: '.$e->getMessage());
         }
     }
 
@@ -174,7 +196,8 @@ class EstabelecimentoController extends Controller
 
             return view('estabelecimentos.regra-detalhes', compact('estabelecimento', 'regra'));
         } catch (\Exception $e) {
-            Log::error('Erro ao consultar regra de split: ' . $e->getMessage());
+            Log::error('Erro ao consultar regra de split: '.$e->getMessage());
+
             return redirect()->route('estabelecimentos.show', $id)
                 ->with('error', 'Erro ao consultar regra de split.');
         }
@@ -188,7 +211,8 @@ class EstabelecimentoController extends Controller
             return redirect()->route('estabelecimentos.show', $id)
                 ->with('success', 'Regra de split excluída com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao deletar regra de split: ' . $e->getMessage());
+            Log::error('Erro ao deletar regra de split: '.$e->getMessage());
+
             return back()->with('error', 'Erro ao excluir regra de split.');
         }
     }
