@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\PaytimeTransaction;
 use App\Models\PaytimeEstablishment;
+use App\Models\PaytimeTransaction;
 use App\Services\BoletoService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -12,7 +12,10 @@ use Illuminate\Support\Facades\Log;
 class SyncPaytimeBillets extends Command
 {
     protected $signature = 'paytime:sync-billets {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
+
     protected $description = 'Sync billets from Paytime to local database';
+
+    protected int $perPage = 1000;
 
     protected $boletoService;
 
@@ -38,14 +41,14 @@ class SyncPaytimeBillets extends Command
             $year = $this->option('year') ?? $currentYear;
             sort($months);
 
-            $this->info("Starting manual sync for billets... Months: " . implode(', ', $months) . " of $year");
+            $this->info('Starting manual sync for billets... Months: '.implode(', ', $months)." of $year");
             $periods = [];
             foreach ($months as $m) {
                 $periods[] = [
                     'month' => (int) $m,
                     'year' => (int) $year,
                     'start' => Carbon::createFromDate((int) $year, (int) $m, 1)->startOfMonth()->format('Y-m-d'),
-                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d')
+                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d'),
                 ];
             }
         } else {
@@ -56,7 +59,7 @@ class SyncPaytimeBillets extends Command
                 $start = Carbon::parse($lastRecord);
                 $end = now();
 
-                $this->info("Starting incremental sync for billets from " . $start->toDateTimeString() . " to " . $end->toDateTimeString());
+                $this->info('Starting incremental sync for billets from '.$start->toDateTimeString().' to '.$end->toDateTimeString());
 
                 $periods = [];
                 $tempDate = $start->copy()->startOfMonth();
@@ -65,12 +68,12 @@ class SyncPaytimeBillets extends Command
                         'month' => $tempDate->month,
                         'year' => $tempDate->year,
                         'start' => ($tempDate->format('Y-m') === $start->format('Y-m')) ? $start->format('Y-m-d') : $tempDate->startOfMonth()->format('Y-m-d'),
-                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d') : $tempDate->copy()->endOfMonth()->format('Y-m-d')
+                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d') : $tempDate->copy()->endOfMonth()->format('Y-m-d'),
                     ];
                     $tempDate->addMonth();
                 }
             } else {
-                $this->info("No billet records found. Falling back to default sync (current and previous month).");
+                $this->info('No billet records found. Falling back to default sync (current and previous month).');
                 $months = explode(',', $defaultMonths);
                 $periods = [];
                 foreach ($months as $m) {
@@ -78,14 +81,14 @@ class SyncPaytimeBillets extends Command
                         'month' => (int) $m,
                         'year' => $currentYear,
                         'start' => Carbon::createFromDate($currentYear, (int) $m, 1)->startOfMonth()->format('Y-m-d'),
-                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d')
+                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d'),
                     ];
                 }
             }
         }
 
         $establishments = PaytimeEstablishment::select('id')->get();
-        $this->info("Found " . $establishments->count() . " establishments to sync billets.");
+        $this->info('Found '.$establishments->count().' establishments to sync billets.');
 
         foreach ($periods as $period) {
             $startDate = $period['start'];
@@ -116,9 +119,9 @@ class SyncPaytimeBillets extends Command
             }
 
             $filters = [
-                'perPage' => 100,
+                'perPage' => $this->perPage,
                 'page' => $page,
-                'filters' => json_encode($queryFilter)
+                'filters' => json_encode($queryFilter),
             ];
 
             if ($establishmentId) {
@@ -142,16 +145,16 @@ class SyncPaytimeBillets extends Command
                             'gateway_key' => $item['gateway_key'] ?? null,
                             'expiration_at' => isset($item['expiration_at']) ? Carbon::parse($item['expiration_at']) : null,
                             'created_at' => isset($item['created_at']) ? Carbon::parse($item['created_at']) : now(),
-                            'metadata' => json_encode($item)
+                            'metadata' => json_encode($item),
                         ]
                     );
                 }
 
                 $page++;
             } catch (\Exception $e) {
-                Log::error("Error syncing billets for establishment $establishmentId: " . $e->getMessage());
+                Log::error("Error syncing billets for establishment $establishmentId: ".$e->getMessage());
                 break;
             }
-        } while (!empty($items));
+        } while (! empty($items));
     }
 }

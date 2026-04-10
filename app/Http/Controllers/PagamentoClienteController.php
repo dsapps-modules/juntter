@@ -428,7 +428,9 @@ class PagamentoClienteController extends Controller
 
             // Criar boleto
             Log::info('Solicitação de criação do boleto: '.json_encode($dadosBoleto));
-            $boleto = $this->boletoService->gerarBoleto($dadosBoleto);
+            $boleto = $this->boletoService->normalizarResposta(
+                $this->boletoService->gerarBoleto($dadosBoleto)
+            );
             Log::info('Resposta na criação do boleto: '.json_encode($boleto));
 
             if (! $boleto) {

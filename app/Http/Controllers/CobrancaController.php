@@ -5,22 +5,25 @@ namespace App\Http\Controllers;
 use App\Http\Requests\BoletoRequest;
 use App\Http\Requests\CobrancaCartaoRequest;
 use App\Http\Requests\CobrancaPixRequest;
-use App\Services\TransacaoService;
-use App\Services\CreditoService;
-use App\Services\PixService;
-use App\Services\BoletoService;
-use App\Services\EstabelecimentoService;
 use App\Models\LinkPagamento;
+use App\Services\BoletoService;
+use App\Services\CreditoService;
+use App\Services\EstabelecimentoService;
+use App\Services\PixService;
+use App\Services\TransacaoService;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Log;
 
 class CobrancaController extends Controller
 {
     protected $transacaoService;
+
     protected $creditoService;
+
     protected $pixService;
+
     protected $boletoService;
+
     protected $estabelecimentoService;
 
     public function __construct(
@@ -79,20 +82,20 @@ class CobrancaController extends Controller
             $filtrosData = ['establishment.id' => $estabelecimentoId];
 
             // Aplicar filtro de data baseado no que foi especificado
-            if (!empty($mesAtual) || !empty($anoAtual)) {
+            if (! empty($mesAtual) || ! empty($anoAtual)) {
                 $dataInicio = null;
                 $dataFim = null;
 
-                if (!empty($mesAtual) && !empty($anoAtual)) {
+                if (! empty($mesAtual) && ! empty($anoAtual)) {
                     // Mês e ano específicos
                     $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
                     $dataFim = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $anoAtual));
-                } elseif (!empty($mesAtual)) {
+                } elseif (! empty($mesAtual)) {
                     // Só mês especificado - usar ano atual
                     $tempAno = date('Y');
                     $dataInicio = date('Y-m-d', mktime(0, 0, 0, $mesAtual, 1, $tempAno));
                     $dataFim = date('Y-m-t', mktime(0, 0, 0, $mesAtual, 1, $tempAno));
-                } elseif (!empty($anoAtual)) {
+                } elseif (! empty($anoAtual)) {
                     // Só ano especificado - usar todo o ano
                     $dataInicio = date('Y-m-d', mktime(0, 0, 0, 1, 1, $anoAtual));
                     $dataFim = date('Y-m-t', mktime(0, 0, 0, 12, 1, $anoAtual));
@@ -101,7 +104,7 @@ class CobrancaController extends Controller
                 if ($dataInicio && $dataFim) {
                     $filtrosData['created_at'] = [
                         'min' => $dataInicio,
-                        'max' => $dataFim
+                        'max' => $dataFim,
                     ];
                 }
             }
@@ -121,12 +124,13 @@ class CobrancaController extends Controller
             if (isset($transacoes['data']) && is_array($transacoes['data'])) {
                 $transacoes['data'] = array_filter($transacoes['data'], function ($transacao) {
                     // Se não for transação de crédito, manter
-                    if (!isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
+                    if (! isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
                         return true;
                     }
 
                     // Se for crédito, verificar se é à vista (1x)
                     $installments = $transacao['installments'] ?? 1;
+
                     return $installments == 1;
                 });
 
@@ -139,7 +143,7 @@ class CobrancaController extends Controller
                 $filtrosBoletos = [
                     'perPage' => 1000,
                     'page' => 1,
-                    'filters' => json_encode($filtrosData)
+                    'filters' => json_encode($filtrosData),
                 ];
                 $boletos = $this->boletoService->listarBoletos($filtrosBoletos);
                 // dd($boletos);
@@ -159,7 +163,7 @@ class CobrancaController extends Controller
                     }, $boletos['data']);
 
                     // Garantir estrutura base
-                    if (!isset($transacoes['data']) || !is_array($transacoes['data'])) {
+                    if (! isset($transacoes['data']) || ! is_array($transacoes['data'])) {
                         $transacoes['data'] = [];
                         $transacoes['total'] = 0;
                         $transacoes['page'] = 1;
@@ -171,18 +175,20 @@ class CobrancaController extends Controller
                     // Filtrar transações de crédito para mostrar apenas à vista (1x)
                     $transacoes['data'] = array_filter($transacoes['data'], function ($transacao) {
                         // Se não for transação de crédito, manter
-                        if (!isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
+                        if (! isset($transacao['type']) || $transacao['type'] !== 'CREDIT') {
                             return true;
                         }
 
                         // Se for crédito, verificar se é à vista (1x)
                         $installments = $transacao['installments'] ?? 1;
+
                         return $installments == 1;
                     });
 
                     usort($transacoes['data'], function ($a, $b) {
                         $da = isset($a['created_at']) ? strtotime($a['created_at']) : 0;
                         $db = isset($b['created_at']) ? strtotime($b['created_at']) : 0;
+
                         return $db <=> $da;
                     });
 
@@ -195,13 +201,14 @@ class CobrancaController extends Controller
 
             return view('cobranca.index', compact('transacoes', 'mesAtual', 'anoAtual', 'estabelecimento'));
         } catch (\Exception $e) {
-            Log::error('Erro ao listar transações: ' . $e->getMessage());
+            Log::error('Erro ao listar transações: '.$e->getMessage());
             $mesAtual = $request->input('mes') ?? date('m');
             $anoAtual = $request->input('ano') ?? date('Y');
             $estabelecimento = $estabelecimento ?? null;
             $transacoes = ['data' => [], 'total' => 0];
+
             return view('cobranca.index', compact('mesAtual', 'anoAtual', 'estabelecimento', 'transacoes'))
-                ->with('error', 'Erro ao carregar transações: ' . $e->getMessage());
+                ->with('error', 'Erro ao carregar transações: '.$e->getMessage());
         }
     }
 
@@ -241,21 +248,21 @@ class CobrancaController extends Controller
 
             // Adicionar establishment_id
             $dados['extra_headers'] = [
-                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
             ];
 
-            $sessionId = $request->input('session_id', 'session_' . uniqid());
+            $sessionId = $request->input('session_id', 'session_'.uniqid());
             $dados['session_id'] = $sessionId;
             $transacao = $this->creditoService->criarTransacaoCredito($dados);
 
-            Log::info("CobrancaController.criarTransacaoCredito#255\n" . json_encode($transacao));
+            Log::info("CobrancaController.criarTransacaoCredito#255\n".json_encode($transacao));
 
             // Verificar erro na resposta da API
-            if (isset($transacao['error']) || isset($transacao['errors']) || !isset($transacao['_id'])) {
+            if (isset($transacao['error']) || isset($transacao['errors']) || ! isset($transacao['_id'])) {
                 return response()->json([
                     'success' => false,
                     'error' => $transacao['message'] ?? $transacao['error'] ?? 'Erro na API Paytime',
-                    'paytime_response' => $transacao
+                    'paytime_response' => $transacao,
                 ], 400);
             }
 
@@ -272,8 +279,9 @@ class CobrancaController extends Controller
                 'message' => 'Pagamento processado com sucesso',
             ]);
         } catch (\Exception $e) {
-            Log::error('Erro ao processar pagamento com cartão: ' . $e->getMessage());
-            return response()->json(['error' => 'Erro ao processar pagamento: ' . $e->getMessage()], 500);
+            Log::error('Erro ao processar pagamento com cartão: '.$e->getMessage());
+
+            return response()->json(['error' => 'Erro ao processar pagamento: '.$e->getMessage()], 500);
         }
     }
 
@@ -289,13 +297,13 @@ class CobrancaController extends Controller
             $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
 
             // Processar info_additional como string simples
-            if (isset($dados['info_additional']) && !empty($dados['info_additional'])) {
+            if (isset($dados['info_additional']) && ! empty($dados['info_additional'])) {
                 // Converter para o formato esperado pela API com chave padrão
                 $dados['info_additional'] = [
                     [
                         'key' => 'info_adicional',
-                        'value' => $dados['info_additional']
-                    ]
+                        'value' => $dados['info_additional'],
+                    ],
                 ];
             } else {
                 unset($dados['info_additional']);
@@ -303,15 +311,15 @@ class CobrancaController extends Controller
 
             // Adicionar establishment_id
             $dados['extra_headers'] = [
-                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
             ];
 
             $transacao = $this->pixService->criarTransacaoPix($dados);
 
             // Verificar erro na resposta da API
-            if (isset($transacao['error']) || isset($transacao['errors']) || !isset($transacao['_id'])) {
+            if (isset($transacao['error']) || isset($transacao['errors']) || ! isset($transacao['_id'])) {
                 return redirect()->route('cobranca.index')
-                    ->with('error', 'Erro ao criar transação PIX: ' . ($transacao['message'] ?? $transacao['error'] ?? 'Resposta inesperada'))
+                    ->with('error', 'Erro ao criar transação PIX: '.($transacao['message'] ?? $transacao['error'] ?? 'Resposta inesperada'))
                     ->with('paytime_error', $transacao);
             }
 
@@ -321,7 +329,7 @@ class CobrancaController extends Controller
                 try {
                     $qrCode = $this->pixService->obterQrCodePix($transacao['_id']);
                 } catch (\Exception $e) {
-                    Log::warning('Erro ao buscar QR Code: ' . $e->getMessage());
+                    Log::warning('Erro ao buscar QR Code: '.$e->getMessage());
                     // Continua sem QR Code
                 }
             }
@@ -330,11 +338,11 @@ class CobrancaController extends Controller
             $filteredPixData = [
                 'qr_code' => $qrCode ? [
                     'qrcode' => $qrCode['qrcode'] ?? null,
-                    'emv' => $qrCode['emv'] ?? null
+                    'emv' => $qrCode['emv'] ?? null,
                 ] : null,
                 'pix_code' => $transacao['emv'] ?? null, // Código PIX para copiar e colar
                 'amount' => $transacao['amount'] ?? null,
-                'status' => $transacao['status'] ?? null
+                'status' => $transacao['status'] ?? null,
             ];
 
             return redirect()->route('cobranca.index')
@@ -342,8 +350,9 @@ class CobrancaController extends Controller
                 ->with('pix_data', $filteredPixData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar transação PIX', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
+
             return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao criar transação PIX: ' . $e->getMessage());
+                ->with('error', 'Erro ao criar transação PIX: '.$e->getMessage());
         }
     }
 
@@ -369,13 +378,19 @@ class CobrancaController extends Controller
             $dados['recharge'] = $request->boolean('recharge');
             $dados['instruction']['booklet'] = $request->boolean('instruction.booklet');
 
-            $boleto = $this->boletoService->gerarBoleto($dados);
-            Log::info("CobrancaController.criarBoleto#363\n" . json_encode($boleto));
+            $boleto = $this->boletoService->normalizarResposta(
+                $this->boletoService->gerarBoleto($dados)
+            );
+            Log::info("CobrancaController.criarBoleto#363\n".json_encode($boleto));
 
             // Verificar erro na resposta da API
-            if (isset($boleto['error']) || isset($boleto['errors']) || !isset($boleto['boleto_url'])) {
+            if (
+                isset($boleto['error']) ||
+                isset($boleto['errors']) ||
+                ! isset($boleto['_id']) && ! isset($boleto['id'])
+            ) {
                 return redirect()->route('cobranca.index')
-                    ->with('error', 'Erro ao criar boleto: ' . ($boleto['message'] ?? $boleto['error'] ?? 'Resposta inesperada'))
+                    ->with('error', 'Erro ao criar boleto: '.($boleto['message'] ?? $boleto['error'] ?? 'Resposta inesperada'))
                     ->with('paytime_error', $boleto);
             }
 
@@ -384,7 +399,7 @@ class CobrancaController extends Controller
                 'boleto_url' => $boleto['boleto_url'] ?? null,
                 'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
                 'amount' => $boleto['amount'] ?? null,
-                'status' => $boleto['status'] ?? null
+                'status' => $boleto['status'] ?? null,
             ];
 
             return redirect()->route('cobranca.index')
@@ -392,8 +407,9 @@ class CobrancaController extends Controller
                 ->with('boleto_data', $filteredBoletoData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar boleto', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
+
             return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao criar boleto: ' . $e->getMessage());
+                ->with('error', 'Erro ao criar boleto: '.$e->getMessage());
         }
     }
 
@@ -407,7 +423,7 @@ class CobrancaController extends Controller
             $dados = $request->validate([
                 'amount' => 'required|string',
                 'flag_id' => 'required|integer|in:1,2,3,4,5,6,8',
-                'interest' => 'required|in:CLIENT,ESTABLISHMENT'
+                'interest' => 'required|in:CLIENT,ESTABLISHMENT',
             ]);
 
             // Converter valor para centavos usando função helper
@@ -418,7 +434,7 @@ class CobrancaController extends Controller
             $dados['modality'] = 'ONLINE';
 
             $dados['extra_headers'] = [
-                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
             ];
 
             $simulacao = $this->transacaoService->simularTransacao($dados);
@@ -427,25 +443,25 @@ class CobrancaController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'simulation' => $simulacao
+                    'simulation' => $simulacao,
                 ]);
             }
 
             return view('cobranca.simular', compact('simulacao'))
                 ->with('success', 'Simulação realizada com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao simular transação: ' . $e->getMessage());
+            Log::error('Erro ao simular transação: '.$e->getMessage());
 
             // Se for requisição AJAX, retornar JSON de erro
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Erro ao simular transação: ' . $e->getMessage()
+                    'message' => 'Erro ao simular transação: '.$e->getMessage(),
                 ], 422);
             }
 
             return redirect()->route('cobranca.transacao.simular')
-                ->with('error', 'Erro ao simular transação: ' . $e->getMessage());
+                ->with('error', 'Erro ao simular transação: '.$e->getMessage());
         }
     }
 
@@ -460,9 +476,10 @@ class CobrancaController extends Controller
             return redirect()->route('cobranca.index')
                 ->with('success', 'QR Code PIX obtido com sucesso!');
         } catch (\Exception $e) {
-            Log::error('Erro ao obter QR Code PIX: ' . $e->getMessage());
+            Log::error('Erro ao obter QR Code PIX: '.$e->getMessage());
+
             return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao obter QR Code PIX: ' . $e->getMessage());
+                ->with('error', 'Erro ao obter QR Code PIX: '.$e->getMessage());
         }
     }
 
@@ -475,14 +492,14 @@ class CobrancaController extends Controller
             // Buscar detalhes da transação específica
             $transacao = $this->transacaoService->detalhesTransacao($id);
 
-            if (!$transacao) {
+            if (! $transacao) {
                 return redirect()->route('cobranca.index')
                     ->with('error', 'Transação não encontrada.');
             }
 
             // Preparar breadcrumb dinâmico
             $breadcrumbItems = [
-                ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')]
+                ['label' => 'Cobranças', 'icon' => 'fas fa-credit-card', 'url' => route('cobranca.index')],
             ];
 
             if (request('from') == 'saldoextrato') {
@@ -493,9 +510,10 @@ class CobrancaController extends Controller
 
             return view('cobranca.detalhes', compact('transacao', 'breadcrumbItems'));
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar detalhes da transação: ' . $e->getMessage());
+            Log::error('Erro ao buscar detalhes da transação: '.$e->getMessage());
+
             return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao buscar detalhes da transação: ' . $e->getMessage());
+                ->with('error', 'Erro ao buscar detalhes da transação: '.$e->getMessage());
         }
     }
 
@@ -507,16 +525,17 @@ class CobrancaController extends Controller
         try {
             $boleto = $this->boletoService->consultarBoleto($id);
 
-            if (!$boleto) {
+            if (! $boleto) {
                 return redirect()->route('cobranca.index')
                     ->with('error', 'Boleto não encontrado.');
             }
 
             return view('cobranca.boleto-detalhes', compact('boleto'));
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar detalhes do boleto: ' . $e->getMessage());
+            Log::error('Erro ao buscar detalhes do boleto: '.$e->getMessage());
+
             return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao buscar detalhes do boleto: ' . $e->getMessage());
+                ->with('error', 'Erro ao buscar detalhes do boleto: '.$e->getMessage());
         }
     }
 
@@ -535,7 +554,7 @@ class CobrancaController extends Controller
 
             $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
-            if (!$estabelecimentoId) {
+            if (! $estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
@@ -563,16 +582,17 @@ class CobrancaController extends Controller
                 ],
                 'url_retorno' => null,
                 'url_webhook' => null,
-                'status' => 'ATIVO'
+                'status' => 'ATIVO',
             ]);
 
             return redirect()->route('links-pagamento.show', $link->id)
                 ->with('success', 'Link de pagamento à vista criado com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao criar link de crédito à vista: ' . $e->getMessage());
+            Log::error('Erro ao criar link de crédito à vista: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Erro ao criar link: ' . $e->getMessage())
+                ->with('error', 'Erro ao criar link: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -586,13 +606,13 @@ class CobrancaController extends Controller
             // Buscar detalhes da transação para verificar se pode ser estornada
             $transacao = $this->transacaoService->detalhesTransacao($id);
 
-            if (!$transacao) {
+            if (! $transacao) {
                 return redirect()->route('cobranca.index')
                     ->with('error', 'Transação não encontrada.');
             }
 
             // Verificar se a transação pode ser estornada/cancelada
-            if (!in_array($transacao['status'] ?? '', ['PAID', 'APPROVED', 'PENDING'])) {
+            if (! in_array($transacao['status'] ?? '', ['PAID', 'APPROVED', 'PENDING'])) {
                 return redirect()->route('cobranca.index')
                     ->with('error', 'Apenas transações pagas, aprovadas ou pendentes podem ser estornadas/canceladas.');
             }
@@ -617,9 +637,10 @@ class CobrancaController extends Controller
                     ->with('error', 'Erro ao processar transação. Tente novamente.');
             }
         } catch (\Exception $e) {
-            Log::error('Erro ao estornar transação: ' . $e->getMessage());
+            Log::error('Erro ao estornar transação: '.$e->getMessage());
+
             return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao estornar transação: ' . $e->getMessage());
+                ->with('error', 'Erro ao estornar transação: '.$e->getMessage());
         }
     }
 
@@ -644,8 +665,8 @@ class CobrancaController extends Controller
             // Preparar filtros para lançamentos futuros (saldo - apenas headers obrigatórios)
             $filtrosSaldo = [
                 'extra_headers' => [
-                    'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
-                ]
+                    'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
+                ],
             ];
 
             $saldoDoEstabelecimento = $this->transacaoService->consultarSaldoEstabelecimento($filtrosSaldo);
@@ -655,7 +676,7 @@ class CobrancaController extends Controller
             $saldo = $this->transacaoService->lancamentosFuturos($filtrosSaldo);
 
             // Aplicar filtros de data localmente (igual ao dashboard)
-            if (!empty($mesAtual) || !empty($anoAtual)) {
+            if (! empty($mesAtual) || ! empty($anoAtual)) {
                 $saldo = $this->aplicarFiltrosDataSaldo($saldo, $mesAtual, $anoAtual);
             }
 
@@ -703,14 +724,15 @@ class CobrancaController extends Controller
                     'data_inicio' => $request->data_inicio,
                     'search' => $request->search,
                     'page' => $request->page ?? 1,
-                    'perPage' => $request->perPage ?? 20
-                ]
+                    'perPage' => $request->perPage ?? 20,
+                ],
             ];
 
             return view('cobranca.saldoextrato', $dados);
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar saldo e extrato: ' . $e->getMessage());
-            return view('cobranca.saldoextrato')->with('error', 'Erro ao carregar saldo e extrato: ' . $e->getMessage());
+            Log::error('Erro ao buscar saldo e extrato: '.$e->getMessage());
+
+            return view('cobranca.saldoextrato')->with('error', 'Erro ao carregar saldo e extrato: '.$e->getMessage());
         }
     }
 
@@ -725,7 +747,7 @@ class CobrancaController extends Controller
 
         $saldoFiltrado = $saldo;
 
-        if (!empty($mes) && !empty($ano)) {
+        if (! empty($mes) && ! empty($ano)) {
             // Filtro completo: mês + ano específicos
             $mesFiltro = (int) $mes;
             $anoFiltro = (int) $ano;
@@ -749,7 +771,7 @@ class CobrancaController extends Controller
             $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoFiltro, 30);
             $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, $mesFiltro, $anoFiltro, 7);
 
-        } elseif (!empty($ano)) {
+        } elseif (! empty($ano)) {
             // Apenas ano: somar todos os meses daquele ano
             $anoFiltro = (int) $ano;
 
@@ -767,7 +789,7 @@ class CobrancaController extends Controller
             $saldoFiltrado['thirtyDays']['amount'] = $this->calcularPeriodoRelativo($saldo, date('n'), $anoFiltro, 30);
             $saldoFiltrado['sevenDays']['amount'] = $this->calcularPeriodoRelativo($saldo, date('n'), $anoFiltro, 7);
 
-        } elseif (!empty($mes)) {
+        } elseif (! empty($mes)) {
             // Apenas mês: usar ano atual
             $mesFiltro = (int) $mes;
             $anoAtual = (int) date('Y');
@@ -799,7 +821,7 @@ class CobrancaController extends Controller
      */
     private function calcularPeriodoRelativo($saldo, $mes, $ano, $dias)
     {
-        if (!isset($saldo['calendar']) || !is_array($saldo['calendar'])) {
+        if (! isset($saldo['calendar']) || ! is_array($saldo['calendar'])) {
             return 0;
         }
 
@@ -808,7 +830,7 @@ class CobrancaController extends Controller
         $dataFim = date('Y-m-t', mktime(0, 0, 0, $mes, 1, $ano));
 
         // Calcular data limite baseada no período
-        $dataLimite = date('Y-m-d', strtotime($dataInicio . " +{$dias} days"));
+        $dataLimite = date('Y-m-d', strtotime($dataInicio." +{$dias} days"));
 
         // Se a data limite ultrapassa o mês, usar o final do mês
         if ($dataLimite > $dataFim) {
@@ -860,7 +882,7 @@ class CobrancaController extends Controller
                 'amount' => 0, // Valor padrão
                 'is_current' => ($mesCalculado == $mesAtual && $anoCalculado == $anoAtual),
                 'formatted_date' => date('M/Y', mktime(0, 0, 0, $mesCalculado, 1, $anoCalculado)),
-                'formatted_amount' => 'R$ 0,00'
+                'formatted_amount' => 'R$ 0,00',
             ];
         }
 
@@ -870,7 +892,7 @@ class CobrancaController extends Controller
                 foreach ($mesesExibir as &$mesExibir) {
                     if ($mesExibir['month'] == $mesApi['month'] && $mesExibir['year'] == $mesApi['year']) {
                         $mesExibir['amount'] = $mesApi['amount'];
-                        $mesExibir['formatted_amount'] = 'R$ ' . number_format($mesApi['amount'] / 100, 2, ',', '.');
+                        $mesExibir['formatted_amount'] = 'R$ '.number_format($mesApi['amount'] / 100, 2, ',', '.');
                         break;
                     }
                 }
@@ -889,28 +911,27 @@ class CobrancaController extends Controller
             // Obter ID do estabelecimento do usuário logado
             $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
 
-
-
-            if (!$estabelecimentoId) {
-                return view('cobranca.planos')->with('error', 'Estabelecimento não encontrado - Usuário: ' . (auth()->user()?->id ?? 'não logado'));
+            if (! $estabelecimentoId) {
+                return view('cobranca.planos')->with('error', 'Estabelecimento não encontrado - Usuário: '.(auth()->user()?->id ?? 'não logado'));
             }
 
             // Buscar informações do estabelecimento (que deve conter o plano contratado)
             try {
                 $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
             } catch (\Exception $e) {
-                Log::error('Erro ao buscar estabelecimento: ' . $e->getMessage());
-                return view('cobranca.planos')->with('error', 'Erro ao buscar estabelecimento: ' . $e->getMessage());
+                Log::error('Erro ao buscar estabelecimento: '.$e->getMessage());
+
+                return view('cobranca.planos')->with('error', 'Erro ao buscar estabelecimento: '.$e->getMessage());
             }
 
-            if (!$estabelecimento) {
+            if (! $estabelecimento) {
                 Log::warning('Estabelecimento não encontrado', [
                     'estabelecimento_id' => $estabelecimentoId,
-                    'resposta' => $estabelecimento
+                    'resposta' => $estabelecimento,
                 ]);
-                return view('cobranca.planos')->with('error', 'Dados do estabelecimento não encontrados. ID: ' . $estabelecimentoId);
-            }
 
+                return view('cobranca.planos')->with('error', 'Dados do estabelecimento não encontrados. ID: '.$estabelecimentoId);
+            }
 
             // Se o estabelecimento tem um plano contratado, buscar detalhes do plano
             $planoContratado = null;
@@ -927,15 +948,16 @@ class CobrancaController extends Controller
                     try {
                         $planoContratado = $this->transacaoService->detalhesPlanoComercial($planoId);
                     } catch (\Exception $e) {
-                        Log::error('Erro ao buscar detalhes do plano: ' . $e->getMessage());
+                        Log::error('Erro ao buscar detalhes do plano: '.$e->getMessage());
                     }
                 }
             }
 
             return view('cobranca.planos', compact('estabelecimento', 'planoContratado'));
         } catch (\Exception $e) {
-            Log::error('Erro ao listar plano contratado: ' . $e->getMessage());
-            return view('cobranca.planos')->with('error', 'Erro ao carregar plano contratado: ' . $e->getMessage());
+            Log::error('Erro ao listar plano contratado: '.$e->getMessage());
+
+            return view('cobranca.planos')->with('error', 'Erro ao carregar plano contratado: '.$e->getMessage());
         }
     }
 
@@ -947,7 +969,7 @@ class CobrancaController extends Controller
         try {
             $plano = $this->transacaoService->detalhesPlanoComercial($id);
 
-            if (!$plano) {
+            if (! $plano) {
                 return redirect()->route('cobranca.planos')
                     ->with('error', 'Plano não encontrado.');
             }
@@ -963,9 +985,10 @@ class CobrancaController extends Controller
 
             return view('cobranca.plano-detalhes', compact('plano'));
         } catch (\Exception $e) {
-            Log::error('Erro ao buscar detalhes do plano: ' . $e->getMessage());
+            Log::error('Erro ao buscar detalhes do plano: '.$e->getMessage());
+
             return redirect()->route('cobranca.planos')
-                ->with('error', 'Erro ao carregar detalhes do plano: ' . $e->getMessage());
+                ->with('error', 'Erro ao carregar detalhes do plano: '.$e->getMessage());
         }
     }
 
@@ -980,8 +1003,8 @@ class CobrancaController extends Controller
 
         // Agrupar parcelas com taxas iguais
         for ($i = 1; $i <= 18; $i++) {
-            if (isset($parcelas[$i . 'x'])) {
-                $taxaAtual = $parcelas[$i . 'x'];
+            if (isset($parcelas[$i.'x'])) {
+                $taxaAtual = $parcelas[$i.'x'];
 
                 if ($taxaAtual === $taxaAnterior) {
                     // Continua o range
@@ -991,13 +1014,13 @@ class CobrancaController extends Controller
                     if ($inicioRange !== null) {
                         if ($inicioRange === $i - 1) {
                             $resultado[] = [
-                                'parcela' => $inicioRange . 'x',
-                                'taxa' => $taxaAnterior
+                                'parcela' => $inicioRange.'x',
+                                'taxa' => $taxaAnterior,
                             ];
                         } else {
                             $resultado[] = [
-                                'parcela' => $inicioRange . 'x-' . ($i - 1) . 'x',
-                                'taxa' => $taxaAnterior
+                                'parcela' => $inicioRange.'x-'.($i - 1).'x',
+                                'taxa' => $taxaAnterior,
                             ];
                         }
                     }
@@ -1013,13 +1036,13 @@ class CobrancaController extends Controller
         if ($inicioRange !== null) {
             if ($inicioRange === 18) {
                 $resultado[] = [
-                    'parcela' => $inicioRange . 'x',
-                    'taxa' => $taxaAnterior
+                    'parcela' => $inicioRange.'x',
+                    'taxa' => $taxaAnterior,
                 ];
             } else {
                 $resultado[] = [
-                    'parcela' => $inicioRange . 'x-18x',
-                    'taxa' => $taxaAnterior
+                    'parcela' => $inicioRange.'x-18x',
+                    'taxa' => $taxaAnterior,
                 ];
             }
         }
@@ -1034,12 +1057,12 @@ class CobrancaController extends Controller
             $dados = $request->validate([
                 'id' => 'required|string',
                 'status' => 'required|string|in:AUTH_FLOW_COMPLETED,AUTH_NOT_SUPPORTED,CHANGE_PAYMENT_METHOD',
-                'authentication_status' => 'required|string|in:AUTHENTICATED,NOT_AUTHENTICATED'
+                'authentication_status' => 'required|string|in:AUTHENTICATED,NOT_AUTHENTICATED',
             ]);
 
             // Adicionar establishment_id
             $dados['extra_headers'] = [
-                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
             ];
 
             $resultado = $this->transacaoService->autenticarAntifraude($id, $dados);
@@ -1049,20 +1072,21 @@ class CobrancaController extends Controller
                     'success' => true,
                     'message' => 'Autenticação 3DS processada com sucesso',
                     'status' => $resultado['status'] ?? null,
-                    'transaction_id' => $resultado['transaction_id'] ?? null
+                    'transaction_id' => $resultado['transaction_id'] ?? null,
                 ]);
             } else {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Erro ao processar autenticação 3DS'
+                    'message' => 'Erro ao processar autenticação 3DS',
                 ], 500);
             }
 
         } catch (\Exception $e) {
-            Log::error('Erro ao autenticar antifraude: ' . $e->getMessage());
+            Log::error('Erro ao autenticar antifraude: '.$e->getMessage());
+
             return response()->json([
                 'success' => false,
-                'message' => 'Erro ao processar autenticação: ' . $e->getMessage()
+                'message' => 'Erro ao processar autenticação: '.$e->getMessage(),
             ], 500);
         }
     }

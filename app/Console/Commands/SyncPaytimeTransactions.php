@@ -11,7 +11,10 @@ use Illuminate\Support\Facades\Log;
 class SyncPaytimeTransactions extends Command
 {
     protected $signature = 'paytime:sync-transactions {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
+
     protected $description = 'Sync transactions from Paytime to local database';
+
+    protected int $perPage = 1000;
 
     protected $transacaoService;
 
@@ -37,14 +40,14 @@ class SyncPaytimeTransactions extends Command
             $year = $this->option('year') ?? $currentYear;
             sort($months);
 
-            $this->info("Starting manual sync for transactions... Months: " . implode(', ', $months) . " of $year");
+            $this->info('Starting manual sync for transactions... Months: '.implode(', ', $months)." of $year");
             $periods = [];
             foreach ($months as $m) {
                 $periods[] = [
                     'month' => (int) $m,
                     'year' => (int) $year,
                     'start' => Carbon::createFromDate((int) $year, (int) $m, 1)->startOfMonth()->format('Y-m-d'),
-                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d')
+                    'end' => Carbon::createFromDate((int) $year, (int) $m, 1)->endOfMonth()->format('Y-m-d'),
                 ];
             }
         } else {
@@ -55,7 +58,7 @@ class SyncPaytimeTransactions extends Command
                 $start = Carbon::parse($lastRecord);
                 $end = now();
 
-                $this->info("Starting incremental sync for transactions from " . $start->toDateTimeString() . " to " . $end->toDateTimeString());
+                $this->info('Starting incremental sync for transactions from '.$start->toDateTimeString().' to '.$end->toDateTimeString());
 
                 $periods = [];
                 $tempDate = $start->copy()->startOfMonth();
@@ -64,12 +67,12 @@ class SyncPaytimeTransactions extends Command
                         'month' => $tempDate->month,
                         'year' => $tempDate->year,
                         'start' => ($tempDate->format('Y-m') === $start->format('Y-m')) ? $start->format('Y-m-d') : $tempDate->startOfMonth()->format('Y-m-d'),
-                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d') : $tempDate->copy()->endOfMonth()->format('Y-m-d')
+                        'end' => ($tempDate->format('Y-m') === $end->format('Y-m')) ? $end->format('Y-m-d') : $tempDate->copy()->endOfMonth()->format('Y-m-d'),
                     ];
                     $tempDate->addMonth();
                 }
             } else {
-                $this->info("No transaction records found. Falling back to default sync (current and previous month).");
+                $this->info('No transaction records found. Falling back to default sync (current and previous month).');
                 $months = explode(',', $defaultMonths);
                 $periods = [];
                 foreach ($months as $m) {
@@ -77,7 +80,7 @@ class SyncPaytimeTransactions extends Command
                         'month' => (int) $m,
                         'year' => $currentYear,
                         'start' => Carbon::createFromDate($currentYear, (int) $m, 1)->startOfMonth()->format('Y-m-d'),
-                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d')
+                        'end' => Carbon::createFromDate($currentYear, (int) $m, 1)->endOfMonth()->format('Y-m-d'),
                     ];
                 }
             }
@@ -98,10 +101,10 @@ class SyncPaytimeTransactions extends Command
         $page = 1;
         do {
             $filters = [
-                'perPage' => 100,
+                'perPage' => $this->perPage,
                 'page' => $page,
                 'filters' => json_encode([
-                    'created_at' => ['min' => $startDate, 'max' => $endDate]
+                    'created_at' => ['min' => $startDate, 'max' => $endDate],
                 ]),
                 'sorters' => json_encode([
                     'column' => 'created_at',
@@ -125,18 +128,18 @@ class SyncPaytimeTransactions extends Command
                             'fees' => $item['fees'] ?? 0,
                             'installments' => $item['installments'] ?? 1,
                             'created_at' => isset($item['created_at']) ? Carbon::parse($item['created_at']) : now(),
-                            'metadata' => json_encode($item)
+                            'metadata' => json_encode($item),
                         ]
                     );
                 }
 
-                $this->info("Synced " . count($items) . " transactions (Page $page)");
+                $this->info('Synced '.count($items)." transactions (Page $page)");
                 $page++;
             } catch (\Exception $e) {
-                Log::error("Error syncing transactions: " . $e->getMessage());
-                $this->error("Error syncing transactions: " . $e->getMessage());
+                Log::error('Error syncing transactions: '.$e->getMessage());
+                $this->error('Error syncing transactions: '.$e->getMessage());
                 break;
             }
-        } while (!empty($items));
+        } while (! empty($items));
     }
 }
