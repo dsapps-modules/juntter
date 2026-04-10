@@ -1,135 +1,162 @@
 <?php
+
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessCreatePaytimeEstablishment;
+use App\Jobs\ProcessPaytimeBilletStatusChange;
+use App\Jobs\ProcessPaytimeEstablishmentStatusChange;
+use App\Jobs\ProcessUpdatePaytimeEstablishmentData;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
-use App\Jobs\ProcessPaytimeBilletStatusChange;
-use App\Jobs\ProcessPaytimeEstablishmentStatusChange;
-use App\Jobs\ProcessCreatePaytimeEstablishment;
 
 class PaytimeWebhookController extends Controller
 {
-
-    public function createEstablishment(Request $request)
+    public function handle(Request $request): JsonResponse
     {
-        $data = $request->all();
+        $payload = $request->all();
 
         if (! $this->isAuthorized($request)) {
-            Log::info("createEstablishment request unauthorized with data: ", $data);
-            return response()->json(['message' => 'Create establishment unauthorized'], 401);
+            Log::warning('Paytime webhook request unauthorized', $payload);
+
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        Queue::push(new ProcessCreatePaytimeEstablishment($data));
-        return response()->json(['message' => 'Create establishment webhook received'], 200);
+        $event = $payload['event'] ?? null;
+
+        if (! is_string($event) || $event === '') {
+            Log::warning('Paytime webhook request missing event', $payload);
+
+            return response()->json(['message' => 'Event is required'], 422);
+        }
+
+        $this->dispatchEventHandler($event, $payload);
+
+        return response()->json(['message' => 'Paytime webhook received'], 200);
     }
 
-
-    public function updateEstablishmentStatus(Request $request)
+    private function dispatchEventHandler(string $event, array $payload): void
     {
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: update establishment status'], 401);
-        }
-
-        Log::info('Paytime update establishment webhook received', $request->all());
-        Queue::push(new ProcessPaytimeEstablishmentStatusChange($request->all()));
-        return response()->json(['message' => 'Update establishment status webhook received'], 200);
+        match ($event) {
+            'new-billet' => $this->handleNewBillet($payload),
+            'updated-billet-status' => $this->handleUpdatedBilletStatus($payload),
+            'new-sub-split' => $this->handleNewSubSplit($payload),
+            'canceled-sub-split' => $this->handleCanceledSubSplit($payload),
+            'new-establishment' => $this->handleNewEstablishment($payload),
+            'updated-establishment-status' => $this->handleUpdatedEstablishmentStatus($payload),
+            'updated-establishment-gateway' => $this->handleUpdatedEstablishmentGateway($payload),
+            'updated-establishment-data' => $this->handleUpdatedEstablishmentData($payload),
+            'new-sub-transaction' => $this->handleNewSubTransaction($payload),
+            'updated-sub-transaction' => $this->handleUpdatedSubTransaction($payload),
+            'new-pagseguro-transaction' => $this->handleNewPagseguroTransaction($payload),
+            'updated-pagseguro-transaction' => $this->handleUpdatedPagseguroTransaction($payload),
+            'new-zoop-transaction' => $this->handleNewZoopTransaction($payload),
+            'updated-zoop-transaction' => $this->handleUpdatedZoopTransaction($payload),
+            default => $this->handleUnknownEvent($event, $payload),
+        };
     }
 
-
-    public function updateEstablishmentData(Request $request)
+    private function handleNewEstablishment(array $payload): void
     {
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: update establishment data'], 401);
-        }
-
-        Log::info(__CLASS__.'#updateEstablishmentData');
-        Log::info('Paytime update establishment data webhook received', $request->all());
-        // Queue::push(new ProcessUpdatePaytimeEstablishmentData($request->all()));
-        return response()->json(['message' => 'Update establishment data webhook received'], 200);
+        Log::info('Paytime webhook received for new-establishment', ['event' => 'new-establishment']);
+        Queue::push(new ProcessCreatePaytimeEstablishment($payload));
     }
 
-
-    public function newSubTransaction(Request $request){
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: new transaction'], 401);
-        }
-
-        Log::info('Paytime transaction status changed webhook received', $request->all());
-        // Queue::push(new ProcessPaytimeEstablishmentStatusChange($request->all()));
-        return response()->json(['message' => 'New transaction webhook received'], 200);
-    }
-
-
-    public function updatedSubTransaction(Request $request){
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: update transaction'], 401);
-        }
-
-        Log::info('Paytime transaction status changed webhook received', $request->all());
-        // Queue::push(new ProcessPaytimeEstablishmentStatusChange($request->all()));
-        return response()->json(['message' => 'Update transaction webhook received'], 200);
-    }
-
-
-    public function newBillet(Request $request){
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: new billet'], 401);
-        }
-
-        Log::info('Paytime transaction status changed webhook received', $request->all());
-        // Queue::push(new ProcessPaytimeEstablishmentStatusChange($request->all()));
-        return response()->json(['message' => 'New billet webhook received'], 200);
-    }
-
-
-    public function updateBilletStatus(Request $request)
+    private function handleUpdatedEstablishmentStatus(array $payload): void
     {
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: update billet'], 401);
-        }
-
-        Log::info('Paytime update billet webhook received', $request->all());
-        Queue::push(new ProcessPaytimeBilletStatusChange($request->all()));
-        return response()->json(['message' => 'Update billet webhook received'], 200);
+        Log::info('Paytime webhook received for updated-establishment-status', ['event' => 'updated-establishment-status']);
+        Queue::push(new ProcessPaytimeEstablishmentStatusChange($this->payloadWithEvent($payload, 'update-establishment-status')));
     }
 
-
-    public function newSubSplit(Request $request)
+    private function handleUpdatedEstablishmentGateway(array $payload): void
     {
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: new sub split'], 401);
-        }
-
-        Log::info('Paytime update billet webhook received', $request->all());
-        // Queue::push(new ProcessPaytimeBilletStatusChange($request->all()));
-        return response()->json(['message' => 'New sub split webhook received'], 200);
+        Log::info('Paytime webhook received for updated-establishment-gateway', ['event' => 'updated-establishment-gateway']);
     }
 
-
-    public function canceledSubSplit(Request $request)
+    private function handleUpdatedEstablishmentData(array $payload): void
     {
-        if (!$this->isAuthorized($request)) {
-            return response()->json(['message' => 'Unauthorized: canceled sub split'], 401);
-        }
-
-        Log::info('Paytime update billet webhook received', $request->all());
-        // Queue::push(new ProcessPaytimeBilletStatusChange($request->all()));
-        return response()->json(['message' => 'Canceled sub split webhook received'], 200);
+        Log::info('Paytime webhook received for updated-establishment-data', ['event' => 'updated-establishment-data']);
+        Queue::push(new ProcessUpdatePaytimeEstablishmentData($this->payloadWithEvent($payload, 'update-establishment-data')));
     }
 
+    private function handleNewSubTransaction(array $payload): void
+    {
+        Log::info('Paytime webhook received for new-sub-transaction', ['event' => 'new-sub-transaction']);
+    }
+
+    private function handleUpdatedSubTransaction(array $payload): void
+    {
+        Log::info('Paytime webhook received for updated-sub-transaction', ['event' => 'updated-sub-transaction']);
+    }
+
+    private function handleNewBillet(array $payload): void
+    {
+        Log::info('Paytime webhook received for new-billet', ['event' => 'new-billet']);
+    }
+
+    private function handleUpdatedBilletStatus(array $payload): void
+    {
+        Log::info('Paytime webhook received for updated-billet-status', ['event' => 'updated-billet-status']);
+        Queue::push(new ProcessPaytimeBilletStatusChange($this->payloadWithEvent($payload, 'update-billet-status')));
+    }
+
+    private function handleNewSubSplit(array $payload): void
+    {
+        Log::info('Paytime webhook received for new-sub-split', ['event' => 'new-sub-split']);
+    }
+
+    private function handleCanceledSubSplit(array $payload): void
+    {
+        Log::info('Paytime webhook received for canceled-sub-split', ['event' => 'canceled-sub-split']);
+    }
+
+    private function handleNewPagseguroTransaction(array $payload): void
+    {
+        Log::info('Paytime webhook received for new-pagseguro-transaction', ['event' => 'new-pagseguro-transaction']);
+    }
+
+    private function handleUpdatedPagseguroTransaction(array $payload): void
+    {
+        Log::info('Paytime webhook received for updated-pagseguro-transaction', ['event' => 'updated-pagseguro-transaction']);
+    }
+
+    private function handleNewZoopTransaction(array $payload): void
+    {
+        Log::info('Paytime webhook received for new-zoop-transaction', ['event' => 'new-zoop-transaction']);
+    }
+
+    private function handleUpdatedZoopTransaction(array $payload): void
+    {
+        Log::info('Paytime webhook received for updated-zoop-transaction', ['event' => 'updated-zoop-transaction']);
+    }
+
+    private function handleUnknownEvent(string $event, array $payload): void
+    {
+        Log::warning('Paytime webhook received with unsupported event', [
+            'event' => $event,
+            'payload' => $payload,
+        ]);
+    }
+
+    private function payloadWithEvent(array $payload, string $event): array
+    {
+        $payload['event'] = $event;
+
+        return $payload;
+    }
 
     protected function isAuthorized(Request $request): bool
     {
-        $user = env('PAYTIME_WEBHOOK_USER');
-        $pass = env('PAYTIME_WEBHOOK_PASS');
+        $user = config('services.paytime.webhook_user');
+        $pass = config('services.paytime.webhook_pass');
 
         $hasAuth = $request->getUser() && $request->getPassword();
-        $pass_key = $request->getPassword();
-        $user_key = $request->getUser();
+        $passKey = $request->getPassword();
+        $userKey = $request->getUser();
 
         return $hasAuth &&
-            $user_key === $user &&
-            $pass_key === $pass;
+            $userKey === $user &&
+            $passKey === $pass;
     }
 }

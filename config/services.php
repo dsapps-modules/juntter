@@ -36,6 +36,8 @@ return [
         'integration_key' => env('PAYTIME_INTEGRATION_KEY'),
         'authentication_key' => env('PAYTIME_AUTHENTICATION_KEY'),
         'x_token' => env('PAYTIME_X_TOKEN'),
+        'webhook_user' => env('PAYTIME_WEBHOOK_USER'),
+        'webhook_pass' => env('PAYTIME_WEBHOOK_PASS'),
     ],
 
 ];
