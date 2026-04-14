@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\PaytimeEstablishment;
 use App\Models\PaytimeTransaction;
 use App\Services\BoletoService;
+use App\Services\PaytimeTransactionSyncService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -19,10 +20,15 @@ class SyncPaytimeBillets extends Command
 
     protected $boletoService;
 
-    public function __construct(BoletoService $boletoService)
-    {
+    protected PaytimeTransactionSyncService $paytimeTransactionSyncService;
+
+    public function __construct(
+        BoletoService $boletoService,
+        PaytimeTransactionSyncService $paytimeTransactionSyncService
+    ) {
         parent::__construct();
         $this->boletoService = $boletoService;
+        $this->paytimeTransactionSyncService = $paytimeTransactionSyncService;
     }
 
     public function handle()
@@ -133,21 +139,12 @@ class SyncPaytimeBillets extends Command
                 $items = $response['data'] ?? [];
 
                 foreach ($items as $item) {
-                    PaytimeTransaction::updateOrCreate(
-                        ['external_id' => $item['_id'] ?? $item['id']],
-                        [
-                            'establishment_id' => $item['establishment']['id'] ?? ($item['establishment_id'] ?? $establishmentId ?? 'UNKNOWN'),
-                            'type' => $item['type'] ?? 'BILLET',
-                            'status' => $item['status'] ?? 'UNKNOWN',
-                            'amount' => $item['amount'] ?? 0,
-                            'original_amount' => $item['original_amount'] ?? ($item['amount'] ?? 0),
-                            'fees' => $item['fees'] ?? 0,
-                            'gateway_key' => $item['gateway_key'] ?? null,
-                            'expiration_at' => isset($item['expiration_at']) ? Carbon::parse($item['expiration_at']) : null,
-                            'created_at' => isset($item['created_at']) ? Carbon::parse($item['created_at']) : now(),
-                            'metadata' => json_encode($item),
-                        ]
-                    );
+                    $this->paytimeTransactionSyncService->sync($item, [
+                        'default_type' => 'BILLET',
+                        'default_establishment_id' => $establishmentId,
+                        'created_at' => $item['created_at'] ?? null,
+                        'metadata' => $item,
+                    ]);
                 }
 
                 $page++;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\ProcessCreatePaytimeEstablishment;
 use App\Jobs\ProcessPaytimeBilletStatusChange;
 use App\Jobs\ProcessPaytimeEstablishmentStatusChange;
+use App\Jobs\ProcessPaytimeTransactionWebhook;
 use App\Jobs\ProcessUpdatePaytimeEstablishmentData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -114,11 +115,13 @@ class PaytimeWebhookController extends Controller
     private function handleNewPagseguroTransaction(array $payload): void
     {
         Log::info('Paytime webhook received for new-pagseguro-transaction', ['event' => 'new-pagseguro-transaction']);
+        Queue::push(new ProcessPaytimeTransactionWebhook($payload));
     }
 
     private function handleUpdatedPagseguroTransaction(array $payload): void
     {
         Log::info('Paytime webhook received for updated-pagseguro-transaction', ['event' => 'updated-pagseguro-transaction']);
+        Queue::push(new ProcessPaytimeTransactionWebhook($payload));
     }
 
     private function handleNewZoopTransaction(array $payload): void

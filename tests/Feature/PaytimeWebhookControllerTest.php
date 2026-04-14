@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\ProcessPaytimeBilletStatusChange;
+use App\Jobs\ProcessPaytimeTransactionWebhook;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -37,6 +38,30 @@ class PaytimeWebhookControllerTest extends TestCase
 
         Queue::assertPushed(ProcessPaytimeBilletStatusChange::class, function (ProcessPaytimeBilletStatusChange $job): bool {
             return ($job->payload['event'] ?? null) === 'update-billet-status';
+        });
+    }
+
+    public function test_it_dispatches_the_pagseguro_transaction_handler_from_the_single_paytime_webhook_route(): void
+    {
+        Queue::fake();
+
+        $response = $this
+            ->withBasicAuth('webhook-user', 'webhook-pass')
+            ->postJson('/api/webhook/paytime', [
+                'event' => 'new-pagseguro-transaction',
+                'data' => [
+                    '_id' => 'transaction-123',
+                    'status' => 'PENDING',
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Paytime webhook received',
+        ]);
+
+        Queue::assertPushed(ProcessPaytimeTransactionWebhook::class, function (ProcessPaytimeTransactionWebhook $job): bool {
+            return ($job->payload['event'] ?? null) === 'new-pagseguro-transaction';
         });
     }
 

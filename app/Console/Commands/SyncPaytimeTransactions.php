@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\PaytimeTransaction;
+use App\Services\PaytimeTransactionSyncService;
 use App\Services\TransacaoService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -18,10 +19,15 @@ class SyncPaytimeTransactions extends Command
 
     protected $transacaoService;
 
-    public function __construct(TransacaoService $transacaoService)
-    {
+    protected PaytimeTransactionSyncService $paytimeTransactionSyncService;
+
+    public function __construct(
+        TransacaoService $transacaoService,
+        PaytimeTransactionSyncService $paytimeTransactionSyncService
+    ) {
         parent::__construct();
         $this->transacaoService = $transacaoService;
+        $this->paytimeTransactionSyncService = $paytimeTransactionSyncService;
     }
 
     public function handle()
@@ -117,20 +123,11 @@ class SyncPaytimeTransactions extends Command
                 $items = $response['data'] ?? [];
 
                 foreach ($items as $item) {
-                    PaytimeTransaction::updateOrCreate(
-                        ['external_id' => $item['_id'] ?? $item['id']],
-                        [
-                            'establishment_id' => $item['establishment']['id'] ?? ($item['establishment_id'] ?? 'UNKNOWN'),
-                            'type' => $item['type'] ?? 'UNKNOWN',
-                            'status' => $item['status'] ?? 'UNKNOWN',
-                            'amount' => $item['amount'] ?? 0,
-                            'original_amount' => $item['original_amount'] ?? ($item['amount'] ?? 0),
-                            'fees' => $item['fees'] ?? 0,
-                            'installments' => $item['installments'] ?? 1,
-                            'created_at' => isset($item['created_at']) ? Carbon::parse($item['created_at']) : now(),
-                            'metadata' => json_encode($item),
-                        ]
-                    );
+                    $this->paytimeTransactionSyncService->sync($item, [
+                        'default_type' => 'UNKNOWN',
+                        'created_at' => $item['created_at'] ?? null,
+                        'metadata' => $item,
+                    ]);
                 }
 
                 $this->info('Synced '.count($items)." transactions (Page $page)");
