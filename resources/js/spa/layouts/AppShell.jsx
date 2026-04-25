@@ -16,6 +16,7 @@ const navigationItems = [
     { key: '/home', label: 'Home', icon: <AppstoreOutlined /> },
     { key: '/estabelecimentos', label: 'Estabelecimentos', icon: <BankOutlined /> },
     { key: '/cobranca', label: 'Cobrança', icon: <CreditCardOutlined /> },
+    { key: '/links-pagamento', label: 'Links', icon: <CreditCardOutlined /> },
     { key: '/vendedores', label: 'Vendedores', icon: <TeamOutlined /> },
     { key: '/perfil', label: 'Configurações', icon: <SettingOutlined /> },
 ];
@@ -26,12 +27,13 @@ export default function AppShell() {
     const screens = Grid.useBreakpoint();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-    const selectedKey = useMemo(() => {
+    const currentItem = useMemo(() => {
         const path = location.pathname.replace('/app', '');
-        const foundItem = navigationItems.find((item) => path.startsWith(item.key));
 
-        return foundItem ? foundItem.key : '/home';
+        return navigationItems.find((item) => path.startsWith(item.key)) ?? navigationItems[0];
     }, [location.pathname]);
+
+    const selectedKey = currentItem.key;
 
     const menu = (
         <Menu
@@ -89,15 +91,15 @@ export default function AppShell() {
                         <div>
                             <Typography.Text className="spa-header-kicker">Painel operacional</Typography.Text>
                             <Typography.Title level={3} className="spa-header-title">
-                                Home operacional
+                                {currentItem.label}
                             </Typography.Title>
                         </div>
                     </Space>
 
                     <Space size={12}>
-                        <Button className="spa-secondary-button">Importar</Button>
+                        <Button className="spa-secondary-button">Atualizar</Button>
                         <Button type="primary" className="spa-primary-button">
-                            Cadastrar
+                            Nova ação
                         </Button>
                     </Space>
                 </Header>

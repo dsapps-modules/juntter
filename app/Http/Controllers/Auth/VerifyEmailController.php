@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 
 class VerifyEmailController extends Controller
@@ -13,10 +14,10 @@ class VerifyEmailController extends Controller
     /**
      * Mark the authenticated user's email address as verified.
      */
-    public function __invoke(EmailVerificationRequest $request): RedirectResponse
+    public function __invoke(EmailVerificationRequest $request): RedirectResponse|JsonResponse
     {
         $user = $request->user();
-        
+
         if ($user->hasVerifiedEmail()) {
             return $this->redirectBasedOnUserLevel($user);
         }
@@ -25,9 +26,16 @@ class VerifyEmailController extends Controller
             event(new Verified($user));
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'email-verified',
+                'redirect' => '/app/home',
+            ]);
+        }
+
         return $this->redirectBasedOnUserLevel($user);
     }
-    
+
     /**
      * Redireciona baseado no nível de acesso do usuário
      */

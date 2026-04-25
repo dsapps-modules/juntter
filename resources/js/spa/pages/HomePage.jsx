@@ -2,26 +2,42 @@ import {
     ArrowRightOutlined,
     BankOutlined,
     CreditCardOutlined,
-    FireOutlined,
+    EllipsisOutlined,
+    ThunderboltOutlined,
     TeamOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Divider, List, Row, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
+import { Alert, Avatar, Button, Card, Col, Divider, List, Row, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+const defaultPayload = {
+    user: {
+        name: 'Usuário',
+        email: '',
+        nivel_label: '',
+        verified: false,
+        must_change_password: false,
+        created_at: '',
+    },
+    summary: {
+        total_establishments: 0,
+        active_establishments: 0,
+        blocked_establishments: 0,
+        total_transactions: 0,
+        pending_transactions: 0,
+        today_transactions: 0,
+        total_revenue: 'R$ 0,00',
+    },
+    rows: [],
+    selected: null,
+    recent_transactions: [],
+    actions: [],
+};
 
 export default function HomePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [payload, setPayload] = useState({
-        summary: {
-            total_establishments: 0,
-            active_establishments: 0,
-            blocked_establishments: 0,
-            total_revenue: 'R$ 0,00',
-        },
-        rows: [],
-        recent_transactions: [],
-    });
+    const [payload, setPayload] = useState(defaultPayload);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -31,7 +47,7 @@ export default function HomePage() {
             setError('');
 
             try {
-                const response = await fetch('/api/spa/estabelecimentos', {
+                const response = await fetch('/api/spa/dashboard', {
                     signal: controller.signal,
                     headers: {
                         Accept: 'application/json',
@@ -39,18 +55,23 @@ export default function HomePage() {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Não foi possível carregar a home.');
+                    throw new Error('Não foi possível carregar o painel.');
                 }
 
                 const data = await response.json();
-                setPayload({
-                    summary: data.summary ?? payload.summary,
+                setPayload((current) => ({
+                    ...current,
+                    ...data,
+                    summary: data.summary ?? current.summary,
+                    user: data.user ?? current.user,
                     rows: data.rows ?? [],
+                    selected: data.selected ?? data.rows?.[0] ?? null,
                     recent_transactions: data.recent_transactions ?? [],
-                });
+                    actions: data.actions ?? [],
+                }));
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
-                    setError(fetchError.message || 'Falha ao carregar a home.');
+                    setError(fetchError.message || 'Falha ao carregar o painel.');
                 }
             } finally {
                 setLoading(false);
@@ -63,18 +84,22 @@ export default function HomePage() {
     }, []);
 
     const topRows = useMemo(() => payload.rows.slice(0, 5), [payload.rows]);
+    const selectedRow = payload.selected ?? payload.rows[0] ?? null;
 
     const topColumns = [
         {
             title: 'Cliente',
             dataIndex: 'name',
             render: (_, record) => (
-                <div>
-                    <Typography.Text strong>{record.name}</Typography.Text>
+                <Space size={14}>
+                    <Avatar className="spa-row-avatar">{record.initials}</Avatar>
                     <div>
-                        <Typography.Text type="secondary">{record.owner}</Typography.Text>
+                        <Typography.Text strong>{record.name}</Typography.Text>
+                        <div>
+                            <Typography.Text type="secondary">{record.owner}</Typography.Text>
+                        </div>
                     </div>
-                </div>
+                </Space>
             ),
         },
         {
@@ -88,25 +113,21 @@ export default function HomePage() {
         },
     ];
 
-    const quickLinks = [
-        { title: 'Estabelecimentos', description: 'Cadastro e monitoramento de contas.', icon: <BankOutlined />, href: '/estabelecimentos' },
-        { title: 'Cobrança', description: 'Fluxos de cartão, PIX e boleto.', icon: <CreditCardOutlined />, href: '/cobranca' },
-        { title: 'Vendedores', description: 'Acesso, faturamento e permissões.', icon: <TeamOutlined />, href: '/vendedores' },
-    ];
-
     return (
         <Row gutter={[20, 20]} className="spa-home-grid">
             <Col xs={24} xl={16}>
                 <Card className="spa-hero-card">
                     <Space direction="vertical" size={18} className="spa-hero-stack">
                         <div>
-                            <Typography.Text className="spa-brand-kicker">Home operacional</Typography.Text>
+                            <Typography.Text className="spa-brand-kicker">
+                                {payload.user.nivel_label || 'Painel operacional'}
+                            </Typography.Text>
                             <Typography.Title level={2} className="spa-hero-title">
-                                Controle central com foco em performance, status e ação rápida.
+                                Olá, {payload.user.name}.
                             </Typography.Title>
                             <Typography.Paragraph className="spa-hero-description">
-                                Esta é a primeira home React da migração. O layout já segue a direção visual definida:
-                                superfícies claras, cartão destacado, amarelo como cor de ação e leitura rápida do estado do negócio.
+                                Este painel consolida a operação em uma leitura rápida: volume, status, atividade recente e
+                                atalhos para os módulos migrados.
                             </Typography.Paragraph>
                         </div>
 
@@ -114,20 +135,20 @@ export default function HomePage() {
                             <Button type="primary" icon={<ArrowRightOutlined />} className="spa-primary-button">
                                 Ir para estabelecimentos
                             </Button>
-                            <Button className="spa-secondary-button" icon={<FireOutlined />}>
-                                Ver pendências
+                            <Button className="spa-secondary-button" icon={<ThunderboltOutlined />}>
+                                Ver atividade
                             </Button>
                         </Space>
 
                         <Row gutter={[16, 16]}>
                             <Col xs={24} sm={12} lg={6}>
-                                <Statistic title="Total" value={payload.summary.total_establishments} />
+                                <Statistic title="Estabelecimentos" value={payload.summary.total_establishments} />
                             </Col>
                             <Col xs={24} sm={12} lg={6}>
                                 <Statistic title="Ativos" value={payload.summary.active_establishments} />
                             </Col>
                             <Col xs={24} sm={12} lg={6}>
-                                <Statistic title="Bloqueados" value={payload.summary.blocked_establishments} />
+                                <Statistic title="Hoje" value={payload.summary.today_transactions} />
                             </Col>
                             <Col xs={24} sm={12} lg={6}>
                                 <Statistic title="Receita" value={payload.summary.total_revenue} />
@@ -139,12 +160,12 @@ export default function HomePage() {
                 <Card
                     title="Clientes recentes"
                     className="spa-table-card spa-home-table-card"
-                    extra={<Link to="/app/estabelecimentos">Ver tudo</Link>}
+                    extra={<Link to="/estabelecimentos">Ver tudo</Link>}
                 >
                     {loading ? (
                         <Skeleton active paragraph={{ rows: 5 }} />
                     ) : error ? (
-                        <Alert type="error" showIcon message="Falha ao carregar a home" description={error} />
+                        <Alert type="error" showIcon message="Falha ao carregar o painel" description={error} />
                     ) : (
                         <Table
                             rowKey="id"
@@ -159,15 +180,36 @@ export default function HomePage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title="Atalhos e atividade">
+                <Card
+                    className="spa-quick-view-card"
+                    title={selectedRow ? `Quick View: ${selectedRow.name}` : 'Quick View'}
+                    extra={<EllipsisOutlined />}
+                >
                     <Space direction="vertical" size={16} className="spa-detail-stack">
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Statistic title="Atividade" value={payload.summary.total_transactions} />
+                            </Col>
+                            <Col span={12}>
+                                <Statistic title="Pendentes" value={payload.summary.pending_transactions} />
+                            </Col>
+                        </Row>
+
+                        <Divider />
+
+                        <Typography.Title level={4} className="spa-section-title">
+                            Acessos rápidos
+                        </Typography.Title>
+
                         <List
-                            dataSource={quickLinks}
-                            renderItem={(item) => (
+                            dataSource={payload.actions}
+                            renderItem={(item, index) => (
                                 <List.Item className="spa-quick-link-item">
                                     <Link to={item.href} className="spa-quick-link">
                                         <Space align="start" size={14}>
-                                            <div className="spa-quick-link-icon">{item.icon}</div>
+                                            <div className="spa-quick-link-icon">
+                                                {index === 0 ? <BankOutlined /> : index === 1 ? <CreditCardOutlined /> : <TeamOutlined />}
+                                            </div>
                                             <div>
                                                 <Typography.Text strong>{item.title}</Typography.Text>
                                                 <div>
@@ -179,6 +221,31 @@ export default function HomePage() {
                                 </List.Item>
                             )}
                         />
+
+                        <Divider />
+
+                        <Space direction="vertical" size={10} className="spa-detail-stack">
+                            <Space wrap>
+                                <Avatar className="spa-row-avatar">{selectedRow?.initials ?? 'JT'}</Avatar>
+                                <div>
+                                    <Typography.Text strong>{selectedRow?.name ?? 'Sem dados'}</Typography.Text>
+                                    <div>
+                                        <Typography.Text type="secondary">
+                                            {selectedRow?.owner ?? 'Nenhum estabelecimento disponível'}
+                                        </Typography.Text>
+                                    </div>
+                                </div>
+                            </Space>
+
+                            <Space wrap>
+                                <Tag color="gold">{selectedRow?.status ?? 'Sem status'}</Tag>
+                                <Tag color="default">{selectedRow?.segment ?? 'Geral'}</Tag>
+                            </Space>
+
+                            <Typography.Text type="secondary">
+                                {selectedRow?.email ?? 'N/A'} • {selectedRow?.city ?? 'N/A'}
+                            </Typography.Text>
+                        </Space>
 
                         <Divider />
 
@@ -200,20 +267,6 @@ export default function HomePage() {
                             }))}
                             className="spa-timeline"
                         />
-
-                        <Divider />
-
-                        <Card className="spa-mini-surface" bordered={false}>
-                            <Space direction="vertical" size={6}>
-                                <Typography.Text className="spa-placeholder-kicker">Próximo corte</Typography.Text>
-                                <Typography.Title level={4} className="spa-mini-title">
-                                    Monitoramento de cobranças
-                                </Typography.Title>
-                                <Typography.Text type="secondary">
-                                    A próxima fase vai encaixar o módulo de cobrança com o mesmo padrão visual.
-                                </Typography.Text>
-                            </Space>
-                        </Card>
                     </Space>
                 </Card>
             </Col>

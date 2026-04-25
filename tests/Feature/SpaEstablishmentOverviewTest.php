@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,7 +12,12 @@ class SpaEstablishmentOverviewTest extends TestCase
 
     public function test_it_returns_the_establishment_overview_payload(): void
     {
-        $response = $this->getJson('/api/spa/estabelecimentos');
+        $admin = User::factory()->create([
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)->getJson('/api/spa/estabelecimentos');
 
         $response->assertOk();
         $response->assertJsonStructure([

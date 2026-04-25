@@ -28,6 +28,7 @@ import {
 } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import StatusPill from '../components/StatusPill';
+import { useNavigate } from 'react-router-dom';
 
 const defaultFilters = ['Todos', 'Ativos', 'Inadimplentes', 'Inativos'];
 
@@ -39,6 +40,7 @@ const statusColors = {
 };
 
 export default function EstablishmentsPage() {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filter, setFilter] = useState('Todos');
@@ -289,7 +291,12 @@ export default function EstablishmentsPage() {
                                 <Button icon={<MoreOutlined />}>Ações</Button>
                             </Space>
 
-                            <Button type="primary" icon={<ArrowRightOutlined />} className="spa-primary-button spa-full-width">
+                            <Button
+                                type="primary"
+                                icon={<ArrowRightOutlined />}
+                                className="spa-primary-button spa-full-width"
+                                onClick={() => navigate(`/estabelecimentos/${selectedRow.id}/editar`)}
+                            >
                                 Edit Details
                             </Button>
                         </>

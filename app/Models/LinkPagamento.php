@@ -15,6 +15,7 @@ class LinkPagamento extends Model
     protected $fillable = [
         'estabelecimento_id',
         'codigo_unico',
+        'titulo',
         'descricao',
         'valor',
         'valor_centavos',

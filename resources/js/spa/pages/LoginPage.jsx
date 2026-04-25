@@ -5,20 +5,54 @@ import {
     SafetyCertificateOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Checkbox, Col, Divider, Form, Input, Row, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Checkbox, Col, Divider, Input, Row, Space, Tag, Typography } from 'antd';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function LoginPage() {
-    const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [remember, setRemember] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
-    const handleFinish = async () => {
+    const handleSubmit = async (event) => {
+        event.preventDefault();
         setLoading(true);
-        window.setTimeout(() => {
+        setError('');
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const formData = new FormData();
+
+            formData.append('email', email);
+            formData.append('password', password);
+            formData.append('remember', remember ? '1' : '0');
+
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken ?? '',
+                },
+                body: formData,
+                credentials: 'same-origin',
+            });
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                const firstError = Object.values(payload.errors ?? {}).flat().shift();
+
+                throw new Error(firstError ?? payload.message ?? 'Falha ao entrar.');
+            }
+
+            window.location.assign(payload.redirect ?? '/app/home');
+        } catch (submitError) {
+            setError(submitError.message || 'Falha ao entrar.');
             setLoading(false);
-            navigate('/home');
-        }, 450);
+        }
     };
 
     return (
@@ -68,47 +102,60 @@ export default function LoginPage() {
                             Use suas credenciais para acessar os módulos migrados para React.
                         </Typography.Paragraph>
 
-                        <Form layout="vertical" onFinish={handleFinish} autoComplete="off">
-                            <Form.Item
-                                label="E-mail"
-                                name="email"
-                                rules={[
-                                    { required: true, message: 'Informe o e-mail' },
-                                    { type: 'email', message: 'Informe um e-mail válido' },
-                                ]}
-                            >
-                                <Input prefix={<MailOutlined />} size="large" placeholder="nome@empresa.com" />
-                            </Form.Item>
+                        {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
 
-                            <Form.Item
-                                label="Senha"
-                                name="password"
-                                rules={[{ required: true, message: 'Informe a senha' }]}
-                            >
-                                <Input.Password prefix={<LockOutlined />} size="large" placeholder="Sua senha" />
-                            </Form.Item>
+                        <form onSubmit={handleSubmit}>
+                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                <div>
+                                    <Typography.Text strong>E-mail</Typography.Text>
+                                    <Input
+                                        name="email"
+                                        prefix={<MailOutlined />}
+                                        size="large"
+                                        placeholder="nome@empresa.com"
+                                        value={email}
+                                        onChange={(event) => setEmail(event.target.value)}
+                                        autoComplete="username"
+                                        className="spa-auth-input"
+                                    />
+                                </div>
 
-                            <div className="spa-auth-row">
-                                <Form.Item name="remember" valuePropName="checked" className="spa-auth-remember">
-                                    <Checkbox>Manter conectado</Checkbox>
-                                </Form.Item>
-                                <Button type="link" className="spa-auth-link">
-                                    Esqueci a senha
+                                <div>
+                                    <Typography.Text strong>Senha</Typography.Text>
+                                    <Input.Password
+                                        name="password"
+                                        prefix={<LockOutlined />}
+                                        size="large"
+                                        placeholder="Sua senha"
+                                        value={password}
+                                        onChange={(event) => setPassword(event.target.value)}
+                                        autoComplete="current-password"
+                                        className="spa-auth-input"
+                                    />
+                                </div>
+
+                                <div className="spa-auth-row">
+                                    <Checkbox checked={remember} onChange={(event) => setRemember(event.target.checked)}>
+                                        Manter conectado
+                                    </Checkbox>
+                                    <Link to="/forgot-password" className="spa-auth-link">
+                                        Esqueci a senha
+                                    </Link>
+                                </div>
+
+                                <Button
+                                    htmlType="submit"
+                                    type="primary"
+                                    size="large"
+                                    block
+                                    loading={loading}
+                                    className="spa-primary-button"
+                                    icon={<ArrowRightOutlined />}
+                                >
+                                    Entrar
                                 </Button>
-                            </div>
-
-                            <Button
-                                htmlType="submit"
-                                type="primary"
-                                size="large"
-                                block
-                                loading={loading}
-                                className="spa-primary-button"
-                                icon={<ArrowRightOutlined />}
-                            >
-                                Entrar
-                            </Button>
-                        </Form>
+                            </Space>
+                        </form>
 
                         <Divider />
 
@@ -118,6 +165,11 @@ export default function LoginPage() {
                                 Esta tela já está pronta para a próxima etapa da validação visual.
                             </Typography.Text>
                         </Space>
+
+                        <div className="spa-auth-links">
+                            <Link to="/forgot-password">Recuperar senha</Link>
+                            <Link to="/">Ir para a home</Link>
+                        </div>
                     </Card>
                 </Col>
             </Row>

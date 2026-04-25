@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LinkPagamento;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -40,18 +41,7 @@ class LinkPagamentoController extends Controller
      */
     public function index()
     {
-        $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-
-        if (! $estabelecimentoId) {
-            return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
-        }
-
-        $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId)
-            ->where('tipo_pagamento', 'CARTAO')
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-
-        return view('links-pagamento.index', compact('links'));
+        return redirect('/app/links-pagamento');
     }
 
     /**
@@ -59,13 +49,13 @@ class LinkPagamentoController extends Controller
      */
     public function create()
     {
-        return view('links-pagamento.create');
+        return redirect('/app/links-pagamento/novo?tipo=CARTAO');
     }
 
     /**
      * Salvar novo link de pagamento
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         try {
 
@@ -149,11 +139,25 @@ class LinkPagamentoController extends Controller
                 'tipo_pagamento' => 'CARTAO',
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Link de pagamento criado com sucesso!',
+                    'redirect' => '/app/links-pagamento',
+                    'link_id' => $link->id,
+                ]);
+            }
+
             return redirect()->route('links-pagamento.show', $link->id)
                 ->with('success', 'Link de pagamento criado com sucesso!');
 
         } catch (\Exception $e) {
             Log::error('Erro ao criar link de pagamento: '.$e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Erro ao criar link de pagamento: '.$e->getMessage(),
+                ], 500);
+            }
 
             return redirect()->back()
                 ->with('error', 'Erro ao criar link de pagamento: '.$e->getMessage())
@@ -166,14 +170,7 @@ class LinkPagamentoController extends Controller
      */
     public function show(LinkPagamento $linkPagamento)
     {
-        // Verificar se o usuário tem acesso a este link
-        $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-
-        if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
-            abort(403, 'Acesso negado');
-        }
-
-        return view('links-pagamento.show', compact('linkPagamento'));
+        return redirect('/app/links-pagamento/'.$linkPagamento->id.'/editar');
     }
 
     /**
@@ -181,20 +178,13 @@ class LinkPagamentoController extends Controller
      */
     public function edit(LinkPagamento $linkPagamento)
     {
-        // Verificar se o usuário tem acesso a este link
-        $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-
-        if ($linkPagamento->estabelecimento_id !== $estabelecimentoId) {
-            abort(403, 'Acesso negado');
-        }
-
-        return view('links-pagamento.edit', compact('linkPagamento'));
+        return redirect('/app/links-pagamento/'.$linkPagamento->id.'/editar');
     }
 
     /**
      * Atualizar link de pagamento
      */
-    public function update(Request $request, LinkPagamento $linkPagamento)
+    public function update(Request $request, LinkPagamento $linkPagamento): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         try {
             $valor = $this->converterValorParaCentavos($request->input('valor')) / 100;
@@ -275,11 +265,24 @@ class LinkPagamentoController extends Controller
                 'tipo_pagamento' => 'CARTAO',
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Link de pagamento atualizado com sucesso!',
+                    'redirect' => '/app/links-pagamento',
+                ]);
+            }
+
             return redirect()->route('links-pagamento.show', $linkPagamento->id)
                 ->with('success', 'Link de pagamento atualizado com sucesso!');
 
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar link de pagamento: '.$e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Erro ao atualizar link de pagamento: '.$e->getMessage(),
+                ], 500);
+            }
 
             return redirect()->back()
                 ->with('error', 'Erro ao atualizar link de pagamento: '.$e->getMessage())

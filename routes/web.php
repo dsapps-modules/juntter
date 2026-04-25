@@ -48,20 +48,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['nivel.acesso:vendedor', 'must.change.password'])->group(function () {
         Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
-        Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
+        Route::get('/cobranca', fn () => redirect('/app/cobranca'))->name('cobranca.index');
         Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
-        Route::get('/cobranca/planos', [CobrancaController::class, 'listarPlanos'])->name('cobranca.planos');
-        Route::get('/cobranca/planos/{id}', [CobrancaController::class, 'detalhesPlano'])->name('cobranca.plano.detalhes');
-        Route::get('/cobranca/saldoextrato', [CobrancaController::class, 'saldoExtrato'])->name('cobranca.saldoextrato');
+        Route::get('/cobranca/planos', fn () => redirect('/app/cobranca'))->name('cobranca.planos');
+        Route::get('/cobranca/planos/{id}', fn () => redirect('/app/cobranca'))->name('cobranca.plano.detalhes');
+        Route::get('/cobranca/saldoextrato', fn () => redirect('/app/cobranca'))->name('cobranca.saldoextrato');
 
         // Rotas de API para transações
         Route::post('/cobranca/transacao/credito', [CobrancaController::class, 'criarTransacaoCredito'])->name('cobranca.transacao.credito');
         Route::post('/cobranca/transacao/pix', [CobrancaController::class, 'criarTransacaoPix'])->name('cobranca.transacao.pix');
         Route::post('/cobranca/boleto', [CobrancaController::class, 'criarBoleto'])->name('cobranca.boleto.criar');
-        Route::get('/cobranca/simular', [CobrancaController::class, 'mostrarSimulacao'])->name('cobranca.simular');
+        Route::get('/cobranca/simular', fn () => redirect('/app/cobranca'))->name('cobranca.simular');
         Route::post('/cobranca/simular', [CobrancaController::class, 'simularTransacao'])->name('cobranca.transacao.simular');
-        Route::get('/cobranca/transacao/{id}', [CobrancaController::class, 'detalhesTransacao'])->name('cobranca.transacao.detalhes');
-        Route::get('/cobranca/boleto/{id}', [CobrancaController::class, 'detalhesBoleto'])->name('cobranca.boleto.detalhes');
+        Route::get('/cobranca/transacao/{id}', fn () => redirect('/app/cobranca'))->name('cobranca.transacao.detalhes');
+        Route::get('/cobranca/boleto/{id}', fn () => redirect('/app/cobranca'))->name('cobranca.boleto.detalhes');
         Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
         Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
         Route::post('/cobranca/transacao/{id}/antifraud-auth', [CobrancaController::class, 'autenticarAntifraude'])->name('cobranca.transacao.antifraud-auth');

@@ -1,10 +1,21 @@
 import { ConfigProvider, theme } from 'antd';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './layouts/AppShell';
-import ComingSoonPage from './pages/ComingSoonPage';
 import EstablishmentsPage from './pages/EstablishmentsPage';
+import EstabelecimentoFormPage from './pages/EstabelecimentoFormPage';
 import HomePage from './pages/HomePage';
+import CobrancaPage from './pages/CobrancaPage';
+import LinksPagamentoPage from './pages/LinksPagamentoPage';
+import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
+import VendedoresPage from './pages/VendedoresPage';
+import VendedoresAcessoPage from './pages/VendedoresAcessoPage';
+import VendedoresFaturamentoPage from './pages/VendedoresFaturamentoPage';
 import LoginPage from './pages/LoginPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
+import ChangePasswordPage from './pages/ChangePasswordPage';
+import ProfilePage from './pages/ProfilePage';
 
 const appTheme = {
     algorithm: theme.defaultAlgorithm,
@@ -43,46 +54,23 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<Navigate replace to="/home" />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/change-password" element={<ChangePasswordPage />} />
                     <Route element={<AppShell />}>
                         <Route path="home" element={<HomePage />} />
                         <Route path="painel" element={<HomePage />} />
                         <Route path="estabelecimentos" element={<EstablishmentsPage />} />
-                        <Route
-                            path="cobranca"
-                            element={
-                                <ComingSoonPage
-                                    title="Cobrança"
-                                    description="A lista operacional de cobranças vai seguir o mesmo padrão visual da referência, com tabela central e painel lateral de detalhe."
-                                />
-                            }
-                        />
-                        <Route
-                            path="links-pagamento"
-                            element={
-                                <ComingSoonPage
-                                    title="Links de Pagamento"
-                                    description="O módulo de links será migrado para cards, tabela e formulários em Ant Design."
-                                />
-                            }
-                        />
-                        <Route
-                            path="vendedores"
-                            element={
-                                <ComingSoonPage
-                                    title="Vendedores"
-                                    description="A gestão de acesso e faturamento será reescrita com o mesmo shell de navegação."
-                                />
-                            }
-                        />
-                        <Route
-                            path="perfil"
-                            element={
-                                <ComingSoonPage
-                                    title="Perfil"
-                                    description="A área de perfil será convertida para React após a base de navegação estar estável."
-                                />
-                            }
-                        />
+                        <Route path="estabelecimentos/:estabelecimentoId/editar" element={<EstabelecimentoFormPage />} />
+                        <Route path="cobranca" element={<CobrancaPage />} />
+                        <Route path="links-pagamento" element={<LinksPagamentoPage />} />
+                        <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
+                        <Route path="links-pagamento/:linkId/editar" element={<LinkPagamentoFormPage />} />
+                        <Route path="vendedores" element={<VendedoresPage />} />
+                        <Route path="vendedores/acesso" element={<VendedoresAcessoPage />} />
+                        <Route path="vendedores/faturamento" element={<VendedoresFaturamentoPage />} />
+                        <Route path="perfil" element={<ProfilePage />} />
                         <Route
                             path="*"
                             element={<Navigate replace to="/home" />}

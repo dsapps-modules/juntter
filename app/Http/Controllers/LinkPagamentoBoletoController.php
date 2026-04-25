@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LinkBoletoRequest;
 use App\Models\LinkPagamento;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class LinkPagamentoBoletoController extends Controller
 {
@@ -23,27 +24,27 @@ class LinkPagamentoBoletoController extends Controller
 
         // Remover símbolos de moeda e espaços
         $valor = preg_replace('/[R$\s]/', '', $valor);
-        
+
         // Verificar se ainda está vazio após limpeza
         if (empty($valor)) {
             throw new \Exception('O valor é obrigatório');
         }
-        
+
         // Se tem vírgula, é formato brasileiro (1.100,00)
         if (strpos($valor, ',') !== false) {
             // Remover pontos (separadores de milhares) e trocar vírgula por ponto
             $valor = str_replace('.', '', $valor);
             $valor = str_replace(',', '.', $valor);
         }
-        
-        $valorFloat = (float)$valor;
-        
+
+        $valorFloat = (float) $valor;
+
         // Validar valor mínimo (1 centavo = R$ 0,01)
         if ($valorFloat < 0.01) {
             throw new \Exception('O valor deve ser pelo menos R$ 0,01');
         }
-        
-        return (int)($valorFloat * 100);
+
+        return (int) ($valorFloat * 100);
     }
 
     /**
@@ -51,18 +52,7 @@ class LinkPagamentoBoletoController extends Controller
      */
     public function index()
     {
-        $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-        
-        if (!$estabelecimentoId) {
-            return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
-        }
-
-        $links = LinkPagamento::where('estabelecimento_id', $estabelecimentoId)
-            ->where('tipo_pagamento', 'BOLETO')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        return view('links-pagamento-boleto.index', compact('links'));
+        return redirect('/app/links-pagamento');
     }
 
     /**
@@ -70,18 +60,18 @@ class LinkPagamentoBoletoController extends Controller
      */
     public function create()
     {
-        return view('links-pagamento-boleto.create');
+        return redirect('/app/links-pagamento/novo?tipo=BOLETO');
     }
 
     /**
      * Salvar novo link de pagamento Boleto
      */
-    public function store(LinkBoletoRequest $request)
+    public function store(LinkBoletoRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
-        try {   
+        try {
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
-            if (!$estabelecimentoId) {
+
+            if (! $estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
@@ -105,15 +95,15 @@ class LinkPagamentoBoletoController extends Controller
             $instrucoesBoleto = [
                 'description' => $dados['instrucoes_boleto']['description'] ?? null,
                 'late_fee' => [
-                    'amount' => $dados['instrucoes_boleto']['late_fee']['amount']
+                    'amount' => $dados['instrucoes_boleto']['late_fee']['amount'],
                 ],
                 'interest' => [
-                    'amount' => $dados['instrucoes_boleto']['interest']['amount']
+                    'amount' => $dados['instrucoes_boleto']['interest']['amount'],
                 ],
                 'discount' => [
                     'amount' => $dados['instrucoes_boleto']['discount']['amount'],
-                    'limit_date' => $dados['instrucoes_boleto']['discount']['limit_date']
-                ]
+                    'limit_date' => $dados['instrucoes_boleto']['discount']['limit_date'],
+                ],
             ];
 
             $link = LinkPagamento::create([
@@ -122,7 +112,7 @@ class LinkPagamentoBoletoController extends Controller
                 'descricao' => $dados['descricao'],
                 'valor' => $valorFloat,
                 'valor_centavos' => $valorCentavos,
-                'parcelas' => json_encode(['installments' => 1 ]), // Boleto sempre à vista
+                'parcelas' => json_encode(['installments' => 1]), // Boleto sempre à vista
                 'juros' => $dados['juros'],
                 'data_expiracao' => $dados['data_expiracao'],
                 'data_vencimento' => $dados['data_vencimento'],
@@ -130,16 +120,31 @@ class LinkPagamentoBoletoController extends Controller
                 'dados_cliente' => $dadosCliente,
                 'instrucoes_boleto' => $instrucoesBoleto,
                 'tipo_pagamento' => 'BOLETO',
-                'status' => 'ATIVO'
+                'status' => 'ATIVO',
             ]);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Link de pagamento Boleto criado com sucesso!',
+                    'redirect' => '/app/links-pagamento',
+                    'link_id' => $link->id,
+                ]);
+            }
 
             return redirect()->route('links-pagamento-boleto.show', $link->id)
                 ->with('success', 'Link de pagamento Boleto criado com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao criar link de pagamento Boleto: ' . $e->getMessage());
+            Log::error('Erro ao criar link de pagamento Boleto: '.$e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Erro ao criar link de pagamento Boleto: '.$e->getMessage(),
+                ], 500);
+            }
+
             return redirect()->back()
-                ->with('error', 'Erro ao criar link de pagamento Boleto: ' . $e->getMessage())
+                ->with('error', 'Erro ao criar link de pagamento Boleto: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -149,18 +154,7 @@ class LinkPagamentoBoletoController extends Controller
      */
     public function show($id)
     {
-        $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-        
-        if (!$estabelecimentoId) {
-            return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
-        }
-
-        $linkPagamento = LinkPagamento::where('id', $id)
-            ->where('estabelecimento_id', $estabelecimentoId)
-            ->where('tipo_pagamento', 'BOLETO')
-            ->firstOrFail();
-
-        return view('links-pagamento-boleto.show', compact('linkPagamento'));
+        return redirect('/app/links-pagamento/'.$id.'/editar');
     }
 
     /**
@@ -168,29 +162,18 @@ class LinkPagamentoBoletoController extends Controller
      */
     public function edit($id)
     {
-        $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-        
-        if (!$estabelecimentoId) {
-            return redirect()->route('dashboard')->with('error', 'Estabelecimento não encontrado');
-        }
-
-        $linkPagamento = LinkPagamento::where('id', $id)
-            ->where('estabelecimento_id', $estabelecimentoId)
-            ->where('tipo_pagamento', 'BOLETO')
-            ->firstOrFail();
-
-        return view('links-pagamento-boleto.edit', compact('linkPagamento'));
+        return redirect('/app/links-pagamento/'.$id.'/editar');
     }
 
     /**
      * Atualizar link de pagamento Boleto
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         try {
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
-            if (!$estabelecimentoId) {
+
+            if (! $estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
@@ -250,15 +233,15 @@ class LinkPagamentoBoletoController extends Controller
             $instrucoesBoleto = [
                 'description' => $dados['instrucoes_boleto']['description'] ?? null,
                 'late_fee' => [
-                    'amount' => $dados['instrucoes_boleto']['late_fee']['amount']
+                    'amount' => $dados['instrucoes_boleto']['late_fee']['amount'],
                 ],
                 'interest' => [
-                    'amount' => $dados['instrucoes_boleto']['interest']['amount']
+                    'amount' => $dados['instrucoes_boleto']['interest']['amount'],
                 ],
                 'discount' => [
                     'amount' => $dados['instrucoes_boleto']['discount']['amount'],
-                    'limit_date' => $dados['instrucoes_boleto']['discount']['limit_date']
-                ]
+                    'limit_date' => $dados['instrucoes_boleto']['discount']['limit_date'],
+                ],
             ];
 
             $linkPagamento->update([
@@ -273,13 +256,27 @@ class LinkPagamentoBoletoController extends Controller
                 'instrucoes_boleto' => $instrucoesBoleto,
             ]);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Link de pagamento Boleto atualizado com sucesso!',
+                    'redirect' => '/app/links-pagamento',
+                ]);
+            }
+
             return redirect()->route('links-pagamento-boleto.show', $linkPagamento->id)
                 ->with('success', 'Link de pagamento Boleto atualizado com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao atualizar link de pagamento Boleto: ' . $e->getMessage());
+            Log::error('Erro ao atualizar link de pagamento Boleto: '.$e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Erro ao atualizar link de pagamento Boleto: '.$e->getMessage(),
+                ], 500);
+            }
+
             return redirect()->back()
-                ->with('error', 'Erro ao atualizar link de pagamento Boleto: ' . $e->getMessage())
+                ->with('error', 'Erro ao atualizar link de pagamento Boleto: '.$e->getMessage())
                 ->withInput();
         }
     }
@@ -291,8 +288,8 @@ class LinkPagamentoBoletoController extends Controller
     {
         try {
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
-            if (!$estabelecimentoId) {
+
+            if (! $estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
@@ -307,9 +304,10 @@ class LinkPagamentoBoletoController extends Controller
                 ->with('success', 'Link de pagamento Boleto excluído com sucesso!');
 
         } catch (\Exception $e) {
-            Log::error('Erro ao excluir link de pagamento Boleto: ' . $e->getMessage());
+            Log::error('Erro ao excluir link de pagamento Boleto: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Erro ao excluir link de pagamento Boleto: ' . $e->getMessage());
+                ->with('error', 'Erro ao excluir link de pagamento Boleto: '.$e->getMessage());
         }
     }
 
@@ -320,8 +318,8 @@ class LinkPagamentoBoletoController extends Controller
     {
         try {
             $estabelecimentoId = Auth::user()?->vendedor?->estabelecimento_id;
-            
-            if (!$estabelecimentoId) {
+
+            if (! $estabelecimentoId) {
                 return redirect()->back()->with('error', 'Estabelecimento não encontrado');
             }
 
@@ -334,14 +332,15 @@ class LinkPagamentoBoletoController extends Controller
             $linkPagamento->save();
 
             $statusText = $linkPagamento->status === 'ATIVO' ? 'ativado' : 'desativado';
-            
+
             return redirect()->back()
                 ->with('success', "Link de pagamento Boleto {$statusText} com sucesso!");
 
         } catch (\Exception $e) {
-            Log::error('Erro ao alterar status do link de pagamento Boleto: ' . $e->getMessage());
+            Log::error('Erro ao alterar status do link de pagamento Boleto: '.$e->getMessage());
+
             return redirect()->back()
-                ->with('error', 'Erro ao alterar status do link: ' . $e->getMessage());
+                ->with('error', 'Erro ao alterar status do link: '.$e->getMessage());
         }
     }
 }

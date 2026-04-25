@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Providers\RouteServiceProvider;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,25 +23,22 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request): RedirectResponse|JsonResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
-        
-        // Redireciona baseado no nível de acesso
-        switch ($user->nivel_acesso) {
-            case 'super_admin':
-                return redirect()->intended(route('super_admin.dashboard'));
-            case 'admin':
-                return redirect()->intended(route('admin.dashboard'));
-            case 'vendedor':
-                return redirect()->intended(route('vendedor.dashboard'));
-            default:
-        return redirect()->intended(RouteServiceProvider::HOME);
+        $redirectTo = route('spa', ['any' => 'home']);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Autenticado com sucesso.',
+                'redirect' => '/app/home',
+            ]);
         }
+
+        return redirect()->intended($redirectTo);
     }
 
     /**
@@ -49,16 +46,10 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        // Logout completo
         Auth::guard('web')->logout();
 
-        // Invalida TODA a sessão
         $request->session()->invalidate();
-
-        // Gera nova sessão
         $request->session()->regenerateToken();
-
-        // Limpa dados da sessão
         $request->session()->flush();
 
         return redirect()->route('checkout');

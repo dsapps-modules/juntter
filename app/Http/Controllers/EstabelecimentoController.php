@@ -5,27 +5,21 @@ namespace App\Http\Controllers;
 use App\Models\PaytimeEstablishment;
 use App\Services\EstabelecimentoService;
 use App\Services\SplitPreService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class EstabelecimentoController extends Controller
 {
-    protected $estabelecimentoService;
-
-    protected $splitPreService;
-
-    public function __construct(EstabelecimentoService $estabelecimentoService, SplitPreService $splitPreService)
-    {
-        $this->estabelecimentoService = $estabelecimentoService;
-        $this->splitPreService = $splitPreService;
-    }
+    public function __construct(
+        protected EstabelecimentoService $estabelecimentoService,
+        protected SplitPreService $splitPreService
+    ) {}
 
     public function index()
     {
-        $estabelecimentos = PaytimeEstablishment::orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")->paginate(15);
-
-        return view('estabelecimentos.index', compact('estabelecimentos'));
+        return redirect('/app/estabelecimentos');
     }
 
     public function export(): \Illuminate\Http\Response
@@ -53,18 +47,20 @@ class EstabelecimentoController extends Controller
         $query = PaytimeEstablishment::query();
 
         if ($term) {
-            $query->where(function ($q) use ($term) {
-                $q->where('fantasy_name', 'like', "%{$term}%")
+            $query->where(function ($builder) use ($term): void {
+                $builder->where('fantasy_name', 'like', "%{$term}%")
                     ->orWhere('first_name', 'like', "%{$term}%")
                     ->orWhere('last_name', 'like', "%{$term}%")
                     ->orWhere('document', 'like', "%{$term}%");
             });
         }
 
-        // Limita a 20 resultados para o select2
-        $estabelecimentos = $query->orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")->limit(20)->get();
+        $estabelecimentos = $query
+            ->orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")
+            ->limit(20)
+            ->get();
 
-        $results = $estabelecimentos->map(function ($item) {
+        $results = $estabelecimentos->map(function ($item): array {
             return [
                 'id' => $item->id,
                 'text' => $item->display_name.' ('.$item->document.')',
@@ -76,37 +72,15 @@ class EstabelecimentoController extends Controller
 
     public function show($id)
     {
-        try {
-            $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($id);
-
-            // Buscar regras de split pré
-            $regrasSplit = $this->splitPreService->listarRegrasSplitPre($id);
-
-            // Buscar lista de estabelecimentos para o select
-            $estabelecimentos = $this->estabelecimentoService->listarEstabelecimentos();
-
-            return view('estabelecimentos.show', compact('estabelecimento', 'regrasSplit', 'estabelecimentos'));
-        } catch (\Exception $e) {
-            Log::error('Erro ao buscar estabelecimento: '.$e->getMessage());
-
-            return redirect()->route('admin.dashboard')->with('error', 'Erro ao carregar dados do estabelecimento.');
-        }
+        return redirect('/app/estabelecimentos/'.$id.'/editar');
     }
 
     public function edit($id)
     {
-        try {
-            $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($id);
-
-            return view('estabelecimentos.edit', compact('estabelecimento'));
-        } catch (\Exception $e) {
-            Log::error('Erro ao buscar estabelecimento para edição: '.$e->getMessage());
-
-            return redirect()->route('admin.dashboard')->with('error', 'Erro ao carregar dados do estabelecimento.');
-        }
+        return redirect('/app/estabelecimentos/'.$id.'/editar');
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse|\Illuminate\Http\RedirectResponse
     {
         try {
             $dados = $request->validate([
@@ -121,20 +95,32 @@ class EstabelecimentoController extends Controller
                 'birthdate' => 'required|date_format:Y-m-d',
             ]);
 
-            // Converter revenue e gmv para números
             $dados['revenue'] = (float) $dados['revenue'];
             if (! empty($dados['gmv'])) {
                 $dados['gmv'] = (float) $dados['gmv'];
             } else {
-                unset($dados['gmv']); // Remove se estiver vazio
+                unset($dados['gmv']);
             }
 
-            $resultado = $this->estabelecimentoService->atualizarEstabelecimento($id, $dados);
+            $this->estabelecimentoService->atualizarEstabelecimento($id, $dados);
 
-            return redirect()->route('estabelecimentos.show', $id)
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Estabelecimento atualizado com sucesso!',
+                    'redirect' => '/app/estabelecimentos',
+                ]);
+            }
+
+            return redirect('/app/estabelecimentos/'.$id.'/editar')
                 ->with('success', 'Estabelecimento atualizado com sucesso!');
         } catch (\Exception $e) {
             Log::error('Erro ao atualizar estabelecimento: '.$e->getMessage());
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Erro ao atualizar estabelecimento.',
+                ], 500);
+            }
 
             return back()->withInput()->with('error', 'Erro ao atualizar estabelecimento.');
         }
@@ -156,10 +142,8 @@ class EstabelecimentoController extends Controller
                 'establishments.*.active' => 'nullable',
             ]);
 
-            // Tratar dados após validação
             $dados = $this->tratarDadosSplit($dados);
-
-            $resultado = $this->splitPreService->criarRegraSplitPre($id, $dados);
+            $this->splitPreService->criarRegraSplitPre($id, $dados);
 
             return redirect()->route('estabelecimentos.show', $id)
                 ->with('success', 'Regra de split criada com sucesso!');
@@ -170,22 +154,16 @@ class EstabelecimentoController extends Controller
         }
     }
 
-    /**
-     * Trata os dados de split para garantir tipos corretos
-     */
     private function tratarDadosSplit(array $dados): array
     {
-        // Tratar campo active
-        $dados['active'] = isset($dados['active']) ? true : false;
+        $dados['active'] = isset($dados['active']);
 
-        // Tratar installment
         if (empty($dados['installment'])) {
             unset($dados['installment']);
         }
 
-        // Tratar establishments
         foreach ($dados['establishments'] as $key => $establishment) {
-            $dados['establishments'][$key]['active'] = isset($establishment['active']) ? true : false;
+            $dados['establishments'][$key]['active'] = isset($establishment['active']);
             $dados['establishments'][$key]['id'] = (int) $establishment['id'];
             $dados['establishments'][$key]['value'] = (int) $establishment['value'];
         }

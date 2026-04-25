@@ -63,9 +63,9 @@
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="{{ route('cobranca.index') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
                                             class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
-                                <li><a class="dropdown-item" href="{{ route('cobranca.transacao.simular') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
                                             class="fas fa-calculator me-2"></i>Simular Transação</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
@@ -76,17 +76,17 @@
                                         <i class="fas fa-link me-2"></i>Links de Pagamento
                                     </a>
                                     <ul class="dropdown-menu dropdown-submenu">
-                                        <li><a class="dropdown-item" href="{{ route('links-pagamento.index') }}"><i
+                                        <li><a class="dropdown-item" href="{{ url('/app/links-pagamento') }}"><i
                                                     class="fas fa-credit-card me-2"></i>Cartão</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('links-pagamento-pix.index') }}"><i
+                                        <li><a class="dropdown-item" href="{{ url('/app/links-pagamento/novo?tipo=PIX') }}"><i
                                                     class="fas fa-qrcode me-2"></i>PIX</a></li>
-                                        <li><a class="dropdown-item" href="{{ route('links-pagamento-boleto.index') }}"><i
+                                        <li><a class="dropdown-item" href="{{ url('/app/links-pagamento/novo?tipo=BOLETO') }}"><i
                                                     class="fas fa-file-invoice me-2"></i>Boleto</a></li>
                                     </ul>
                                 </li>
                                 {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i
                                             class="fas fa-sync-alt me-2"></i>Cobrança Recorrente</a></li> --}}
-                                <li><a class="dropdown-item" href="{{ route('cobranca.planos') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
                                             class="fas fa-list-alt me-2"></i>Planos de Cobrança</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
@@ -96,7 +96,7 @@
                                 {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i
                                             class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
 
-                                <li><a class="dropdown-item" href="{{ route('cobranca.saldoextrato') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
                                             class="fas fa-wallet me-2"></i>Saldo e Extrato</a></li>
                             </ul>
                         </div>
@@ -111,11 +111,11 @@
                                 <span>Vendedores</span>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-modern" aria-labelledby="vendedoresDropdown">
-                                <li><a class="dropdown-item" href="{{ route('vendedores.faturamento') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/vendedores/faturamento') }}"><i
                                             class="fas fa-chart-line me-2"></i>Faturamento por Vendedor</a></li>
-                                <li><a class="dropdown-item" href="{{ route('estabelecimentos.index') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/estabelecimentos') }}"><i
                                             class="fas fa-store me-2"></i>Estabelecimentos</a></li>
-                                <li><a class="dropdown-item" href="{{ route('vendedores.acesso') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/vendedores/acesso') }}"><i
                                             class="fas fa-key me-2"></i>Acesso do Vendedor</a></li>
                             </ul>
                         </div>

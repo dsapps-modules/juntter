@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Providers\RouteServiceProvider;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,13 +20,7 @@ class RedirectIfAuthenticated
 
         foreach ($guards as $guard) {
             if (Auth::guard($guard)->check()) {
-                // Usuário está logado - fazer logout forçado por segurança
-                // (mesma lógica do AuthenticatedSessionController)
-                Auth::guard($guard)->logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-                
-               
+                return redirect()->route('spa', ['any' => 'home']);
             }
         }
 
