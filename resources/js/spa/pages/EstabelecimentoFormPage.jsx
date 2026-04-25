@@ -55,6 +55,7 @@ export default function EstabelecimentoFormPage() {
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {

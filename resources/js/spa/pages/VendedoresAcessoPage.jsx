@@ -118,6 +118,7 @@ export default function VendedoresAcessoPage() {
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {
@@ -168,6 +169,7 @@ export default function VendedoresAcessoPage() {
                         headers: {
                             Accept: 'application/json',
                         },
+                        credentials: 'same-origin',
                     }
                 );
 
@@ -277,6 +279,7 @@ export default function VendedoresAcessoPage() {
             headers: {
                 Accept: 'application/json',
             },
+            credentials: 'same-origin',
         });
 
         if (!response.ok) {

@@ -68,6 +68,7 @@ export default function EstablishmentsPage() {
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {

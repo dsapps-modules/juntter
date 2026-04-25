@@ -59,6 +59,7 @@ export default function CobrancaPage() {
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {

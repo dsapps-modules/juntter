@@ -63,6 +63,7 @@ export default function VendedoresFaturamentoPage() {
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {

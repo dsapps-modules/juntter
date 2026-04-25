@@ -1,24 +1,51 @@
 import {
-    ArrowRightOutlined,
     BankOutlined,
+    CheckCircleFilled,
+    ClockCircleFilled,
     CreditCardOutlined,
-    EllipsisOutlined,
+    DownOutlined,
+    FilterFilled,
+    HomeOutlined,
+    MinusCircleFilled,
     ThunderboltOutlined,
-    TeamOutlined,
+    ReloadOutlined,
+    RiseOutlined,
+    WalletOutlined,
 } from '@ant-design/icons';
-import { Alert, Avatar, Button, Card, Col, Divider, List, Row, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
+import { Alert, Button, Card, Col, Row, Select, Space, Spin, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+const monthOptions = [
+    { value: 1, label: 'Janeiro' },
+    { value: 2, label: 'Fevereiro' },
+    { value: 3, label: 'Março' },
+    { value: 4, label: 'Abril' },
+    { value: 5, label: 'Maio' },
+    { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' },
+    { value: 8, label: 'Agosto' },
+    { value: 9, label: 'Setembro' },
+    { value: 10, label: 'Outubro' },
+    { value: 11, label: 'Novembro' },
+    { value: 12, label: 'Dezembro' },
+];
+
+const currentDate = new Date();
 
 const defaultPayload = {
     user: {
         name: 'Usuário',
-        email: '',
         nivel_label: '',
-        verified: false,
-        must_change_password: false,
-        created_at: '',
     },
+    period: {
+        month: currentDate.getMonth() + 1,
+        year: currentDate.getFullYear(),
+        label: '',
+    },
+    overview_cards: [],
+    distribution_sections: [],
+    status_sections: [],
     summary: {
         total_establishments: 0,
         active_establishments: 0,
@@ -34,10 +61,78 @@ const defaultPayload = {
     actions: [],
 };
 
+const toneClasses = {
+    blue: 'tone-blue',
+    cyan: 'tone-cyan',
+    amber: 'tone-amber',
+    slate: 'tone-slate',
+    green: 'tone-green',
+    dark: 'tone-dark',
+    success: 'tone-success',
+    danger: 'tone-danger',
+    warning: 'tone-warning',
+};
+
+const iconByTone = {
+    blue: <WalletOutlined />,
+    cyan: <ClockCircleFilled />,
+    amber: <MinusCircleFilled />,
+    slate: <RiseOutlined />,
+    green: <CreditCardOutlined />,
+    dark: <BankOutlined />,
+    success: <CheckCircleFilled />,
+    danger: <MinusCircleFilled />,
+    warning: <ReloadOutlined />,
+};
+
+function MetricTile({ value, label, tone, icon }) {
+    return (
+        <div className="spa-metric-tile">
+            <div className="spa-metric-copy">
+                <Typography.Title level={4} className="spa-metric-value">
+                    {value}
+                </Typography.Title>
+                <Typography.Text className="spa-metric-label">
+                    <span className="spa-metric-label-icon">i</span>
+                    {label}
+                </Typography.Text>
+            </div>
+            <div className={`spa-metric-icon ${toneClasses[tone] ?? toneClasses.blue}`}>
+                {icon}
+            </div>
+        </div>
+    );
+}
+
+function SectionCard({ title, collapsed, onToggle, children }) {
+    return (
+        <Card
+            className="spa-dashboard-section"
+            title={<Typography.Title level={4} className="spa-dashboard-section-title">{title}</Typography.Title>}
+            extra={
+                <Button
+                    type="text"
+                    icon={<DownOutlined rotate={collapsed ? 180 : 0} />}
+                    onClick={onToggle}
+                    className="spa-section-toggle"
+                />
+            }
+        >
+            {!collapsed ? children : null}
+        </Card>
+    );
+}
+
 export default function HomePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [payload, setPayload] = useState(defaultPayload);
+    const [month, setMonth] = useState(currentDate.getMonth() + 1);
+    const [year, setYear] = useState(currentDate.getFullYear());
+    const [refreshNonce, setRefreshNonce] = useState(0);
+    const [overviewCollapsed, setOverviewCollapsed] = useState(false);
+    const [distributionCollapsed, setDistributionCollapsed] = useState(false);
+    const [statusCollapsed, setStatusCollapsed] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -47,11 +142,12 @@ export default function HomePage() {
             setError('');
 
             try {
-                const response = await fetch('/api/spa/dashboard', {
+                const response = await fetch(`/api/spa/dashboard?mes=${month}&ano=${year}`, {
                     signal: controller.signal,
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {
@@ -62,6 +158,10 @@ export default function HomePage() {
                 setPayload((current) => ({
                     ...current,
                     ...data,
+                    period: data.period ?? current.period,
+                    overview_cards: data.overview_cards ?? [],
+                    distribution_sections: data.distribution_sections ?? [],
+                    status_sections: data.status_sections ?? [],
                     summary: data.summary ?? current.summary,
                     user: data.user ?? current.user,
                     rows: data.rows ?? [],
@@ -81,195 +181,140 @@ export default function HomePage() {
         loadHome();
 
         return () => controller.abort();
+    }, [month, year, refreshNonce]);
+
+    const years = useMemo(() => {
+        const baseYear = currentDate.getFullYear();
+
+        return Array.from({ length: 4 }, (_, index) => baseYear - index);
     }, []);
 
-    const topRows = useMemo(() => payload.rows.slice(0, 5), [payload.rows]);
-    const selectedRow = payload.selected ?? payload.rows[0] ?? null;
-
-    const topColumns = [
-        {
-            title: 'Cliente',
-            dataIndex: 'name',
-            render: (_, record) => (
-                <Space size={14}>
-                    <Avatar className="spa-row-avatar">{record.initials}</Avatar>
-                    <div>
-                        <Typography.Text strong>{record.name}</Typography.Text>
-                        <div>
-                            <Typography.Text type="secondary">{record.owner}</Typography.Text>
-                        </div>
-                    </div>
-                </Space>
-            ),
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            render: (value) => <Tag color={value === 'Ativo' ? 'gold' : 'volcano'}>{value}</Tag>,
-        },
-        {
-            title: 'Receita',
-            dataIndex: 'revenue',
-        },
-    ];
-
     return (
-        <Row gutter={[20, 20]} className="spa-home-grid">
-            <Col xs={24} xl={16}>
-                <Card className="spa-hero-card">
-                    <Space direction="vertical" size={18} className="spa-hero-stack">
-                        <div>
-                            <Typography.Text className="spa-brand-kicker">
-                                {payload.user.nivel_label || 'Painel operacional'}
-                            </Typography.Text>
-                            <Typography.Title level={2} className="spa-hero-title">
-                                Olá, {payload.user.name}.
-                            </Typography.Title>
-                            <Typography.Paragraph className="spa-hero-description">
-                                Este painel consolida a operação em uma leitura rápida: volume, status, atividade recente e
-                                atalhos para os módulos migrados.
-                            </Typography.Paragraph>
+        <Space direction="vertical" size={20} className="spa-home-dashboard">
+            <div className="spa-dashboard-toolbar">
+                <div className="spa-dashboard-toolbar-breadcrumb">
+                    <HomeOutlined />
+                    <Typography.Text className="spa-dashboard-toolbar-link">Dashboard</Typography.Text>
+                    <span className="spa-dashboard-toolbar-separator">/</span>
+                    <Typography.Text className="spa-dashboard-toolbar-current">
+                        {payload.user?.nivel_label || 'Administração'}
+                    </Typography.Text>
+                </div>
+
+                <Link to="/perfil" className="spa-dashboard-toolbar-center">
+                    Acessar Conta Bancária
+                </Link>
+
+                <div className="spa-dashboard-toolbar-filters">
+                    <Select
+                        value={month}
+                        options={monthOptions}
+                        onChange={setMonth}
+                        className="spa-toolbar-select"
+                    />
+                    <Select
+                        value={year}
+                        options={years.map((value) => ({ value, label: String(value) }))}
+                        onChange={setYear}
+                        className="spa-toolbar-select"
+                    />
+                    <Button className="spa-toolbar-filter-button" icon={<FilterFilled />} />
+                </div>
+            </div>
+
+            {error ? <Alert type="error" showIcon message="Falha ao carregar o painel" description={error} /> : null}
+
+            <SectionCard
+                title="Visão geral de transações"
+                collapsed={overviewCollapsed}
+                onToggle={() => setOverviewCollapsed((current) => !current)}
+            >
+                {loading ? (
+                    <div className="spa-loading-shell">
+                        <Spin size="large" />
+                    </div>
+                ) : (
+                    <Row gutter={[16, 16]}>
+                        {payload.overview_cards.map((card) => (
+                            <Col xs={24} md={12} xl={8} key={card.key}>
+                                <MetricTile
+                                    value={card.value}
+                                    label={card.label}
+                                    tone={card.tone}
+                                    icon={iconByTone[card.tone] ?? iconByTone.blue}
+                                />
+                            </Col>
+                        ))}
+                    </Row>
+                )}
+            </SectionCard>
+
+            <SectionCard
+                title="Distribuição por meio de pagamento"
+                collapsed={distributionCollapsed}
+                onToggle={() => setDistributionCollapsed((current) => !current)}
+            >
+                <Space direction="vertical" size={16} className="spa-section-stack">
+                    {payload.distribution_sections.map((section) => (
+                        <div key={section.key} className="spa-section-group">
+                            <Row gutter={[16, 16]}>
+                                {section.cards.map((card) => (
+                                    <Col xs={24} md={12} xl={8} key={`${section.key}-${card.kind}`}>
+                                        <MetricTile
+                                            value={card.value}
+                                            label={card.label ?? section.label}
+                                            tone={card.tone ?? section.tone}
+                                            icon={
+                                                section.icon === 'bank' ? <BankOutlined /> :
+                                                section.icon === 'bolt' ? <ThunderboltOutlined /> :
+                                                section.icon === 'document' ? <CreditCardOutlined /> :
+                                                <CreditCardOutlined />
+                                        }
+                                        />
+                                    </Col>
+                                ))}
+                            </Row>
                         </div>
+                    ))}
+                </Space>
+            </SectionCard>
 
-                        <Space wrap>
-                            <Button type="primary" icon={<ArrowRightOutlined />} className="spa-primary-button">
-                                Ir para estabelecimentos
-                            </Button>
-                            <Button className="spa-secondary-button" icon={<ThunderboltOutlined />}>
-                                Ver atividade
-                            </Button>
-                        </Space>
+            <SectionCard
+                title="Visão de status de pagamentos"
+                collapsed={statusCollapsed}
+                onToggle={() => setStatusCollapsed((current) => !current)}
+            >
+                <Space direction="vertical" size={16} className="spa-section-stack">
+                    {payload.status_sections.map((section) => (
+                        <div key={section.key} className="spa-section-group">
+                            <Row gutter={[16, 16]}>
+                                {section.cards.map((card) => (
+                                    <Col xs={24} md={12} xl={8} key={`${section.key}-${card.kind}`}>
+                                        <MetricTile
+                                            value={card.value}
+                                            label={card.label ?? section.label}
+                                            tone={card.tone ?? section.tone}
+                                            icon={
+                                                (card.tone ?? section.tone) === 'success' ? <CheckCircleFilled /> :
+                                                (card.tone ?? section.tone) === 'danger' ? <MinusCircleFilled /> :
+                                                <ReloadOutlined />
+                                            }
+                                        />
+                                    </Col>
+                                ))}
+                            </Row>
+                        </div>
+                    ))}
+                </Space>
+            </SectionCard>
 
-                        <Row gutter={[16, 16]}>
-                            <Col xs={24} sm={12} lg={6}>
-                                <Statistic title="Estabelecimentos" value={payload.summary.total_establishments} />
-                            </Col>
-                            <Col xs={24} sm={12} lg={6}>
-                                <Statistic title="Ativos" value={payload.summary.active_establishments} />
-                            </Col>
-                            <Col xs={24} sm={12} lg={6}>
-                                <Statistic title="Hoje" value={payload.summary.today_transactions} />
-                            </Col>
-                            <Col xs={24} sm={12} lg={6}>
-                                <Statistic title="Receita" value={payload.summary.total_revenue} />
-                            </Col>
-                        </Row>
-                    </Space>
-                </Card>
-
-                <Card
-                    title="Clientes recentes"
-                    className="spa-table-card spa-home-table-card"
-                    extra={<Link to="/estabelecimentos">Ver tudo</Link>}
-                >
-                    {loading ? (
-                        <Skeleton active paragraph={{ rows: 5 }} />
-                    ) : error ? (
-                        <Alert type="error" showIcon message="Falha ao carregar o painel" description={error} />
-                    ) : (
-                        <Table
-                            rowKey="id"
-                            columns={topColumns}
-                            dataSource={topRows}
-                            pagination={false}
-                            size="middle"
-                            className="spa-table"
-                        />
-                    )}
-                </Card>
-            </Col>
-
-            <Col xs={24} xl={8}>
-                <Card
-                    className="spa-quick-view-card"
-                    title={selectedRow ? `Quick View: ${selectedRow.name}` : 'Quick View'}
-                    extra={<EllipsisOutlined />}
-                >
-                    <Space direction="vertical" size={16} className="spa-detail-stack">
-                        <Row gutter={16}>
-                            <Col span={12}>
-                                <Statistic title="Atividade" value={payload.summary.total_transactions} />
-                            </Col>
-                            <Col span={12}>
-                                <Statistic title="Pendentes" value={payload.summary.pending_transactions} />
-                            </Col>
-                        </Row>
-
-                        <Divider />
-
-                        <Typography.Title level={4} className="spa-section-title">
-                            Acessos rápidos
-                        </Typography.Title>
-
-                        <List
-                            dataSource={payload.actions}
-                            renderItem={(item, index) => (
-                                <List.Item className="spa-quick-link-item">
-                                    <Link to={item.href} className="spa-quick-link">
-                                        <Space align="start" size={14}>
-                                            <div className="spa-quick-link-icon">
-                                                {index === 0 ? <BankOutlined /> : index === 1 ? <CreditCardOutlined /> : <TeamOutlined />}
-                                            </div>
-                                            <div>
-                                                <Typography.Text strong>{item.title}</Typography.Text>
-                                                <div>
-                                                    <Typography.Text type="secondary">{item.description}</Typography.Text>
-                                                </div>
-                                            </div>
-                                        </Space>
-                                    </Link>
-                                </List.Item>
-                            )}
-                        />
-
-                        <Divider />
-
-                        <Space direction="vertical" size={10} className="spa-detail-stack">
-                            <Space wrap>
-                                <Avatar className="spa-row-avatar">{selectedRow?.initials ?? 'JT'}</Avatar>
-                                <div>
-                                    <Typography.Text strong>{selectedRow?.name ?? 'Sem dados'}</Typography.Text>
-                                    <div>
-                                        <Typography.Text type="secondary">
-                                            {selectedRow?.owner ?? 'Nenhum estabelecimento disponível'}
-                                        </Typography.Text>
-                                    </div>
-                                </div>
-                            </Space>
-
-                            <Space wrap>
-                                <Tag color="gold">{selectedRow?.status ?? 'Sem status'}</Tag>
-                                <Tag color="default">{selectedRow?.segment ?? 'Geral'}</Tag>
-                            </Space>
-
-                            <Typography.Text type="secondary">
-                                {selectedRow?.email ?? 'N/A'} • {selectedRow?.city ?? 'N/A'}
-                            </Typography.Text>
-                        </Space>
-
-                        <Divider />
-
-                        <Typography.Title level={4} className="spa-section-title">
-                            Últimas movimentações
-                        </Typography.Title>
-
-                        <Timeline
-                            items={(payload.recent_transactions || []).slice(0, 4).map((item) => ({
-                                color: 'gold',
-                                children: (
-                                    <div>
-                                        <div>{item.establishment}</div>
-                                        <Typography.Text type="secondary">
-                                            {item.type} • {item.created_at}
-                                        </Typography.Text>
-                                    </div>
-                                ),
-                            }))}
-                            className="spa-timeline"
-                        />
-                    </Space>
-                </Card>
-            </Col>
-        </Row>
+            <Button
+                type="primary"
+                shape="circle"
+                icon={<ReloadOutlined />}
+                className="spa-fab"
+                onClick={() => setRefreshNonce((current) => current + 1)}
+            />
+        </Space>
     );
 }

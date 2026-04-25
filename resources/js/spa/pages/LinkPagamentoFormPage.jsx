@@ -81,6 +81,7 @@ export default function LinkPagamentoFormPage() {
                     headers: {
                         Accept: 'application/json',
                     },
+                    credentials: 'same-origin',
                 });
 
                 if (!response.ok) {

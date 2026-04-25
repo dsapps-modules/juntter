@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Juntter SPA</title>
     @unless(app()->environment('testing'))
+        @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.jsx'])
     @endunless
 </head>
