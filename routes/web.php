@@ -21,6 +21,9 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 Route::get('/', function () {
     return view('checkout');
 })->name('checkout');
+Route::view('/app/{any?}', 'spa')
+    ->where('any', '.*')
+    ->name('spa');
 
 // Rotas públicas para pagamento do cliente (apenas cartão)
 Route::get('/pagamento/efetivado/sucesso', [PagamentoClienteController::class, 'pagamentoSucesso'])->name('pagamento.sucesso');

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PaytimeTransaction extends Model
 {
@@ -29,7 +30,7 @@ class PaytimeTransaction extends Model
         'customer_document',
         'metadata',
         'created_at', // Permitir setar manualmente ao sincronizar
-        'updated_at'
+        'updated_at',
     ];
 
     protected $casts = [
@@ -69,5 +70,10 @@ class PaytimeTransaction extends Model
     public function getOriginalAmountFloatAttribute()
     {
         return $this->original_amount / 100;
+    }
+
+    public function establishment(): BelongsTo
+    {
+        return $this->belongsTo(PaytimeEstablishment::class, 'establishment_id');
     }
 }
