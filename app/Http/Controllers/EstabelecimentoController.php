@@ -72,7 +72,7 @@ class EstabelecimentoController extends Controller
 
     public function show($id)
     {
-        return redirect('/app/estabelecimentos/'.$id.'/editar');
+        return redirect('/app/estabelecimentos/'.$id);
     }
 
     public function edit($id)

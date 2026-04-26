@@ -187,19 +187,17 @@ export default function AppShell() {
                             />
                         ) : null}
                         <div>
-                            <Typography.Text className="spa-header-kicker">Painel operacional</Typography.Text>
                             <Typography.Title level={3} className="spa-header-title">
                                 {currentItem ? currentItem.label : <Spin size="small" />}
                             </Typography.Title>
                         </div>
                     </Space>
 
-                    <Space size={12}>
-                        <Button className="spa-secondary-button">Atualizar</Button>
-                        <Button type="primary" className="spa-primary-button">
-                            Nova ação
-                        </Button>
-                    </Space>
+                    <img
+                        src="/img/logo/juntter_webp_640_174.webp"
+                        alt="Juntter"
+                        style={{ height: 44, width: 'auto', objectFit: 'contain' }}
+                    />
                 </Header>
 
                 <Content className="spa-content">

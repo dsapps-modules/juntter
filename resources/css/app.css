@@ -173,13 +173,18 @@ a {
 }
 
 .spa-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
 }
 
 .spa-search-input {
-    min-width: 320px;
-    max-width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
     border-radius: 14px;
 }
 
@@ -712,6 +717,12 @@ a {
     .spa-content {
         padding-left: 18px;
         padding-right: 18px;
+    }
+
+    .spa-filter-row {
+        flex-direction: column;
+        align-items: stretch;
+        flex-wrap: wrap;
     }
 
     .spa-search-input {

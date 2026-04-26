@@ -5,11 +5,9 @@ import {
     LineChartOutlined,
     MoreOutlined,
     SearchOutlined,
-    SwapOutlined,
 } from '@ant-design/icons';
 import {
     Alert,
-    Avatar,
     Button,
     Card,
     Col,
@@ -26,17 +24,37 @@ import {
     Timeline,
     Typography,
 } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
-import StatusPill from '../components/StatusPill';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import StatusPill from '../components/StatusPill';
 
-const defaultFilters = ['Todos', 'Ativos', 'Inadimplentes', 'Inativos'];
+const defaultFilters = ['Todos', 'Ativos', 'Inativos'];
 
 const statusColors = {
     Ativo: 'gold',
     Bloqueado: 'volcano',
-    'Em análise': 'default',
+    'Em anÃƒÂ¡lise': 'default',
     Inativo: 'red',
+};
+
+const defaultPagination = {
+    current_page: 1,
+    per_page: 20,
+    total: 0,
+    last_page: 1,
+};
+
+const defaultPayload = {
+    summary: {
+        total_establishments: 0,
+        active_establishments: 0,
+        blocked_establishments: 0,
+        total_revenue: 'R$ 0,00',
+    },
+    rows: [],
+    selected: null,
+    recent_transactions: [],
+    pagination: defaultPagination,
 };
 
 export default function EstablishmentsPage() {
@@ -45,14 +63,9 @@ export default function EstablishmentsPage() {
     const [error, setError] = useState('');
     const [filter, setFilter] = useState('Todos');
     const [searchTerm, setSearchTerm] = useState('');
-    const [rows, setRows] = useState([]);
+    const [page, setPage] = useState(1);
     const [selectedId, setSelectedId] = useState(null);
-    const [summary, setSummary] = useState({
-        total_establishments: 0,
-        active_establishments: 0,
-        blocked_establishments: 0,
-        total_revenue: 'R$ 0,00',
-    });
+    const [payload, setPayload] = useState(defaultPayload);
     const [filters, setFilters] = useState(defaultFilters);
 
     useEffect(() => {
@@ -63,7 +76,19 @@ export default function EstablishmentsPage() {
             setError('');
 
             try {
-                const response = await fetch('/api/spa/estabelecimentos', {
+                const params = new URLSearchParams({
+                    page: String(page),
+                });
+
+                if (filter !== 'Todos') {
+                    params.set('filter', filter);
+                }
+
+                if (searchTerm.trim() !== '') {
+                    params.set('search', searchTerm.trim());
+                }
+
+                const response = await fetch(`/api/spa/estabelecimentos?${params.toString()}`, {
                     signal: controller.signal,
                     headers: {
                         Accept: 'application/json',
@@ -75,12 +100,20 @@ export default function EstablishmentsPage() {
                     throw new Error('Não foi possível carregar a listagem.');
                 }
 
-                const payload = await response.json();
-                setRows(payload.rows ?? []);
-                setSelectedId(payload.selected?.id ?? payload.rows?.[0]?.id ?? null);
-                setSummary(payload.summary ?? summary);
-                setFilters(payload.filters ?? defaultFilters);
-                setFilter('Todos');
+                const data = await response.json();
+                const nextRows = data.rows ?? [];
+
+                setPayload((current) => ({
+                    ...current,
+                    ...data,
+                    summary: data.summary ?? current.summary,
+                    rows: nextRows,
+                    selected: data.selected ?? nextRows[0] ?? null,
+                    recent_transactions: data.recent_transactions ?? [],
+                    pagination: data.pagination ?? current.pagination,
+                }));
+                setFilters(data.filters ?? defaultFilters);
+                setSelectedId(data.selected?.id ?? nextRows[0]?.id ?? null);
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
                     setError(fetchError.message || 'Falha ao carregar a tela.');
@@ -90,60 +123,29 @@ export default function EstablishmentsPage() {
             }
         }
 
-        loadOverview();
+        const timeout = window.setTimeout(loadOverview, searchTerm.trim() !== '' ? 250 : 0);
 
-        return () => controller.abort();
-    }, []);
+        return () => {
+            controller.abort();
+            window.clearTimeout(timeout);
+        };
+    }, [filter, page, searchTerm]);
 
-    const visibleRows = useMemo(() => {
-        return rows.filter((item) => {
-            const matchesSearch =
-                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.owner.toLowerCase().includes(searchTerm.toLowerCase());
-
-            if (!matchesSearch) {
-                return false;
-            }
-
-            if (filter === 'Todos') {
-                return true;
-            }
-
-            if (filter === 'Ativos') {
-                return item.status === 'Ativo';
-            }
-
-            if (filter === 'Inadimplentes') {
-                return item.status === 'Bloqueado';
-            }
-
-            return item.status === 'Inativo';
-        });
-    }, [filter, rows, searchTerm]);
-
-    const selectedRow = visibleRows.find((item) => item.id === selectedId) ?? visibleRows[0] ?? null;
-
-    useEffect(() => {
-        if (selectedRow && selectedRow.id !== selectedId) {
-            setSelectedId(selectedRow.id);
-        }
-    }, [selectedId, selectedRow]);
+    const rows = payload.rows ?? [];
+    const selectedRow = rows.find((item) => item.id === selectedId) ?? payload.selected ?? rows[0] ?? null;
+    const pagination = payload.pagination ?? defaultPagination;
 
     const columns = [
         {
             title: 'Cliente',
             dataIndex: 'name',
             render: (_, record) => (
-                <Space size={14}>
-                    <Avatar className="spa-row-avatar">{record.initials}</Avatar>
+                <div>
+                    <Typography.Text strong>{record.name}</Typography.Text>
                     <div>
-                        <Typography.Text strong>{record.name}</Typography.Text>
-                        <div>
-                            <Typography.Text type="secondary">{record.owner}</Typography.Text>
-                        </div>
+                        <Typography.Text type="secondary">{record.owner}</Typography.Text>
                     </div>
-                </Space>
+                </div>
             ),
         },
         {
@@ -156,11 +158,6 @@ export default function EstablishmentsPage() {
             dataIndex: 'email',
             render: (value) => <Typography.Text>{value}</Typography.Text>,
         },
-        {
-            title: 'Receita',
-            dataIndex: 'revenue',
-            render: (value) => <Typography.Text strong>{value}</Typography.Text>,
-        },
     ];
 
     return (
@@ -172,36 +169,39 @@ export default function EstablishmentsPage() {
                             <Space direction="vertical" size={16} className="spa-toolbar-stack">
                                 <Row gutter={[16, 16]} style={{ width: '100%' }}>
                                     <Col xs={24} md={8}>
-                                        <Statistic title="Total" value={summary.total_establishments} />
+                                        <Statistic title="Total" value={payload.summary.total_establishments} />
                                     </Col>
                                     <Col xs={24} md={8}>
-                                        <Statistic title="Ativos" value={summary.active_establishments} />
+                                        <Statistic title="Ativos" value={payload.summary.active_establishments} />
                                     </Col>
                                     <Col xs={24} md={8}>
-                                        <Statistic title="Receita" value={summary.total_revenue} />
+                                        <Statistic title="Receita" value={payload.summary.total_revenue} />
                                     </Col>
                                 </Row>
 
-                                <Segmented
-                                    value={filter}
-                                    options={filters}
-                                    onChange={setFilter}
-                                    className="spa-segmented"
-                                />
+                                <div className="spa-filter-row">
+                                    <Segmented
+                                        value={filter}
+                                        options={filters}
+                                        onChange={(value) => {
+                                            setFilter(value);
+                                            setPage(1);
+                                        }}
+                                        className="spa-segmented"
+                                    />
 
-                                <Space wrap className="spa-filter-row">
                                     <Input
                                         allowClear
                                         prefix={<SearchOutlined />}
-                                        placeholder="Buscar cliente, responsável ou e-mail"
+                                        placeholder="Buscar nome, documento, e-mail ou cidade"
                                         value={searchTerm}
-                                        onChange={(event) => setSearchTerm(event.target.value)}
+                                        onChange={(event) => {
+                                            setSearchTerm(event.target.value);
+                                            setPage(1);
+                                        }}
                                         className="spa-search-input"
                                     />
-                                    <Button icon={<SwapOutlined />} className="spa-secondary-button">
-                                        Ordenar
-                                    </Button>
-                                </Space>
+                                </div>
                             </Space>
                         </Card>
                     </Col>
@@ -212,14 +212,20 @@ export default function EstablishmentsPage() {
                                 <Skeleton active paragraph={{ rows: 6 }} />
                             ) : error ? (
                                 <Alert type="error" message="Falha ao carregar dados" description={error} showIcon />
-                            ) : visibleRows.length === 0 ? (
+                            ) : rows.length === 0 ? (
                                 <Empty description="Nenhum estabelecimento encontrado" />
                             ) : (
                                 <Table
                                     rowKey="id"
                                     columns={columns}
-                                    dataSource={visibleRows}
-                                    pagination={false}
+                                    dataSource={rows}
+                                    pagination={{
+                                        current: pagination.current_page,
+                                        pageSize: pagination.per_page,
+                                        total: pagination.total,
+                                        showSizeChanger: false,
+                                        onChange: (nextPage) => setPage(nextPage),
+                                    }}
                                     className="spa-table"
                                     onRow={(record) => ({
                                         onClick: () => setSelectedId(record.id),
@@ -235,7 +241,7 @@ export default function EstablishmentsPage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title={selectedRow ? `Quick View: ${selectedRow.name}` : 'Quick View'}>
+                <Card className="spa-quick-view-card" title={selectedRow ? selectedRow.name : 'Quick View'}>
                     <Button type="text" icon={<CloseOutlined />} className="spa-quick-close" />
 
                     {!selectedRow ? (
@@ -287,7 +293,7 @@ export default function EstablishmentsPage() {
                             <Divider />
 
                             <Space wrap className="spa-action-row">
-                                <Button icon={<EyeOutlined />}>Visualizar</Button>
+                                <Button icon={<EyeOutlined />} onClick={() => navigate(`/estabelecimentos/${selectedRow.id}`)} disabled={!selectedRow}>Visualizar</Button>
                                 <Button icon={<LineChartOutlined />}>Relatórios</Button>
                                 <Button icon={<MoreOutlined />}>Ações</Button>
                             </Space>
@@ -298,7 +304,7 @@ export default function EstablishmentsPage() {
                                 className="spa-primary-button spa-full-width"
                                 onClick={() => navigate(`/estabelecimentos/${selectedRow.id}/editar`)}
                             >
-                                Edit Details
+                                Editar
                             </Button>
                         </>
                     )}

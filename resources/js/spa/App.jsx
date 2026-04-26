@@ -2,6 +2,7 @@ import { ConfigProvider, theme } from 'antd';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './layouts/AppShell';
 import EstablishmentsPage from './pages/EstablishmentsPage';
+import EstabelecimentoDetailsPage from './pages/EstabelecimentoDetailsPage';
 import EstabelecimentoFormPage from './pages/EstabelecimentoFormPage';
 import HomePage from './pages/HomePage';
 import CobrancaPage from './pages/CobrancaPage';
@@ -62,6 +63,7 @@ export default function App() {
                         <Route path="home" element={<HomePage />} />
                         <Route path="painel" element={<HomePage />} />
                         <Route path="estabelecimentos" element={<EstablishmentsPage />} />
+                        <Route path="estabelecimentos/:estabelecimentoId" element={<EstabelecimentoDetailsPage />} />
                         <Route path="estabelecimentos/:estabelecimentoId/editar" element={<EstabelecimentoFormPage />} />
                         <Route path="cobranca" element={<CobrancaPage />} />
                         <Route path="links-pagamento" element={<LinksPagamentoPage />} />

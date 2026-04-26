@@ -6,45 +6,42 @@ use App\Http\Controllers\Controller;
 use App\Models\PaytimeEstablishment;
 use App\Models\PaytimeTransaction;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class EstablishmentOverviewController extends Controller
 {
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
-        $establishments = PaytimeEstablishment::query()
-            ->orderByDesc('updated_at')
-            ->limit(12)
-            ->get();
+        $searchTerm = trim((string) $request->input('search', ''));
+        $filter = (string) $request->input('filter', 'Todos');
+        $page = max(1, (int) $request->integer('page', 1));
+        $perPage = 20;
 
-        if ($establishments->isEmpty()) {
-            return response()->json([
-                'summary' => [
-                    'total_establishments' => 0,
-                    'active_establishments' => 0,
-                    'blocked_establishments' => 0,
-                    'total_revenue' => $this->formatMoney(0),
-                ],
-                'filters' => ['Todos', 'Ativos', 'Inadimplentes', 'Inativos'],
-                'rows' => [],
-                'selected' => [
-                    'id' => null,
-                    'name' => 'Sem dados',
-                    'status' => 'Em análise',
-                    'email' => 'N/A',
-                    'revenue' => $this->formatMoney(0),
-                    'active_tasks' => 0,
-                    'segment' => 'N/A',
-                    'owner' => 'N/A',
-                    'phone' => 'N/A',
-                    'city' => 'N/A',
-                    'timeline' => [],
-                ],
-                'recent_transactions' => [],
-            ]);
-        }
+        $baseQuery = $this->buildFilteredQuery($searchTerm, $filter);
 
-        $establishmentIds = $establishments->pluck('id')->all();
+        $summary = [
+            'total_establishments' => (clone $baseQuery)->count(),
+            'active_establishments' => (clone $baseQuery)->where('active', true)->count(),
+            'blocked_establishments' => (clone $baseQuery)->whereIn('status', ['BLOCKED', 'SUSPENDED'])->count(),
+            'total_revenue' => $this->formatMoney((int) round(((float) (clone $baseQuery)->sum('revenue')) * 100)),
+        ];
+
+        $paginatedEstablishments = (clone $baseQuery)
+            ->orderBy('fantasy_name')
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->orderBy('id')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $establishments = collect($paginatedEstablishments->items());
+        $establishmentIds = $establishments
+            ->pluck('id')
+            ->filter()
+            ->map(fn ($value): int => (int) $value)
+            ->values()
+            ->all();
 
         $transactionStats = PaytimeTransaction::query()
             ->selectRaw('establishment_id, COUNT(*) as total_transactions, SUM(amount) as total_amount, MAX(created_at) as last_activity')
@@ -64,7 +61,7 @@ class EstablishmentOverviewController extends Controller
 
         $rows = $establishments->map(function (PaytimeEstablishment $establishment) use ($transactionStats, $transactionsByEstablishment): array {
             $stats = $transactionStats->get($establishment->id);
-            $revenue = (int) ($establishment->revenue * 100);
+            $revenue = (int) round(((float) $establishment->revenue) * 100);
             $totalTransactions = (int) ($stats->total_transactions ?? 0);
             $status = $this->mapStatus($establishment);
             $timeline = $transactionsByEstablishment->get($establishment->id, collect())
@@ -97,7 +94,7 @@ class EstablishmentOverviewController extends Controller
             ];
         });
 
-        $detail = $rows->first() ?? [
+        $selected = $rows->first() ?? [
             'id' => null,
             'name' => 'Sem dados',
             'status' => 'Em análise',
@@ -112,17 +109,18 @@ class EstablishmentOverviewController extends Controller
         ];
 
         return response()->json([
-            'summary' => [
-                'total_establishments' => $establishments->count(),
-                'active_establishments' => $establishments->where('active', true)->count(),
-                'blocked_establishments' => $establishments->where('status', 'BLOCKED')->count(),
-                'total_revenue' => $this->formatMoney((int) round(((float) $establishments->sum('revenue')) * 100)),
-            ],
-            'filters' => ['Todos', 'Ativos', 'Inadimplentes', 'Inativos'],
+            'summary' => $summary,
+            'filters' => ['Todos', 'Ativos', 'Inativos'],
             'rows' => $rows->values(),
-            'selected' => array_merge($detail, [
-                'timeline' => $detail['timeline'] ?? [],
+            'selected' => array_merge($selected, [
+                'timeline' => $selected['timeline'] ?? [],
             ]),
+            'pagination' => [
+                'current_page' => $paginatedEstablishments->currentPage(),
+                'per_page' => $paginatedEstablishments->perPage(),
+                'total' => $paginatedEstablishments->total(),
+                'last_page' => $paginatedEstablishments->lastPage(),
+            ],
             'recent_transactions' => $recentTransactions->map(function (PaytimeTransaction $transaction): array {
                 return [
                     'id' => $transaction->id,
@@ -134,6 +132,31 @@ class EstablishmentOverviewController extends Controller
                 ];
             })->values(),
         ]);
+    }
+
+    private function buildFilteredQuery(string $searchTerm, string $filter): Builder
+    {
+        return PaytimeEstablishment::query()
+            ->when($searchTerm !== '', function (Builder $query) use ($searchTerm): void {
+                $like = "%{$searchTerm}%";
+
+                $query->where(function (Builder $builder) use ($like): void {
+                    $builder->where('fantasy_name', 'like', $like)
+                        ->orWhere('first_name', 'like', $like)
+                        ->orWhere('last_name', 'like', $like)
+                        ->orWhere('document', 'like', $like)
+                        ->orWhere('email', 'like', $like)
+                        ->orWhere('phone_number', 'like', $like)
+                        ->orWhere('category', 'like', $like)
+                        ->orWhere('code', 'like', $like);
+                });
+            })
+            ->when($filter === 'Ativos', function (Builder $query): void {
+                $query->where('active', true);
+            })
+            ->when($filter === 'Inativos', function (Builder $query): void {
+                $query->where('active', false);
+            });
     }
 
     private function mapStatus(PaytimeEstablishment $establishment): string

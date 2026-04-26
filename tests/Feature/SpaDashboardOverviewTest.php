@@ -60,4 +60,59 @@ class SpaDashboardOverviewTest extends TestCase
             ->assertJsonPath('summary.total_transactions', 1)
             ->assertJsonPath('rows.0.name', 'Acme Corp');
     }
+
+    public function test_dashboard_overview_counts_transactions_outside_top_rows_for_admin(): void
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        foreach (range(1, 12) as $index) {
+            PaytimeEstablishment::create([
+                'id' => 3000 + $index,
+                'fantasy_name' => "Loja {$index}",
+                'email' => "loja{$index}@example.com",
+                'active' => true,
+                'status' => 'APPROVED',
+                'revenue' => 0,
+                'address_json' => ['city' => 'São Paulo'],
+                'responsible_json' => ['name' => "Responsável {$index}"],
+            ]);
+        }
+
+        PaytimeEstablishment::create([
+            'id' => 4000,
+            'fantasy_name' => 'Loja Fora da Lista',
+            'email' => 'fora@example.com',
+            'active' => true,
+            'status' => 'APPROVED',
+            'revenue' => 0,
+            'address_json' => ['city' => 'São Paulo'],
+            'responsible_json' => ['name' => 'Responsável fora'],
+        ]);
+
+        PaytimeEstablishment::query()
+            ->whereKey(4000)
+            ->update(['updated_at' => now()->subDays(30)]);
+
+        PaytimeTransaction::create([
+            'external_id' => 'trx-outside',
+            'establishment_id' => '4000',
+            'type' => 'PIX',
+            'status' => 'PAID',
+            'amount' => 10457200,
+            'original_amount' => 10457200,
+            'fees' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/spa/dashboard?mes=4&ano=2026');
+
+        $response
+            ->assertOk()
+            ->assertJsonCount(12, 'rows')
+            ->assertJsonPath('summary.total_establishments', 13)
+            ->assertJsonPath('summary.active_establishments', 13)
+            ->assertJsonPath('summary.total_transactions', 1);
+    }
 }

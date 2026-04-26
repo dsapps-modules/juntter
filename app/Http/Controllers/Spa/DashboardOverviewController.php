@@ -33,17 +33,17 @@ class DashboardOverviewController extends Controller
             $establishmentsQuery->whereKey($user->getEstabelecimentoId());
         }
 
-        $establishments = $establishmentsQuery->limit(12)->get();
-        $establishmentIds = $establishments->pluck('id')->all();
+        $totalEstablishments = (clone $establishmentsQuery)->count();
+        $activeEstablishments = (clone $establishmentsQuery)->where('active', true)->count();
+        $blockedEstablishments = (clone $establishmentsQuery)->whereIn('status', ['BLOCKED', 'SUSPENDED'])->count();
+        $establishments = (clone $establishmentsQuery)->limit(12)->get();
 
         $transactionsQuery = PaytimeTransaction::query()
             ->with('establishment:id,fantasy_name,first_name,last_name')
             ->whereBetween('created_at', [$periodStart, $periodEnd]);
 
-        if ($establishmentIds !== []) {
-            $transactionsQuery->whereIn('establishment_id', $establishmentIds);
-        } else {
-            $transactionsQuery->whereRaw('1 = 0');
+        if ($user->isVendedor() && $user->getEstabelecimentoId()) {
+            $transactionsQuery->where('establishment_id', $user->getEstabelecimentoId());
         }
 
         $totalTransactions = (clone $transactionsQuery)->count();
@@ -65,9 +65,9 @@ class DashboardOverviewController extends Controller
             ->keyBy('status');
 
         $summary = [
-            'total_establishments' => $establishments->count(),
-            'active_establishments' => $establishments->where('active', true)->count(),
-            'blocked_establishments' => $establishments->whereIn('status', ['BLOCKED', 'SUSPENDED'])->count(),
+            'total_establishments' => $totalEstablishments,
+            'active_establishments' => $activeEstablishments,
+            'blocked_establishments' => $blockedEstablishments,
             'total_transactions' => $totalTransactions,
             'pending_transactions' => (clone $transactionsQuery)->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count(),
             'today_transactions' => (clone $transactionsQuery)->whereDate('created_at', Carbon::today())->count(),
@@ -124,7 +124,7 @@ class DashboardOverviewController extends Controller
         $selected = $rows->first() ?? [
             'id' => null,
             'name' => 'Sem dados',
-            'status' => 'Em analise',
+            'status' => 'Em análise',
             'email' => 'N/A',
             'revenue' => $this->formatMoney(0),
             'active_tasks' => 0,
@@ -344,7 +344,7 @@ class DashboardOverviewController extends Controller
 
         return match ($establishment->status) {
             'BLOCKED', 'SUSPENDED' => 'Bloqueado',
-            'REVIEW' => 'Em analise',
+            'REVIEW' => 'Em análise',
             default => 'Ativo',
         };
     }
@@ -369,11 +369,11 @@ class DashboardOverviewController extends Controller
     private function formatType(?string $type): string
     {
         return match ($type) {
-            'CREDIT' => 'Credito',
-            'DEBIT' => 'Debito',
+            'CREDIT' => 'Crédito',
+            'DEBIT' => 'Débito',
             'PIX' => 'PIX',
             'BILLET' => 'Boleto',
-            default => 'Transacao',
+            default => 'Transação',
         };
     }
 
@@ -403,7 +403,7 @@ class DashboardOverviewController extends Controller
             'super_admin' => 'Super admin',
             'admin' => 'Admin',
             'vendedor' => 'Vendedor',
-            default => 'Usuario',
+            default => 'Usuário',
         };
     }
 }

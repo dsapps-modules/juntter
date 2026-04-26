@@ -15,7 +15,7 @@ export const navigationByRole = {
         {
             label: 'Vendedores',
             children: [
-                { key: 'vendedores.lista', path: '/vendedores', label: 'Lista', icon: 'lista' },
+                { key: 'vendedores.estabelecimentos', path: '/vendedores', label: 'Estabelecimentos', icon: 'estabelecimentos' },
                 { key: 'vendedores.faturamento', path: '/vendedores/faturamento', label: 'Faturamento', icon: 'faturamento' },
                 { key: 'vendedores.acesso', path: '/vendedores/acesso', label: 'Acesso', icon: 'acesso' },
             ],
@@ -52,7 +52,7 @@ export const navigationByRole = {
         {
             label: 'Vendedores',
             children: [
-                { key: 'vendedores.lista', path: '/vendedores', label: 'Lista', icon: 'lista' },
+                { key: 'vendedores.estabelecimentos', path: '/vendedores', label: 'Estabelecimentos', icon: 'estabelecimentos' },
                 { key: 'vendedores.faturamento', path: '/vendedores/faturamento', label: 'Faturamento', icon: 'faturamento' },
                 { key: 'vendedores.acesso', path: '/vendedores/acesso', label: 'Acesso', icon: 'acesso' },
             ],

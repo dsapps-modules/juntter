@@ -108,6 +108,14 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_establishment_details_route_is_available(): void
+    {
+        $response = $this->get('/app/estabelecimentos/1');
+
+        $response->assertOk();
+        $response->assertSee('id="app"', false);
+    }
+
     public function test_the_vendedores_access_route_is_available(): void
     {
         $response = $this->get('/app/vendedores/acesso');
@@ -194,7 +202,7 @@ class SpaShellTest extends TestCase
         $this->actingAs($admin);
 
         $this->get('/estabelecimentos')->assertRedirect('/app/estabelecimentos');
-        $this->get('/estabelecimentos/9001')->assertRedirect('/app/estabelecimentos/9001/editar');
+        $this->get('/estabelecimentos/9001')->assertRedirect('/app/estabelecimentos/9001');
         $this->get('/estabelecimentos/9001/edit')->assertRedirect('/app/estabelecimentos/9001/editar');
     }
 

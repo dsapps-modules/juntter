@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Vendedor extends Model
 {
@@ -23,7 +24,7 @@ class Vendedor extends Model
         'telefone',
         'endereco',
         'status',
-        'must_change_password'
+        'must_change_password',
     ];
 
     protected $casts = [
@@ -38,6 +39,11 @@ class Vendedor extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function estabelecimento(): BelongsTo
+    {
+        return $this->belongsTo(PaytimeEstablishment::class, 'estabelecimento_id', 'id')->withTrashed();
     }
 
     /**
@@ -69,7 +75,7 @@ class Vendedor extends Model
      */
     public function getComissaoFormatadaAttribute(): string
     {
-        return $this->comissao ? number_format($this->comissao, 2, ',', '.') . '%' : 'N/A';
+        return $this->comissao ? number_format($this->comissao, 2, ',', '.').'%' : 'N/A';
     }
 
     /**
@@ -77,6 +83,6 @@ class Vendedor extends Model
      */
     public function getMetaVendasFormatadaAttribute(): string
     {
-        return $this->meta_vendas ? 'R$ ' . number_format($this->meta_vendas, 2, ',', '.') : 'N/A';
+        return $this->meta_vendas ? 'R$ '.number_format($this->meta_vendas, 2, ',', '.') : 'N/A';
     }
 }

@@ -52,20 +52,23 @@ class VendedorController extends Controller
             });
         }
 
-        $results = $query->limit(20)->get()->map(function ($item): array {
-            $nome = $item->display_name;
+        $results = $query
+            ->orderByRaw("COALESCE(NULLIF(fantasy_name, ''), first_name, 'ZZZ') ASC")
+            ->get()
+            ->map(function ($item): array {
+                $nome = $item->display_name;
 
-            if (empty($nome) || $nome === 'Sem Nome') {
-                $nome = $item->document ?? $item->email;
-            }
+                if (empty($nome) || $nome === 'Sem Nome') {
+                    $nome = $item->document ?? $item->email;
+                }
 
-            return [
-                'id' => $item->id,
-                'text' => $nome.' (ID: '.$item->id.')',
-                'email' => $item->email,
-                'name_clean' => $nome,
-            ];
-        });
+                return [
+                    'id' => $item->id,
+                    'text' => $nome.' (ID: '.$item->id.')',
+                    'email' => $item->email,
+                    'name_clean' => $nome,
+                ];
+            });
 
         return response()->json(['results' => $results]);
     }

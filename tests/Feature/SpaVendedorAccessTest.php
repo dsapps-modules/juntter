@@ -60,6 +60,31 @@ class SpaVendedorAccessTest extends TestCase
             ->assertJsonPath('rows.0.establishment', 'Loja Teste');
     }
 
+    public function test_vendedor_access_establishment_search_returns_more_than_twenty_results(): void
+    {
+        $admin = User::factory()->create([
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        foreach (range(1, 21) as $index) {
+            PaytimeEstablishment::create([
+                'id' => 9200 + $index,
+                'fantasy_name' => "Loja {$index}",
+                'email' => "loja{$index}@example.com",
+                'active' => true,
+                'status' => 'APPROVED',
+                'revenue' => 1000,
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->getJson('/vendedores/acesso/search?q=Loja');
+
+        $response
+            ->assertOk()
+            ->assertJsonCount(21, 'results');
+    }
+
     public function test_vendedor_access_crud_flow_works_with_json_requests(): void
     {
         $admin = User::factory()->create([

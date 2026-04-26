@@ -1,8 +1,23 @@
-import { SaveOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, DatePicker, Divider, Input, InputNumber, Row, Select, Space, Typography } from 'antd';
+import { EyeOutlined, HomeOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+    Alert,
+    Button,
+    Card,
+    Col,
+    DatePicker,
+    Divider,
+    Input,
+    InputNumber,
+    Row,
+    Select,
+    Space,
+    Tag,
+    Typography,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import StatusPill from '../components/StatusPill';
 
 const formatOptions = [
     { value: 'SS', label: 'SS - Sociedade Simples' },
@@ -30,6 +45,20 @@ const initialState = {
     birthdate: null,
 };
 
+function formatText(value) {
+    return value === null || value === undefined || value === '' ? 'N/A' : value;
+}
+
+function currencyInput(value) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+
+    const numericValue = Number(String(value).replace(/[^\d.]/g, ''));
+
+    return Number.isNaN(numericValue) ? '' : numericValue;
+}
+
 export default function EstabelecimentoFormPage() {
     const navigate = useNavigate();
     const { estabelecimentoId } = useParams();
@@ -39,6 +68,7 @@ export default function EstabelecimentoFormPage() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [formState, setFormState] = useState(initialState);
+    const [systemInfo, setSystemInfo] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -70,11 +100,18 @@ export default function EstabelecimentoFormPage() {
                     first_name: establishment.first_name ?? '',
                     last_name: establishment.last_name ?? '',
                     phone_number: establishment.phone_number ?? '',
-                    revenue: establishment.revenue ?? '',
+                    revenue: establishment.revenue_cents ? currencyInput(establishment.revenue_cents / 100) : currencyInput(establishment.revenue),
                     format: establishment.format ?? 'MEI',
                     email: establishment.email ?? '',
                     gmv: establishment.gmv ?? '',
                     birthdate: establishment.birthdate ? dayjs(establishment.birthdate) : null,
+                });
+
+                setSystemInfo({
+                    id: establishment.id,
+                    document: establishment.document,
+                    status: establishment.status_label ?? establishment.status,
+                    risk: establishment.risk_label ?? establishment.risk,
                 });
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
@@ -135,152 +172,202 @@ export default function EstabelecimentoFormPage() {
         setFormState((current) => ({ ...current, [field]: value }));
     }
 
+    const displayName = `${formState.first_name ?? ''} ${formState.last_name ?? ''}`.trim();
+
     return (
-        <Row gutter={[20, 20]} className="spa-profile-grid">
-            <Col xs={24} xl={16}>
-                <Card className="spa-hero-card">
-                    <Space direction="vertical" size={18} className="spa-hero-stack">
-                        <div>
+        <Row gutter={[20, 20]} className="spa-board">
+            <Col span={24}>
+                <Card className="spa-toolbar-card">
+                    <Row gutter={[16, 16]} align="middle" justify="space-between">
+                        <Col xs={24} md={16}>
                             <Typography.Text className="spa-brand-kicker">Estabelecimentos</Typography.Text>
-                            <Typography.Title level={2} className="spa-hero-title">
-                                {isEdit ? 'Editar estabelecimento' : 'Novo estabelecimento'}
+                            <Typography.Title level={2} className="spa-hero-title" style={{ marginTop: 8, marginBottom: 2 }}>
+                                Editar {formatText(systemInfo?.document)}
                             </Typography.Title>
-                            <Typography.Paragraph className="spa-hero-description">
-                                Atualize os dados operacionais do cadastro com o mesmo padrão visual da interface nova.
+                            <Typography.Title level={3} className="spa-hero-title" style={{ marginTop: 0, marginBottom: 8 }}>
+                                {displayName || 'Estabelecimento'}
+                            </Typography.Title>
+                            <Typography.Paragraph className="spa-hero-description" style={{ marginBottom: 0 }}>
+                                Atualize as informações do estabelecimento usando a mesma estrutura da listagem e da página de detalhes.
                             </Typography.Paragraph>
-                        </div>
+                        </Col>
 
-                        {error ? <Alert type="error" showIcon message={error} /> : null}
-                        {success ? <Alert type="success" showIcon message={success} /> : null}
-                    </Space>
+                        <Col xs={24} md={8}>
+                            <Space wrap style={{ width: '100%', justifyContent: 'flex-end' }}>
+                                <Button icon={<EyeOutlined />} onClick={() => navigate(`/estabelecimentos/${estabelecimentoId}`)}>
+                                    Visualizar
+                                </Button>
+                                <Button icon={<HomeOutlined />} onClick={() => navigate('/home')} />
+                            </Space>
+                        </Col>
+                    </Row>
+
+                    {error ? <Alert style={{ marginTop: 16 }} type="error" showIcon message={error} /> : null}
+                    {success ? <Alert style={{ marginTop: 16 }} type="success" showIcon message={success} /> : null}
                 </Card>
+            </Col>
 
-                <Card className="spa-table-card" title="Dados do estabelecimento">
+            <Col span={24}>
+                <Card className="spa-table-card">
                     {loading ? (
                         <Typography.Text type="secondary">Carregando formulário...</Typography.Text>
                     ) : (
                         <form onSubmit={handleSubmit}>
-                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                                <Row gutter={16}>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Tipo de acesso</Typography.Text>
-                                        <Select
-                                            value={formState.access_type}
-                                            onChange={(value) => updateField('access_type', value)}
-                                            style={{ width: '100%' }}
-                                            size="large"
-                                            options={[
-                                                { value: 'ACQUIRER', label: 'ACQUIRER' },
-                                                { value: 'BANKING', label: 'BANKING' },
-                                            ]}
-                                        />
-                                    </Col>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Formato jurídico</Typography.Text>
-                                        <Select
-                                            value={formState.format}
-                                            onChange={(value) => updateField('format', value)}
-                                            style={{ width: '100%' }}
-                                            size="large"
-                                            options={formatOptions}
-                                        />
-                                    </Col>
-                                </Row>
+                            <Row gutter={[24, 24]}>
+                                <Col xs={24} lg={13}>
+                                    <Typography.Title level={4} className="spa-section-title">
+                                        Informações Básicas
+                                    </Typography.Title>
 
-                                <Row gutter={16}>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Nome</Typography.Text>
-                                        <Input
-                                            value={formState.first_name}
-                                            onChange={(event) => updateField('first_name', event.target.value)}
-                                            placeholder="Razão social / nome"
-                                        />
-                                    </Col>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Sobrenome / fantasia</Typography.Text>
-                                        <Input
-                                            value={formState.last_name}
-                                            onChange={(event) => updateField('last_name', event.target.value)}
-                                            placeholder="Nome fantasia / sobrenome"
-                                        />
-                                    </Col>
-                                </Row>
+                                    <Space direction="vertical" size={14} style={{ width: '100%' }}>
+                                        <div>
+                                            <Typography.Text strong>Tipo de Acesso *</Typography.Text>
+                                            <Select
+                                                value={formState.access_type}
+                                                onChange={(value) => updateField('access_type', value)}
+                                                style={{ width: '100%' }}
+                                                size="large"
+                                                options={[
+                                                    { value: 'ACQUIRER', label: 'ACQUIRER' },
+                                                    { value: 'BANKING', label: 'BANKING' },
+                                                ]}
+                                            />
+                                        </div>
 
-                                <Row gutter={16}>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>E-mail</Typography.Text>
-                                        <Input
-                                            value={formState.email}
-                                            onChange={(event) => updateField('email', event.target.value)}
-                                            placeholder="email@empresa.com"
-                                        />
-                                    </Col>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Telefone</Typography.Text>
-                                        <Input
-                                            value={formState.phone_number}
-                                            onChange={(event) => updateField('phone_number', event.target.value)}
-                                            placeholder="Telefone"
-                                        />
-                                    </Col>
-                                </Row>
+                                        <div>
+                                            <Typography.Text strong>Nome / Razão Social</Typography.Text>
+                                            <Input
+                                                value={formState.first_name}
+                                                onChange={(event) => updateField('first_name', event.target.value)}
+                                                placeholder="Razão social / nome"
+                                                size="large"
+                                            />
+                                        </div>
 
-                                <Row gutter={16}>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Receita mensal</Typography.Text>
-                                        <InputNumber
-                                            value={formState.revenue}
-                                            onChange={(value) => updateField('revenue', value)}
-                                            style={{ width: '100%' }}
-                                            placeholder="0,00"
-                                        />
-                                    </Col>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>GMV</Typography.Text>
-                                        <InputNumber
-                                            value={formState.gmv}
-                                            onChange={(value) => updateField('gmv', value)}
-                                            style={{ width: '100%' }}
-                                            placeholder="0,00"
-                                        />
-                                    </Col>
-                                </Row>
+                                        <div>
+                                            <Typography.Text strong>Nome Fantasia / Sobrenome</Typography.Text>
+                                            <Input
+                                                value={formState.last_name}
+                                                onChange={(event) => updateField('last_name', event.target.value)}
+                                                placeholder="Nome fantasia / sobrenome"
+                                                size="large"
+                                            />
+                                        </div>
 
-                                <Row gutter={16}>
-                                    <Col xs={24} md={12}>
-                                        <Typography.Text strong>Data de nascimento/fundação</Typography.Text>
-                                        <DatePicker
-                                            value={formState.birthdate}
-                                            onChange={(value) => updateField('birthdate', value)}
-                                            style={{ width: '100%' }}
-                                        />
-                                    </Col>
-                                </Row>
+                                        <div>
+                                            <Typography.Text strong>Email *</Typography.Text>
+                                            <Input
+                                                value={formState.email}
+                                                onChange={(event) => updateField('email', event.target.value)}
+                                                placeholder="email@empresa.com"
+                                                size="large"
+                                            />
+                                        </div>
 
-                                <Divider />
+                                        <div>
+                                            <Typography.Text strong>Telefone *</Typography.Text>
+                                            <Input
+                                                value={formState.phone_number}
+                                                onChange={(event) => updateField('phone_number', event.target.value)}
+                                                placeholder="Telefone"
+                                                size="large"
+                                            />
+                                        </div>
+                                    </Space>
+                                </Col>
 
-                                <div className="spa-profile-actions">
-                                    <Button type="primary" htmlType="submit" loading={submitting} icon={<SaveOutlined />}>
-                                        Salvar estabelecimento
-                                    </Button>
-                                    <Button onClick={() => navigate('/estabelecimentos')}>
-                                        Cancelar
-                                    </Button>
-                                </div>
+                                <Col xs={24} lg={11}>
+                                    <Typography.Title level={4} className="spa-section-title">
+                                        Informações Empresariais
+                                    </Typography.Title>
+
+                                    <Space direction="vertical" size={14} style={{ width: '100%' }}>
+                                        <div>
+                                            <Typography.Text strong>Tipo Societário *</Typography.Text>
+                                            <Select
+                                                value={formState.format}
+                                                onChange={(value) => updateField('format', value)}
+                                                style={{ width: '100%' }}
+                                                size="large"
+                                                options={formatOptions}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Typography.Text strong>Receita Mensal (R$) *</Typography.Text>
+                                            <InputNumber
+                                                value={formState.revenue}
+                                                onChange={(value) => updateField('revenue', value)}
+                                                style={{ width: '100%' }}
+                                                placeholder="1000000"
+                                                size="large"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Typography.Text strong>GMV - Volume Bruto de Vendas</Typography.Text>
+                                            <InputNumber
+                                                value={formState.gmv}
+                                                onChange={(value) => updateField('gmv', value)}
+                                                style={{ width: '100%' }}
+                                                placeholder="0,00"
+                                                size="large"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Typography.Text strong>Data de Nascimento/Fundação *</Typography.Text>
+                                            <DatePicker
+                                                value={formState.birthdate}
+                                                onChange={(value) => updateField('birthdate', value)}
+                                                style={{ width: '100%' }}
+                                                size="large"
+                                                format="DD/MM/YYYY"
+                                            />
+                                        </div>
+                                    </Space>
+                                </Col>
+                            </Row>
+
+                            <Divider />
+
+                            <Typography.Title level={4} className="spa-section-title">
+                                Informações do Sistema (Somente Leitura)
+                            </Typography.Title>
+
+                            <Row gutter={[16, 16]}>
+                                <Col xs={24} md={6}>
+                                    <Typography.Text strong>ID: </Typography.Text>
+                                    <Typography.Text>{formatText(systemInfo?.id)}</Typography.Text>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Typography.Text strong>Documento: </Typography.Text>
+                                    <Typography.Text>{formatText(systemInfo?.document)}</Typography.Text>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Typography.Text strong>Status: </Typography.Text>
+                                    <StatusPill status={systemInfo?.status} />
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Typography.Text strong>Risco: </Typography.Text>
+                                    <Tag color={systemInfo?.risk === 'Baixo' ? 'green' : systemInfo?.risk === 'Médio' ? 'gold' : 'default'}>
+                                        {formatText(systemInfo?.risk)}
+                                    </Tag>
+                                </Col>
+                            </Row>
+
+                            <Divider />
+
+                            <Space>
+                                <Button type="primary" htmlType="submit" loading={submitting} icon={<SaveOutlined />}>
+                                    Salvar Alterações
+                                </Button>
+                                <Button onClick={() => navigate('/estabelecimentos')}>
+                                    Cancelar
+                                </Button>
                             </Space>
                         </form>
                     )}
-                </Card>
-            </Col>
-
-            <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title="Atalhos">
-                    <Space direction="vertical" size={14} className="spa-detail-stack">
-                        <Typography.Text type="secondary">Ações rápidas</Typography.Text>
-                        <Link to="/estabelecimentos">Voltar para listagem</Link>
-                        <Link to="/estabelecimentos/export">Exportar planilha</Link>
-                        <Link to="/home">Ir para home</Link>
-                    </Space>
                 </Card>
             </Col>
         </Row>
