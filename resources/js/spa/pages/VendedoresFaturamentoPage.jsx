@@ -105,15 +105,11 @@ export default function VendedoresFaturamentoPage() {
             render: (value) => <Typography.Text strong>{value}</Typography.Text>,
         },
         {
-            title: 'Estabelecimento ID',
-            dataIndex: 'estabelecimento_id',
-        },
-        {
-            title: 'Qtd. transações',
+            title: 'Transações',
             dataIndex: 'qtd',
         },
         {
-            title: 'Total bruto',
+            title: 'Bruto',
             dataIndex: 'total_bruto',
             render: (value) => formatCurrency(value),
         },
@@ -123,7 +119,7 @@ export default function VendedoresFaturamentoPage() {
             render: (value) => <Tag color="volcano">{formatCurrency(value)}</Tag>,
         },
         {
-            title: 'Total líquido',
+            title: 'Líquido',
             dataIndex: 'total_liquido',
             render: (value) => <Tag color="green">{formatCurrency(value)}</Tag>,
         },
@@ -145,15 +141,7 @@ export default function VendedoresFaturamentoPage() {
                     <Col span={24}>
                         <Card className="spa-hero-card">
                             <Space direction="vertical" size={18} className="spa-hero-stack">
-                                <div>
-                                    <Typography.Text className="spa-brand-kicker">Vendedores</Typography.Text>
-                                    <Typography.Title level={2} className="spa-hero-title">
-                                        Faturamento por loja
-                                    </Typography.Title>
-                                    <Typography.Paragraph className="spa-hero-description">
-                                        Acompanhe volume bruto, taxas e líquido por estabelecimento no período selecionado.
-                                    </Typography.Paragraph>
-                                </div>
+                                <Typography.Text className="spa-brand-kicker">Vendedores</Typography.Text>
 
                                 {error ? <Alert type="error" showIcon message={error} /> : null}
 
@@ -185,6 +173,7 @@ export default function VendedoresFaturamentoPage() {
                                             setSelectedMonth(new Date().getMonth() + 1);
                                             setSelectedYear(new Date().getFullYear());
                                         }}
+                                        size="large"
                                     >
                                         Período atual
                                     </Button>
@@ -220,7 +209,7 @@ export default function VendedoresFaturamentoPage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title={selectedRow ? `Quick View: ${selectedRow.nome}` : 'Quick View'}>
+                <Card className="spa-quick-view-card" title={selectedRow ? selectedRow.nome : 'Selecione um vendedor'}>
                     {!selectedRow ? (
                         <Empty description="Selecione uma linha para ver os detalhes" />
                     ) : (

@@ -3,9 +3,7 @@
 namespace Tests;
 
 use Facebook\WebDriver\Chrome\ChromeOptions;
-use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
-use Illuminate\Support\Collection;
 use Laravel\Dusk\TestCase as BaseTestCase;
 use PHPUnit\Framework\Attributes\BeforeClass;
 
@@ -30,14 +28,15 @@ abstract class DuskTestCase extends BaseTestCase
     protected function driver(): RemoteWebDriver
     {
         $options = (new ChromeOptions)->addArguments([
+            '--headless=new',
             '--window-size=1920,1080',
             '--disable-gpu',
             '--no-sandbox',
             '--disable-dev-shm-usage',
             '--disable-web-security',
             '--disable-save-password-bubble',
-            '--password-store=basic'
-           
+            '--password-store=basic',
+
         ]);
 
         return RemoteWebDriver::create(
