@@ -17,6 +17,10 @@ class VendedorAccessOverviewController extends Controller
         $users = User::query()
             ->with(['vendedor'])
             ->where('nivel_acesso', 'vendedor')
+            ->whereHas('vendedor', function ($query): void {
+                $query->where('status', 'ativo')
+                    ->where('must_change_password', false);
+            })
             ->orderByDesc('updated_at')
             ->limit(50)
             ->get();

@@ -1,4 +1,4 @@
-import {
+﻿import {
     DeleteOutlined,
     EditOutlined,
     EyeOutlined,
@@ -9,7 +9,6 @@ import {
 } from '@ant-design/icons';
 import {
     Alert,
-    Avatar,
     Button,
     Card,
     Col,
@@ -68,7 +67,7 @@ const filterMatcher = {
     Todos: () => true,
     Ativos: (item) => item.status === 'Ativo',
     Inativos: (item) => item.status === 'Inativo',
-    'Senha obrigatória': (item) => item.must_change_password,
+    'Senha obrigatÃ³ria': (item) => item.must_change_password,
 };
 
 function formatError(response, fallbackMessage) {
@@ -122,7 +121,7 @@ export default function VendedoresAcessoPage() {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Não foi possível carregar o acesso dos vendedores.');
+                    throw new Error('NÃ£o foi possÃ­vel carregar o acesso dos vendedores.');
                 }
 
                 const data = await response.json();
@@ -174,7 +173,7 @@ export default function VendedoresAcessoPage() {
                 );
 
                 if (!response.ok) {
-                    throw new Error('Não foi possível buscar os estabelecimentos.');
+                    throw new Error('NÃ£o foi possÃ­vel buscar os estabelecimentos.');
                 }
 
                 const data = await response.json();
@@ -215,50 +214,37 @@ export default function VendedoresAcessoPage() {
             title: 'Usuário',
             dataIndex: 'name',
             render: (_, record) => (
-                <Space size={14}>
-                    <Avatar className="spa-row-avatar">{record.name?.slice(0, 2)?.toUpperCase() ?? 'VT'}</Avatar>
-                    <div>
-                        <Typography.Text strong>{record.name}</Typography.Text>
-                        <div>
-                            <Typography.Text type="secondary">{record.email}</Typography.Text>
-                        </div>
-                    </div>
+                <Space direction="vertical" size={0}>
+                    <Typography.Text strong>{record.name}</Typography.Text>
+                    <Typography.Text type="secondary">{record.email}</Typography.Text>
                 </Space>
             ),
-        },
-        {
-            title: 'Perfil',
-            dataIndex: 'role',
-            render: (value) => <Tag color="gold">{value}</Tag>,
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            render: (value) => <Tag color={value === 'Ativo' ? 'green' : 'volcano'}>{value}</Tag>,
-        },
-        {
-            title: 'Estabelecimento',
-            dataIndex: 'establishment',
         },
         {
             title: 'Última atividade',
             dataIndex: 'last_activity',
         },
         {
-            title: 'Ações',
             render: (_, record) => (
                 <Space>
-                    <Button size="small" icon={<EditOutlined />} onClick={() => openEditModal(record)}>
-                        Editar
-                    </Button>
-                    <Button size="small" icon={<KeyOutlined />} onClick={() => openPasswordModal(record)}>
-                        Senha
-                    </Button>
+                    <Button
+                        size="small"
+                        type="text"
+                        icon={<EditOutlined />}
+                        aria-label="Editar acesso"
+                        onClick={() => openEditModal(record)}
+                    />
+                    <Button
+                        size="small"
+                        type="text"
+                        icon={<KeyOutlined />}
+                        aria-label="Alterar senha"
+                        onClick={() => openPasswordModal(record)}
+                    />
                 </Space>
             ),
         },
     ];
-
     function openEditModal(record) {
         setActiveUserId(record.id);
         setEditForm({
@@ -283,7 +269,7 @@ export default function VendedoresAcessoPage() {
         });
 
         if (!response.ok) {
-            throw new Error('Não foi possível atualizar a lista.');
+            throw new Error('NÃ£o foi possÃ­vel atualizar a lista.');
         }
 
         const data = await response.json();
@@ -317,7 +303,7 @@ export default function VendedoresAcessoPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(formatError(result, 'Não foi possível criar o acesso.'));
+                throw new Error(formatError(result, 'NÃ£o foi possÃ­vel criar o acesso.'));
             }
 
             setSuccess(result.message ?? 'Acesso criado com sucesso.');
@@ -349,7 +335,7 @@ export default function VendedoresAcessoPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(formatError(result, 'Não foi possível atualizar o acesso.'));
+                throw new Error(formatError(result, 'NÃ£o foi possÃ­vel atualizar o acesso.'));
             }
 
             setSuccess(result.message ?? 'Dados do vendedor atualizados com sucesso.');
@@ -379,7 +365,7 @@ export default function VendedoresAcessoPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(formatError(result, 'Não foi possível atualizar a senha.'));
+                throw new Error(formatError(result, 'NÃ£o foi possÃ­vel atualizar a senha.'));
             }
 
             setSuccess(result.message ?? 'Senha atualizada com sucesso.');
@@ -415,7 +401,7 @@ export default function VendedoresAcessoPage() {
                     const result = await response.json().catch(() => ({}));
 
                     if (!response.ok) {
-                        throw new Error(formatError(result, 'Não foi possível remover o acesso.'));
+                        throw new Error(formatError(result, 'NÃ£o foi possÃ­vel remover o acesso.'));
                     }
 
                     setSuccess(result.message ?? 'Acesso removido com sucesso.');
@@ -438,12 +424,6 @@ export default function VendedoresAcessoPage() {
                             <Space direction="vertical" size={18} className="spa-hero-stack">
                                 <div>
                                     <Typography.Text className="spa-brand-kicker">Vendedores</Typography.Text>
-                                    <Typography.Title level={2} className="spa-hero-title">
-                                        Gestão de acesso
-                                    </Typography.Title>
-                                    <Typography.Paragraph className="spa-hero-description">
-                                        Cadastre, edite e remova acessos sem sair da interface nova.
-                                    </Typography.Paragraph>
                                 </div>
 
                                 {error ? <Alert type="error" showIcon message={error} /> : null}
@@ -452,7 +432,7 @@ export default function VendedoresAcessoPage() {
                                 <Input
                                     allowClear
                                     prefix={<TeamOutlined />}
-                                    placeholder="Buscar nome, e-mail, estabelecimento ou perfil"
+                                    placeholder="Buscar nome, e-mail ou última atividade"
                                     value={tableSearchTerm}
                                     onChange={(event) => setTableSearchTerm(event.target.value)}
                                     size="large"
@@ -572,7 +552,7 @@ export default function VendedoresAcessoPage() {
                     </Col>
 
                     <Col span={24}>
-                        <Card className="spa-table-card" title="Vendedores com acesso">
+                        <Card className="spa-table-card" title={`Vendedores com acesso: ${visibleRows.length}`}>
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 6 }} />
                             ) : visibleRows.length === 0 ? (
@@ -598,7 +578,7 @@ export default function VendedoresAcessoPage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title={currentRow ? `Quick View: ${currentRow.name}` : 'Quick View'}>
+                <Card className="spa-quick-view-card" title={currentRow ? currentRow.name : 'Selecione um vendedor'}>
                     {!currentRow ? (
                         <Empty description="Selecione um vendedor para ver os detalhes" />
                     ) : (
@@ -644,7 +624,19 @@ export default function VendedoresAcessoPage() {
                             <List
                                 dataSource={payload.recent_activity}
                                 renderItem={(item) => (
-                                    <List.Item className="spa-quick-link-item">
+                                    <List.Item
+                                        className="spa-quick-link-item"
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={() => setSelectedRow(item)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                setSelectedRow(item);
+                                            }
+                                        }}
+                                        style={{ cursor: 'pointer' }}
+                                    >
                                         <Space align="start" size={14}>
                                             <div className="spa-quick-link-icon">
                                                 <EyeOutlined />
@@ -726,3 +718,6 @@ export default function VendedoresAcessoPage() {
         </Row>
     );
 }
+
+
+

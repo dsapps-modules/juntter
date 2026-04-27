@@ -13,17 +13,33 @@ class SpaVendedorAccessTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_vendedor_access_overview_returns_rows(): void
+    public function test_vendedor_access_overview_returns_only_released_access(): void
     {
-        $vendor = User::factory()->create([
+        $releasedVendor = User::factory()->create([
             'name' => 'João Vendedor',
             'email' => 'joao@example.com',
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
         ]);
 
-        $vendor->vendedor()->create([
+        $releasedVendor->vendedor()->create([
             'estabelecimento_id' => '9001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'comissao' => 4.5,
+            'meta_vendas' => 10000,
+            'must_change_password' => false,
+        ]);
+
+        $blockedVendor = User::factory()->create([
+            'name' => 'Contato Bloqueado',
+            'email' => 'contato@dsaplicativos.com.br',
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $blockedVendor->vendedor()->create([
+            'estabelecimento_id' => '9002',
             'sub_nivel' => 'admin_loja',
             'status' => 'ativo',
             'comissao' => 4.5,
@@ -40,6 +56,15 @@ class SpaVendedorAccessTest extends TestCase
             'revenue' => 4520.20,
         ]);
 
+        PaytimeEstablishment::create([
+            'id' => 9002,
+            'fantasy_name' => 'Loja Bloqueada',
+            'email' => 'bloqueada@example.com',
+            'active' => true,
+            'status' => 'APPROVED',
+            'revenue' => 1000.00,
+        ]);
+
         PaytimeTransaction::create([
             'external_id' => 'trx-v1',
             'establishment_id' => '9001',
@@ -50,12 +75,13 @@ class SpaVendedorAccessTest extends TestCase
             'fees' => 0,
         ]);
 
-        $response = $this->actingAs($vendor)->getJson('/api/spa/vendedores/acesso');
+        $response = $this->actingAs($releasedVendor)->getJson('/api/spa/vendedores/acesso');
 
         $response
             ->assertOk()
             ->assertJsonPath('summary.total_vendors', 1)
             ->assertJsonPath('summary.active_vendors', 1)
+            ->assertJsonCount(1, 'rows')
             ->assertJsonPath('rows.0.name', 'João Vendedor')
             ->assertJsonPath('rows.0.establishment', 'Loja Teste');
     }
