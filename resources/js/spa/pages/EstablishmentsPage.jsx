@@ -1,6 +1,5 @@
 import {
     ArrowRightOutlined,
-    CloseOutlined,
     EyeOutlined,
     LineChartOutlined,
     MoreOutlined,
@@ -166,20 +165,14 @@ export default function EstablishmentsPage() {
                 <Row gutter={[20, 20]}>
                     <Col span={24}>
                         <Card className="spa-toolbar-card">
-                            <Space direction="vertical" size={16} className="spa-toolbar-stack">
-                                <Row gutter={[16, 16]} style={{ width: '100%' }}>
-                                    <Col xs={24} md={8}>
-                                        <Statistic title="Total" value={payload.summary.total_establishments} />
-                                    </Col>
-                                    <Col xs={24} md={8}>
-                                        <Statistic title="Ativos" value={payload.summary.active_establishments} />
-                                    </Col>
-                                    <Col xs={24} md={8}>
-                                        <Statistic title="Receita" value={payload.summary.total_revenue} />
-                                    </Col>
-                                </Row>
-
-                                <div className="spa-filter-row">
+                            <div className="spa-toolbar-top-row">
+                                <div className="spa-toolbar-metric">
+                                    <Statistic title="Total" value={payload.summary.total_establishments} />
+                                </div>
+                                <div className="spa-toolbar-metric">
+                                    <Statistic title="Ativos" value={payload.summary.active_establishments} />
+                                </div>
+                                <div className="spa-toolbar-filter">
                                     <Segmented
                                         value={filter}
                                         options={filters}
@@ -189,7 +182,8 @@ export default function EstablishmentsPage() {
                                         }}
                                         className="spa-segmented"
                                     />
-
+                                </div>
+                                <div className="spa-toolbar-search">
                                     <Input
                                         allowClear
                                         prefix={<SearchOutlined />}
@@ -202,7 +196,7 @@ export default function EstablishmentsPage() {
                                         className="spa-search-input"
                                     />
                                 </div>
-                            </Space>
+                            </div>
                         </Card>
                     </Col>
 
@@ -242,23 +236,10 @@ export default function EstablishmentsPage() {
 
             <Col xs={24} xl={8}>
                 <Card className="spa-quick-view-card" title={selectedRow ? selectedRow.name : 'Quick View'}>
-                    <Button type="text" icon={<CloseOutlined />} className="spa-quick-close" />
-
                     {!selectedRow ? (
                         <Empty description="Selecione uma linha para ver os detalhes" />
                     ) : (
                         <>
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Statistic title="Revenue" value={selectedRow.revenue} />
-                                </Col>
-                                <Col span={12}>
-                                    <Statistic title="Active Tasks" value={selectedRow.active_tasks} />
-                                </Col>
-                            </Row>
-
-                            <Divider />
-
                             <Space direction="vertical" size={10} className="spa-detail-stack">
                                 <Space wrap>
                                     <StatusPill status={selectedRow.status} />

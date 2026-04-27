@@ -103,6 +103,20 @@ class SpaVendedoresOverviewTest extends TestCase
             ->assertJsonPath('rows.0.location', 'Junco do Seridó - PB');
     }
 
+    public function test_vendedores_overview_quick_view_does_not_render_revenue_and_active_tasks_stats(): void
+    {
+        $componentSource = file_get_contents(base_path('resources/js/spa/pages/EstablishmentsPage.jsx'));
+
+        $this->assertIsString($componentSource);
+        $this->assertStringContainsString('spa-toolbar-top-row', $componentSource);
+        $this->assertStringContainsString('spa-toolbar-metric', $componentSource);
+        $this->assertStringContainsString('spa-toolbar-filter', $componentSource);
+        $this->assertStringContainsString('spa-toolbar-search', $componentSource);
+        $this->assertStringNotContainsString('title="Receita"', $componentSource);
+        $this->assertStringNotContainsString('Statistic title="Revenue"', $componentSource);
+        $this->assertStringNotContainsString('Statistic title="Active Tasks"', $componentSource);
+    }
+
     public function test_vendedores_overview_paginates_results_in_pages_of_twenty(): void
     {
         $admin = User::factory()->create([
