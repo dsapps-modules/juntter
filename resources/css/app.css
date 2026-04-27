@@ -65,6 +65,13 @@ a {
     box-shadow: 0 10px 24px rgba(244, 196, 0, 0.34);
 }
 
+.spa-brand-copy {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
 .spa-brand-kicker,
 .spa-header-kicker,
 .spa-placeholder-kicker {
@@ -76,9 +83,14 @@ a {
     color: var(--spa-muted);
 }
 
-.spa-brand-title,
+.spa-brand-name,
 .spa-header-title,
 .spa-placeholder-title {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     margin: 0 !important;
     font-weight: 800 !important;
     color: var(--spa-text) !important;

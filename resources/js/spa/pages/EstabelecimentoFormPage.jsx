@@ -180,16 +180,10 @@ export default function EstabelecimentoFormPage() {
                 <Card className="spa-toolbar-card">
                     <Row gutter={[16, 16]} align="middle" justify="space-between">
                         <Col xs={24} md={16}>
-                            <Typography.Text className="spa-brand-kicker">Estabelecimentos</Typography.Text>
-                            <Typography.Title level={2} className="spa-hero-title" style={{ marginTop: 8, marginBottom: 2 }}>
-                                Editar {formatText(systemInfo?.document)}
-                            </Typography.Title>
-                            <Typography.Title level={3} className="spa-hero-title" style={{ marginTop: 0, marginBottom: 8 }}>
+                            <Typography.Text className="spa-brand-kicker">Editar Estabelecimento</Typography.Text>
+                            <Typography.Title level={2} style={{ marginTop: 8, marginBottom: 2 }}>
                                 {displayName || 'Estabelecimento'}
                             </Typography.Title>
-                            <Typography.Paragraph className="spa-hero-description" style={{ marginBottom: 0 }}>
-                                Atualize as informações do estabelecimento usando a mesma estrutura da listagem e da página de detalhes.
-                            </Typography.Paragraph>
                         </Col>
 
                         <Col xs={24} md={8}>

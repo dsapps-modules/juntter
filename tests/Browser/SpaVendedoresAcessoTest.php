@@ -13,10 +13,10 @@ class SpaVendedoresAcessoTest extends DuskTestCase
 {
     use DatabaseMigrations;
 
-    private function createAdmin(): User
+    private function createAdmin(string $name = 'Admin Test'): User
     {
         return User::create([
-            'name' => 'Admin Test',
+            'name' => $name,
             'email' => 'admin.acesso@test.com',
             'password' => Hash::make('senha123456'),
             'nivel_acesso' => 'admin',
@@ -26,7 +26,7 @@ class SpaVendedoresAcessoTest extends DuskTestCase
 
     public function test_the_access_table_uses_icons_without_redundant_labels(): void
     {
-        $user = $this->createAdmin();
+        $user = $this->createAdmin('Admin Teste Muito Muito Longo Para Sidebar');
 
         PaytimeEstablishment::create([
             'id' => 9001,
@@ -55,8 +55,8 @@ class SpaVendedoresAcessoTest extends DuskTestCase
                 ->waitForText('Vendedores com acesso: 1', 10)
                 ->waitFor('.spa-brand', 10)
                 ->assertSeeIn('.spa-brand .ant-avatar', 'AT')
+                ->assertAttribute('.spa-brand-name', 'title', 'Admin Teste Muito Muito Longo Para Sidebar')
                 ->assertSeeIn('.spa-brand-kicker', 'Admin')
-                ->assertSeeIn('.spa-brand', 'Admin Test')
                 ->waitFor('.spa-table-card .ant-table', 10)
                 ->with('.spa-table-card', function (Browser $table): void {
                     $table->assertSee('Joao Vendedor')

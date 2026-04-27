@@ -6,7 +6,7 @@ import {
     SettingOutlined,
     TeamOutlined,
 } from '@ant-design/icons';
-import { Avatar, Button, Drawer, Grid, Layout, Menu, Space, Spin, Typography } from 'antd';
+import { Avatar, Button, Drawer, Grid, Layout, Menu, Space, Spin, Tooltip, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -52,12 +52,34 @@ function mapNavigationItem(item) {
     };
 }
 
+function formatAccessLevel(accessLevel) {
+    return accessLevel
+        .split('_')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        .join(' ');
+}
+
+function getUserInitials(name) {
+    const initials = name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join('');
+
+    return initials || 'U';
+}
+
 export default function AppShell() {
     const navigate = useNavigate();
     const location = useLocation();
     const screens = Grid.useBreakpoint();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [accessLevel, setAccessLevel] = useState('');
+    const [accessLabel, setAccessLabel] = useState('');
+    const [userName, setUserName] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState('');
 
     useEffect(() => {
         const controller = new AbortController();
@@ -76,10 +98,16 @@ export default function AppShell() {
                 }
 
                 const data = await response.json();
+                setUserName(data.profile?.name ?? '');
+                setAvatarUrl(data.profile?.avatar_url ?? data.profile?.photo_url ?? '');
                 setAccessLevel(data.profile?.nivel_acesso ?? '');
+                setAccessLabel(data.profile?.nivel_label ?? formatAccessLevel(data.profile?.nivel_acesso ?? ''));
             } catch (error) {
                 if (error.name !== 'AbortError') {
+                    setUserName('');
+                    setAvatarUrl('');
                     setAccessLevel('');
+                    setAccessLabel('');
                 }
             }
         }
@@ -151,14 +179,18 @@ export default function AppShell() {
             {screens.lg ? (
                 <Sider className="spa-sider" width={276}>
                     <div className="spa-brand">
-                        <Avatar size={44} className="spa-brand-mark">
-                            J
+                        <Avatar size={44} className="spa-brand-mark" src={avatarUrl || undefined}>
+                            {getUserInitials(userName)}
                         </Avatar>
-                        <div>
-                            <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
-                            <Typography.Title level={4} className="spa-brand-title">
-                                Control Center
-                            </Typography.Title>
+                        <div className="spa-brand-copy">
+                            <Tooltip title={userName || ''} placement="right">
+                                <Typography.Text className="spa-brand-name" title={userName || ''}>
+                                    {userName || <Spin size="small" />}
+                                </Typography.Text>
+                            </Tooltip>
+                            <Typography.Text className="spa-brand-kicker">
+                                {accessLabel || <Spin size="small" />}
+                            </Typography.Text>
                         </div>
                     </div>
                     {menu}
@@ -168,7 +200,7 @@ export default function AppShell() {
                     open={mobileMenuOpen}
                     onClose={() => setMobileMenuOpen(false)}
                     placement="left"
-                    title="Juntter"
+                    title={accessLabel || 'Carregando'}
                     width={280}
                     className="spa-mobile-drawer"
                 >
