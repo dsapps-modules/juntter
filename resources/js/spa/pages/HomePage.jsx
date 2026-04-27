@@ -4,7 +4,6 @@ import {
     ClockCircleFilled,
     CreditCardOutlined,
     DownOutlined,
-    FilterFilled,
     HomeOutlined,
     MinusCircleFilled,
     ThunderboltOutlined,
@@ -133,6 +132,7 @@ export default function HomePage() {
     const [overviewCollapsed, setOverviewCollapsed] = useState(false);
     const [distributionCollapsed, setDistributionCollapsed] = useState(false);
     const [statusCollapsed, setStatusCollapsed] = useState(false);
+    const showBankAccountLink = payload.user?.nivel_acesso === 'vendedor';
 
     useEffect(() => {
         const controller = new AbortController();
@@ -201,9 +201,13 @@ export default function HomePage() {
                     </Typography.Text>
                 </div>
 
-                <Link to="/perfil" className="spa-dashboard-toolbar-center">
-                    Acessar Conta Bancária
-                </Link>
+                {showBankAccountLink ? (
+                    <Link to="/perfil" className="spa-dashboard-toolbar-center">
+                        Acessar Conta Bancária
+                    </Link>
+                ) : (
+                    <span />
+                )}
 
                 <div className="spa-dashboard-toolbar-filters">
                     <Select
@@ -218,7 +222,6 @@ export default function HomePage() {
                         onChange={setYear}
                         className="spa-toolbar-select"
                     />
-                    <Button className="spa-toolbar-filter-button" icon={<FilterFilled />} />
                 </div>
             </div>
 
