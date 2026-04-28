@@ -3,6 +3,7 @@ import {
     BankOutlined,
     CreditCardOutlined,
     MenuOutlined,
+    LogoutOutlined,
     SettingOutlined,
     TeamOutlined,
 } from '@ant-design/icons';
@@ -159,6 +160,16 @@ export default function AppShell() {
     }, [location.pathname, location.search, menuSections]);
 
     const selectedKey = currentItem?.key ?? 'home.dashboard';
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    const logoutForm = (
+        <form method="POST" action="/logout" className="spa-sider-logout-form">
+            <input type="hidden" name="_token" value={csrfToken ?? ''} />
+            <Button danger htmlType="submit" block icon={<LogoutOutlined />} className="spa-secondary-button">
+                Sair
+            </Button>
+        </form>
+    );
 
     const menu = (
         <Menu
@@ -193,7 +204,10 @@ export default function AppShell() {
                             </Typography.Text>
                         </div>
                     </div>
-                    {menu}
+                    <div className="spa-sider-body">
+                        {menu}
+                        <div className="spa-sider-footer">{logoutForm}</div>
+                    </div>
                 </Sider>
             ) : (
                 <Drawer
@@ -204,7 +218,10 @@ export default function AppShell() {
                     width={280}
                     className="spa-mobile-drawer"
                 >
-                    {menu}
+                    <div className="spa-sider-body spa-sider-drawer-body">
+                        {menu}
+                        <div className="spa-sider-footer">{logoutForm}</div>
+                    </div>
                 </Drawer>
             )}
 

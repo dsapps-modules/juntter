@@ -100,6 +100,7 @@ class CobrancaOverviewController extends Controller
         });
 
         return response()->json([
+            'seller_name' => trim((string) $user->name) !== '' ? $user->name : 'Vendedor',
             'summary' => $summary,
             'filters' => ['Todos', 'Pagas', 'Pendentes', 'Falhas'],
             'actions' => [

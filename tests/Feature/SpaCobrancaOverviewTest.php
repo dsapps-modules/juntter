@@ -15,6 +15,7 @@ class SpaCobrancaOverviewTest extends TestCase
     public function test_cobranca_overview_returns_transaction_and_link_data(): void
     {
         $user = User::factory()->create([
+            'name' => 'Test User',
             'nivel_acesso' => 'admin',
             'email_verified_at' => now(),
         ]);
@@ -46,6 +47,7 @@ class SpaCobrancaOverviewTest extends TestCase
 
         $response
             ->assertOk()
+            ->assertJsonPath('seller_name', 'Test User')
             ->assertJsonPath('summary.total_transactions', 1)
             ->assertJsonPath('summary.paid_transactions', 1)
             ->assertJsonPath('summary.active_links', 1)

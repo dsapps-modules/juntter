@@ -23,7 +23,7 @@ export const navigationByRole = {
         {
             label: 'Cobrança',
             children: [
-                { key: 'cobranca.unica', path: '/cobranca', label: 'Única', icon: 'unica' },
+                { key: 'cobranca.unica', path: '/cobranca', label: 'Cobrança Única', icon: 'unica' },
                 {
                     type: 'submenu',
                     key: 'cobranca.links',
@@ -68,7 +68,7 @@ export const navigationByRole = {
         {
             label: 'Cobrança',
             children: [
-                { key: 'cobranca.unica', path: '/cobranca', label: 'Única', icon: 'unica' },
+                { key: 'cobranca.unica', path: '/cobranca', label: 'Cobrança Única', icon: 'unica' },
                 {
                     type: 'submenu',
                     key: 'cobranca.links',

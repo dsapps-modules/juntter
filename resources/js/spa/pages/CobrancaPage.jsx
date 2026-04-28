@@ -1,12 +1,11 @@
 import {
-    ArrowRightOutlined,
     BankOutlined,
     CreditCardOutlined,
     EllipsisOutlined,
+    ReloadOutlined,
     QrcodeOutlined,
-    ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Alert, Avatar, Button, Card, Col, Divider, Empty, Input, List, Row, Segmented, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
+import { Alert, Button, Card, Col, Divider, Empty, Input, List, Row, Segmented, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -28,6 +27,7 @@ const defaultPayload = {
     selected: null,
     recent_links: [],
     actions: [],
+    seller_name: 'Vendedor',
 };
 
 const filters = ['Todos', 'Pagas', 'Pendentes', 'Falhas'];
@@ -107,17 +107,12 @@ export default function CobrancaPage() {
             title: 'Cliente',
             dataIndex: 'customer',
             render: (_, record) => (
-                <Space size={14}>
-                    <Avatar className="spa-row-avatar">
-                        {record.customer?.slice(0, 2)?.toUpperCase() ?? 'JT'}
-                    </Avatar>
+                <div>
+                    <Typography.Text strong>{record.customer}</Typography.Text>
                     <div>
-                        <Typography.Text strong>{record.customer}</Typography.Text>
-                        <div>
-                            <Typography.Text type="secondary">{record.establishment}</Typography.Text>
-                        </div>
+                        <Typography.Text type="secondary">{record.establishment}</Typography.Text>
                     </div>
-                </Space>
+                </div>
             ),
         },
         {
@@ -159,21 +154,27 @@ export default function CobrancaPage() {
                                     </Col>
                                 </Row>
 
-                                <Segmented value={filter} options={filters} onChange={setFilter} className="spa-segmented" />
+                                <div className="spa-filter-row">
+                                    <Segmented value={filter} options={filters} onChange={setFilter} className="spa-segmented" />
 
-                                <Space wrap className="spa-filter-row">
-                                    <Input
-                                        allowClear
-                                        prefix={<CreditCardOutlined />}
-                                        className="spa-search-input"
-                                        placeholder="Buscar cliente, estabelecimento ou status"
-                                        value={searchTerm}
-                                        onChange={(event) => setSearchTerm(event.target.value)}
-                                    />
-                                    <Button icon={<ThunderboltOutlined />} className="spa-secondary-button">
-                                        Atualizar
-                                    </Button>
-                                </Space>
+                                    <div className="spa-search-group">
+                                        <Input
+                                            allowClear
+                                            prefix={<CreditCardOutlined />}
+                                            className="spa-search-input"
+                                            placeholder="Buscar cliente, estabelecimento ou status"
+                                            value={searchTerm}
+                                            onChange={(event) => setSearchTerm(event.target.value)}
+                                        />
+                                        <Button
+                                            type="button"
+                                            icon={<ReloadOutlined />}
+                                            className="spa-secondary-button"
+                                            aria-label="Atualizar dados"
+                                            title="Atualizar dados"
+                                        />
+                                    </div>
+                                </div>
                             </Space>
                         </Card>
                     </Col>
@@ -207,7 +208,11 @@ export default function CobrancaPage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title={selectedRow ? `Quick View: ${selectedRow.customer}` : 'Quick View'} extra={<EllipsisOutlined />}>
+                <Card
+                    className="spa-quick-view-card"
+                    title={payload.seller_name || 'Vendedor'}
+                    extra={<EllipsisOutlined />}
+                >
                     {!selectedRow ? (
                         <Empty description="Selecione uma transação para ver detalhes" />
                     ) : (

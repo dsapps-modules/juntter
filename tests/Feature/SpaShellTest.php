@@ -76,6 +76,17 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_sidebar_contains_a_logout_button(): void
+    {
+        $shellSource = file_get_contents(base_path('resources/js/spa/layouts/AppShell.jsx'));
+        $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+
+        $this->assertStringContainsString('action="/logout"', $shellSource);
+        $this->assertStringContainsString('Sair', $shellSource);
+        $this->assertStringContainsString('spa-sider-footer', $shellSource);
+        $this->assertStringContainsString('Cobrança Única', $navigationSource);
+    }
+
     public function test_the_cobranca_route_is_available(): void
     {
         $response = $this->get('/app/cobranca');
