@@ -68,14 +68,6 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
-    public function test_the_change_password_route_is_available(): void
-    {
-        $response = $this->get('/app/change-password');
-
-        $response->assertOk();
-        $response->assertSee('id="app"', false);
-    }
-
     public function test_the_profile_route_is_available(): void
     {
         $response = $this->get('/app/perfil');

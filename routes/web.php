@@ -7,7 +7,6 @@ use App\Http\Controllers\LinkPagamentoBoletoController;
 use App\Http\Controllers\LinkPagamentoController;
 use App\Http\Controllers\LinkPagamentoPixController;
 use App\Http\Controllers\PagamentoClienteController;
-use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\ProfileController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -46,7 +45,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('nivel.acesso:admin')
         ->name('admin.dashboard');
 
-    Route::middleware(['nivel.acesso:vendedor', 'must.change.password'])->group(function () {
+    Route::middleware(['nivel.acesso:vendedor'])->group(function () {
         Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
         Route::get('/cobranca', fn () => redirect('/app/cobranca'))->name('cobranca.index');
         Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
@@ -143,12 +142,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/password', function () {
         return view('profile.dashboard.password');
     })->name('profile.password');
-});
-
-// Rotas para troca de senha obrigatória
-Route::middleware('auth')->group(function () {
-    Route::get('/password/change', [PasswordController::class, 'showChangeForm'])->name('password.change');
-    Route::post('/password/change', [PasswordController::class, 'changePassword'])->name('password.change.post');
 });
 
 // Rotas públicas para processar pagamentos via link

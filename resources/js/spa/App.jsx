@@ -15,7 +15,6 @@ import LoginPage from './pages/LoginPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
-import ChangePasswordPage from './pages/ChangePasswordPage';
 import ProfilePage from './pages/ProfilePage';
 
 const appTheme = {
@@ -58,7 +57,6 @@ export default function App() {
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                     <Route path="/verify-email" element={<VerifyEmailPage />} />
-                    <Route path="/change-password" element={<ChangePasswordPage />} />
                     <Route element={<AppShell />}>
                         <Route path="home" element={<HomePage />} />
                         <Route path="painel" element={<HomePage />} />

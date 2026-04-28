@@ -90,7 +90,7 @@ export const navigationByRole = {
 };
 
 export const sharedNavigationItems = [
-    { key: 'perfil.configuracoes', path: '/perfil', label: 'Configurações', icon: 'perfil' },
+    { key: 'perfil.configuracoes', path: '/perfil', label: 'Perfil', icon: 'perfil' },
 ];
 
 export function buildNavigationSections(role) {

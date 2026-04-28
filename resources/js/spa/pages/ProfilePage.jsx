@@ -1,4 +1,4 @@
-import { DeleteOutlined, MailOutlined, SafetyOutlined, SaveOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined, SaveOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Col, Divider, Input, Row, Space, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -19,11 +19,15 @@ const defaultProfile = {
     },
 };
 
+function formatLabel(value, fallback) {
+    return value || fallback;
+}
+
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [savingProfile, setSavingProfile] = useState(false);
     const [savingPassword, setSavingPassword] = useState(false);
-    const [deletingAccount, setDeletingAccount] = useState(false);
+    const [resendingVerification, setResendingVerification] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [profile, setProfile] = useState(defaultProfile);
@@ -36,7 +40,6 @@ export default function ProfilePage() {
         password: '',
         password_confirmation: '',
     });
-    const [deletionPassword, setDeletionPassword] = useState('');
 
     useEffect(() => {
         const controller = new AbortController();
@@ -60,6 +63,7 @@ export default function ProfilePage() {
 
                 const data = await response.json();
                 const nextProfile = data.profile ?? defaultProfile;
+
                 setProfile(nextProfile);
                 setProfileForm({
                     name: nextProfile.name ?? '',
@@ -116,12 +120,13 @@ export default function ProfilePage() {
 
             if (payload.redirect) {
                 window.location.assign(payload.redirect);
-            } else {
-                setProfile((current) => ({
-                    ...current,
-                    ...profileForm,
-                }));
+                return;
             }
+
+            setProfile((current) => ({
+                ...current,
+                ...profileForm,
+            }));
         } catch (submitError) {
             setError(submitError.message || 'Falha ao atualizar o perfil.');
         } finally {
@@ -150,39 +155,22 @@ export default function ProfilePage() {
         }
     }
 
-    async function handleDeleteAccount(event) {
-        event.preventDefault();
-        setDeletingAccount(true);
-        setError('');
-        setSuccess('');
-
-        try {
-            const payload = await submitJson('/profile', 'DELETE', {
-                password: deletionPassword,
-            });
-
-            if (payload.redirect) {
-                window.location.assign(payload.redirect);
-                return;
-            }
-
-            window.location.assign('/app/login');
-        } catch (submitError) {
-            setError(submitError.message || 'Falha ao remover a conta.');
-        } finally {
-            setDeletingAccount(false);
-        }
-    }
-
     async function resendVerification() {
+        setResendingVerification(true);
         setError('');
         setSuccess('');
 
         try {
             const payload = await submitJson('/email/verification-notification', 'POST', {});
-            setSuccess(payload.message === 'verification-link-sent' ? 'Novo link de verificação enviado.' : 'Solicitação enviada.');
+            setSuccess(
+                payload.message === 'verification-link-sent'
+                    ? 'Novo link de verificação enviado.'
+                    : 'Solicitação enviada.',
+            );
         } catch (submitError) {
             setError(submitError.message || 'Falha ao reenviar o e-mail de verificação.');
+        } finally {
+            setResendingVerification(false);
         }
     }
 
@@ -191,149 +179,134 @@ export default function ProfilePage() {
             <Col xs={24} xl={16}>
                 <Card className="spa-hero-card">
                     <Space direction="vertical" size={18} className="spa-hero-stack">
-                        <div>
-                            <Typography.Text className="spa-brand-kicker">Configurações</Typography.Text>
-                            <Typography.Title level={2} className="spa-hero-title">
-                                Perfil e segurança da conta.
-                            </Typography.Title>
-                            <Typography.Paragraph className="spa-hero-description">
-                                Atualize nome, e-mail, senha e o estado de verificação em uma interface única, sem sair da SPA.
-                            </Typography.Paragraph>
-                        </div>
-
                         {error ? <Alert type="error" showIcon message={error} /> : null}
                         {success ? <Alert type="success" showIcon message={success} /> : null}
 
-                        <Row gutter={[16, 16]}>
-                            <Col xs={24} md={8}>
-                                <Card bordered={false} className="spa-mini-surface">
-                                    <Typography.Text className="spa-placeholder-kicker">Tipo de acesso</Typography.Text>
-                                    <Typography.Title level={4} className="spa-mini-title">
-                                        {profile.nivel_label || 'Usuário'}
-                                    </Typography.Title>
-                                </Card>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Card bordered={false} className="spa-mini-surface">
-                                    <Typography.Text className="spa-placeholder-kicker">Verificação</Typography.Text>
-                                    <Typography.Title level={4} className="spa-mini-title">
-                                        {profile.verified ? 'Concluída' : 'Pendente'}
-                                    </Typography.Title>
-                                </Card>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Card bordered={false} className="spa-mini-surface">
-                                    <Typography.Text className="spa-placeholder-kicker">Conta criada</Typography.Text>
-                                    <Typography.Title level={4} className="spa-mini-title">
-                                        {profile.created_at || 'N/A'}
-                                    </Typography.Title>
-                                </Card>
-                            </Col>
-                        </Row>
-                    </Space>
-                </Card>
+                        <Space direction="vertical" size={20} style={{ width: '100%' }}>
+                            <div>
+                                <Typography.Title level={4} className="spa-section-title">
+                                    Dados pessoais
+                                </Typography.Title>
 
-                <Card className="spa-table-card" title="Dados pessoais">
-                    {loading ? (
-                        <Typography.Text type="secondary">Carregando perfil...</Typography.Text>
-                    ) : (
-                        <form onSubmit={handleProfileSubmit}>
-                            <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                                <div>
-                                    <Typography.Text strong>Nome</Typography.Text>
-                                    <Input
-                                        value={profileForm.name}
-                                        onChange={(event) => setProfileForm((current) => ({ ...current, name: event.target.value }))}
-                                        placeholder="Seu nome"
-                                        size="large"
-                                        className="spa-auth-input"
-                                    />
-                                </div>
+                                {loading ? (
+                                    <Typography.Text type="secondary">Carregando perfil...</Typography.Text>
+                                ) : (
+                                    <form onSubmit={handleProfileSubmit}>
+                                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                            <div>
+                                                <Typography.Text strong>Nome</Typography.Text>
+                                                <Input
+                                                    value={profileForm.name}
+                                                    onChange={(event) =>
+                                                        setProfileForm((current) => ({ ...current, name: event.target.value }))
+                                                    }
+                                                    prefix={<UserOutlined />}
+                                                    placeholder="Seu nome"
+                                                    size="large"
+                                                    className="spa-auth-input"
+                                                />
+                                            </div>
 
-                                <div>
-                                    <Typography.Text strong>E-mail</Typography.Text>
-                                    <Input
-                                        value={profileForm.email}
-                                        onChange={(event) => setProfileForm((current) => ({ ...current, email: event.target.value }))}
-                                        prefix={<MailOutlined />}
-                                        placeholder="nome@empresa.com"
-                                        size="large"
-                                        className="spa-auth-input"
-                                    />
-                                </div>
+                                            <div>
+                                                <Typography.Text strong>E-mail</Typography.Text>
+                                                <Input
+                                                    value={profileForm.email}
+                                                    onChange={(event) =>
+                                                        setProfileForm((current) => ({ ...current, email: event.target.value }))
+                                                    }
+                                                    prefix={<MailOutlined />}
+                                                    placeholder="nome@empresa.com"
+                                                    size="large"
+                                                    className="spa-auth-input"
+                                                />
+                                            </div>
 
-                                <Space wrap>
-                                    <Tag color={profile.verified ? 'green' : 'gold'}>
-                                        {profile.verified ? 'E-mail verificado' : 'E-mail pendente'}
-                                    </Tag>
-                                    <Tag color="default">{profile.vendedor?.sub_nivel || profile.nivel_acesso || 'Conta'}</Tag>
-                                </Space>
+                                            <Space wrap>
+                                                <Tag color={profile.verified ? 'green' : 'gold'}>
+                                                    {profile.verified ? 'E-mail verificado' : 'E-mail pendente'}
+                                                </Tag>
+                                                <Tag color="default">{profile.vendedor?.sub_nivel || profile.nivel_acesso || 'Conta'}</Tag>
+                                            </Space>
 
-                                {! profile.verified ? (
-                                    <Alert
-                                        type="warning"
-                                        showIcon
-                                        message="Seu e-mail ainda não foi verificado."
-                                        description="Você pode reenviar o link de verificação sem sair da aplicação."
-                                        action={
-                                            <Button size="small" onClick={resendVerification}>
-                                                Reenviar link
+                                            {!profile.verified ? (
+                                                <Alert
+                                                    type="warning"
+                                                    showIcon
+                                                    message="Seu e-mail ainda não foi verificado."
+                                                    description="Você pode reenviar o link de verificação sem sair da aplicação."
+                                                    action={
+                                                        <Button size="small" onClick={resendVerification} loading={resendingVerification}>
+                                                            Reenviar link
+                                                        </Button>
+                                                    }
+                                                />
+                                            ) : null}
+
+                                            <div className="spa-profile-actions">
+                                                <Button type="primary" htmlType="submit" loading={savingProfile} icon={<SaveOutlined />}>
+                                                    Salvar dados
+                                                </Button>
+                                            </div>
+                                        </Space>
+                                    </form>
+                                )}
+                            </div>
+
+                            <Divider />
+
+                            <div>
+                                <Typography.Title level={4} className="spa-section-title">
+                                    Alterar senha
+                                </Typography.Title>
+
+                                <form onSubmit={handlePasswordSubmit}>
+                                    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                        <Input.Password
+                                            value={passwordForm.current_password}
+                                            onChange={(event) =>
+                                                setPasswordForm((current) => ({ ...current, current_password: event.target.value }))
+                                            }
+                                            prefix={<LockOutlined />}
+                                            placeholder="Senha atual"
+                                            size="large"
+                                            className="spa-auth-input"
+                                        />
+
+                                        <Input.Password
+                                            value={passwordForm.password}
+                                            onChange={(event) =>
+                                                setPasswordForm((current) => ({ ...current, password: event.target.value }))
+                                            }
+                                            prefix={<LockOutlined />}
+                                            placeholder="Nova senha"
+                                            size="large"
+                                            className="spa-auth-input"
+                                        />
+
+                                        <Input.Password
+                                            value={passwordForm.password_confirmation}
+                                            onChange={(event) =>
+                                                setPasswordForm((current) => ({
+                                                    ...current,
+                                                    password_confirmation: event.target.value,
+                                                }))
+                                            }
+                                            prefix={<LockOutlined />}
+                                            placeholder="Confirmar nova senha"
+                                            size="large"
+                                            className="spa-auth-input"
+                                        />
+
+                                        <div className="spa-profile-actions">
+                                            <Button type="primary" htmlType="submit" loading={savingPassword} icon={<SaveOutlined />}>
+                                                Atualizar senha
                                             </Button>
-                                        }
-                                    />
-                                ) : null}
-
-                                <div className="spa-profile-actions">
-                                    <Button type="primary" htmlType="submit" loading={savingProfile} icon={<SaveOutlined />}>
-                                        Salvar alterações
-                                    </Button>
-                                    <Button onClick={() => window.location.assign('/app/change-password')} icon={<SafetyOutlined />}>
-                                        Trocar senha obrigatória
-                                    </Button>
-                                </div>
-                            </Space>
-                        </form>
-                    )}
-                </Card>
-
-                <Card className="spa-table-card" title="Atualizar senha">
-                    <form onSubmit={handlePasswordSubmit}>
-                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                            <Input.Password
-                                value={passwordForm.current_password}
-                                onChange={(event) =>
-                                    setPasswordForm((current) => ({ ...current, current_password: event.target.value }))
-                                }
-                                placeholder="Senha atual"
-                                size="large"
-                                className="spa-auth-input"
-                            />
-
-                            <Input.Password
-                                value={passwordForm.password}
-                                onChange={(event) =>
-                                    setPasswordForm((current) => ({ ...current, password: event.target.value }))
-                                }
-                                placeholder="Nova senha"
-                                size="large"
-                                className="spa-auth-input"
-                            />
-
-                            <Input.Password
-                                value={passwordForm.password_confirmation}
-                                onChange={(event) =>
-                                    setPasswordForm((current) => ({ ...current, password_confirmation: event.target.value }))
-                                }
-                                placeholder="Confirmar nova senha"
-                                size="large"
-                                className="spa-auth-input"
-                            />
-
-                            <Button type="primary" htmlType="submit" loading={savingPassword} icon={<SaveOutlined />}>
-                                Atualizar senha
-                            </Button>
+                                        </div>
+                                    </Space>
+                                </form>
+                            </div>
                         </Space>
-                    </form>
+                    </Space>
                 </Card>
             </Col>
 
@@ -354,6 +327,9 @@ export default function ProfilePage() {
                         <Typography.Text type="secondary">
                             {profile.vendedor?.status ? `Status do acesso: ${profile.vendedor.status}` : 'Sem vínculo de vendedor'}
                         </Typography.Text>
+                        <Typography.Text type="secondary">
+                            Conta criada: {formatLabel(profile.created_at, 'N/A')}
+                        </Typography.Text>
 
                         <Divider />
 
@@ -363,30 +339,7 @@ export default function ProfilePage() {
 
                         <Space direction="vertical" size={8} style={{ width: '100%' }}>
                             <Link to="/home">Ir para o painel</Link>
-                            <Link to="/estabelecimentos">Abrir estabelecimentos</Link>
-                            <Link to="/change-password">Fluxo de senha obrigatória</Link>
                         </Space>
-
-                        <Divider />
-
-                        <form onSubmit={handleDeleteAccount}>
-                            <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                <Typography.Title level={5}>Zona de risco</Typography.Title>
-                                <Typography.Text type="secondary">
-                                    A exclusão remove o acesso da conta e encerra a sessão atual.
-                                </Typography.Text>
-                                <Input.Password
-                                    value={deletionPassword}
-                                    onChange={(event) => setDeletionPassword(event.target.value)}
-                                    placeholder="Confirme a senha"
-                                    size="large"
-                                    className="spa-auth-input"
-                                />
-                                <Button danger icon={<DeleteOutlined />} htmlType="submit" loading={deletingAccount}>
-                                    Excluir conta
-                                </Button>
-                            </Space>
-                        </form>
                     </Space>
                 </Card>
             </Col>
