@@ -6,6 +6,11 @@ import EstabelecimentoDetailsPage from './pages/EstabelecimentoDetailsPage';
 import EstabelecimentoFormPage from './pages/EstabelecimentoFormPage';
 import HomePage from './pages/HomePage';
 import CobrancaPage from './pages/CobrancaPage';
+import CobrancaBoletoPage from './pages/cobranca/CobrancaBoletoPage';
+import CobrancaCartaoCreditoPage from './pages/cobranca/CobrancaCartaoCreditoPage';
+import CobrancaCreditoVistaPage from './pages/cobranca/CobrancaCreditoVistaPage';
+import CobrancaPlanoContratadoPage from './pages/cobranca/CobrancaPlanoContratadoPage';
+import CobrancaPixPage from './pages/cobranca/CobrancaPixPage';
 import LinksPagamentoPage from './pages/LinksPagamentoPage';
 import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
 import VendedoresPage from './pages/VendedoresPage';
@@ -64,6 +69,11 @@ export default function App() {
                         <Route path="estabelecimentos/:estabelecimentoId" element={<EstabelecimentoDetailsPage />} />
                         <Route path="estabelecimentos/:estabelecimentoId/editar" element={<EstabelecimentoFormPage />} />
                         <Route path="cobranca" element={<CobrancaPage />} />
+                        <Route path="cobranca/pix" element={<CobrancaPixPage />} />
+                        <Route path="cobranca/credito-vista" element={<CobrancaCreditoVistaPage />} />
+                        <Route path="cobranca/cartao-credito" element={<CobrancaCartaoCreditoPage />} />
+                        <Route path="cobranca/boleto" element={<CobrancaBoletoPage />} />
+                        <Route path="cobranca/planos" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="links-pagamento" element={<LinksPagamentoPage />} />
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
                         <Route path="links-pagamento/:linkId/editar" element={<LinkPagamentoFormPage />} />

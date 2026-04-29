@@ -84,7 +84,86 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('action="/logout"', $shellSource);
         $this->assertStringContainsString('Sair', $shellSource);
         $this->assertStringContainsString('spa-sider-footer', $shellSource);
-        $this->assertStringContainsString('Cobrança Única', $navigationSource);
+        $this->assertStringContainsString('Histórico', $navigationSource);
+    }
+
+    public function test_the_top_sidebar_items_are_back_in_home_before_cobranca(): void
+    {
+        $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+        $vendedorSectionStart = strpos($navigationSource, 'vendedor: [');
+        $sharedItemsStart = strpos($navigationSource, 'export const sharedNavigationItems');
+        $vendedorSection = substr(
+            $navigationSource,
+            $vendedorSectionStart === false ? 0 : $vendedorSectionStart,
+            $sharedItemsStart === false || $vendedorSectionStart === false ? null : $sharedItemsStart - $vendedorSectionStart
+        );
+
+        $saldoPosition = strpos($vendedorSection, 'cobranca.saldo');
+        $simularPosition = strpos($vendedorSection, 'cobranca.simular');
+        $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'Cobrança'");
+
+        $this->assertNotFalse($saldoPosition);
+        $this->assertNotFalse($simularPosition);
+        $this->assertNotFalse($cobrancaHeaderPosition);
+        $this->assertLessThan($simularPosition, $saldoPosition);
+        $this->assertLessThan($cobrancaHeaderPosition, $simularPosition);
+    }
+
+    public function test_the_cobranca_sidebar_items_are_in_the_expected_order(): void
+    {
+        $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+
+        $historicoPosition = strpos($navigationSource, 'cobranca.unica');
+        $pixPosition = strpos($navigationSource, 'cobranca.pix');
+        $cartaoCreditoPosition = strpos($navigationSource, 'cobranca.cartao-credito');
+        $boletoPosition = strpos($navigationSource, 'cobranca.boleto');
+
+        $this->assertNotFalse($historicoPosition);
+        $this->assertNotFalse($pixPosition);
+        $this->assertNotFalse($cartaoCreditoPosition);
+        $this->assertNotFalse($boletoPosition);
+        $this->assertLessThan($pixPosition, $historicoPosition);
+        $this->assertLessThan($cartaoCreditoPosition, $pixPosition);
+        $this->assertLessThan($boletoPosition, $cartaoCreditoPosition);
+    }
+
+    public function test_the_removed_cobranca_sidebar_items_are_not_present(): void
+    {
+        $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+
+        $this->assertStringNotContainsString('cobranca.credito-vista', $navigationSource);
+        $this->assertStringNotContainsString('links.cartao', $navigationSource);
+        $this->assertStringNotContainsString('links.pix', $navigationSource);
+        $this->assertStringNotContainsString('links.boleto', $navigationSource);
+        $this->assertStringNotContainsString("label: 'Links de Pagamento'", $navigationSource);
+    }
+
+    public function test_the_plano_contratado_item_is_shared_between_the_separator_and_profile(): void
+    {
+        $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+
+        $planosPosition = strpos($navigationSource, 'cobranca.planos');
+        $perfilPosition = strpos($navigationSource, 'perfil.configuracoes');
+
+        $this->assertNotFalse($planosPosition);
+        $this->assertNotFalse($perfilPosition);
+        $this->assertLessThan($perfilPosition, $planosPosition);
+    }
+
+    public function test_the_new_cobranca_pages_are_available(): void
+    {
+        foreach ([
+            '/app/cobranca/pix',
+            '/app/cobranca/credito-vista',
+            '/app/cobranca/cartao-credito',
+            '/app/cobranca/boleto',
+            '/app/cobranca/planos',
+        ] as $path) {
+            $response = $this->get($path);
+
+            $response->assertOk();
+            $response->assertSee('id="app"', false);
+        }
     }
 
     public function test_the_cobranca_route_is_available(): void

@@ -33,12 +33,22 @@ const iconByName = {
     simular: <CreditCardOutlined />,
     planos: <CreditCardOutlined />,
     saldo: <CreditCardOutlined />,
+    credit: <CreditCardOutlined />,
     perfil: <SettingOutlined />,
 };
 
 function mapNavigationItem(item) {
-    if (item.type === 'submenu') {
+    if (item.type === 'submenu' || item.type === 'group') {
+        if (item.type === 'group') {
+            return {
+                type: 'group',
+                label: item.label,
+                children: item.children.map(mapNavigationItem),
+            };
+        }
+
         return {
+            type: 'submenu',
             key: item.key,
             label: item.label,
             icon: iconByName[item.icon] ?? null,

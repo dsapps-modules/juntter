@@ -23,22 +23,10 @@ export const navigationByRole = {
         {
             label: 'Cobrança',
             children: [
-                { key: 'cobranca.unica', path: '/cobranca', label: 'Cobrança Única', icon: 'unica' },
-                {
-                    type: 'submenu',
-                    key: 'cobranca.links',
-                    path: '/links-pagamento',
-                    label: 'Links de Pagamento',
-                    icon: 'links',
-                    children: [
-                        { key: 'links.cartao', path: '/links-pagamento', label: 'Cartão', icon: 'cartao' },
-                        { key: 'links.pix', path: '/links-pagamento/novo?tipo=PIX', label: 'Pix', icon: 'pix' },
-                        { key: 'links.boleto', path: '/links-pagamento/novo?tipo=BOLETO', label: 'Boleto', icon: 'boleto' },
-                    ],
-                },
-                { key: 'cobranca.simular', path: '/cobranca', label: 'Simular Transação', icon: 'simular' },
-                { key: 'cobranca.planos', path: '/cobranca', label: 'Planos de Cobrança', icon: 'planos' },
-                { key: 'cobranca.saldo', path: '/cobranca', label: 'Saldo e Extrato', icon: 'saldo' },
+                { key: 'cobranca.unica', path: '/cobranca', label: 'Histórico', icon: 'unica' },
+                { key: 'cobranca.pix', path: '/cobranca/pix', label: 'Pix', icon: 'pix' },
+                { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
+                { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
             ],
         },
     ],
@@ -63,33 +51,24 @@ export const navigationByRole = {
             label: 'Home',
             children: [
                 { key: 'home.dashboard', path: '/home', label: 'Dashboard', icon: 'dashboard' },
+                { key: 'cobranca.saldo', path: '/cobranca', label: 'Saldo e Extrato', icon: 'saldo' },
+                { key: 'cobranca.simular', path: '/cobranca', label: 'Simular Transação', icon: 'simular' },
             ],
         },
         {
             label: 'Cobrança',
             children: [
-                { key: 'cobranca.unica', path: '/cobranca', label: 'Cobrança Única', icon: 'unica' },
-                {
-                    type: 'submenu',
-                    key: 'cobranca.links',
-                    path: '/links-pagamento',
-                    label: 'Links de Pagamento',
-                    icon: 'links',
-                    children: [
-                        { key: 'links.cartao', path: '/links-pagamento', label: 'Cartão', icon: 'cartao' },
-                        { key: 'links.pix', path: '/links-pagamento/novo?tipo=PIX', label: 'Pix', icon: 'pix' },
-                        { key: 'links.boleto', path: '/links-pagamento/novo?tipo=BOLETO', label: 'Boleto', icon: 'boleto' },
-                    ],
-                },
-                { key: 'cobranca.simular', path: '/cobranca', label: 'Simular Transação', icon: 'simular' },
-                { key: 'cobranca.planos', path: '/cobranca', label: 'Planos de Cobrança', icon: 'planos' },
-                { key: 'cobranca.saldo', path: '/cobranca', label: 'Saldo e Extrato', icon: 'saldo' },
+                { key: 'cobranca.unica', path: '/cobranca', label: 'Histórico', icon: 'unica' },
+                { key: 'cobranca.pix', path: '/cobranca/pix', label: 'Pix', icon: 'pix' },
+                { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
+                { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
             ],
         },
     ],
 };
 
 export const sharedNavigationItems = [
+    { key: 'cobranca.planos', path: '/cobranca/planos', label: 'Plano Contratado', icon: 'planos' },
     { key: 'perfil.configuracoes', path: '/perfil', label: 'Perfil', icon: 'perfil' },
 ];
 
@@ -113,7 +92,7 @@ export function findNavigationItem(sections, path) {
 
     const walk = (items) => {
         items.forEach((item) => {
-            if (item.type === 'submenu') {
+            if (item.type === 'submenu' || item.type === 'group') {
                 considerItem(item);
                 walk(item.children);
                 return;
@@ -133,8 +112,7 @@ export function buildKeyPathMap(sections) {
 
     const walk = (items) => {
         items.forEach((item) => {
-            if (item.type === 'submenu') {
-                map.set(item.key, item.path);
+            if (item.type === 'submenu' || item.type === 'group') {
                 walk(item.children);
                 return;
             }
@@ -147,3 +125,4 @@ export function buildKeyPathMap(sections) {
 
     return map;
 }
+
