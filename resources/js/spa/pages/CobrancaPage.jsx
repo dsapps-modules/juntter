@@ -2,10 +2,29 @@ import {
     BankOutlined,
     CreditCardOutlined,
     EllipsisOutlined,
-    ReloadOutlined,
     QrcodeOutlined,
+    ReloadOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Divider, Empty, Input, List, Row, Segmented, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
+import {
+    Alert,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Empty,
+    Input,
+    List,
+    Row,
+    Segmented,
+    Select,
+    Skeleton,
+    Space,
+    Statistic,
+    Table,
+    Tag,
+    Timeline,
+    Typography,
+} from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -26,11 +45,23 @@ const defaultPayload = {
     rows: [],
     selected: null,
     recent_links: [],
+    periods: [],
     actions: [],
     seller_name: 'Vendedor',
+    selected_period: 'all',
 };
 
 const filters = ['Todos', 'Pagas', 'Pendentes', 'Falhas'];
+
+function getCurrentPeriod() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function formatPeriodLabel(period) {
+    const [year, month] = period.split('-');
+    return `${month}/${year}`;
+}
 
 const filterMatcher = {
     Todos: () => true,
@@ -40,11 +71,13 @@ const filterMatcher = {
 };
 
 export default function CobrancaPage() {
+    const currentPeriod = getCurrentPeriod();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [payload, setPayload] = useState(defaultPayload);
     const [filter, setFilter] = useState('Todos');
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -54,7 +87,11 @@ export default function CobrancaPage() {
             setError('');
 
             try {
-                const response = await fetch('/api/spa/cobranca', {
+                const params = new URLSearchParams();
+
+                params.set('period', selectedPeriod);
+
+                const response = await fetch(`/api/spa/cobranca${params.toString() !== '' ? `?${params.toString()}` : ''}`, {
                     signal: controller.signal,
                     headers: {
                         Accept: 'application/json',
@@ -74,7 +111,9 @@ export default function CobrancaPage() {
                     rows: data.rows ?? [],
                     selected: data.selected ?? data.rows?.[0] ?? null,
                     recent_links: data.recent_links ?? [],
+                    periods: data.periods ?? current.periods,
                     actions: data.actions ?? [],
+                    selected_period: data.selected_period ?? current.selected_period,
                 }));
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
@@ -88,7 +127,29 @@ export default function CobrancaPage() {
         loadOverview();
 
         return () => controller.abort();
-    }, []);
+    }, [selectedPeriod]);
+
+    const periodOptions = useMemo(() => {
+        const optionsByValue = new Map();
+
+        optionsByValue.set('all', {
+            label: 'Todos os meses',
+            value: 'all',
+        });
+
+        optionsByValue.set(currentPeriod, {
+            label: formatPeriodLabel(currentPeriod),
+            value: currentPeriod,
+        });
+
+        (payload.periods ?? []).forEach((item) => {
+            if (item?.value && !optionsByValue.has(item.value)) {
+                optionsByValue.set(item.value, item);
+            }
+        });
+
+        return Array.from(optionsByValue.values());
+    }, [currentPeriod, payload.periods]);
 
     const visibleRows = useMemo(() => {
         return payload.rows.filter((item) => {
@@ -142,15 +203,24 @@ export default function CobrancaPage() {
                     <Col span={24}>
                         <Card className="spa-toolbar-card">
                             <Space direction="vertical" size={16} className="spa-toolbar-stack">
-                                <Row gutter={[16, 16]} style={{ width: '100%' }}>
-                                    <Col xs={24} md={8}>
+                                <Row gutter={[16, 16]} align="middle" style={{ width: '100%' }}>
+                                    <Col xs={24} md={6}>
                                         <Statistic title="Total" value={payload.summary.total_transactions} />
                                     </Col>
-                                    <Col xs={24} md={8}>
+                                    <Col xs={24} md={6}>
                                         <Statistic title="Hoje" value={payload.summary.today_transactions} />
                                     </Col>
-                                    <Col xs={24} md={8}>
+                                    <Col xs={24} md={6}>
                                         <Statistic title="Pagas" value={payload.summary.paid_transactions} />
+                                    </Col>
+                                    <Col xs={24} md={6} className="spa-period-column">
+                                        <Select
+                                            value={selectedPeriod}
+                                            options={periodOptions}
+                                            onChange={setSelectedPeriod}
+                                            className="spa-period-select"
+                                            aria-label="Filtrar por mês e ano"
+                                        />
                                     </Col>
                                 </Row>
 
@@ -167,7 +237,7 @@ export default function CobrancaPage() {
                                             onChange={(event) => setSearchTerm(event.target.value)}
                                         />
                                         <Button
-                                            type="button"
+                                            htmlType="button"
                                             icon={<ReloadOutlined />}
                                             className="spa-secondary-button"
                                             aria-label="Atualizar dados"

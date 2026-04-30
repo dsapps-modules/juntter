@@ -1,11 +1,8 @@
 // vendedor
 projetosoulpsi@gmail.com
 
-**Dashboard**
-[ ] Trocar 'Consultar Extrato' por 'Saldo em Conta'
-
 **Histórico**
-[ ] Limitar a exibição em função de seletor mês/ano
+[x] Limitar a exibição em função de seletor mês/ano
 
 **Pix**
 [ ] Form + implementação
@@ -24,6 +21,9 @@ projetosoulpsi@gmail.com
 [ ] Remover grupo 'Links de Pagamento'
 [ ] Criar grupo usuários
 [ ] Cadastrar usuário do estabelecimento
+
+**Dashboard**
+[ ] Trocar 'Consultar Extrato' por 'Saldo em Conta'
 
 
 

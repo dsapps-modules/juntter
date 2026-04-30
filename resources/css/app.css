@@ -220,6 +220,16 @@ a {
     width: 100%;
 }
 
+.spa-period-column {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.spa-period-select {
+    width: 100%;
+    max-width: 180px;
+}
+
 .spa-filter-row {
     display: flex;
     align-items: center;

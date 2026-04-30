@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\LinkPagamento;
 use App\Models\PaytimeTransaction;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class CobrancaOverviewController extends Controller
 {
@@ -23,6 +25,7 @@ class CobrancaOverviewController extends Controller
 
         $establishmentId = $user->getEstabelecimentoId();
         $isRestricted = $user->isVendedor() && $establishmentId !== null;
+        $selectedPeriod = $this->resolveSelectedPeriod($request->string('period')->toString());
 
         $transactionsQuery = PaytimeTransaction::query()
             ->with('establishment:id,fantasy_name,first_name,last_name');
@@ -34,7 +37,10 @@ class CobrancaOverviewController extends Controller
             $linksQuery->where('estabelecimento_id', (string) $establishmentId);
         }
 
-        $transactions = $transactionsQuery->orderByDesc('created_at')->limit(24)->get();
+        $periods = $this->buildPeriodOptions((clone $transactionsQuery)->get(['created_at']));
+        $transactions = $this->applyPeriodFilter($transactionsQuery, $selectedPeriod)
+            ->orderByDesc('created_at')
+            ->get();
         $links = $linksQuery->orderByDesc('created_at')->limit(8)->get();
 
         $today = Carbon::today();
@@ -102,6 +108,8 @@ class CobrancaOverviewController extends Controller
         return response()->json([
             'seller_name' => trim((string) $user->name) !== '' ? $user->name : 'Vendedor',
             'summary' => $summary,
+            'periods' => $periods,
+            'selected_period' => $selectedPeriod,
             'filters' => ['Todos', 'Pagas', 'Pendentes', 'Falhas'],
             'actions' => [
                 ['title' => 'Novo cartão', 'description' => 'Fluxo de crédito e débito.', 'href' => '/cobranca'],
@@ -112,6 +120,71 @@ class CobrancaOverviewController extends Controller
             'selected' => $selected,
             'recent_links' => $recentLinks->values(),
         ]);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\PaytimeTransaction>  $transactions
+     * @return array<int, array{label: string, value: string}>
+     */
+    private function buildPeriodOptions(Collection $transactions): array
+    {
+        $currentPeriod = Carbon::now()->format('Y-m');
+
+        $availablePeriods = $transactions
+            ->map(function (PaytimeTransaction $transaction): string {
+                return Carbon::parse($transaction->created_at)->format('Y-m');
+            })
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        $periodValues = collect([$currentPeriod])
+            ->merge($availablePeriods)
+            ->unique()
+            ->values();
+
+        return $periodValues
+            ->map(function (string $period): array {
+                return [
+                    'label' => Carbon::createFromFormat('Y-m', $period)->format('m/Y'),
+                    'value' => $period,
+                ];
+            })
+            ->prepend([
+                'label' => 'Todos os meses',
+                'value' => 'all',
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function applyPeriodFilter(Builder $query, string $selectedPeriod): Builder
+    {
+        if ($selectedPeriod === 'all') {
+            return $query;
+        }
+
+        $period = Carbon::createFromFormat('Y-m', $selectedPeriod);
+
+        return $query->whereBetween('created_at', [
+            $period->copy()->startOfMonth(),
+            $period->copy()->endOfMonth(),
+        ]);
+    }
+
+    private function resolveSelectedPeriod(string $selectedPeriod): string
+    {
+        if ($selectedPeriod === 'all') {
+            return 'all';
+        }
+
+        try {
+            Carbon::createFromFormat('Y-m', $selectedPeriod);
+        } catch (\Throwable) {
+            return Carbon::now()->format('Y-m');
+        }
+
+        return $selectedPeriod;
     }
 
     private function formatMoney(int $amountInCents): string
