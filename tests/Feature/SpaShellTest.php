@@ -355,6 +355,18 @@ class SpaShellTest extends TestCase
         $this->get('/vendedores/faturamento')->assertRedirect('/app/vendedores/faturamento');
     }
 
+    public function test_legacy_vendedores_root_route_redirects_to_the_spa(): void
+    {
+        $admin = User::factory()->create([
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($admin);
+
+        $this->get('/vendedores')->assertRedirect('/app/vendedores');
+    }
+
     public function test_legacy_links_pagamento_routes_redirect_to_the_spa(): void
     {
         $user = User::factory()->create([

@@ -20,6 +20,9 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 Route::get('/', function () {
     return view('checkout');
 })->name('checkout');
+Route::middleware('guest')->get('/login', function () {
+    return view('auth.login');
+})->name('login');
 Route::redirect('/home', '/app/home')->name('home');
 Route::view('/app/{any?}', 'spa')
     ->where('any', '.*')
@@ -101,6 +104,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // Rotas de Estabelecimentos (apenas admin e super admin)
 Route::middleware(['auth', 'verified', 'nivel.acesso:admin'])->group(function () {
+    Route::redirect('/vendedores', '/app/vendedores')->name('vendedores.index');
     Route::get('/estabelecimentos', [EstabelecimentoController::class, 'index'])->name('estabelecimentos.index');
     Route::get('/estabelecimentos/export', [EstabelecimentoController::class, 'export'])->name('estabelecimentos.export');
     Route::get('/estabelecimentos/search', [EstabelecimentoController::class, 'search'])->name('estabelecimentos.search');
