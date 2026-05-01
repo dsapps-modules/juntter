@@ -37,7 +37,7 @@
         <div class="container">
             <!-- Logo -->
             <a class="navbar-brand" href="{{ route('dashboard') }}">
-                <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" height="45" class="logo-img">
+                <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" class="logo-img" style="height: 32.4px;">
             </a>
 
             <!-- Mobile menu button -->
@@ -65,7 +65,7 @@
                                 </li>
                                 <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
                                             class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
-                                <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca/simular') }}"><i
                                             class="fas fa-calculator me-2"></i>Simular Transação</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
@@ -96,7 +96,7 @@
                                 {{-- <li><a class="dropdown-item" href="{{ route('cobranca.pagarcontas') }}"><i
                                             class="fas fa-file-invoice-dollar me-2"></i>Pagar Contas</a></li> --}}
 
-                                <li><a class="dropdown-item" href="{{ url('/app/cobranca') }}"><i
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca/saldoextrato') }}"><i
                                             class="fas fa-wallet me-2"></i>Saldo e Extrato</a></li>
                             </ul>
                         </div>

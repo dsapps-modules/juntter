@@ -79,13 +79,17 @@ class SpaShellTest extends TestCase
     public function test_the_sidebar_contains_a_logout_button(): void
     {
         $shellSource = file_get_contents(base_path('resources/js/spa/layouts/AppShell.jsx'));
+        $dashboardTemplateSource = file_get_contents(base_path('resources/views/templates/dashboard-template.blade.php'));
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
 
         $this->assertStringContainsString('action="/logout"', $shellSource);
         $this->assertStringContainsString('Sair', $shellSource);
         $this->assertStringContainsString('spa-sider-footer', $shellSource);
-        $this->assertStringContainsString('HistÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³rico', $navigationSource);
-        $this->assertStringContainsString('Histórico', $navigationSource);
+        $this->assertStringContainsString('height: 39.6', $shellSource);
+        $this->assertStringContainsString('style="height: 32.4px;"', $dashboardTemplateSource);
+        $this->assertStringContainsString('Hist', $navigationSource);
+
+    }
 
     public function test_the_top_sidebar_items_are_back_in_home_before_cobranca(): void
     {
@@ -99,10 +103,13 @@ class SpaShellTest extends TestCase
         );
 
         $saldoPosition = strpos($vendedorSection, 'cobranca.saldo');
+        $saldoRoutePosition = strpos($vendedorSection, '/cobranca/saldoextrato');
+        $simularRoutePosition = strpos($vendedorSection, '/cobranca/simular');
+        $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'Cobran");
         $simularPosition = strpos($vendedorSection, 'cobranca.simular');
-        $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'CobranÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§a'");
-        $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'Cobrança'");
         $this->assertNotFalse($saldoPosition);
+        $this->assertNotFalse($saldoRoutePosition);
+        $this->assertNotFalse($simularRoutePosition);
         $this->assertNotFalse($simularPosition);
         $this->assertNotFalse($cobrancaHeaderPosition);
         $this->assertLessThan($simularPosition, $saldoPosition);
@@ -158,6 +165,8 @@ class SpaShellTest extends TestCase
             '/app/cobranca/cartao-credito',
             '/app/cobranca/boleto',
             '/app/cobranca/planos',
+            '/app/cobranca/saldoextrato',
+            '/app/cobranca/simular',
             '/app/links-pagamento-pix/1',
         ] as $path) {
             $response = $this->get($path);
@@ -171,11 +180,15 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
-        $this->assertStringContainsString('Link de pagamento', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento', $pageSource);
         $this->assertStringContainsString('Gerar QR Code', $pageSource);
-        $this->assertStringContainsString('Link de Pagamento - PIX', $pageSource);
-        $this->assertStringContainsString('Descreva o que o cliente estÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ pagando', $pageSource);
-        $this->assertStringContainsString('Descreva o que o cliente está pagando', $pageSource);
+        $this->assertStringContainsString('spa-pix-collapse-label-badge', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-link-button', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
+        $this->assertStringContainsString('spa-pix-form-panel', $pageSource);
+        $this->assertStringNotContainsString('Collapse', $pageSource);
+        $this->assertStringNotContainsString('Abra para montar o PIX', $pageSource);
+        $this->assertStringContainsString('Descreva o que o cliente', $pageSource);
     }
 
     public function test_the_pix_page_contains_the_side_panel_content(): void
@@ -183,10 +196,10 @@ class SpaShellTest extends TestCase
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
         $this->assertStringContainsString('Painel lateral', $pageSource);
-        $this->assertStringContainsString('Visao rapida', $pageSource);
+        $this->assertStringContainsString('Visão rápida', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('Ultimos links', $pageSource);
-        $this->assertStringContainsString('Dica rapida', $pageSource);
+        $this->assertStringContainsString('Últimos links', $pageSource);
+        $this->assertStringContainsString('Dica rápida', $pageSource);
         $this->assertStringContainsString('Criar link PIX', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
@@ -352,9 +365,9 @@ class SpaShellTest extends TestCase
         $this->actingAs($vendor);
 
         $this->get('/cobranca')->assertRedirect('/app/cobranca');
-        $this->get('/cobranca/simular')->assertRedirect('/app/cobranca');
+        $this->get('/cobranca/simular')->assertRedirect('/app/cobranca/simular');
         $this->get('/cobranca/planos')->assertRedirect('/app/cobranca');
-        $this->get('/cobranca/saldoextrato')->assertRedirect('/app/cobranca');
+        $this->get('/cobranca/saldoextrato')->assertRedirect('/app/cobranca/saldoextrato');
         $this->get('/cobranca/transacao/123')->assertRedirect('/app/cobranca');
         $this->get('/cobranca/boleto/123')->assertRedirect('/app/cobranca');
     }

@@ -330,6 +330,22 @@ a {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
+    flex-wrap: nowrap;
+}
+
+.spa-pix-page-header > .spa-pix-page-toggle-button {
+    order: 1;
+    flex: 0 0 auto;
+}
+
+.spa-pix-page-header > .spa-pix-page-link-button {
+    order: 2;
+    flex: 0 0 auto;
+}
+
+.spa-pix-form-panel {
+    width: 100%;
+    margin-top: 18px;
 }
 
 .spa-pix-page-title {
@@ -414,6 +430,7 @@ a {
     padding-left: 0 !important;
     padding-right: 0 !important;
     font-weight: 700;
+    align-items: center !important;
 }
 
 .spa-pix-collapse .ant-collapse-content {
@@ -423,6 +440,50 @@ a {
 
 .spa-pix-collapse .ant-collapse-content-box {
     padding: 0 !important;
+}
+
+.spa-pix-collapse-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.spa-pix-collapse-label-badge,
+.spa-pix-page-link-button.ant-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    width: fit-content;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #fff1ba 0%, #ffd84d 100%);
+    border: 1px solid rgba(171, 130, 0, 0.18);
+    color: #2f2400;
+    box-shadow: 0 10px 24px rgba(196, 146, 0, 0.18);
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+}
+
+.spa-pix-page-link-button.ant-btn {
+    height: auto;
+    line-height: 1.2;
+    border: 1px solid rgba(171, 130, 0, 0.18);
+}
+
+.spa-pix-page-link-button.ant-btn:hover,
+.spa-pix-page-link-button.ant-btn:focus {
+    color: #2f2400;
+}
+
+.spa-pix-collapse-label-badge .anticon {
+    font-size: 1.1rem;
+}
+
+.spa-pix-collapse-label-hint {
+    padding-left: 4px;
+    font-size: 0.92rem;
+    font-weight: 500;
 }
 
 .spa-pix-table-card {

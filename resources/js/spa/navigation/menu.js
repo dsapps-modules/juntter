@@ -51,8 +51,8 @@ export const navigationByRole = {
             label: 'Home',
             children: [
                 { key: 'home.dashboard', path: '/home', label: 'Dashboard', icon: 'dashboard' },
-                { key: 'cobranca.saldo', path: '/cobranca', label: 'Saldo e Extrato', icon: 'saldo' },
-                { key: 'cobranca.simular', path: '/cobranca', label: 'Simular Transação', icon: 'simular' },
+                { key: 'cobranca.saldo', path: '/cobranca/saldoextrato', label: 'Saldo e Extrato', icon: 'saldo' },
+                { key: 'cobranca.simular', path: '/cobranca/simular', label: 'Simular Transação', icon: 'simular' },
             ],
         },
         {

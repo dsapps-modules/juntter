@@ -15,7 +15,6 @@ import {
     Button,
     Card,
     Col,
-    Collapse,
     DatePicker,
     Divider,
     Empty,
@@ -612,133 +611,137 @@ export default function CobrancaPixPage() {
                         ) : null}
 
                         <div className="spa-pix-page-header">
-                            <div className="spa-pix-page-title-spacer" aria-hidden="true" />
-                            <Button type="primary" onClick={openLinkModal} className="spa-primary-button">
-                                Link de pagamento
+                            <Button
+                                htmlType="button"
+                                onClick={() => setFormVisible((current) => !current)}
+                                aria-expanded={formVisible}
+                                className="spa-pix-collapse-label-badge spa-pix-page-toggle-button"
+                            >
+                                <QrcodeOutlined />
+                                <span>Gerar QR Code</span>
+                            </Button>
+
+                            <Button
+                                htmlType="button"
+                                onClick={openLinkModal}
+                                className="spa-pix-collapse-label-badge spa-pix-page-link-button"
+                            >
+                                Link de Pagamento
                             </Button>
                         </div>
 
-                        <Collapse
-                            activeKey={formVisible ? ['pix-form'] : []}
-                            onChange={(keys) => setFormVisible(Array.isArray(keys) && keys.includes('pix-form'))}
-                            items={[
-                                {
-                                    key: 'pix-form',
-                                    label: 'Gerar QR Code',
-                                    children: (
-                                        <Form
-                                            form={form}
-                                            layout="vertical"
-                                            requiredMark={false}
-                                            initialValues={initialValues}
-                                            onFinish={handleSubmit}
-                                            className="spa-pix-form"
-                                        >
-                                            <Row gutter={[16, 16]}>
-                                                <Col xs={24} md={12}>
-                                                    <Form.Item
-                                                        label="Valor da transação"
-                                                        name="amount"
-                                                        rules={[
-                                                            { required: true, message: 'Informe o valor da transação.' },
-                                                        ]}
-                                                    >
-                                                        <Input size="large" placeholder="0,00" inputMode="decimal" />
-                                                    </Form.Item>
-                                                </Col>
-                                                <Col xs={24} md={12}>
-                                                    <Form.Item
-                                                        label="Quem paga as taxas"
-                                                        name="interest"
-                                                        rules={[
-                                                            { required: true, message: 'Selecione quem paga as taxas.' },
-                                                        ]}
-                                                    >
-                                                        <Select
-                                                            size="large"
-                                                            placeholder="Selecione..."
-                                                            options={interestOptions}
-                                                        />
-                                                    </Form.Item>
-                                                </Col>
-                                            </Row>
+                        {formVisible ? (
+                            <div className="spa-pix-form-panel">
+                                <Form
+                                    form={form}
+                                    layout="vertical"
+                                    requiredMark={false}
+                                    initialValues={initialValues}
+                                    onFinish={handleSubmit}
+                                    className="spa-pix-form"
+                                >
+                                    <Row gutter={[16, 16]}>
+                                        <Col xs={24} md={12}>
+                                            <Form.Item
+                                                label="Valor da transação"
+                                                name="amount"
+                                                rules={[{ required: true, message: 'Informe o valor da transação.' }]}
+                                            >
+                                                <Input size="large" placeholder="0,00" inputMode="decimal" />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col xs={24} md={12}>
+                                            <Form.Item
+                                                label="Quem paga as taxas"
+                                                name="interest"
+                                                rules={[{ required: true, message: 'Selecione quem paga as taxas.' }]}
+                                            >
+                                                <Select
+                                                    size="large"
+                                                    placeholder="Selecione..."
+                                                    options={interestOptions}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
 
-                                            <Card className="spa-pix-subcard" bordered={false}>
-                                                <Typography.Text className="spa-pix-section-label">
-                                                    Dados do cliente (opcional)
-                                                </Typography.Text>
+                                    <Card className="spa-pix-subcard" bordered={false}>
+                                        <Typography.Text className="spa-pix-section-label">
+                                            Dados do cliente (opcional)
+                                        </Typography.Text>
 
-                                                <Row gutter={[16, 16]}>
-                                                    <Col xs={24} md={12}>
-                                                        <Form.Item label="Nome do cliente" name={['client', 'first_name']}>
-                                                            <Input size="large" placeholder="Nome completo" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                    <Col xs={24} md={12}>
-                                                        <Form.Item label="Sobrenome" name={['client', 'last_name']}>
-                                                            <Input size="large" placeholder="Sobrenome" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                </Row>
-
-                                                <Row gutter={[16, 16]}>
-                                                    <Col xs={24} md={12}>
-                                                        <Form.Item label="CPF/CNPJ" name={['client', 'document']}>
-                                                            <Input size="large" placeholder="000.000.000-00" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                    <Col xs={24} md={12}>
-                                                        <Form.Item label="Telefone" name={['client', 'phone']}>
-                                                            <Input size="large" placeholder="(00) 00000-0000" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                </Row>
-
-                                                <Row gutter={[16, 0]}>
-                                                    <Col span={24}>
-                                                        <Form.Item label="Email" name={['client', 'email']} className="spa-pix-email-field">
-                                                            <Input size="large" placeholder="email@exemplo.com" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                </Row>
-                                            </Card>
-
-                                            <Card className="spa-pix-subcard spa-pix-observations-card" bordered={false}>
-                                                <Form.Item
-                                                    label="Observações"
-                                                    name="info_additional"
-                                                    className="spa-pix-observations-item"
-                                                >
-                                                    <Input.TextArea
-                                                        rows={2}
-                                                        placeholder="Informações extras sobre a transação"
-                                                    />
+                                        <Row gutter={[16, 16]}>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item label="Nome do cliente" name={['client', 'first_name']}>
+                                                    <Input size="large" placeholder="Nome completo" />
                                                 </Form.Item>
-                                                <Typography.Text type="secondary">
-                                                    Informações extras sobre a transação
-                                                </Typography.Text>
-                                            </Card>
+                                            </Col>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item label="Sobrenome" name={['client', 'last_name']}>
+                                                    <Input size="large" placeholder="Sobrenome" />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
 
-                                            <div className="spa-pix-actions">
-                                                <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cobranca')}>
-                                                    Fechar
-                                                </Button>
-                                                <Button
-                                                    type="primary"
-                                                    htmlType="submit"
-                                                    loading={submitting}
-                                                    icon={<SendOutlined />}
-                                                    className="spa-primary-button"
+                                        <Row gutter={[16, 16]}>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item label="CPF/CNPJ" name={['client', 'document']}>
+                                                    <Input size="large" placeholder="000.000.000-00" />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item label="Telefone" name={['client', 'phone']}>
+                                                    <Input size="large" placeholder="(00) 00000-0000" />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+
+                                        <Row gutter={[16, 0]}>
+                                            <Col span={24}>
+                                                <Form.Item
+                                                    label="Email"
+                                                    name={['client', 'email']}
+                                                    className="spa-pix-email-field"
                                                 >
-                                                    Criar Transação Pix
-                                                </Button>
-                                            </div>
-                                        </Form>
-                                    ),
-                                },
-                            ]}
-                            className="spa-pix-collapse"
-                        />
+                                                    <Input size="large" placeholder="email@exemplo.com" />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+                                    </Card>
+
+                                    <Card className="spa-pix-subcard spa-pix-observations-card" bordered={false}>
+                                        <Form.Item
+                                            label="Observações"
+                                            name="info_additional"
+                                            className="spa-pix-observations-item"
+                                        >
+                                            <Input.TextArea
+                                                rows={2}
+                                                placeholder="Informações extras sobre a transação"
+                                            />
+                                        </Form.Item>
+                                        <Typography.Text type="secondary">
+                                            Informações extras sobre a transação
+                                        </Typography.Text>
+                                    </Card>
+
+                                    <div className="spa-pix-actions">
+                                        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/cobranca')}>
+                                            Fechar
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            htmlType="submit"
+                                            loading={submitting}
+                                            icon={<SendOutlined />}
+                                            className="spa-primary-button"
+                                        >
+                                            Criar Transação Pix
+                                        </Button>
+                                    </div>
+                                </Form>
+                            </div>
+                        ) : null}
 
                         <Card
                             className="spa-pix-table-card"
@@ -780,7 +783,7 @@ export default function CobrancaPixPage() {
                             <div className="spa-pix-detail-side-hero">
                                 <QrcodeOutlined className="spa-pix-detail-side-icon" />
                                 <Typography.Title level={4} className="spa-pix-detail-side-title">
-                                    Visao rapida
+                                    Visão rápida
                                 </Typography.Title>
                             </div>
 
@@ -818,7 +821,7 @@ export default function CobrancaPixPage() {
                                 </Space>
                             </Card>
 
-                            <Card size="small" title="Ultimos links" bordered={false}>
+                            <Card size="small" title="Últimos links" bordered={false}>
                                 {recentLinks.length === 0 ? (
                                     <Empty description="Nenhum link recente encontrado." />
                                 ) : (
@@ -843,7 +846,7 @@ export default function CobrancaPixPage() {
                                 )}
                             </Card>
 
-                            <Card size="small" title="Dica rapida" bordered={false}>
+                            <Card size="small" title="Dica rápida" bordered={false}>
                                 <Space direction="vertical" size={8} style={{ width: '100%' }}>
                                     <Typography.Text>
                                         Use o botão de link de pagamento para criar uma cobrança imediata.

@@ -255,7 +255,7 @@ export default function AppShell() {
                     <img
                         src="/img/logo/juntter_webp_640_174.webp"
                         alt="Juntter"
-                        style={{ height: 44, width: 'auto', objectFit: 'contain' }}
+                        style={{ height: 39.6, width: 'auto', objectFit: 'contain' }}
                     />
                 </Header>
 
