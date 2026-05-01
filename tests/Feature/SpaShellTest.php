@@ -93,6 +93,9 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Sair', $shellSource);
         $this->assertStringContainsString('spa-sider-footer', $shellSource);
         $this->assertStringContainsString('height: 39.6', $shellSource);
+        $this->assertStringContainsString('UserSwitchOutlined', $shellSource);
+        $this->assertStringContainsString('UserOutlined', $shellSource);
+        $this->assertStringNotContainsString('SettingOutlined', $shellSource);
         $this->assertStringContainsString('style="height: 32.4px;"', $dashboardTemplateSource);
         $this->assertStringContainsString('Hist', $navigationSource);
 
@@ -152,16 +155,14 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString("label: 'Links de Pagamento'", $navigationSource);
     }
 
-    public function test_the_plano_contratado_item_is_shared_between_the_separator_and_profile(): void
+    public function test_the_plano_contratado_item_is_hidden_for_admins_and_kept_for_vendors(): void
     {
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
 
-        $planosPosition = strpos($navigationSource, 'cobranca.planos');
-        $perfilPosition = strpos($navigationSource, 'perfil.configuracoes');
-
-        $this->assertNotFalse($planosPosition);
-        $this->assertNotFalse($perfilPosition);
-        $this->assertLessThan($perfilPosition, $planosPosition);
+        $this->assertStringContainsString('getSharedNavigationItems(role)', $navigationSource);
+        $this->assertStringContainsString("role !== 'admin' && role !== 'super_admin'", $navigationSource);
+        $this->assertStringContainsString("label: 'Plano Contratado'", $navigationSource);
+        $this->assertStringContainsString("label: 'Perfil'", $navigationSource);
     }
 
     public function test_the_new_cobranca_pages_are_available(): void

@@ -67,10 +67,17 @@ export const navigationByRole = {
     ],
 };
 
-export const sharedNavigationItems = [
-    { key: 'cobranca.planos', path: '/cobranca/planos', label: 'Plano Contratado', icon: 'planos' },
-    { key: 'perfil.configuracoes', path: '/perfil', label: 'Perfil', icon: 'perfil' },
-];
+export function getSharedNavigationItems(role) {
+    const items = [
+        { key: 'perfil.configuracoes', path: '/perfil', label: 'Perfil', icon: 'perfil' },
+    ];
+
+    if (role !== 'admin' && role !== 'super_admin') {
+        items.unshift({ key: 'cobranca.planos', path: '/cobranca/planos', label: 'Plano Contratado', icon: 'planos' });
+    }
+
+    return items;
+}
 
 export function buildNavigationSections(role) {
     return navigationByRole[role] ?? [];

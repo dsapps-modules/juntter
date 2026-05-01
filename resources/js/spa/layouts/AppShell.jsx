@@ -4,7 +4,8 @@ import {
     CreditCardOutlined,
     MenuOutlined,
     LogoutOutlined,
-    SettingOutlined,
+    UserOutlined,
+    UserSwitchOutlined,
     TeamOutlined,
 } from '@ant-design/icons';
 import { Avatar, Button, Drawer, Grid, Layout, Menu, Space, Spin, Tooltip, Typography } from 'antd';
@@ -14,7 +15,7 @@ import {
     buildKeyPathMap,
     buildNavigationSections,
     findNavigationItem,
-    sharedNavigationItems,
+    getSharedNavigationItems,
 } from '../navigation/menu';
 
 const { Header, Sider, Content } = Layout;
@@ -24,7 +25,7 @@ const iconByName = {
     estabelecimentos: <BankOutlined />,
     lista: <TeamOutlined />,
     faturamento: <CreditCardOutlined />,
-    acesso: <SettingOutlined />,
+    acesso: <UserSwitchOutlined />,
     unica: <CreditCardOutlined />,
     links: <CreditCardOutlined />,
     cartao: <CreditCardOutlined />,
@@ -34,7 +35,7 @@ const iconByName = {
     planos: <CreditCardOutlined />,
     saldo: <CreditCardOutlined />,
     credit: <CreditCardOutlined />,
-    perfil: <SettingOutlined />,
+    perfil: <UserOutlined />,
 };
 
 function mapNavigationItem(item) {
@@ -129,6 +130,7 @@ export default function AppShell() {
     }, []);
 
     const menuSections = useMemo(() => buildNavigationSections(accessLevel), [accessLevel]);
+    const sharedNavigationItems = useMemo(() => getSharedNavigationItems(accessLevel), [accessLevel]);
     const keyPathMap = useMemo(() => {
         const map = buildKeyPathMap(menuSections);
 
@@ -137,7 +139,7 @@ export default function AppShell() {
         });
 
         return map;
-    }, [menuSections]);
+    }, [menuSections, sharedNavigationItems]);
     const menuItems = useMemo(
         () => [
             ...menuSections.map((section) => ({
@@ -154,7 +156,7 @@ export default function AppShell() {
                 : []),
             ...sharedNavigationItems.map(mapNavigationItem),
         ],
-        [menuSections],
+        [menuSections, sharedNavigationItems],
     );
 
     const currentItem = useMemo(() => {
@@ -167,7 +169,7 @@ export default function AppShell() {
         ];
 
         return findNavigationItem(sectionsWithShared, path) ?? menuSections[0]?.children[0] ?? sharedNavigationItems[0] ?? null;
-    }, [location.pathname, location.search, menuSections]);
+    }, [location.pathname, location.search, menuSections, sharedNavigationItems]);
 
     const selectedKey = currentItem?.key ?? 'home.dashboard';
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
