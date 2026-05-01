@@ -194,6 +194,8 @@ export default function CobrancaPixPage() {
         );
     }, [overview.link_rows, overview.rows]);
 
+    const summary = overview.summary ?? {};
+    const recentLinks = overview.recent_links ?? [];
     const linkCustomerEnabled = Form.useWatch('dados_cliente_preenchidos_habilitado', linkForm);
 
     function getStatusColor(status) {
@@ -210,6 +212,36 @@ export default function CobrancaPixPage() {
             default:
                 return 'gold';
         }
+    }
+
+    function getTransactionStatusTone(status) {
+        switch (status) {
+            case 'Ativo':
+            case 'Pago':
+            case 'Aprovado':
+                return 'green';
+            case 'Inativo':
+            case 'Cancelado':
+            case 'Falha':
+            case 'Estornado':
+                return 'red';
+            default:
+                return 'gray';
+        }
+    }
+
+    function getTransactionStatusColor(record) {
+        const rawStatus = String(record?.raw_status ?? record?.status ?? '').toLowerCase();
+
+        if (rawStatus.includes('ativo') || rawStatus.includes('paid') || rawStatus.includes('aprov')) {
+            return '#22c55e';
+        }
+
+        if (rawStatus.includes('inativo') || rawStatus.includes('cancel') || rawStatus.includes('falh') || rawStatus.includes('estorn')) {
+            return '#ef4444';
+        }
+
+        return '#d1d5db';
     }
 
     function openTransactionDetails(record) {
@@ -264,13 +296,27 @@ export default function CobrancaPixPage() {
             title: 'Transação',
             dataIndex: 'title',
             render: (_, record) => (
-                <Space direction="vertical" size={2} className="spa-pix-title-cell">
-                    <Typography.Text strong className="spa-pix-row-title">
-                        {record.title}
-                    </Typography.Text>
-                    <Typography.Text type="secondary" className="spa-pix-row-subtitle">
-                        {record.kind === 'link' ? record.code : record.description}
-                    </Typography.Text>
+                <Space align="start" size={10} className="spa-pix-title-cell">
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            display: 'inline-block',
+                            width: 8,
+                            height: 8,
+                            marginTop: 8,
+                            borderRadius: 999,
+                            flex: '0 0 auto',
+                            backgroundColor: getTransactionStatusColor(record),
+                        }}
+                    />
+                    <Space direction="vertical" size={2}>
+                        <Typography.Text strong className="spa-pix-row-title">
+                            {record.title}
+                        </Typography.Text>
+                        <Typography.Text type="secondary" className="spa-pix-row-subtitle">
+                            {record.kind === 'link' ? record.code : record.description}
+                        </Typography.Text>
+                    </Space>
                 </Space>
             ),
             width: 300,
@@ -294,12 +340,6 @@ export default function CobrancaPixPage() {
             title: 'Data',
             dataIndex: 'created_at',
             width: 180,
-        },
-        {
-            title: 'Status',
-            dataIndex: 'status',
-            render: (value) => <Tag color={getStatusColor(value)}>{value}</Tag>,
-            width: 140,
         },
         {
             title: '',
@@ -572,9 +612,7 @@ export default function CobrancaPixPage() {
                         ) : null}
 
                         <div className="spa-pix-page-header">
-                            <Typography.Title level={3} className="spa-pix-page-title">
-                                Pix
-                            </Typography.Title>
+                            <div className="spa-pix-page-title-spacer" aria-hidden="true" />
                             <Button type="primary" onClick={openLinkModal} className="spa-primary-button">
                                 Link de pagamento
                             </Button>
@@ -711,6 +749,7 @@ export default function CobrancaPixPage() {
                                     options={periodOptions}
                                     onChange={(value) => setSelectedPeriod(value)}
                                     className="spa-period-select"
+                                    style={{ width: 240 }}
                                     aria-label="Filtrar por mês e ano"
                                 />
                             }
@@ -735,7 +774,88 @@ export default function CobrancaPixPage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card spa-pix-empty-card" bordered={false} aria-hidden="true" />
+                <Space direction="vertical" size={20} style={{ width: '100%' }}>
+                    <Card className="spa-quick-view-card spa-pix-sidebar-card" title="Painel lateral" bordered={false}>
+                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                            <div className="spa-pix-detail-side-hero">
+                                <QrcodeOutlined className="spa-pix-detail-side-icon" />
+                                <Typography.Title level={4} className="spa-pix-detail-side-title">
+                                    Visao rapida
+                                </Typography.Title>
+                            </div>
+
+                            <Row gutter={[12, 12]}>
+                                {[
+                                    ['Transações', summary.total_transactions ?? 0],
+                                    ['Pagas', summary.paid_transactions ?? 0],
+                                    ['Pendentes', summary.pending_transactions ?? 0],
+                                    ['Links ativos', summary.active_links ?? 0],
+                                ].map(([label, value]) => (
+                                    <Col xs={12} sm={12} key={label}>
+                                        <Card size="small" bordered={false} className="spa-pix-mini-stat-card">
+                                            <Typography.Text type="secondary">{label}</Typography.Text>
+                                            <div>
+                                                <Typography.Title level={3} style={{ marginBottom: 0 }}>
+                                                    {value}
+                                                </Typography.Title>
+                                            </div>
+                                        </Card>
+                                    </Col>
+                                ))}
+                            </Row>
+
+                            <Card size="small" title="Atalhos" bordered={false}>
+                                <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                                    <Button type="primary" block onClick={openLinkModal} className="spa-primary-button">
+                                        Criar link PIX
+                                    </Button>
+                                    <Button block onClick={() => navigate('/links-pagamento')}>
+                                        Ver links
+                                    </Button>
+                                    <Button block onClick={() => refreshOverview()}>
+                                        Atualizar painel
+                                    </Button>
+                                </Space>
+                            </Card>
+
+                            <Card size="small" title="Ultimos links" bordered={false}>
+                                {recentLinks.length === 0 ? (
+                                    <Empty description="Nenhum link recente encontrado." />
+                                ) : (
+                                    <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                                        {recentLinks.slice(0, 5).map((item) => (
+                                            <div key={item.id} className="spa-pix-side-link-item">
+                                                <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                                                    <Typography.Text strong>{item.title}</Typography.Text>
+                                                    <Typography.Text type="secondary">{item.code}</Typography.Text>
+                                                </Space>
+                                                <Space wrap>
+                                                    <Tag color="green">{item.amount}</Tag>
+                                                    <Tag color={item.status === 'Ativo' ? 'green' : 'gold'}>{item.status}</Tag>
+                                                </Space>
+                                                <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
+                                                <Button size="small" onClick={() => navigate(`/links-pagamento-pix/${item.id}`)}>
+                                                    Abrir
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </Space>
+                                )}
+                            </Card>
+
+                            <Card size="small" title="Dica rapida" bordered={false}>
+                                <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                                    <Typography.Text>
+                                        Use o botão de link de pagamento para criar uma cobrança imediata.
+                                    </Typography.Text>
+                                    <Typography.Text>
+                                        O painel lateral ajuda a acompanhar o volume e os links mais recentes.
+                                    </Typography.Text>
+                                </Space>
+                            </Card>
+                        </Space>
+                    </Card>
+                </Space>
             </Col>
 
             <Modal

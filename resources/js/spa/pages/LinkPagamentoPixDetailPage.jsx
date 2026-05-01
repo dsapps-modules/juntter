@@ -1,15 +1,14 @@
 import {
     CopyOutlined,
     DeleteOutlined,
-    EditOutlined,
-    HomeOutlined,
+    ArrowLeftOutlined,
     LinkOutlined,
     PauseOutlined,
     PlayCircleOutlined,
     QrcodeOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Input, Row, Skeleton, Space, Tag, Typography, message } from 'antd';
+import { Alert, Button, Card, Col, Empty, Input, Row, Skeleton, Space, Tag, Typography, message } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -52,7 +51,7 @@ export default function LinkPagamentoPixDetailPage() {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Não foi possível carregar os detalhes do link.');
+                    throw new Error('Nao foi possivel carregar os detalhes do link.');
                 }
 
                 const data = await response.json();
@@ -81,9 +80,9 @@ export default function LinkPagamentoPixDetailPage() {
 
         try {
             await navigator.clipboard.writeText(text);
-            message.success('Copiado para a área de transferência.');
+            message.success('Copiado para a area de transferencia.');
         } catch (copyError) {
-            message.error('Não foi possível copiar o texto.');
+            message.error('Nao foi possivel copiar o texto.');
         }
     }
 
@@ -106,7 +105,7 @@ export default function LinkPagamentoPixDetailPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok || result.success === false) {
-                throw new Error(result.message || 'Não foi possível alterar o status.');
+                throw new Error(result.message || 'Nao foi possivel alterar o status.');
             }
 
             setLink((current) => ({
@@ -138,10 +137,10 @@ export default function LinkPagamentoPixDetailPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok || result.success === false) {
-                throw new Error(result.message || 'Não foi possível excluir o link.');
+                throw new Error(result.message || 'Nao foi possivel excluir o link.');
             }
 
-            message.success(result.message ?? 'Link excluído com sucesso.');
+            message.success(result.message ?? 'Link excluido com sucesso.');
             navigate('/links-pagamento');
         } catch (deleteError) {
             message.error(deleteError.message || 'Falha ao excluir o link.');
@@ -149,7 +148,7 @@ export default function LinkPagamentoPixDetailPage() {
     }
 
     const statusColor = link.status === 'ATIVO' ? 'green' : link.status === 'EXPIRADO' ? 'volcano' : 'gold';
-    const expirationDate = link.data_expiracao ? dayjs(link.data_expiracao).format('DD/MM/YYYY') : 'Sem expiração';
+    const expirationDate = link.data_expiracao ? dayjs(link.data_expiracao).format('DD/MM/YYYY') : 'Sem expiracao';
     const createdAt = link.created_at ? dayjs(link.created_at).format('DD/MM/YYYY HH:mm') : 'Sem data';
     const clientData = link.dados_cliente_preenchidos ?? {};
     const hasClientData = Object.values(clientData).some((value) => Boolean(value));
@@ -178,17 +177,15 @@ export default function LinkPagamentoPixDetailPage() {
 
                             <Space wrap>
                                 <Button
-                                    type="primary"
-                                    icon={<EditOutlined />}
-                                    onClick={() => navigate(`/links-pagamento/${linkId}/editar`)}
+                                    icon={<ArrowLeftOutlined />}
+                                    onClick={() => navigate('/cobranca/pix')}
                                 >
-                                    Editar
+                                    Voltar
                                 </Button>
-                                <Button icon={<HomeOutlined />} onClick={() => navigate('/home')} />
                             </Space>
                         </div>
 
-                        <Card className="spa-pix-detail-info-card" title="Informações do Link" bordered={false}>
+                        <Card className="spa-pix-detail-info-card" title="Informacoes do Link" bordered={false}>
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 4 }} />
                             ) : (
@@ -206,14 +203,14 @@ export default function LinkPagamentoPixDetailPage() {
                                         </div>
                                     </Col>
                                     <Col xs={24} md={12}>
-                                        <Typography.Text type="secondary">Código Único</Typography.Text>
+                                        <Typography.Text type="secondary">Codigo Unico</Typography.Text>
                                         <div className="spa-pix-detail-code">
                                             <Typography.Text code>{link.codigo_unico}</Typography.Text>
                                             <Button
                                                 icon={<CopyOutlined />}
                                                 onClick={() => copyText(link.codigo_unico)}
-                                                title="Copiar código"
-                                                aria-label="Copiar código"
+                                                title="Copiar codigo"
+                                                aria-label="Copiar codigo"
                                             />
                                         </div>
                                     </Col>
@@ -247,7 +244,7 @@ export default function LinkPagamentoPixDetailPage() {
                                     <div className="spa-pix-detail-empty-code">
                                         <QrcodeOutlined />
                                         <Typography.Text type="secondary">
-                                            QR Code será gerado quando o cliente acessar o link.
+                                            QR Code sera gerado quando o cliente acessar o link.
                                         </Typography.Text>
                                         <Typography.Text type="secondary">
                                             Compartilhe este link com seus clientes para pagamentos PIX.
@@ -283,7 +280,7 @@ export default function LinkPagamentoPixDetailPage() {
                             )}
                         </Card>
 
-                        <Card className="spa-pix-detail-config-card" title="Configurações de Pagamento PIX" bordered={false}>
+                        <Card className="spa-pix-detail-config-card" title="Configuracoes de Pagamento PIX" bordered={false}>
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 3 }} />
                             ) : (
@@ -345,27 +342,65 @@ export default function LinkPagamentoPixDetailPage() {
                                 </Typography.Title>
                             </div>
 
-                            <Typography.Text type="secondary">Código Único</Typography.Text>
-                            <div>
-                                <Typography.Text code>{link.codigo_unico}</Typography.Text>
-                            </div>
+                            <Card size="small" title="Resumo do link" bordered={false}>
+                                <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                                    <div>
+                                        <Typography.Text type="secondary">Código único</Typography.Text>
+                                        <div>
+                                            <Typography.Text code>{link.codigo_unico}</Typography.Text>
+                                        </div>
+                                    </div>
 
-                            <Typography.Text type="secondary">Criado em</Typography.Text>
-                            <div>
-                                <Typography.Text>{createdAt}</Typography.Text>
-                            </div>
+                                    <div>
+                                        <Typography.Text type="secondary">Valor e status</Typography.Text>
+                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                                            <Tag color="green">{`R$ ${Number(link.valor).toFixed(2).replace('.', ',')}`}</Tag>
+                                            <Tag color={statusColor}>{link.status === 'ATIVO' ? 'Ativo' : link.status}</Tag>
+                                        </div>
+                                    </div>
 
-                            <Typography.Text type="secondary">Expira em</Typography.Text>
-                            <div>
-                                <Typography.Text>{expirationDate}</Typography.Text>
-                            </div>
+                                    <div>
+                                        <Typography.Text type="secondary">Prazo</Typography.Text>
+                                        <div>
+                                            <Typography.Text>{expirationDate}</Typography.Text>
+                                        </div>
+                                    </div>
 
-                            <div className="spa-pix-detail-empty-code">
-                                <QrcodeOutlined />
-                                <Typography.Text type="secondary">
-                                    O QR Code ficará disponível para o cliente no momento do acesso.
-                                </Typography.Text>
-                            </div>
+                                    <div>
+                                        <Typography.Text type="secondary">Criado em</Typography.Text>
+                                        <div>
+                                            <Typography.Text>{createdAt}</Typography.Text>
+                                        </div>
+                                    </div>
+                                </Space>
+                            </Card>
+
+                            <Card size="small" title="Acoes recomendadas" bordered={false}>
+                                <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                                    <Typography.Text>1. Teste o link antes de compartilhar com o cliente.</Typography.Text>
+                                    <Typography.Text>
+                                        2. Copie a URL completa e envie por WhatsApp, e-mail ou CRM.
+                                    </Typography.Text>
+                                    <Typography.Text>
+                                        3. Se necessario, alterne o status para impedir novos pagamentos.
+                                    </Typography.Text>
+                                </Space>
+                            </Card>
+
+                            <Card size="small" title="Dica rapida" bordered={false}>
+                                <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                                    <div className="spa-pix-detail-empty-code">
+                                        <QrcodeOutlined />
+                                        <Typography.Text type="secondary">
+                                            A pagina do cliente destaca o valor, o codigo e a instrucao de pagamento para reduzir duvidas.
+                                        </Typography.Text>
+                                    </div>
+
+                                    <Typography.Text type="secondary">
+                                        Use a descricao do link para orientar o cliente sobre o que esta sendo cobrado.
+                                    </Typography.Text>
+                                </Space>
+                            </Card>
                         </Space>
                     )}
                 </Card>
@@ -373,3 +408,4 @@ export default function LinkPagamentoPixDetailPage() {
         </Row>
     );
 }
+

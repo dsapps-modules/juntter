@@ -7,15 +7,16 @@ projetosoulpsi@gmail.com
 **Pix**
 [x] Form + implementação
 [x] Criar link para pix
+[x] Corrigir geração do qrcode na página do link de pagamento
+
+**Boleto**
+[ ] Form + implementação
+[ ] Criar link no painel direiro
 
 **Cartão**
 [ ] Form + implementação
 [ ] Criar link no painel direiro
 [ ] Crédito à vista também no painel
-
-**Boleto**
-[ ] Form + implementação
-[ ] Criar link no painel direiro
 
 **Sidebar**
 [x] Remover grupo 'Links de Pagamento'

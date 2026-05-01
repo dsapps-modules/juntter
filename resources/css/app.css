@@ -227,7 +227,7 @@ a {
 
 .spa-period-select {
     width: 100%;
-    max-width: 180px;
+    max-width: 240px;
 }
 
 .spa-filter-row {
@@ -336,6 +336,11 @@ a {
     margin-bottom: 0 !important;
 }
 
+.spa-pix-page-title-spacer {
+    flex: 1;
+    min-height: 1px;
+}
+
 .spa-pix-header {
     display: flex;
     flex-direction: column;
@@ -441,6 +446,32 @@ a {
     background: #ffffff;
     border-bottom: 1px solid rgba(34, 26, 11, 0.08);
     vertical-align: middle;
+}
+
+.spa-pix-title-cell {
+    display: flex;
+    align-items: flex-start;
+}
+
+.spa-pix-status-dot {
+    flex: 0 0 auto;
+    width: 10px;
+    height: 10px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #d1d5db;
+}
+
+.spa-pix-status-dot-green {
+    background: #22c55e;
+}
+
+.spa-pix-status-dot-red {
+    background: #ef4444;
+}
+
+.spa-pix-status-dot-gray {
+    background: #d1d5db;
 }
 
 .spa-pix-transactions-table .ant-table-tbody > tr:hover > td {

@@ -84,8 +84,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('action="/logout"', $shellSource);
         $this->assertStringContainsString('Sair', $shellSource);
         $this->assertStringContainsString('spa-sider-footer', $shellSource);
+        $this->assertStringContainsString('HistÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³rico', $navigationSource);
         $this->assertStringContainsString('Histórico', $navigationSource);
-    }
 
     public function test_the_top_sidebar_items_are_back_in_home_before_cobranca(): void
     {
@@ -100,8 +100,8 @@ class SpaShellTest extends TestCase
 
         $saldoPosition = strpos($vendedorSection, 'cobranca.saldo');
         $simularPosition = strpos($vendedorSection, 'cobranca.simular');
+        $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'CobranÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§a'");
         $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'Cobrança'");
-
         $this->assertNotFalse($saldoPosition);
         $this->assertNotFalse($simularPosition);
         $this->assertNotFalse($cobrancaHeaderPosition);
@@ -174,22 +174,42 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Link de pagamento', $pageSource);
         $this->assertStringContainsString('Gerar QR Code', $pageSource);
         $this->assertStringContainsString('Link de Pagamento - PIX', $pageSource);
+        $this->assertStringContainsString('Descreva o que o cliente estÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ pagando', $pageSource);
         $this->assertStringContainsString('Descreva o que o cliente está pagando', $pageSource);
-        $this->assertStringContainsString('Preencher dados do cliente', $pageSource);
+    }
+
+    public function test_the_pix_page_contains_the_side_panel_content(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
+
+        $this->assertStringContainsString('Painel lateral', $pageSource);
+        $this->assertStringContainsString('Visao rapida', $pageSource);
+        $this->assertStringContainsString('Atalhos', $pageSource);
+        $this->assertStringContainsString('Ultimos links', $pageSource);
+        $this->assertStringContainsString('Dica rapida', $pageSource);
+        $this->assertStringContainsString('Criar link PIX', $pageSource);
+        $this->assertStringContainsString('Ver links', $pageSource);
+        $this->assertStringContainsString('Atualizar painel', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
     }
 
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
 
-        $this->assertStringContainsString('Informações do Link', $pageSource);
         $this->assertStringContainsString('Link de Pagamento PIX', $pageSource);
-        $this->assertStringContainsString('Configurações de Pagamento PIX', $pageSource);
-        $this->assertStringContainsString('Dados do Cliente', $pageSource);
-        $this->assertStringContainsString('Testar Link', $pageSource);
+        $this->assertStringContainsString('Voltar', $pageSource);
+        $this->assertStringContainsString('/cobranca/pix', $pageSource);
+        $this->assertStringContainsString('Resumo do link', $pageSource);
+        $this->assertStringContainsString('Acoes recomendadas', $pageSource);
+        $this->assertStringContainsString('Dica rapida', $pageSource);
+        $this->assertStringContainsString('Copie a URL completa', $pageSource);
         $this->assertStringContainsString('Desativar', $pageSource);
         $this->assertStringContainsString('Excluir', $pageSource);
-        $this->assertStringNotContainsString('Pré-preenchido:', $pageSource);
+        $this->assertStringNotContainsString('Editar', $pageSource);
+        $this->assertStringNotContainsString('HomeOutlined', $pageSource);
+        $this->assertStringNotContainsString("onClick={() => navigate('/links-pagamento')}", $pageSource);
+        $this->assertStringNotContainsString('Pre-preenchido:', $pageSource);
     }
 
     public function test_the_cobranca_route_is_available(): void
