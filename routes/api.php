@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PaytimeWebhookController;
 use App\Http\Controllers\Spa\CobrancaOverviewController;
+use App\Http\Controllers\Spa\CobrancaPlanoContratadoController;
 use App\Http\Controllers\Spa\DashboardOverviewController;
 use App\Http\Controllers\Spa\EstabelecimentoDetailController;
 use App\Http\Controllers\Spa\EstablishmentOverviewController;
@@ -18,6 +19,7 @@ Route::post('/webhook/paytime', [PaytimeWebhookController::class, 'handle']);
 Route::middleware(['web', 'auth', 'verified'])->group(function (): void {
     Route::get('/spa/dashboard', DashboardOverviewController::class);
     Route::get('/spa/cobranca', CobrancaOverviewController::class);
+    Route::get('/spa/cobranca/planos/{planoId?}', CobrancaPlanoContratadoController::class);
     Route::get('/spa/estabelecimentos', EstablishmentOverviewController::class);
     Route::get('/spa/links-pagamento', LinksPagamentoOverviewController::class);
     Route::get('/spa/links-pagamento/{linkPagamento}', LinkPagamentoDetailController::class);

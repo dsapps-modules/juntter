@@ -49,8 +49,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
         Route::get('/cobranca', fn () => redirect('/app/cobranca'))->name('cobranca.index');
         Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
-        Route::get('/cobranca/planos', fn () => redirect('/app/cobranca'))->name('cobranca.planos');
-        Route::get('/cobranca/planos/{id}', fn () => redirect('/app/cobranca'))->name('cobranca.plano.detalhes');
+        Route::get('/cobranca/planos', fn () => redirect('/app/cobranca/planos'))->name('cobranca.planos');
+        Route::get('/cobranca/planos/{id}', fn ($id) => redirect('/app/cobranca/planos/'.$id))->name('cobranca.plano.detalhes');
         Route::get('/cobranca/saldoextrato', fn () => redirect('/app/cobranca/saldoextrato'))->name('cobranca.saldoextrato');
 
         // Rotas de API para transações

@@ -165,6 +165,7 @@ class SpaShellTest extends TestCase
             '/app/cobranca/cartao-credito',
             '/app/cobranca/boleto',
             '/app/cobranca/planos',
+            '/app/cobranca/planos/123',
             '/app/cobranca/saldoextrato',
             '/app/cobranca/simular',
             '/app/links-pagamento-pix/1',
@@ -427,7 +428,8 @@ class SpaShellTest extends TestCase
 
         $this->get('/cobranca')->assertRedirect('/app/cobranca');
         $this->get('/cobranca/simular')->assertRedirect('/app/cobranca/simular');
-        $this->get('/cobranca/planos')->assertRedirect('/app/cobranca');
+        $this->get('/cobranca/planos')->assertRedirect('/app/cobranca/planos');
+        $this->get('/cobranca/planos/123')->assertRedirect('/app/cobranca/planos/123');
         $this->get('/cobranca/saldoextrato')->assertRedirect('/app/cobranca/saldoextrato');
         $this->get('/cobranca/transacao/123')->assertRedirect('/app/cobranca');
         $this->get('/cobranca/boleto/123')->assertRedirect('/app/cobranca');

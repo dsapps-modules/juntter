@@ -77,6 +77,7 @@ export default function App() {
                         <Route path="cobranca/cartao-credito" element={<CobrancaCartaoCreditoPage />} />
                         <Route path="cobranca/boleto" element={<CobrancaBoletoPage />} />
                         <Route path="cobranca/planos" element={<CobrancaPlanoContratadoPage />} />
+                        <Route path="cobranca/planos/:planoId" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="cobranca/saldoextrato" element={<CobrancaSaldoExtratoPage />} />
                         <Route path="cobranca/simular" element={<CobrancaSimularPage />} />
                         <Route path="links-pagamento" element={<LinksPagamentoPage />} />
