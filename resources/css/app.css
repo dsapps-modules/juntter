@@ -446,6 +446,10 @@ a {
     display: none;
 }
 
+.spa-cartao-credito-collapse .ant-collapse-item > .ant-collapse-header {
+    display: none;
+}
+
 .spa-pix-collapse-label {
     display: flex;
     flex-direction: column;

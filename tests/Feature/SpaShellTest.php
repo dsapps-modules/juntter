@@ -251,6 +251,22 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Atualizar painel', $pageSource);
     }
 
+    public function test_the_cartao_credito_page_contains_the_new_card_cobranca_structure(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
+
+        $this->assertStringContainsString('Gerar Cobrança', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento', $pageSource);
+        $this->assertStringContainsString('Valor da cobrança', $pageSource);
+        $this->assertStringContainsString('Dados do cliente', $pageSource);
+        $this->assertStringContainsString('Dados do cartão', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento - Cartão de Crédito', $pageSource);
+        $this->assertStringContainsString('Painel lateral', $pageSource);
+        $this->assertStringContainsString('Atualizar painel', $pageSource);
+        $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
+        $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
+    }
+
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
