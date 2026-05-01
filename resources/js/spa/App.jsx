@@ -13,6 +13,7 @@ import CobrancaPlanoContratadoPage from './pages/cobranca/CobrancaPlanoContratad
 import CobrancaPixPage from './pages/cobranca/CobrancaPixPage';
 import LinksPagamentoPage from './pages/LinksPagamentoPage';
 import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
+import LinkPagamentoPixDetailPage from './pages/LinkPagamentoPixDetailPage';
 import VendedoresPage from './pages/VendedoresPage';
 import VendedoresAcessoPage from './pages/VendedoresAcessoPage';
 import VendedoresFaturamentoPage from './pages/VendedoresFaturamentoPage';
@@ -76,6 +77,7 @@ export default function App() {
                         <Route path="cobranca/planos" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="links-pagamento" element={<LinksPagamentoPage />} />
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
+                        <Route path="links-pagamento-pix/:linkId" element={<LinkPagamentoPixDetailPage />} />
                         <Route path="links-pagamento/:linkId/editar" element={<LinkPagamentoFormPage />} />
                         <Route path="vendedores" element={<VendedoresPage />} />
                         <Route path="vendedores/acesso" element={<VendedoresAcessoPage />} />

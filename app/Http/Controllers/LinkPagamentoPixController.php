@@ -116,7 +116,7 @@ class LinkPagamentoPixController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Link de pagamento PIX criado com sucesso!',
-                    'redirect' => '/app/links-pagamento',
+                    'redirect' => '/app/links-pagamento-pix/'.$link->id,
                     'link_id' => $link->id,
                 ]);
             }
@@ -144,7 +144,7 @@ class LinkPagamentoPixController extends Controller
      */
     public function show(LinkPagamento $linkPagamento)
     {
-        return redirect('/app/links-pagamento/'.$linkPagamento->id.'/editar');
+        return redirect('/app/links-pagamento-pix/'.$linkPagamento->id);
     }
 
     /**
@@ -277,6 +277,14 @@ class LinkPagamentoPixController extends Controller
             }
 
             $linkPagamento->delete();
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Link de pagamento PIX excluído com sucesso!',
+                    'link_id' => $linkPagamento->id,
+                ]);
+            }
 
             return redirect()->route('links-pagamento-pix.index')
                 ->with('success', 'Link de pagamento PIX excluído com sucesso!');

@@ -158,12 +158,38 @@ class SpaShellTest extends TestCase
             '/app/cobranca/cartao-credito',
             '/app/cobranca/boleto',
             '/app/cobranca/planos',
+            '/app/links-pagamento-pix/1',
         ] as $path) {
             $response = $this->get($path);
 
             $response->assertOk();
             $response->assertSee('id="app"', false);
         }
+    }
+
+    public function test_the_pix_page_uses_the_new_link_payment_modal_labels(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
+
+        $this->assertStringContainsString('Link de pagamento', $pageSource);
+        $this->assertStringContainsString('Gerar QR Code', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento - PIX', $pageSource);
+        $this->assertStringContainsString('Descreva o que o cliente está pagando', $pageSource);
+        $this->assertStringContainsString('Preencher dados do cliente', $pageSource);
+    }
+
+    public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
+
+        $this->assertStringContainsString('Informações do Link', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento PIX', $pageSource);
+        $this->assertStringContainsString('Configurações de Pagamento PIX', $pageSource);
+        $this->assertStringContainsString('Dados do Cliente', $pageSource);
+        $this->assertStringContainsString('Testar Link', $pageSource);
+        $this->assertStringContainsString('Desativar', $pageSource);
+        $this->assertStringContainsString('Excluir', $pageSource);
+        $this->assertStringNotContainsString('Pré-preenchido:', $pageSource);
     }
 
     public function test_the_cobranca_route_is_available(): void
@@ -261,6 +287,7 @@ class SpaShellTest extends TestCase
 
         $this->get('/links-pagamento-pix')->assertRedirect('/app/links-pagamento');
         $this->get('/links-pagamento-pix/create')->assertRedirect('/app/links-pagamento/novo?tipo=PIX');
+        $this->get('/links-pagamento-pix/'.$link->id)->assertRedirect('/app/links-pagamento-pix/'.$link->id);
         $this->get('/links-pagamento-boleto')->assertRedirect('/app/links-pagamento');
         $this->get('/links-pagamento-boleto/create')->assertRedirect('/app/links-pagamento/novo?tipo=BOLETO');
     }

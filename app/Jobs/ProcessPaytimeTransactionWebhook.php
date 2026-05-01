@@ -20,7 +20,7 @@ class ProcessPaytimeTransactionWebhook implements ShouldQueue
     {
         $event = $this->payload['event'] ?? null;
 
-        if (! in_array($event, ['new-pagseguro-transaction', 'updated-pagseguro-transaction'], true)) {
+        if (! in_array($event, ['new-sub-transaction', 'new-pagseguro-transaction', 'updated-pagseguro-transaction'], true)) {
             Log::warning('Webhook ignorado: evento não reconhecido', ['event' => $event]);
 
             return;

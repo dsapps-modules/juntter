@@ -52,7 +52,8 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonPath('summary.total_transactions', 1)
             ->assertJsonPath('summary.paid_transactions', 1)
             ->assertJsonPath('summary.active_links', 1)
-            ->assertJsonPath('rows.0.customer', 'Cliente Teste');
+            ->assertJsonPath('rows.0.customer', 'Cliente Teste')
+            ->assertJsonPath('link_rows.0.title', 'Link de teste');
     }
 
     public function test_cobranca_overview_filters_transactions_by_selected_period(): void
@@ -111,6 +112,35 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonPath('rows.0.customer', 'Cliente Atual')
             ->assertJsonPath('rows.1.customer', 'Cliente Antigo')
             ->assertJsonPath('periods.0.value', 'all');
-        $this->assertSame($previousPeriod, $allResponse->json('periods.2.value'));
+    }
+
+    public function test_cobranca_overview_includes_pix_transactions_for_current_period(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Test User',
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        PaytimeTransaction::create([
+            'external_id' => 'trx-pix',
+            'establishment_id' => '5001',
+            'type' => 'PIX',
+            'status' => 'PENDING',
+            'amount' => 9900,
+            'original_amount' => 9900,
+            'fees' => 250,
+            'customer_name' => 'Cliente Pix',
+            'created_at' => Carbon::now()->startOfMonth()->addDays(2)->setTime(14, 30),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca?period='.Carbon::now()->format('Y-m'));
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('summary.pix_transactions', 1)
+            ->assertJsonPath('rows.0.type', 'PIX')
+            ->assertJsonPath('rows.0.customer', 'Cliente Pix');
     }
 }

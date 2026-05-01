@@ -11,6 +11,8 @@ use App\Services\CreditoService;
 use App\Services\EstabelecimentoService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -318,9 +320,11 @@ class CobrancaController extends Controller
 
             // Verificar erro na resposta da API
             if (isset($transacao['error']) || isset($transacao['errors']) || ! isset($transacao['_id'])) {
-                return redirect()->route('cobranca.index')
-                    ->with('error', 'Erro ao criar transação PIX: '.($transacao['message'] ?? $transacao['error'] ?? 'Resposta inesperada'))
-                    ->with('paytime_error', $transacao);
+                return $this->respondPixError(
+                    $request,
+                    'Erro ao criar transação PIX: '.($transacao['message'] ?? $transacao['error'] ?? 'Resposta inesperada'),
+                    $transacao
+                );
             }
 
             // Buscar QR Code pelo ID da transação
@@ -345,15 +349,56 @@ class CobrancaController extends Controller
                 'status' => $transacao['status'] ?? null,
             ];
 
-            return redirect()->route('cobranca.index')
-                ->with('success', 'Transação PIX criada com sucesso!')
-                ->with('pix_data', $filteredPixData);
+            return $this->respondPixSuccess($request, 'Transação PIX criada com sucesso!', $filteredPixData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar transação PIX', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
 
-            return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao criar transação PIX: '.$e->getMessage());
+            return $this->respondPixError($request, 'Erro ao criar transação PIX: '.$e->getMessage());
         }
+    }
+
+    private function respondPixSuccess(Request $request, string $message, array $pixData): JsonResponse|RedirectResponse
+    {
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'pix_data' => $pixData,
+            ]);
+        }
+
+        return redirect()->route('cobranca.index')
+            ->with('success', $message)
+            ->with('pix_data', $pixData);
+    }
+
+    private function respondPixError(Request $request, string $message, mixed $paytimeError = null): JsonResponse|RedirectResponse
+    {
+        if ($this->shouldReturnJson($request)) {
+            $payload = [
+                'success' => false,
+                'message' => $message,
+            ];
+
+            if ($paytimeError !== null) {
+                $payload['paytime_error'] = $paytimeError;
+            }
+
+            return response()->json($payload, 400);
+        }
+
+        $response = redirect()->route('cobranca.index')->with('error', $message);
+
+        if ($paytimeError !== null) {
+            $response->with('paytime_error', $paytimeError);
+        }
+
+        return $response;
+    }
+
+    private function shouldReturnJson(Request $request): bool
+    {
+        return $request->expectsJson() || $request->ajax();
     }
 
     /**
@@ -600,27 +645,27 @@ class CobrancaController extends Controller
     /**
      * Estornar transação
      */
-    public function estornarTransacao($id)
+    public function estornarTransacao(Request $request, $id)
     {
         try {
             // Buscar detalhes da transação para verificar se pode ser estornada
             $transacao = $this->transacaoService->detalhesTransacao($id);
 
             if (! $transacao) {
-                return redirect()->route('cobranca.index')
-                    ->with('error', 'Transação não encontrada.');
+                return $this->respondEstornoErro($request, 'Transação não encontrada.');
             }
 
             // Verificar se a transação pode ser estornada/cancelada
             if (! in_array($transacao['status'] ?? '', ['PAID', 'APPROVED', 'PENDING'])) {
-                return redirect()->route('cobranca.index')
-                    ->with('error', 'Apenas transações pagas, aprovadas ou pendentes podem ser estornadas/canceladas.');
+                return $this->respondEstornoErro(
+                    $request,
+                    'Apenas transações pagas, aprovadas ou pendentes podem ser estornadas/canceladas.'
+                );
             }
 
             // Verificar se já foi estornada
             if (($transacao['status'] ?? '') === 'REFUNDED') {
-                return redirect()->route('cobranca.index')
-                    ->with('error', 'Esta transação já foi estornada.');
+                return $this->respondEstornoErro($request, 'Esta transação já foi estornada.');
             }
 
             // Chamar serviço para estornar a transação
@@ -629,19 +674,40 @@ class CobrancaController extends Controller
             if ($resultado && isset($resultado['status'])) {
                 $valorFormatado = number_format(($transacao['amount'] ?? 0) / 100, 2, ',', '.');
                 $acao = ($transacao['status'] ?? '') === 'PENDING' ? 'cancelada' : 'estornada';
+                $message = "Transação de R$ {$valorFormatado} {$acao} com sucesso!";
+
+                if ($this->shouldReturnJson($request)) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'status' => $resultado['status'] ?? null,
+                        'transaction_id' => $id,
+                    ]);
+                }
 
                 return redirect()->route('cobranca.index')
-                    ->with('success', "Transação de R$ {$valorFormatado} {$acao} com sucesso!");
+                    ->with('success', $message);
             } else {
-                return redirect()->route('cobranca.index')
-                    ->with('error', 'Erro ao processar transação. Tente novamente.');
+                return $this->respondEstornoErro($request, 'Erro ao processar transação. Tente novamente.');
             }
         } catch (\Exception $e) {
             Log::error('Erro ao estornar transação: '.$e->getMessage());
 
-            return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao estornar transação: '.$e->getMessage());
+            return $this->respondEstornoErro($request, 'Erro ao estornar transação: '.$e->getMessage());
         }
+    }
+
+    private function respondEstornoErro(Request $request, string $message)
+    {
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], 400);
+        }
+
+        return redirect()->route('cobranca.index')
+            ->with('error', $message);
     }
 
     /**

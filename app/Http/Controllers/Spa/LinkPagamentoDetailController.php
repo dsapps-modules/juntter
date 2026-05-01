@@ -39,8 +39,10 @@ class LinkPagamentoDetailController extends Controller
                 'data_limite_pagamento' => $linkPagamento->data_limite_pagamento?->format('Y-m-d'),
                 'url_retorno' => $linkPagamento->url_retorno,
                 'url_webhook' => $linkPagamento->url_webhook,
+                'url_completa' => $linkPagamento->url_completa,
                 'dados_cliente_preenchidos' => $linkPagamento->dados_cliente['preenchidos'] ?? [],
                 'instrucoes_boleto' => $linkPagamento->instrucoes_boleto ?? [],
+                'created_at' => $linkPagamento->created_at?->format('Y-m-d H:i:s'),
             ],
         ]);
     }

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\ProcessPaytimeBilletStatusChange;
 use App\Jobs\ProcessPaytimeTransactionWebhook;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
@@ -62,6 +63,46 @@ class PaytimeWebhookControllerTest extends TestCase
 
         Queue::assertPushed(ProcessPaytimeTransactionWebhook::class, function (ProcessPaytimeTransactionWebhook $job): bool {
             return ($job->payload['event'] ?? null) === 'new-pagseguro-transaction';
+        });
+    }
+
+    public function test_it_dispatches_the_sub_transaction_handler_from_the_single_paytime_webhook_route(): void
+    {
+        Queue::fake();
+        Log::shouldReceive('info')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                return $message === 'Paytime webhook received for new-sub-transaction'
+                    && ($context['event'] ?? null) === 'new-sub-transaction'
+                    && ($context['transaction_id'] ?? null) === 'transaction-456'
+                    && (int) ($context['establishment_id'] ?? 0) === 127700
+                    && ($context['status'] ?? null) === 'PENDING'
+                    && (int) ($context['amount'] ?? 0) === 1005
+                    && in_array('establishment', $context['data_keys'] ?? [], true);
+            })
+            ->andReturnNull();
+
+        $response = $this
+            ->withBasicAuth('webhook-user', 'webhook-pass')
+            ->postJson('/api/webhook/paytime', [
+                'event' => 'new-sub-transaction',
+                'data' => [
+                    '_id' => 'transaction-456',
+                    'status' => 'PENDING',
+                    'amount' => 1005,
+                    'establishment' => [
+                        'id' => 127700,
+                    ],
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Paytime webhook received',
+        ]);
+
+        Queue::assertPushed(ProcessPaytimeTransactionWebhook::class, function (ProcessPaytimeTransactionWebhook $job): bool {
+            return ($job->payload['event'] ?? null) === 'new-sub-transaction';
         });
     }
 

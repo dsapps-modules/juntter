@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Jobs\ProcessPaytimeTransactionWebhook;
 use App\Models\PaytimeTransaction;
 use App\Services\PaytimeTransactionSyncService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -113,5 +114,75 @@ class PaytimeTransactionWebhookTest extends TestCase
         $this->assertSame(16000, $transaction->original_amount);
         $this->assertSame(250, $transaction->fees);
         $this->assertSame($payload, $transaction->metadata);
+    }
+
+    public function test_it_stores_a_new_sub_transaction_from_the_webhook_payload(): void
+    {
+        $payload = [
+            'event' => 'new-sub-transaction',
+            'event_date' => '2026-04-30T17:05:53.107Z',
+            'data' => [
+                '_id' => 'sub-transaction-123',
+                'status' => 'PENDING',
+                'amount' => 1005,
+                'original_amount' => 1017,
+                'fees' => 12,
+                'type' => 'CREDIT',
+                'gateway_key' => 'gateway-abc',
+                'gateway_authorization' => 'PAYTIME',
+                'installments' => 1,
+                'establishment' => [
+                    'id' => 155463,
+                ],
+                'customer' => [
+                    'first_name' => 'Joao',
+                    'last_name' => 'Silva',
+                    'document' => '10068114004',
+                ],
+            ],
+        ];
+
+        $service = app(PaytimeTransactionSyncService::class);
+        $service->syncWebhookPayload($payload);
+
+        $transaction = PaytimeTransaction::query()->first();
+
+        $this->assertNotNull($transaction);
+        $this->assertSame('sub-transaction-123', $transaction->external_id);
+        $this->assertSame(155463, (int) $transaction->establishment_id);
+        $this->assertSame('CREDIT', $transaction->type);
+        $this->assertSame('PENDING', $transaction->status);
+        $this->assertSame(1005, $transaction->amount);
+        $this->assertSame(1017, $transaction->original_amount);
+        $this->assertSame(12, $transaction->fees);
+        $this->assertSame(1, $transaction->installments);
+        $this->assertSame('gateway-abc', $transaction->gateway_key);
+        $this->assertSame('PAYTIME', $transaction->authorization_code);
+        $this->assertSame('Joao Silva', $transaction->customer_name);
+        $this->assertSame('10068114004', $transaction->customer_document);
+        $this->assertSame($payload, $transaction->metadata);
+    }
+
+    public function test_it_processes_new_sub_transactions_in_the_job_handler(): void
+    {
+        $payload = [
+            'event' => 'new-sub-transaction',
+            'data' => [
+                '_id' => 'sub-transaction-123',
+                'status' => 'PENDING',
+            ],
+        ];
+
+        $job = new ProcessPaytimeTransactionWebhook($payload);
+
+        $service = $this->createMock(PaytimeTransactionSyncService::class);
+        $service->expects($this->once())
+            ->method('syncWebhookPayload')
+            ->with($payload)
+            ->willReturn(null);
+
+        $job->handle($service);
+
+        $this->assertTrue(true);
     }
 }

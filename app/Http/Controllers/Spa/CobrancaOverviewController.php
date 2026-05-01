@@ -37,11 +37,16 @@ class CobrancaOverviewController extends Controller
             $linksQuery->where('estabelecimento_id', (string) $establishmentId);
         }
 
-        $periods = $this->buildPeriodOptions((clone $transactionsQuery)->get(['created_at']));
+        $periods = $this->buildPeriodOptions(
+            (clone $transactionsQuery)->get(['created_at'])
+                ->merge((clone $linksQuery)->get(['created_at']))
+        );
         $transactions = $this->applyPeriodFilter($transactionsQuery, $selectedPeriod)
             ->orderByDesc('created_at')
             ->get();
-        $links = $linksQuery->orderByDesc('created_at')->limit(8)->get();
+        $links = $this->applyPeriodFilter($linksQuery, $selectedPeriod)
+            ->orderByDesc('created_at')
+            ->get();
 
         $today = Carbon::today();
 
@@ -69,31 +74,59 @@ class CobrancaOverviewController extends Controller
             }
 
             return [
+                'kind' => 'transaction',
                 'id' => $transaction->id,
+                'code' => $transaction->external_id,
                 'type' => $this->formatType($transaction->type),
+                'title' => $transaction->customer_name ?? 'Cliente',
+                'description' => $establishmentName ?? 'Transação Pix',
                 'status' => $this->formatStatus($transaction->status),
                 'amount' => $this->formatMoney((int) $transaction->amount),
                 'fee' => $this->formatMoney((int) $transaction->fees),
                 'customer' => $transaction->customer_name ?? 'Cliente',
                 'establishment' => $establishmentName ?? 'Estabelecimento',
+                'created_at_sort' => Carbon::parse($transaction->created_at)->getTimestamp(),
                 'created_at' => Carbon::parse($transaction->created_at)->format('d/m/Y H:i'),
                 'raw_status' => $transaction->status,
             ];
-        });
+        })->values();
+
+        $linkRows = $links->map(function (LinkPagamento $link): array {
+            return [
+                'kind' => 'link',
+                'id' => $link->id,
+                'code' => $link->codigo_unico,
+                'title' => $link->titulo ?? $link->descricao ?? 'Link de pagamento PIX',
+                'description' => $link->descricao ?? 'Link de pagamento PIX',
+                'status' => $this->formatLinkStatus($link->status),
+                'amount' => $link->valor_formatado,
+                'fee' => 'R$ 0,00',
+                'created_at_sort' => Carbon::parse($link->created_at)->getTimestamp(),
+                'created_at' => Carbon::parse($link->created_at)->format('d/m/Y H:i'),
+                'raw_status' => $link->status,
+                'detail_href' => '/links-pagamento-pix/'.$link->id,
+                'delete_href' => '/links-pagamento-pix/'.$link->id,
+            ];
+        })->values();
 
         $selected = $rows->first() ?? [
             'id' => null,
+            'kind' => 'transaction',
+            'code' => null,
             'type' => 'Sem dados',
+            'title' => 'Sem dados',
+            'description' => 'Nenhuma movimentação disponível.',
             'status' => 'Sem dados',
             'amount' => $this->formatMoney(0),
             'fee' => $this->formatMoney(0),
             'customer' => 'Sem cliente',
             'establishment' => 'Sem estabelecimento',
+            'created_at_sort' => 0,
             'created_at' => 'Sem atividade',
             'raw_status' => 'N/A',
         ];
 
-        $recentLinks = $links->map(function (LinkPagamento $link): array {
+        $recentLinks = $links->take(5)->map(function (LinkPagamento $link): array {
             return [
                 'id' => $link->id,
                 'title' => $link->titulo ?? $link->descricao ?? 'Link de pagamento',
@@ -117,6 +150,7 @@ class CobrancaOverviewController extends Controller
                 ['title' => 'Novo boleto', 'description' => 'Emissão e acompanhamento.', 'href' => '/cobranca'],
             ],
             'rows' => $rows->values(),
+            'link_rows' => $linkRows,
             'selected' => $selected,
             'recent_links' => $recentLinks->values(),
         ]);
@@ -131,7 +165,7 @@ class CobrancaOverviewController extends Controller
         $currentPeriod = Carbon::now()->format('Y-m');
 
         $availablePeriods = $transactions
-            ->map(function (PaytimeTransaction $transaction): string {
+            ->map(function ($transaction): string {
                 return Carbon::parse($transaction->created_at)->format('Y-m');
             })
             ->unique()

@@ -5,8 +5,8 @@ projetosoulpsi@gmail.com
 [x] Limitar a exibição em função de seletor mês/ano
 
 **Pix**
-[ ] Form + implementação
-[ ] Criar link no painel direiro
+[x] Form + implementação
+[x] Criar link para pix
 
 **Cartão**
 [ ] Form + implementação
@@ -18,17 +18,14 @@ projetosoulpsi@gmail.com
 [ ] Criar link no painel direiro
 
 **Sidebar**
-[ ] Remover grupo 'Links de Pagamento'
+[x] Remover grupo 'Links de Pagamento'
 [ ] Criar grupo usuários
 [ ] Cadastrar usuário do estabelecimento
 
 **Dashboard**
-[ ] Trocar 'Consultar Extrato' por 'Saldo em Conta'
+[ ] Trocar card 'Consultar Extrato' por 'Saldo em Conta'
 
-
-
-next sprint 
-[ ] verificar a relação estabelecimento x vendedor
 
 (admin page)
+[ ] verificar a relação estabelecimento x vendedor
 [ ] criar página de relatórios dos estabelecimentos
