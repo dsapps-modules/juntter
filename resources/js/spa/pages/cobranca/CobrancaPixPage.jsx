@@ -6,6 +6,7 @@ import {
     CopyOutlined,
     DownloadOutlined,
     ExclamationCircleOutlined,
+    LinkOutlined,
     QrcodeOutlined,
     StopOutlined,
     SendOutlined,
@@ -626,6 +627,7 @@ export default function CobrancaPixPage() {
                                 onClick={openLinkModal}
                                 className="spa-pix-collapse-label-badge spa-pix-page-link-button"
                             >
+                                <LinkOutlined />
                                 Link de Pagamento
                             </Button>
                         </div>

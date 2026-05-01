@@ -434,28 +434,67 @@ class CobrancaController extends Controller
                 isset($boleto['errors']) ||
                 ! isset($boleto['_id']) && ! isset($boleto['id'])
             ) {
-                return redirect()->route('cobranca.index')
-                    ->with('error', 'Erro ao criar boleto: '.($boleto['message'] ?? $boleto['error'] ?? 'Resposta inesperada'))
-                    ->with('paytime_error', $boleto);
+                return $this->respondBoletoError(
+                    $request,
+                    'Erro ao criar boleto: '.($boleto['message'] ?? $boleto['error'] ?? 'Resposta inesperada'),
+                    $boleto
+                );
             }
 
             // Filtrar apenas dados necessários para o frontend
             $filteredBoletoData = [
                 'boleto_url' => $boleto['boleto_url'] ?? null,
                 'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
+                'boleto_digitable_line' => $boleto['boleto_digitable_line'] ?? null,
                 'amount' => $boleto['amount'] ?? null,
                 'status' => $boleto['status'] ?? null,
             ];
 
-            return redirect()->route('cobranca.index')
-                ->with('success', 'Boleto criado com sucesso!')
-                ->with('boleto_data', $filteredBoletoData);
+            return $this->respondBoletoSuccess($request, 'Boleto criado com sucesso!', $filteredBoletoData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar boleto', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
 
-            return redirect()->route('cobranca.index')
-                ->with('error', 'Erro ao criar boleto: '.$e->getMessage());
+            return $this->respondBoletoError($request, 'Erro ao criar boleto: '.$e->getMessage());
         }
+    }
+
+    private function respondBoletoSuccess(Request $request, string $message, array $boletoData): JsonResponse|RedirectResponse
+    {
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'boleto_data' => $boletoData,
+            ]);
+        }
+
+        return redirect()->route('cobranca.index')
+            ->with('success', $message)
+            ->with('boleto_data', $boletoData);
+    }
+
+    private function respondBoletoError(Request $request, string $message, mixed $paytimeError = null): JsonResponse|RedirectResponse
+    {
+        if ($this->shouldReturnJson($request)) {
+            $payload = [
+                'success' => false,
+                'message' => $message,
+            ];
+
+            if ($paytimeError !== null) {
+                $payload['paytime_error'] = $paytimeError;
+            }
+
+            return response()->json($payload, 400);
+        }
+
+        $response = redirect()->route('cobranca.index')->with('error', $message);
+
+        if ($paytimeError !== null) {
+            $response->with('paytime_error', $paytimeError);
+        }
+
+        return $response;
     }
 
     /**

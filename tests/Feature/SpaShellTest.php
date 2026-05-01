@@ -206,6 +206,51 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
     }
 
+    public function test_the_boleto_page_contains_the_form_sections(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
+
+        $this->assertStringContainsString('Criar boleto', $pageSource);
+        $this->assertStringContainsString('Gerar Boleto', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento', $pageSource);
+        $this->assertStringContainsString('Valor do boleto', $pageSource);
+        $this->assertStringContainsString('Data de vencimento', $pageSource);
+        $this->assertStringContainsString('Data limite para pagamento', $pageSource);
+        $this->assertStringContainsString('Dados do cliente', $pageSource);
+        $this->assertStringContainsString('Endereço do cliente', $pageSource);
+        $this->assertStringContainsString('Instruções do boleto', $pageSource);
+        $this->assertStringContainsString('É carnê?', $pageSource);
+        $this->assertStringContainsString('Multa por atraso', $pageSource);
+        $this->assertStringContainsString('Juros ao mês', $pageSource);
+        $this->assertStringContainsString('Data limite para desconto', $pageSource);
+        $this->assertStringContainsString('Fechar', $pageSource);
+        $this->assertStringContainsString('Gerar boleto', $pageSource);
+        $this->assertStringContainsString('Boletos do mês', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento - Boleto', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-link-button', $pageSource);
+        $this->assertStringContainsString('spa-pix-transactions-table', $pageSource);
+        $this->assertStringNotContainsString('Abra para emitir um novo boleto com os dados do cliente', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-collapse-label-badge">Gerar Boleto', $pageSource);
+        $this->assertStringNotContainsString('Atualizar dados', $pageSource);
+        $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
+    }
+
+    public function test_the_boleto_page_contains_the_contextual_side_panel_content(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
+
+        $this->assertStringContainsString('Painel lateral', $pageSource);
+        $this->assertStringContainsString('Resumo de boletos', $pageSource);
+        $this->assertStringContainsString('Atalhos', $pageSource);
+        $this->assertStringContainsString('Últimos boletos', $pageSource);
+        $this->assertStringContainsString('Dica rápida', $pageSource);
+        $this->assertStringContainsString('Gerar boleto', $pageSource);
+        $this->assertStringContainsString('Criar link de pagamento', $pageSource);
+        $this->assertStringContainsString('Ver links', $pageSource);
+        $this->assertStringContainsString('Atualizar painel', $pageSource);
+    }
+
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));

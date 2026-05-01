@@ -442,6 +442,10 @@ a {
     padding: 0 !important;
 }
 
+.spa-boleto-collapse .ant-collapse-item > .ant-collapse-header {
+    display: none;
+}
+
 .spa-pix-collapse-label {
     display: flex;
     flex-direction: column;
