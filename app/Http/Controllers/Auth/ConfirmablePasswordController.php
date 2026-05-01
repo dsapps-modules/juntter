@@ -40,7 +40,7 @@ class ConfirmablePasswordController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'password-confirmed',
-                'redirect' => '/app/home',
+                'redirect' => RouteServiceProvider::spaHome(),
             ]);
         }
 

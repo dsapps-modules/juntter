@@ -19,7 +19,7 @@ class EmailVerificationNotificationController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'verified',
-                    'redirect' => '/app/home',
+                    'redirect' => RouteServiceProvider::spaHome(),
                 ]);
             }
 

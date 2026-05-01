@@ -24,12 +24,12 @@ class RouteServiceProvider extends ServiceProvider
      */
     public static function home(): string
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return '/login';
         }
 
         $user = auth()->user();
-        
+
         // Redireciona baseado no nível de acesso (mesma lógica do RedirectIfAuthenticated)
         switch ($user->nivel_acesso) {
             case 'super_admin':
@@ -41,6 +41,11 @@ class RouteServiceProvider extends ServiceProvider
             default:
                 return '/dashboard';
         }
+    }
+
+    public static function spaHome(): string
+    {
+        return route('spa', ['any' => 'home'], false);
     }
 
     /**

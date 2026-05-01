@@ -36,6 +36,13 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_legacy_home_route_redirects_to_the_spa_home_route(): void
+    {
+        $response = $this->get('/home');
+
+        $response->assertRedirect('/app/home');
+    }
+
     public function test_the_login_route_is_available(): void
     {
         $response = $this->get('/app/login');

@@ -29,7 +29,7 @@ class VerifyEmailController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'email-verified',
-                'redirect' => '/app/home',
+                'redirect' => RouteServiceProvider::spaHome(),
             ]);
         }
 

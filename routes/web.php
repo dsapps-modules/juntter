@@ -20,6 +20,7 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 Route::get('/', function () {
     return view('checkout');
 })->name('checkout');
+Route::redirect('/home', '/app/home')->name('home');
 Route::view('/app/{any?}', 'spa')
     ->where('any', '.*')
     ->name('spa');
