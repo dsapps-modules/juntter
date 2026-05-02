@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('checkout_links')) {
+            return;
+        }
+
         Schema::create('checkout_links', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('seller_id')->index();

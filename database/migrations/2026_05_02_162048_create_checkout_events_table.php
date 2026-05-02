@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('checkout_events')) {
+            return;
+        }
+
         Schema::create('checkout_events', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('checkout_session_id')->nullable()->index();

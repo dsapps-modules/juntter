@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('paytime_transactions')) {
+            return;
+        }
+
         Schema::create('paytime_transactions', function (Blueprint $table) {
             $table->id();
             $table->string('external_id')->unique();

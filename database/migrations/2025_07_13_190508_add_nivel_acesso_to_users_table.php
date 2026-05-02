@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('users') || Schema::hasColumn('users', 'nivel_acesso')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->enum('nivel_acesso', ['super_admin', 'admin', 'vendedor'])->default('vendedor')->after('password');
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'nivel_acesso')) {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn('nivel_acesso');
         });

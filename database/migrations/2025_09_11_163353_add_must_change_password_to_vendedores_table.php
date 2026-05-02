@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasTable('vendedores') || Schema::hasColumn('vendedores', 'must_change_password')) {
+            return;
+        }
+
         Schema::table('vendedores', function (Blueprint $table) {
             $table->boolean('must_change_password')->default(false)->after('status');
         });
@@ -21,6 +25,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (! Schema::hasTable('vendedores') || ! Schema::hasColumn('vendedores', 'must_change_password')) {
+            return;
+        }
+
         Schema::table('vendedores', function (Blueprint $table) {
             $table->dropColumn('must_change_password');
         });
