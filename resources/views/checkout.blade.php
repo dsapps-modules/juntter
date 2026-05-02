@@ -129,41 +129,41 @@
             <p class="section-subtitle fade-in-up">Escolha o plano ideal para o volume do seu negócio</p>
 
             <div class="row justify-content-center">
-                <div class="col-lg-3 mb-4">
+                <div class="col-lg-3 mb-4" id="acelerar">
                     <div class="pricing-card fade-in-up">
-                        <h3>Mais</h3>
+                        <h3>Acelerar</h3>
                         <div class="pricing-rates">
                             <div class="rate-toggle">
                                 <div class="rate-selector">
                                     <span>Crédito à vista</span>
                                     <select class="form-control payment-selector" data-plan="mais">
-                                        <option value="2x" data-rate="7.99">Parcelado 2x</option>
-                                        <option value="3x" data-rate="9.19">Parcelado 3x</option>
-                                        <option value="4x" data-rate="10.39">Parcelado 4x</option>
-                                        <option value="5x" data-rate="11.59">Parcelado 5x</option>
-                                        <option value="6x" data-rate="12.79" selected>Parcelado 6x</option>
-                                        <option value="7x" data-rate="13.99">Parcelado 7x</option>
-                                        <option value="8x" data-rate="15.19">Parcelado 8x</option>
-                                        <option value="9x" data-rate="16.39">Parcelado 9x</option>
-                                        <option value="10x" data-rate="17.59">Parcelado 10x</option>
-                                        <option value="11x" data-rate="18.79">Parcelado 11x</option>
-                                        <option value="12x" data-rate="19.99">Parcelado 12x</option>
-                                        <option value="13x" data-rate="21.19">Parcelado 13x</option>
-                                        <option value="14x" data-rate="22.39">Parcelado 14x</option>
-                                        <option value="15x" data-rate="23.59">Parcelado 15x</option>
-                                        <option value="16x" data-rate="24.79">Parcelado 16x</option>
-                                        <option value="17x" data-rate="25.99">Parcelado 17x</option>
-                                        <option value="18x" data-rate="27.19">Parcelado 18x</option>
+                                        <option value="2x" data-rate="6.53">Parcelado 2x</option>
+                                        <option value="3x" data-rate="8.35">Parcelado 3x</option>
+                                        <option value="4x" data-rate="10.15">Parcelado 4x</option>
+                                        <option value="5x" data-rate="11.87">Parcelado 5x</option>
+                                        <option value="6x" data-rate="13.01" selected>Parcelado 6x</option>
+                                        <option value="7x" data-rate="14.11">Parcelado 7x</option>
+                                        <option value="8x" data-rate="15.21">Parcelado 8x</option>
+                                        <option value="9x" data-rate="16.28">Parcelado 9x</option>
+                                        <option value="10x" data-rate="17.32">Parcelado 10x</option>
+                                        <option value="11x" data-rate="18.36">Parcelado 11x</option>
+                                        <option value="12x" data-rate="19.37">Parcelado 12x</option>
+                                        <option value="13x" data-rate="20.58">Parcelado 13x</option>
+                                        <option value="14x" data-rate="21.79">Parcelado 14x</option>
+                                        <option value="15x" data-rate="23.00">Parcelado 15x</option>
+                                        <option value="16x" data-rate="24.21">Parcelado 16x</option>
+                                        <option value="17x" data-rate="25.42">Parcelado 17x</option>
+                                        <option value="18x" data-rate="26.63">Parcelado 18x</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="price-display-dual">
                                 <div class="price-item">
-                                    <span class="price-value">5,49%</span>
+                                    <span class="price-value">4,97%</span>
                                     <span class="price-label">Crédito à vista</span>
                                 </div>
                                 <div class="price-item">
-                                    <span class="price-value parcelado-rate" data-plan="mais">12,79%</span>
+                                    <span class="price-value parcelado-rate" data-plan="mais">13,01%</span>
                                     <span class="price-label parcelado-label" data-plan="mais">Parcelado 6x</span>
                                 </div>
                             </div>
@@ -201,41 +201,41 @@
                             id="btn-plano-mais">Entrar e Usar</a>
                     </div>
                 </div>
-                <div class="col-lg-3 mb-4">
+                <div class="col-lg-3 mb-4" id="turbo">
                     <div class="pricing-card popular fade-in-up">
-                        <h3>Negócio</h3>
+                        <h3>Turbo</h3>
                         <div class="pricing-rates">
                             <div class="rate-toggle">
                                 <div class="rate-selector">
                                     <span>Crédito à vista</span>
                                     <select class="form-control payment-selector" data-plan="negocio">
-                                        <option value="2x" data-rate="8.99">Parcelado 2x</option>
-                                        <option value="3x" data-rate="10.49">Parcelado 3x</option>
-                                        <option value="4x" data-rate="11.99">Parcelado 4x</option>
-                                        <option value="5x" data-rate="13.49">Parcelado 5x</option>
-                                        <option value="6x" data-rate="14.99" selected>Parcelado 6x</option>
-                                        <option value="7x" data-rate="16.49">Parcelado 7x</option>
-                                        <option value="8x" data-rate="17.99">Parcelado 8x</option>
-                                        <option value="9x" data-rate="19.49">Parcelado 9x</option>
-                                        <option value="10x" data-rate="20.99">Parcelado 10x</option>
-                                        <option value="11x" data-rate="22.49">Parcelado 11x</option>
-                                        <option value="12x" data-rate="23.99">Parcelado 12x</option>
-                                        <option value="13x" data-rate="25.19">Parcelado 13x</option>
-                                        <option value="14x" data-rate="26.39">Parcelado 14x</option>
-                                        <option value="15x" data-rate="27.59">Parcelado 15x</option>
-                                        <option value="16x" data-rate="28.79">Parcelado 16x</option>
-                                        <option value="17x" data-rate="29.99">Parcelado 17x</option>
-                                        <option value="18x" data-rate="31.19">Parcelado 18x</option>
+                                        <option value="2x" data-rate="5.63">Parcelado 2x</option>
+                                        <option value="3x" data-rate="7.20">Parcelado 3x</option>
+                                        <option value="4x" data-rate="8.75">Parcelado 4x</option>
+                                        <option value="5x" data-rate="10.23">Parcelado 5x</option>
+                                        <option value="6x" data-rate="11.21" selected>Parcelado 6x</option>
+                                        <option value="7x" data-rate="12.17">Parcelado 7x</option>
+                                        <option value="8x" data-rate="13.11">Parcelado 8x</option>
+                                        <option value="9x" data-rate="14.03">Parcelado 9x</option>
+                                        <option value="10x" data-rate="14.93">Parcelado 10x</option>
+                                        <option value="11x" data-rate="15.83">Parcelado 11x</option>
+                                        <option value="12x" data-rate="16.70">Parcelado 12x</option>
+                                        <option value="13x" data-rate="17.71">Parcelado 13x</option>
+                                        <option value="14x" data-rate="18.73">Parcelado 14x</option>
+                                        <option value="15x" data-rate="19.74">Parcelado 15x</option>
+                                        <option value="16x" data-rate="20.76">Parcelado 16x</option>
+                                        <option value="17x" data-rate="21.77">Parcelado 17x</option>
+                                        <option value="18x" data-rate="22.79">Parcelado 18x</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="price-display-dual">
                                 <div class="price-item">
-                                    <span class="price-value">4,99%</span>
+                                    <span class="price-value">4,28%</span>
                                     <span class="price-label">Crédito à vista</span>
                                 </div>
                                 <div class="price-item">
-                                    <span class="price-value parcelado-rate" data-plan="negocio">14,99%</span>
+                                    <span class="price-value parcelado-rate" data-plan="negocio">11,21%</span>
                                     <span class="price-label parcelado-label" data-plan="negocio">Parcelado 6x</span>
                                 </div>
                             </div>
@@ -274,31 +274,31 @@
                             Usar</a>
                     </div>
                 </div>
-                <div class="col-lg-3 mb-4">
+                <div class="col-lg-3 mb-4" id="economico">
                     <div class="pricing-card fade-in-up">
-                        <h3>Economizei</h3>
+                        <h3>Econômico</h3>
                         <div class="pricing-rates">
                             <div class="rate-toggle">
                                 <div class="rate-selector">
                                     <span>Crédito à vista</span>
                                     <select class="form-control payment-selector" data-plan="flex">
-                                        <option value="2x" data-rate="4.99">Parcelado 2x</option>
-                                        <option value="3x" data-rate="4.99">Parcelado 3x</option>
-                                        <option value="4x" data-rate="4.99">Parcelado 4x</option>
-                                        <option value="5x" data-rate="4.99">Parcelado 5x</option>
-                                        <option value="6x" data-rate="4.99" selected>Parcelado 6x</option>
-                                        <option value="7x" data-rate="6.99">Parcelado 7x</option>
-                                        <option value="8x" data-rate="6.99">Parcelado 8x</option>
-                                        <option value="9x" data-rate="6.99">Parcelado 9x</option>
-                                        <option value="10x" data-rate="6.99">Parcelado 10x</option>
-                                        <option value="11x" data-rate="6.99">Parcelado 11x</option>
-                                        <option value="12x" data-rate="6.99">Parcelado 12x</option>
-                                        <option value="13x" data-rate="8.99">Parcelado 13x</option>
-                                        <option value="14x" data-rate="8.99">Parcelado 14x</option>
-                                        <option value="15x" data-rate="8.99">Parcelado 15x</option>
-                                        <option value="16x" data-rate="8.99">Parcelado 16x</option>
-                                        <option value="17x" data-rate="8.99">Parcelado 17x</option>
-                                        <option value="18x" data-rate="8.99">Parcelado 18x</option>
+                                        <option value="2x" data-rate="3.75">Parcelado 2x</option>
+                                        <option value="3x" data-rate="3.75">Parcelado 3x</option>
+                                        <option value="4x" data-rate="3.75">Parcelado 4x</option>
+                                        <option value="5x" data-rate="3.75">Parcelado 5x</option>
+                                        <option value="6x" data-rate="3.75" selected>Parcelado 6x</option>
+                                        <option value="7x" data-rate="3.75">Parcelado 7x</option>
+                                        <option value="8x" data-rate="3.75">Parcelado 8x</option>
+                                        <option value="9x" data-rate="3.75">Parcelado 9x</option>
+                                        <option value="10x" data-rate="3.75">Parcelado 10x</option>
+                                        <option value="11x" data-rate="3.75">Parcelado 11x</option>
+                                        <option value="12x" data-rate="3.75">Parcelado 12x</option>
+                                        <option value="13x" data-rate="5.98">Parcelado 13x</option>
+                                        <option value="14x" data-rate="5.98">Parcelado 14x</option>
+                                        <option value="15x" data-rate="5.98">Parcelado 15x</option>
+                                        <option value="16x" data-rate="5.98">Parcelado 16x</option>
+                                        <option value="17x" data-rate="5.98">Parcelado 17x</option>
+                                        <option value="18x" data-rate="5.98">Parcelado 18x</option>
                                     </select>
                                 </div>
                             </div>
@@ -308,7 +308,7 @@
                                     <span class="price-label">Crédito à vista</span>
                                 </div>
                                 <div class="price-item">
-                                    <span class="price-value parcelado-rate" data-plan="flex">4,99%</span>
+                                    <span class="price-value parcelado-rate" data-plan="flex">3,75%</span>
                                     <span class="price-label parcelado-label" data-plan="flex">Parcelado 6x</span>
                                 </div>
                             </div>
@@ -347,7 +347,7 @@
                             id="btn-plano-flex">Entrar e Usar</a>
                     </div>
                 </div>
-                <div class="col-lg-3 mb-4">
+                <div class="col-lg-3 mb-4" id="custom">
                     <div class="pricing-card fade-in-up">
                         <h3>Customizado</h3>
                         <div class="pricing-rates">
