@@ -1,0 +1,16 @@
+<?php
+
+namespace App\Services\Payments;
+
+use App\Models\Order;
+
+interface PaymentGatewayInterface
+{
+    public function createPixPayment(Order $order): array;
+
+    public function createBoletoPayment(Order $order): array;
+
+    public function createCreditCardPayment(Order $order, array $cardData): array;
+
+    public function parseWebhook(array $payload, array $headers): array;
+}

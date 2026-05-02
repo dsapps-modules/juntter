@@ -13,6 +13,11 @@ import CobrancaPlanoContratadoPage from './pages/cobranca/CobrancaPlanoContratad
 import CobrancaSaldoExtratoPage from './pages/cobranca/CobrancaSaldoExtratoPage';
 import CobrancaSimularPage from './pages/cobranca/CobrancaSimularPage';
 import CobrancaPixPage from './pages/cobranca/CobrancaPixPage';
+import CheckoutLinksPage from './pages/checkout/CheckoutLinksPage';
+import CheckoutLinkFormPage from './pages/checkout/CheckoutLinkFormPage';
+import CheckoutLinkSalesPage from './pages/checkout/CheckoutLinkSalesPage';
+import CheckoutProductFormPage from './pages/checkout/CheckoutProductFormPage';
+import CheckoutProductsPage from './pages/checkout/CheckoutProductsPage';
 import LinksPagamentoPage from './pages/LinksPagamentoPage';
 import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
 import LinkPagamentoPixDetailPage from './pages/LinkPagamentoPixDetailPage';
@@ -84,6 +89,13 @@ export default function App() {
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
                         <Route path="links-pagamento-pix/:linkId" element={<LinkPagamentoPixDetailPage />} />
                         <Route path="links-pagamento/:linkId/editar" element={<LinkPagamentoFormPage />} />
+                        <Route path="seller/products" element={<CheckoutProductsPage />} />
+                        <Route path="seller/products/novo" element={<CheckoutProductFormPage />} />
+                        <Route path="seller/products/:productId/editar" element={<CheckoutProductFormPage />} />
+                        <Route path="seller/checkout-links" element={<CheckoutLinksPage />} />
+                        <Route path="seller/checkout-links/novo" element={<CheckoutLinkFormPage />} />
+                        <Route path="seller/checkout-links/:checkoutLinkId/editar" element={<CheckoutLinkFormPage />} />
+                        <Route path="seller/checkout-links/:checkoutLinkId/vendas" element={<CheckoutLinkSalesPage />} />
                         <Route path="vendedores" element={<VendedoresPage />} />
                         <Route path="vendedores/acesso" element={<VendedoresAcessoPage />} />
                         <Route path="vendedores/faturamento" element={<VendedoresFaturamentoPage />} />

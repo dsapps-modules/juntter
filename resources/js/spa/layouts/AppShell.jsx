@@ -2,6 +2,7 @@ import {
     AppstoreOutlined,
     BankOutlined,
     CreditCardOutlined,
+    DeploymentUnitOutlined,
     MenuOutlined,
     LogoutOutlined,
     UserOutlined,
@@ -35,6 +36,7 @@ const iconByName = {
     planos: <CreditCardOutlined />,
     saldo: <CreditCardOutlined />,
     credit: <CreditCardOutlined />,
+    checkout: <DeploymentUnitOutlined />,
     perfil: <UserOutlined />,
 };
 

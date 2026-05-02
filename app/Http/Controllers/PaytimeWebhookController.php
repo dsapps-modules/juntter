@@ -7,6 +7,10 @@ use App\Jobs\ProcessPaytimeBilletStatusChange;
 use App\Jobs\ProcessPaytimeEstablishmentStatusChange;
 use App\Jobs\ProcessPaytimeTransactionWebhook;
 use App\Jobs\ProcessUpdatePaytimeEstablishmentData;
+use App\Models\CheckoutEvent;
+use App\Models\CheckoutSession;
+use App\Models\Order;
+use App\Models\PaymentTransaction;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +34,10 @@ class PaytimeWebhookController extends Controller
             Log::warning('Paytime webhook request missing event', $payload);
 
             return response()->json(['message' => 'Event is required'], 422);
+        }
+
+        if ($this->handleCheckoutPaymentWebhook($payload)) {
+            return response()->json(['message' => 'Paytime checkout webhook received'], 200);
         }
 
         $this->dispatchEventHandler($event, $payload);
@@ -156,6 +164,94 @@ class PaytimeWebhookController extends Controller
         $payload['event'] = $event;
 
         return $payload;
+    }
+
+    private function handleCheckoutPaymentWebhook(array $payload): bool
+    {
+        $event = strtolower((string) ($payload['event'] ?? ''));
+        $status = strtolower((string) data_get($payload, 'status', data_get($payload, 'data.status', '')));
+
+        $approvedEvents = [
+            'payment-approved',
+            'checkout.payment.approved',
+            'checkout-payment-approved',
+        ];
+
+        $approvedStatuses = ['paid', 'approved', 'confirmed', 'success'];
+
+        if (! in_array($event, $approvedEvents, true) && ! in_array($status, $approvedStatuses, true)) {
+            return false;
+        }
+
+        $orderNumber = data_get($payload, 'order_number')
+            ?? data_get($payload, 'data.order_number')
+            ?? data_get($payload, 'data.metadata.order_number')
+            ?? data_get($payload, 'reference')
+            ?? data_get($payload, 'data.reference');
+
+        $transactionId = data_get($payload, 'gateway_transaction_id')
+            ?? data_get($payload, 'data._id')
+            ?? data_get($payload, 'transaction_id')
+            ?? data_get($payload, 'data.transaction_id');
+
+        if (! is_string($orderNumber) || $orderNumber === '') {
+            return false;
+        }
+
+        $order = null;
+
+        $order = Order::query()->where('order_number', $orderNumber)->first();
+
+        if (! $order && is_string($transactionId) && $transactionId !== '') {
+            $transaction = PaymentTransaction::query()->where('gateway_transaction_id', $transactionId)->first();
+            $order = $transaction?->order;
+        }
+
+        if (! $order) {
+            return false;
+        }
+
+        if ($order->status === 'paid') {
+            return true;
+        }
+
+        $transaction = PaymentTransaction::query()->where('order_id', $order->id)->first();
+
+        if ($transaction) {
+            $transaction->update([
+                'gateway_status' => $status ?: $transaction->gateway_status,
+                'internal_status' => 'paid',
+                'webhook_payload' => $payload,
+            ]);
+        }
+
+        $order->update(['status' => 'paid']);
+
+        $checkoutSession = CheckoutSession::query()->find($order->checkout_session_id);
+
+        if ($checkoutSession) {
+            $checkoutSession->update([
+                'status' => 'paid',
+                'current_step' => 'confirmation',
+                'last_activity_at' => now(),
+            ]);
+        }
+
+        CheckoutEvent::query()->firstOrCreate([
+            'checkout_session_id' => $order->checkout_session_id,
+            'event_type' => 'payment_approved',
+        ], [
+            'checkout_link_id' => $order->checkout_link_id,
+            'seller_id' => $order->seller_id,
+            'step' => 'confirmation',
+            'metadata' => [
+                'order_number' => $order->order_number,
+                'gateway_transaction_id' => $transactionId,
+                'status' => $status,
+            ],
+        ]);
+
+        return true;
     }
 
     protected function isAuthorized(Request $request): bool

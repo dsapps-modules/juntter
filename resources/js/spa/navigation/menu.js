@@ -64,6 +64,13 @@ export const navigationByRole = {
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
             ],
         },
+        {
+            label: 'Checkout',
+            children: [
+                { key: 'checkout.produtos', path: '/seller/products', label: 'Produtos', icon: 'checkout' },
+                { key: 'checkout.links', path: '/seller/checkout-links', label: 'Links de Checkout', icon: 'checkout' },
+            ],
+        },
     ],
 };
 

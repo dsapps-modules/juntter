@@ -8,6 +8,11 @@ use App\Http\Controllers\LinkPagamentoController;
 use App\Http\Controllers\LinkPagamentoPixController;
 use App\Http\Controllers\PagamentoClienteController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicCheckoutController;
+use App\Http\Controllers\PublicCheckoutPaymentController;
+use App\Http\Controllers\PublicCheckoutSessionController;
+use App\Http\Controllers\SellerCheckoutLinkController;
+use App\Http\Controllers\SellerProductController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +32,16 @@ Route::redirect('/home', '/app/home')->name('home');
 Route::view('/app/{any?}', 'spa')
     ->where('any', '.*')
     ->name('spa');
+
+Route::get('/checkout/{publicToken}', [PublicCheckoutController::class, 'show'])
+    ->where('publicToken', 'chk_[A-Za-z0-9]+')
+    ->name('checkout.public.show');
+Route::post('/checkout/{publicToken}/session', [PublicCheckoutSessionController::class, 'createOrResume'])->name('checkout.public.session');
+Route::post('/checkout/session/{sessionToken}/identification', [PublicCheckoutSessionController::class, 'saveIdentification'])->name('checkout.public.identification');
+Route::post('/checkout/session/{sessionToken}/delivery', [PublicCheckoutSessionController::class, 'saveDelivery'])->name('checkout.public.delivery');
+Route::post('/checkout/session/{sessionToken}/payment', [PublicCheckoutPaymentController::class, 'startPayment'])->name('checkout.public.payment');
+Route::get('/checkout/session/{sessionToken}/status', [PublicCheckoutPaymentController::class, 'status'])->name('checkout.public.status');
+Route::get('/checkout/session/{sessionToken}/thank-you', [PublicCheckoutController::class, 'thankYou'])->name('checkout.public.thank-you');
 
 // Rotas públicas para pagamento do cliente (apenas cartão)
 Route::get('/pagamento/efetivado/sucesso', [PagamentoClienteController::class, 'pagamentoSucesso'])->name('pagamento.sucesso');
@@ -99,6 +114,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/links-pagamento-boleto/{linkPagamento}', [LinkPagamentoBoletoController::class, 'destroy'])->name('links-pagamento-boleto.destroy');
         Route::patch('/links-pagamento-boleto/{linkPagamento}/status', [LinkPagamentoBoletoController::class, 'toggleStatus'])->name('links-pagamento-boleto.status');
 
+        Route::get('/seller/products', [SellerProductController::class, 'index'])->name('seller.products.index');
+        Route::post('/seller/products', [SellerProductController::class, 'store'])->name('seller.products.store');
+        Route::get('/seller/products/{product}', [SellerProductController::class, 'show'])->name('seller.products.show');
+        Route::put('/seller/products/{product}', [SellerProductController::class, 'update'])->name('seller.products.update');
+        Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy'])->name('seller.products.destroy');
+
+        Route::get('/seller/checkout-links', [SellerCheckoutLinkController::class, 'index'])->name('seller.checkout-links.index');
+        Route::post('/seller/checkout-links', [SellerCheckoutLinkController::class, 'store'])->name('seller.checkout-links.store');
+        Route::get('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'show'])->name('seller.checkout-links.show');
+        Route::put('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'update'])->name('seller.checkout-links.update');
+        Route::delete('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'destroy'])->name('seller.checkout-links.destroy');
+        Route::post('/seller/checkout-links/{checkoutLink}/activate', [SellerCheckoutLinkController::class, 'activate'])->name('seller.checkout-links.activate');
+        Route::post('/seller/checkout-links/{checkoutLink}/deactivate', [SellerCheckoutLinkController::class, 'deactivate'])->name('seller.checkout-links.deactivate');
+        Route::get('/seller/checkout-links/{checkoutLink}/sales', [SellerCheckoutLinkController::class, 'sales'])->name('seller.checkout-links.sales');
     });
 });
 
