@@ -128,6 +128,68 @@
             <h2 class="section-title fade-in-up">Planos transparentes</h2>
             <p class="section-subtitle fade-in-up">Escolha o plano ideal para o volume do seu negócio</p>
 
+            @php
+                $acelerarRates = [
+                    '2x' => 6.53,
+                    '3x' => 8.35,
+                    '4x' => 10.15,
+                    '5x' => 11.87,
+                    '6x' => 13.01,
+                    '7x' => 14.11,
+                    '8x' => 15.21,
+                    '9x' => 16.28,
+                    '10x' => 17.32,
+                    '11x' => 18.36,
+                    '12x' => 19.37,
+                    '13x' => 20.58,
+                    '14x' => 21.79,
+                    '15x' => 23.00,
+                    '16x' => 24.21,
+                    '17x' => 25.42,
+                    '18x' => 26.63,
+                ];
+
+                $turboRates = [
+                    '2x' => 5.63,
+                    '3x' => 7.20,
+                    '4x' => 8.75,
+                    '5x' => 10.23,
+                    '6x' => 11.21,
+                    '7x' => 12.17,
+                    '8x' => 13.11,
+                    '9x' => 14.03,
+                    '10x' => 14.93,
+                    '11x' => 15.83,
+                    '12x' => 16.70,
+                    '13x' => 17.71,
+                    '14x' => 18.73,
+                    '15x' => 19.74,
+                    '16x' => 20.76,
+                    '17x' => 21.77,
+                    '18x' => 22.79,
+                ];
+
+                $economicoRates = [
+                    '2x' => 3.75,
+                    '3x' => 3.75,
+                    '4x' => 3.75,
+                    '5x' => 3.75,
+                    '6x' => 3.75,
+                    '7x' => 3.75,
+                    '8x' => 3.75,
+                    '9x' => 3.75,
+                    '10x' => 3.75,
+                    '11x' => 3.75,
+                    '12x' => 3.75,
+                    '13x' => 5.98,
+                    '14x' => 5.98,
+                    '15x' => 5.98,
+                    '16x' => 5.98,
+                    '17x' => 5.98,
+                    '18x' => 5.98,
+                ];
+            @endphp
+
             <div class="row justify-content-center">
                 <div class="col-lg-3 mb-4" id="acelerar">
                     <div class="pricing-card fade-in-up">
@@ -136,25 +198,7 @@
                             <div class="rate-toggle">
                                 <div class="rate-selector">
                                     <span>Crédito à vista</span>
-                                    <select class="form-control payment-selector" data-plan="mais">
-                                        <option value="2x" data-rate="6.53">Parcelado 2x</option>
-                                        <option value="3x" data-rate="8.35">Parcelado 3x</option>
-                                        <option value="4x" data-rate="10.15">Parcelado 4x</option>
-                                        <option value="5x" data-rate="11.87">Parcelado 5x</option>
-                                        <option value="6x" data-rate="13.01" selected>Parcelado 6x</option>
-                                        <option value="7x" data-rate="14.11">Parcelado 7x</option>
-                                        <option value="8x" data-rate="15.21">Parcelado 8x</option>
-                                        <option value="9x" data-rate="16.28">Parcelado 9x</option>
-                                        <option value="10x" data-rate="17.32">Parcelado 10x</option>
-                                        <option value="11x" data-rate="18.36">Parcelado 11x</option>
-                                        <option value="12x" data-rate="19.37">Parcelado 12x</option>
-                                        <option value="13x" data-rate="20.58">Parcelado 13x</option>
-                                        <option value="14x" data-rate="21.79">Parcelado 14x</option>
-                                        <option value="15x" data-rate="23.00">Parcelado 15x</option>
-                                        <option value="16x" data-rate="24.21">Parcelado 16x</option>
-                                        <option value="17x" data-rate="25.42">Parcelado 17x</option>
-                                        <option value="18x" data-rate="26.63">Parcelado 18x</option>
-                                    </select>
+                                    <x-form.payment-selector plan="acelerar" :rates="$acelerarRates" />
                                 </div>
                             </div>
                             <div class="price-display-dual">
@@ -163,8 +207,8 @@
                                     <span class="price-label">Crédito à vista</span>
                                 </div>
                                 <div class="price-item">
-                                    <span class="price-value parcelado-rate" data-plan="mais">13,01%</span>
-                                    <span class="price-label parcelado-label" data-plan="mais">Parcelado 6x</span>
+                                    <span class="price-value parcelado-rate" data-plan="acelerar">13,01%</span>
+                                    <span class="price-label parcelado-label" data-plan="acelerar">Parcelado 6x</span>
                                 </div>
                             </div>
                             <p class="text-center">Ideal para quem vende mais parcelado</p>
@@ -208,25 +252,7 @@
                             <div class="rate-toggle">
                                 <div class="rate-selector">
                                     <span>Crédito à vista</span>
-                                    <select class="form-control payment-selector" data-plan="negocio">
-                                        <option value="2x" data-rate="5.63">Parcelado 2x</option>
-                                        <option value="3x" data-rate="7.20">Parcelado 3x</option>
-                                        <option value="4x" data-rate="8.75">Parcelado 4x</option>
-                                        <option value="5x" data-rate="10.23">Parcelado 5x</option>
-                                        <option value="6x" data-rate="11.21" selected>Parcelado 6x</option>
-                                        <option value="7x" data-rate="12.17">Parcelado 7x</option>
-                                        <option value="8x" data-rate="13.11">Parcelado 8x</option>
-                                        <option value="9x" data-rate="14.03">Parcelado 9x</option>
-                                        <option value="10x" data-rate="14.93">Parcelado 10x</option>
-                                        <option value="11x" data-rate="15.83">Parcelado 11x</option>
-                                        <option value="12x" data-rate="16.70">Parcelado 12x</option>
-                                        <option value="13x" data-rate="17.71">Parcelado 13x</option>
-                                        <option value="14x" data-rate="18.73">Parcelado 14x</option>
-                                        <option value="15x" data-rate="19.74">Parcelado 15x</option>
-                                        <option value="16x" data-rate="20.76">Parcelado 16x</option>
-                                        <option value="17x" data-rate="21.77">Parcelado 17x</option>
-                                        <option value="18x" data-rate="22.79">Parcelado 18x</option>
-                                    </select>
+                                    <x-form.payment-selector plan="turbo" :rates="$turboRates" />
                                 </div>
                             </div>
                             <div class="price-display-dual">
@@ -235,8 +261,8 @@
                                     <span class="price-label">Crédito à vista</span>
                                 </div>
                                 <div class="price-item">
-                                    <span class="price-value parcelado-rate" data-plan="negocio">11,21%</span>
-                                    <span class="price-label parcelado-label" data-plan="negocio">Parcelado 6x</span>
+                                    <span class="price-value parcelado-rate" data-plan="turbo">11,21%</span>
+                                    <span class="price-label parcelado-label" data-plan="turbo">Parcelado 6x</span>
                                 </div>
                             </div>
                             <p class="text-center">Ideal para quem vende mais à vista</p>
@@ -281,25 +307,7 @@
                             <div class="rate-toggle">
                                 <div class="rate-selector">
                                     <span>Crédito à vista</span>
-                                    <select class="form-control payment-selector" data-plan="flex">
-                                        <option value="2x" data-rate="3.75">Parcelado 2x</option>
-                                        <option value="3x" data-rate="3.75">Parcelado 3x</option>
-                                        <option value="4x" data-rate="3.75">Parcelado 4x</option>
-                                        <option value="5x" data-rate="3.75">Parcelado 5x</option>
-                                        <option value="6x" data-rate="3.75" selected>Parcelado 6x</option>
-                                        <option value="7x" data-rate="3.75">Parcelado 7x</option>
-                                        <option value="8x" data-rate="3.75">Parcelado 8x</option>
-                                        <option value="9x" data-rate="3.75">Parcelado 9x</option>
-                                        <option value="10x" data-rate="3.75">Parcelado 10x</option>
-                                        <option value="11x" data-rate="3.75">Parcelado 11x</option>
-                                        <option value="12x" data-rate="3.75">Parcelado 12x</option>
-                                        <option value="13x" data-rate="5.98">Parcelado 13x</option>
-                                        <option value="14x" data-rate="5.98">Parcelado 14x</option>
-                                        <option value="15x" data-rate="5.98">Parcelado 15x</option>
-                                        <option value="16x" data-rate="5.98">Parcelado 16x</option>
-                                        <option value="17x" data-rate="5.98">Parcelado 17x</option>
-                                        <option value="18x" data-rate="5.98">Parcelado 18x</option>
-                                    </select>
+                                    <x-form.payment-selector plan="economico" :rates="$economicoRates" />
                                 </div>
                             </div>
                             <div class="price-display-dual">
@@ -308,8 +316,8 @@
                                     <span class="price-label">Crédito à vista</span>
                                 </div>
                                 <div class="price-item">
-                                    <span class="price-value parcelado-rate" data-plan="flex">3,75%</span>
-                                    <span class="price-label parcelado-label" data-plan="flex">Parcelado 6x</span>
+                                    <span class="price-value parcelado-rate" data-plan="economico">3,75%</span>
+                                    <span class="price-label parcelado-label" data-plan="economico">Parcelado 6x</span>
                                 </div>
                             </div>
                             <p class="text-center">Ideal para quem não precisa de antecipação</p>
@@ -527,40 +535,13 @@
     </section>
 
     <script>
-        // Funcionalidade para alterar taxas dinamicamente
-        document.addEventListener('DOMContentLoaded', function() {
-            const paymentSelectors = document.querySelectorAll('.payment-selector');
-
-            paymentSelectors.forEach(selector => {
-                selector.addEventListener('change', function() {
-                    const selectedOption = this.options[this.selectedIndex];
-                    const rate = selectedOption.getAttribute('data-rate');
-                    const planName = this.getAttribute('data-plan');
-                    const parcelas = selectedOption.value;
-
-                    // Atualiza o preço parcelado exibido
-                    const priceElement = document.querySelector(
-                        `.parcelado-rate[data-plan="${planName}"]`);
-                    const labelElement = document.querySelector(
-                        `.parcelado-label[data-plan="${planName}"]`);
-
-                    if (priceElement && rate) {
-                        priceElement.textContent = rate + '%';
-                    }
-
-                    if (labelElement && parcelas) {
-                        labelElement.textContent = `Parcelado ${parcelas}`;
-                    }
-                });
-            });
-        });
-
-        // Função para abrir WhatsApp
         function abrirWhatsApp() {
-            const numeroWhatsApp = '5511999999999'; // Substitua pelo número real
+            const numeroWhatsApp = '5511999999999';
             const mensagem = 'Olá! Gostaria de saber mais sobre os planos personalizados do Juntter Checkout.';
             const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
             window.open(url, '_blank');
         }
     </script>
 @endsection
+
+
