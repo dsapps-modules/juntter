@@ -920,6 +920,7 @@ export default function CobrancaCartaoCreditoPage() {
                                     options={periodOptions}
                                     onChange={(value) => refreshOverview(value)}
                                     size="middle"
+                                    style={{ minWidth: 176, width: 'auto' }}
                                 />
                             }
                             bordered={false}
@@ -945,14 +946,17 @@ export default function CobrancaCartaoCreditoPage() {
 
             <Col xs={24} xl={8}>
                 <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                    <Card className="spa-quick-view-card spa-pix-sidebar-card" title="Painel lateral" bordered={false}>
+                    <Card
+                        className="spa-quick-view-card spa-pix-sidebar-card"
+                        title={(
+                            <Space align="center" size={10} className="spa-pix-sidebar-title">
+                                <BankOutlined className="spa-pix-sidebar-title-icon" />
+                                <span>Visão rápida</span>
+                            </Space>
+                        )}
+                        bordered={false}
+                    >
                         <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                            <div className="spa-pix-detail-side-hero">
-                                <BankOutlined className="spa-pix-detail-side-icon" />
-                                <Typography.Title level={4} className="spa-pix-detail-side-title">
-                                    Visão rápida
-                                </Typography.Title>
-                            </div>
 
                             <Row gutter={[12, 12]}>
                                 {[
@@ -1013,16 +1017,6 @@ export default function CobrancaCartaoCreditoPage() {
                                 )}
                             </Card>
 
-                            <Card size="small" title="Dica rápida" bordered={false}>
-                                <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                                    <Typography.Text>
-                                        Use o botão Gerar Cobrança para abrir o accordion e emitir uma transação com cartão.
-                                    </Typography.Text>
-                                    <Typography.Text>
-                                        O seletor de mês controla a lista de transações exibida abaixo.
-                                    </Typography.Text>
-                                </Space>
-                            </Card>
                         </Space>
                     </Card>
                 </Space>

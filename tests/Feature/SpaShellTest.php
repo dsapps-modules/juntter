@@ -185,6 +185,23 @@ class SpaShellTest extends TestCase
         }
     }
 
+    public function test_the_saldo_extrato_page_contains_the_placeholder_layout(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaSaldoExtratoPage.jsx'));
+
+        $this->assertStringContainsString('Extrato do período', $pageSource);
+        $this->assertStringContainsString('Resumo financeiro', $pageSource);
+        $this->assertStringContainsString('Saldo atual', $pageSource);
+        $this->assertStringContainsString('Lançamentos futuros', $pageSource);
+        $this->assertStringContainsString('Sem lançamentos para o período selecionado.', $pageSource);
+        $this->assertStringContainsString('Selecionar mês', $pageSource);
+        $this->assertStringContainsString('Selecionar ano', $pageSource);
+        $this->assertStringContainsString('spa-saldoextrato-sidebar-card', $pageSource);
+        $this->assertStringContainsString('spa-saldoextrato-table-card', $pageSource);
+        $this->assertStringNotContainsString('Conta corrente', $pageSource);
+        $this->assertStringNotContainsString('Espaço reservado para saldos', $pageSource);
+    }
+
     public function test_the_pix_page_uses_the_new_link_payment_modal_labels(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
@@ -204,11 +221,10 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
-        $this->assertStringContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
         $this->assertStringContainsString('Últimos links', $pageSource);
-        $this->assertStringContainsString('Dica rápida', $pageSource);
         $this->assertStringContainsString('Criar link PIX', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
@@ -249,11 +265,10 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
 
-        $this->assertStringContainsString('Painel lateral', $pageSource);
-        $this->assertStringContainsString('Resumo de boletos', $pageSource);
+        $this->assertStringContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
         $this->assertStringContainsString('Últimos boletos', $pageSource);
-        $this->assertStringContainsString('Dica rápida', $pageSource);
         $this->assertStringContainsString('Gerar boleto', $pageSource);
         $this->assertStringContainsString('Criar link de pagamento', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
@@ -270,9 +285,11 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Dados do cartão', $pageSource);
         $this->assertStringContainsString('Link de Pagamento - Cartão de Crédito', $pageSource);
-        $this->assertStringContainsString('Painel lateral', $pageSource);
+        $this->assertStringContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
+        $this->assertStringContainsString("style={{ minWidth: 176, width: 'auto' }}", $pageSource);
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
     }
 

@@ -1,4 +1,4 @@
-import {
+﻿import {
     BankOutlined,
     CheckCircleOutlined,
     CopyOutlined,
@@ -989,14 +989,17 @@ export default function CobrancaBoletoPage() {
 
             <Col xs={24} xl={8}>
                 <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                    <Card className="spa-quick-view-card spa-pix-sidebar-card" title="Painel lateral" bordered={false}>
+                    <Card
+                        className="spa-quick-view-card spa-pix-sidebar-card"
+                        title={(
+                            <Space align="center" size={10} className="spa-pix-sidebar-title">
+                                <BankOutlined className="spa-pix-sidebar-title-icon" />
+                                <span>Visão rápida</span>
+                            </Space>
+                        )}
+                        bordered={false}
+                    >
                         <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                            <div className="spa-pix-detail-side-hero">
-                                <BankOutlined className="spa-pix-detail-side-icon" />
-                                <Typography.Title level={4} className="spa-pix-detail-side-title">
-                                    Resumo de boletos
-                                </Typography.Title>
-                            </div>
 
                             <Row gutter={[12, 12]}>
                                 {[
@@ -1057,17 +1060,6 @@ export default function CobrancaBoletoPage() {
                                         ))}
                                     </Space>
                                 )}
-                            </Card>
-
-                            <Card size="small" title="Dica rápida" bordered={false}>
-                                <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                                    <Typography.Text>
-                                        O botão "Gerar Boleto" abre e fecha o accordion do formulário no centro da tela.
-                                    </Typography.Text>
-                                    <Typography.Text>
-                                        A lista logo abaixo mostra apenas os boletos do período selecionado.
-                                    </Typography.Text>
-                                </Space>
                             </Card>
                         </Space>
                     </Card>
@@ -1377,3 +1369,4 @@ export default function CobrancaBoletoPage() {
         </Row>
     );
 }
+

@@ -780,14 +780,17 @@ export default function CobrancaPixPage() {
 
             <Col xs={24} xl={8}>
                 <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                    <Card className="spa-quick-view-card spa-pix-sidebar-card" title="Painel lateral" bordered={false}>
+                    <Card
+                        className="spa-quick-view-card spa-pix-sidebar-card"
+                        title={(
+                            <Space align="center" size={10} className="spa-pix-sidebar-title">
+                                <QrcodeOutlined className="spa-pix-sidebar-title-icon" />
+                                <span>Visão rápida</span>
+                            </Space>
+                        )}
+                        bordered={false}
+                    >
                         <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                            <div className="spa-pix-detail-side-hero">
-                                <QrcodeOutlined className="spa-pix-detail-side-icon" />
-                                <Typography.Title level={4} className="spa-pix-detail-side-title">
-                                    Visão rápida
-                                </Typography.Title>
-                            </div>
 
                             <Row gutter={[12, 12]}>
                                 {[
@@ -848,16 +851,6 @@ export default function CobrancaPixPage() {
                                 )}
                             </Card>
 
-                            <Card size="small" title="Dica rápida" bordered={false}>
-                                <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                                    <Typography.Text>
-                                        Use o botão de link de pagamento para criar uma cobrança imediata.
-                                    </Typography.Text>
-                                    <Typography.Text>
-                                        O painel lateral ajuda a acompanhar o volume e os links mais recentes.
-                                    </Typography.Text>
-                                </Space>
-                            </Card>
                         </Space>
                     </Card>
                 </Space>
