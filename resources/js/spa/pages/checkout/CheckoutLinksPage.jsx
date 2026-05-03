@@ -1,5 +1,11 @@
-import { CopyOutlined, DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, PauseCircleOutlined, PlayCircleOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Empty, Row, Space, Table, Tag, Typography, message } from 'antd';
+import {
+    CopyOutlined,
+    DeleteOutlined,
+    EditOutlined,
+    EyeOutlined,
+    PlusOutlined,
+} from '@ant-design/icons';
+import { Button, Card, Col, Empty, Row, Space, Spin, Table, Tag, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +13,7 @@ export default function CheckoutLinksPage() {
     const navigate = useNavigate();
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [statusLoadingLinkId, setStatusLoadingLinkId] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -51,24 +58,39 @@ export default function CheckoutLinksPage() {
     }
 
     async function updateStatus(linkId, endpoint, successMessage) {
-        const response = await fetch(`/seller/checkout-links/${linkId}/${endpoint}`, {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
-            },
-            credentials: 'same-origin',
-        });
+        setStatusLoadingLinkId(linkId);
 
-        if (!response.ok) {
-            message.error('Não foi possível atualizar o status.');
+        try {
+            const response = await fetch(`/seller/checkout-links/${linkId}/${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                message.error('Não foi possível atualizar o status.');
+                return;
+            }
+
+            message.success(successMessage);
+            setLinks((current) =>
+                current.map((link) => (link.id === linkId ? { ...link, status: endpoint === 'activate' ? 'active' : 'inactive' } : link)),
+            );
+        } finally {
+            setStatusLoadingLinkId(null);
+        }
+    }
+
+    function toggleLinkStatus(linkId, currentStatus) {
+        if (currentStatus === 'active') {
+            updateStatus(linkId, 'deactivate', 'Link desativado.');
             return;
         }
 
-        message.success(successMessage);
-        setLinks((current) =>
-            current.map((link) => (link.id === linkId ? { ...link, status: endpoint === 'activate' ? 'active' : 'inactive' } : link)),
-        );
+        updateStatus(linkId, 'activate', 'Link ativado.');
     }
 
     async function deleteLink(linkId) {
@@ -100,7 +122,6 @@ export default function CheckoutLinksPage() {
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
                 <Card
-                    title="Links de Checkout"
                     extra={
                         <Button icon={<PlusOutlined />} type="primary" onClick={() => navigate('/seller/checkout-links/novo')}>
                             Novo link
@@ -134,7 +155,40 @@ export default function CheckoutLinksPage() {
                                 {
                                     title: 'Status',
                                     dataIndex: 'status',
-                                    render: (value) => <Tag color={value === 'active' ? 'green' : 'red'}>{value}</Tag>,
+                                    render: (value, record) => (
+                                        <div style={{ alignItems: 'center', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
+                                            <Tag
+                                                aria-busy={statusLoadingLinkId === record.id ? 'true' : undefined}
+                                                aria-label={value === 'active' ? 'Desativar link' : 'Ativar link'}
+                                                color={value === 'active' ? 'green' : 'red'}
+                                                onClick={() => {
+                                                    if (statusLoadingLinkId === record.id) {
+                                                        return;
+                                                    }
+
+                                                    toggleLinkStatus(record.id, value);
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (statusLoadingLinkId === record.id) {
+                                                        return;
+                                                    }
+
+                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                        event.preventDefault();
+                                                        toggleLinkStatus(record.id, value);
+                                                    }
+                                                }}
+                                                role="button"
+                                                tabIndex={0}
+                                                style={{ cursor: statusLoadingLinkId === record.id ? 'wait' : 'pointer', display: 'inline-flex' }}
+                                            >
+                                                {value}
+                                            </Tag>
+                                            <span style={{ display: 'inline-flex', justifyContent: 'center', marginLeft: 20, width: 16, flexShrink: 0 }}>
+                                                {statusLoadingLinkId === record.id ? <Spin size="small" /> : null}
+                                            </span>
+                                        </div>
+                                    ),
                                 },
                                 {
                                     title: 'Preço',
@@ -146,30 +200,33 @@ export default function CheckoutLinksPage() {
                                     render: (_, record) => record.orders?.filter((order) => order.status === 'paid')?.length ?? 0,
                                 },
                                 {
-                                    title: 'Ações',
                                     render: (_, record) => (
                                         <Space wrap>
-                                            <Button icon={<CopyOutlined />} onClick={() => copyLink(record.public_token)}>
-                                                Copiar
-                                            </Button>
-                                            <Button icon={<EditOutlined />} onClick={() => navigate(`/seller/checkout-links/${record.id}/editar`)}>
-                                                Editar
-                                            </Button>
-                                            <Button icon={<EyeOutlined />} onClick={() => navigate(`/seller/checkout-links/${record.id}/vendas`)}>
-                                                Vendas
-                                            </Button>
-                                            {record.status === 'active' ? (
-                                                <Button icon={<PauseCircleOutlined />} onClick={() => updateStatus(record.id, 'deactivate', 'Link desativado.')}>
-                                                    Desativar
-                                                </Button>
-                                            ) : (
-                                                <Button icon={<PlayCircleOutlined />} onClick={() => updateStatus(record.id, 'activate', 'Link ativado.')}>
-                                                    Ativar
-                                                </Button>
-                                            )}
-                                            <Button danger icon={<DeleteOutlined />} onClick={() => deleteLink(record.id)}>
-                                                Excluir
-                                            </Button>
+                                            <Button
+                                                aria-label="Copiar link"
+                                                icon={<CopyOutlined />}
+                                                onClick={() => copyLink(record.public_token)}
+                                                title="Copiar link"
+                                            />
+                                            <Button
+                                                aria-label="Editar link"
+                                                icon={<EditOutlined />}
+                                                onClick={() => navigate(`/seller/checkout-links/${record.id}/editar`)}
+                                                title="Editar link"
+                                            />
+                                            <Button
+                                                aria-label="Ver vendas"
+                                                icon={<EyeOutlined />}
+                                                onClick={() => navigate(`/seller/checkout-links/${record.id}/vendas`)}
+                                                title="Ver vendas"
+                                            />
+                                            <Button
+                                                aria-label="Excluir link"
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => deleteLink(record.id)}
+                                                title="Excluir link"
+                                            />
                                         </Space>
                                     ),
                                 },

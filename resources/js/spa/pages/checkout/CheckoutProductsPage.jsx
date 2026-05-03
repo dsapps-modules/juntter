@@ -1,5 +1,5 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Empty, Row, Space, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Col, Empty, Row, Space, Spin, Table, Tag, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +7,7 @@ export default function CheckoutProductsPage() {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [statusLoadingProductId, setStatusLoadingProductId] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -69,11 +70,47 @@ export default function CheckoutProductsPage() {
         message.success('Produto excluído.');
     }
 
+    async function toggleProductStatus(product) {
+        const nextStatus = product.status === 'active' ? 'inactive' : 'active';
+        setStatusLoadingProductId(product.id);
+
+        try {
+            const response = await fetch(`/seller/products/${product.id}`, {
+                method: 'PUT',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    name: product.name,
+                    slug: product.slug,
+                    description: product.description,
+                    short_description: product.short_description,
+                    sku: product.sku,
+                    image_path: product.image_path,
+                    price: product.price,
+                    status: nextStatus,
+                }),
+            });
+
+            if (!response.ok) {
+                message.error('Não foi possível atualizar o status do produto.');
+                return;
+            }
+
+            setProducts((current) => current.map((currentProduct) => (currentProduct.id === product.id ? { ...currentProduct, status: nextStatus } : currentProduct)));
+            message.success(nextStatus === 'active' ? 'Produto ativado.' : 'Produto desativado.');
+        } finally {
+            setStatusLoadingProductId(null);
+        }
+    }
+
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
                 <Card
-                    title="Produtos do Checkout"
                     extra={
                         <Button icon={<PlusOutlined />} type="primary" onClick={() => navigate('/seller/products/novo')}>
                             Novo produto
@@ -111,18 +148,55 @@ export default function CheckoutProductsPage() {
                                 {
                                     title: 'Status',
                                     dataIndex: 'status',
-                                    render: (value) => <Tag color={value === 'active' ? 'green' : 'red'}>{value}</Tag>,
+                                    render: (value, record) => (
+                                        <Space size={8}>
+                                            {statusLoadingProductId === record.id ? <Spin size="small" /> : null}
+                                            <Tag
+                                                aria-busy={statusLoadingProductId === record.id ? 'true' : undefined}
+                                                aria-label={value === 'active' ? 'Desativar produto' : 'Ativar produto'}
+                                                color={value === 'active' ? 'green' : 'red'}
+                                                onClick={() => {
+                                                    if (statusLoadingProductId === record.id) {
+                                                        return;
+                                                    }
+
+                                                    toggleProductStatus(record);
+                                                }}
+                                                onKeyDown={(event) => {
+                                                    if (statusLoadingProductId === record.id) {
+                                                        return;
+                                                    }
+
+                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                        event.preventDefault();
+                                                        toggleProductStatus(record);
+                                                    }
+                                                }}
+                                                role="button"
+                                                tabIndex={0}
+                                                style={{ cursor: statusLoadingProductId === record.id ? 'wait' : 'pointer' }}
+                                            >
+                                                {value}
+                                            </Tag>
+                                        </Space>
+                                    ),
                                 },
                                 {
-                                    title: 'Ações',
                                     render: (_, record) => (
                                         <Space>
-                                            <Button icon={<EditOutlined />} onClick={() => navigate(`/seller/products/${record.id}/editar`)}>
-                                                Editar
-                                            </Button>
-                                            <Button danger icon={<DeleteOutlined />} onClick={() => deleteProduct(record.id)}>
-                                                Excluir
-                                            </Button>
+                                            <Button
+                                                aria-label="Editar produto"
+                                                icon={<EditOutlined />}
+                                                onClick={() => navigate(`/seller/products/${record.id}/editar`)}
+                                                title="Editar produto"
+                                            />
+                                            <Button
+                                                aria-label="Excluir produto"
+                                                danger
+                                                icon={<DeleteOutlined />}
+                                                onClick={() => deleteProduct(record.id)}
+                                                title="Excluir produto"
+                                            />
                                         </Space>
                                     ),
                                 },

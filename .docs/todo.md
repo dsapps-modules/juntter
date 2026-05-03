@@ -1,5 +1,9 @@
 // vendedor
 projetosoulpsi@gmail.com
+descontochegou
+JuntterAcesso745!
+
+
 
 **Histórico**
 [x] Limitar a exibição em função de seletor mês/ano
@@ -10,13 +14,13 @@ projetosoulpsi@gmail.com
 [x] Corrigir geração do qrcode na página do link de pagamento
 
 **Boleto**
-[ ] Form + implementação
-[ ] Criar link no painel direiro
+[x] Form + implementação
+[x] Criar link no painel direiro
 
 **Cartão**
-[ ] Form + implementação
-[ ] Criar link no painel direiro
-[ ] Crédito à vista também no painel
+[x] Form + implementação
+[x] Criar link no painel direiro
+[x] Crédito à vista também no painel
 
 **Sidebar**
 [x] Remover grupo 'Links de Pagamento'
