@@ -394,6 +394,57 @@ class RedirectedCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_pix_payment_uses_api_transaction_id_when_gateway_transaction_id_is_missing(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createPixPayment')
+            ->willReturn([
+                'gateway_status' => 'PENDING',
+                'internal_status' => 'pending',
+                'pix_qr_code' => '00020126580014br.gov.bcb.pix...',
+                'pix_copy_paste' => '00020126580014br.gov.bcb.pix...',
+                'api_transaction' => [
+                    '_id' => 'pix-checkout-456',
+                    'status' => 'PENDING',
+                ],
+            ]);
+
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'pix',
+            'installments' => 1,
+        ]);
+
+        $response->assertOk();
+        $this->assertSame('pix-checkout-456', $response->json('payment_transaction.gateway_transaction_id'));
+        $this->assertDatabaseHas('payment_transactions', [
+            'payment_method' => 'pix',
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'pix-checkout-456',
+        ]);
+    }
+
     public function test_boleto_payment_creates_order_and_transaction(): void
     {
         $seller = $this->makeVendorUser();

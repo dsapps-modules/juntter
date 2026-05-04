@@ -4,6 +4,7 @@ namespace App\Services\Payments\Paytime;
 
 use App\Models\Order;
 use App\Services\ApiClientService;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -17,23 +18,46 @@ class PaytimeClient
 
         $payload = $this->buildPixPayload($order);
         $transaction = $this->apiClient->post('marketplace/transactions', $payload);
+        $transactionId = $this->resolveTransactionId($transaction);
 
-        if (! isset($transaction['_id'])) {
+        Log::info('Paytime Pix transaction response received', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'transaction_id' => $transactionId,
+            'transaction_keys' => array_keys($transaction),
+            'transaction_payload' => $transaction,
+        ]);
+
+        if ($transactionId === null) {
+            Log::warning('Paytime Pix transaction response did not include a transaction id', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'transaction_payload' => $transaction,
+            ]);
+
             return $transaction;
         }
 
         $qrCode = [];
 
         try {
-            $qrCode = $this->apiClient->get("marketplace/transactions/{$transaction['_id']}/qrcode");
+            $qrCode = $this->apiClient->get("marketplace/transactions/{$transactionId}/qrcode");
         } catch (\Throwable $throwable) {
             $qrCode = [];
         }
 
+        Log::info('Paytime Pix qrcode response received', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'transaction_id' => $transactionId,
+            'qrcode_keys' => array_keys($qrCode),
+            'qrcode_payload' => $qrCode,
+        ]);
+
         $pixCode = $qrCode['emv'] ?? $transaction['emv'] ?? null;
 
         return [
-            'gateway_transaction_id' => $transaction['_id'],
+            'gateway_transaction_id' => $transactionId,
             'gateway_status' => $this->normalizeGatewayStatus($transaction['status'] ?? null),
             'internal_status' => $this->normalizeInternalStatus($transaction['status'] ?? null),
             'pix_qr_code' => $pixCode,
@@ -99,6 +123,7 @@ class PaytimeClient
         return [
             'payment_type' => 'PIX',
             'amount' => $this->toCents($order->total),
+            'interest' => $this->resolveInterest(),
             'client' => [
                 'first_name' => $firstName,
                 'last_name' => $lastName,
@@ -191,5 +216,25 @@ class PaytimeClient
         }
 
         return $expiresAt;
+    }
+
+    private function resolveTransactionId(array $transaction): ?string
+    {
+        $transactionId = $transaction['_id']
+            ?? $transaction['gateway_transaction_id']
+            ?? $transaction['transaction_id']
+            ?? $transaction['id']
+            ?? null;
+
+        if (! is_scalar($transactionId) || trim((string) $transactionId) === '') {
+            return null;
+        }
+
+        return (string) $transactionId;
+    }
+
+    private function resolveInterest(): string
+    {
+        return 'CLIENT';
     }
 }

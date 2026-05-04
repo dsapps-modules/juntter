@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\ApiClientService;
 use App\Services\Payments\Paytime\PaytimeClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class PaytimeClientTest extends TestCase
@@ -18,6 +19,8 @@ class PaytimeClientTest extends TestCase
 
     public function test_create_pix_payment_uses_the_api_and_normalizes_the_response(): void
     {
+        Log::spy();
+
         $seller = $this->makeVendorUser('127700');
         $product = $this->makeProduct($seller);
         $checkoutLink = $this->makeCheckoutLink($seller, $product);
@@ -32,16 +35,17 @@ class PaytimeClientTest extends TestCase
                 $this->callback(function (array $payload) use ($order): bool {
                     return $payload['payment_type'] === 'PIX'
                         && $payload['amount'] === 15000
+                        && $payload['interest'] === 'CLIENT'
                         && $payload['client']['first_name'] === 'Maria'
                         && $payload['client']['last_name'] === 'Silva'
                         && $payload['client']['email'] === 'maria@example.com'
                         && $payload['client']['phone'] === '11999999999'
-                        && $payload['client']['document'] === '12345678909'
-                        && $payload['extra_headers']['establishment_id'] === '127700'
-                        && $payload['session_id'] === 'checkout_'.$order->checkout_session_id
-                        && $payload['info_additional'][0]['value'] === $order->order_number
-                        && $payload['info_additional'][1]['value'] === (string) $order->checkout_link_id
-                        && $payload['info_additional'][2]['value'] === (string) $order->checkout_session_id;
+                            && $payload['client']['document'] === '12345678909'
+                            && $payload['extra_headers']['establishment_id'] === '127700'
+                            && $payload['session_id'] === 'checkout_'.$order->checkout_session_id
+                            && $payload['info_additional'][0]['value'] === $order->order_number
+                            && $payload['info_additional'][1]['value'] === (string) $order->checkout_link_id
+                            && $payload['info_additional'][2]['value'] === (string) $order->checkout_session_id;
                 }),
             )
             ->willReturn([
@@ -71,6 +75,53 @@ class PaytimeClientTest extends TestCase
         $this->assertSame('2026-05-04T12:30:00Z', $response['pix_expires_at']);
         $this->assertSame('pix-api-123', $response['api_transaction']['_id']);
         $this->assertSame('data:image/png;base64,ZmFrZQ==', $response['api_qrcode']['qrcode']);
+
+        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context) use ($order): bool {
+            return $message === 'Paytime Pix transaction response received'
+                && ($context['order_number'] ?? null) === $order->order_number
+                && ($context['transaction_id'] ?? null) === 'pix-api-123'
+                && in_array('_id', $context['transaction_keys'] ?? [], true);
+        });
+        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
+            return $message === 'Paytime Pix qrcode response received'
+                && ($context['transaction_id'] ?? null) === 'pix-api-123'
+                && in_array('qrcode', $context['qrcode_keys'] ?? [], true);
+        });
+    }
+
+    public function test_create_pix_payment_logs_when_transaction_id_is_missing(): void
+    {
+        Log::spy();
+
+        $seller = $this->makeVendorUser('127700');
+        $product = $this->makeProduct($seller);
+        $checkoutLink = $this->makeCheckoutLink($seller, $product);
+        $checkoutSession = $this->makeCheckoutSession($checkoutLink);
+        $order = $this->makeOrder($seller, $checkoutLink, $checkoutSession, $product);
+
+        $apiClient = $this->createMock(ApiClientService::class);
+        $apiClient->expects($this->once())
+            ->method('post')
+            ->willReturn([
+                'status' => 'PENDING',
+                'expected_on' => '2026-05-04T12:30:00Z',
+            ]);
+
+        $apiClient->expects($this->never())
+            ->method('get');
+
+        $service = new PaytimeClient($apiClient);
+        $response = $service->createPixPayment($order);
+
+        $this->assertSame('PENDING', $response['status']);
+        $this->assertArrayNotHasKey('gateway_transaction_id', $response);
+
+        Log::shouldHaveReceived('warning')->withArgs(function (string $message, array $context): bool {
+            return $message === 'Paytime Pix transaction response did not include a transaction id'
+                && ($context['order_number'] ?? null) === 'JNT-2026-000001'
+                && isset($context['transaction_payload']['status'])
+                && $context['transaction_payload']['status'] === 'PENDING';
+        });
     }
 
     private function makeVendorUser(string $establishmentId): User

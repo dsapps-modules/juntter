@@ -77,14 +77,18 @@ class PublicCheckoutPaymentController extends Controller
             default => $this->paymentService->createCreditCardPayment($order, $request->validated()),
         };
 
+        $gatewayTransactionId = $this->resolveGatewayTransactionId($gatewayResponse);
+
+        abort_unless($gatewayTransactionId !== null, 502, 'A resposta do gateway não retornou o identificador da transação.');
+
         $paymentTransaction = PaymentTransaction::query()->updateOrCreate([
             'order_id' => $order->id,
         ], [
             'seller_id' => $checkoutLink->seller_id,
             'gateway' => 'paytime',
-            'gateway_transaction_id' => $gatewayResponse['gateway_transaction_id'],
-            'gateway_status' => $gatewayResponse['gateway_status'],
-            'internal_status' => $gatewayResponse['internal_status'],
+            'gateway_transaction_id' => $gatewayTransactionId,
+            'gateway_status' => $gatewayResponse['gateway_status'] ?? null,
+            'internal_status' => $gatewayResponse['internal_status'] ?? 'pending',
             'payment_method' => $paymentMethod,
             'amount' => $order->total,
             'pix_qr_code' => $gatewayResponse['pix_qr_code'] ?? null,
@@ -162,5 +166,21 @@ class PublicCheckoutPaymentController extends Controller
         $next = (Order::query()->count() + 1);
 
         return 'JNT-'.$year.'-'.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+    }
+
+    private function resolveGatewayTransactionId(array $gatewayResponse): ?string
+    {
+        $transactionId = $gatewayResponse['gateway_transaction_id']
+            ?? data_get($gatewayResponse, 'api_transaction._id')
+            ?? data_get($gatewayResponse, 'api_transaction.id')
+            ?? data_get($gatewayResponse, 'transaction_id')
+            ?? data_get($gatewayResponse, 'id')
+            ?? null;
+
+        if (! is_scalar($transactionId) || trim((string) $transactionId) === '') {
+            return null;
+        }
+
+        return (string) $transactionId;
     }
 }
