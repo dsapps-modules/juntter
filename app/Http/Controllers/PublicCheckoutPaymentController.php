@@ -25,6 +25,15 @@ class PublicCheckoutPaymentController extends Controller
         $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
         $paymentMethod = $request->input('payment_method');
 
+        abort_unless(
+            $paymentMethod !== 'boleto' || $this->isValidCheckoutDocument(
+                (string) $checkoutSession->customer_document,
+                (string) $checkoutSession->customer_document_type
+            ),
+            422,
+            'O documento do pagador é inválido.'
+        );
+
         abort_unless($this->paymentMethodIsAllowed($checkoutLink, $paymentMethod), 422, 'Método de pagamento indisponível para este checkout.');
 
         $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod);
@@ -137,6 +146,28 @@ class PublicCheckoutPaymentController extends Controller
         $order = Order::query()->where('checkout_session_id', $checkoutSession->id)->latest()->first();
         $transaction = $order ? PaymentTransaction::query()->where('order_id', $order->id)->latest()->first() : null;
 
+        if (
+            $order !== null
+            && $transaction !== null
+            && $transaction->payment_method === 'boleto'
+            && $transaction->internal_status !== 'failed'
+            && blank($transaction->boleto_url)
+            && filled($transaction->gateway_transaction_id)
+        ) {
+            $refresh = $this->paymentService->refreshBoletoPayment((string) $transaction->gateway_transaction_id);
+
+            $transaction->fill([
+                'gateway_status' => $refresh['gateway_status'] ?? $transaction->gateway_status,
+                'internal_status' => $refresh['internal_status'] ?? $transaction->internal_status,
+                'boleto_url' => $refresh['boleto_url'] ?? null,
+                'boleto_barcode' => $refresh['boleto_barcode'] ?? null,
+                'boleto_digitable_line' => $refresh['boleto_digitable_line'] ?? null,
+                'response_payload' => $refresh,
+            ])->save();
+
+            $transaction = $transaction->fresh();
+        }
+
         return response()->json([
             'checkout_session' => $checkoutSession,
             'order' => $order,
@@ -173,6 +204,8 @@ class PublicCheckoutPaymentController extends Controller
         $transactionId = $gatewayResponse['gateway_transaction_id']
             ?? data_get($gatewayResponse, 'api_transaction._id')
             ?? data_get($gatewayResponse, 'api_transaction.id')
+            ?? data_get($gatewayResponse, 'api_boleto._id')
+            ?? data_get($gatewayResponse, 'api_boleto.id')
             ?? data_get($gatewayResponse, 'transaction_id')
             ?? data_get($gatewayResponse, 'id')
             ?? null;
@@ -182,5 +215,68 @@ class PublicCheckoutPaymentController extends Controller
         }
 
         return (string) $transactionId;
+    }
+
+    private function isValidCheckoutDocument(string $document, string $documentType): bool
+    {
+        $digits = preg_replace('/\D+/', '', $document) ?? '';
+        $documentType = strtolower(trim($documentType));
+
+        return match ($documentType) {
+            'cnpj' => $this->isValidCnpj($digits),
+            default => $this->isValidCpf($digits),
+        };
+    }
+
+    private function isValidCpf(string $digits): bool
+    {
+        if (strlen($digits) !== 11 || preg_match('/^(\d)\1{10}$/', $digits)) {
+            return false;
+        }
+
+        for ($factor = 10; $factor <= 11; $factor++) {
+            $sum = 0;
+
+            for ($index = 0; $index < $factor - 1; $index++) {
+                $sum += (int) $digits[$index] * ($factor - $index);
+            }
+
+            $digit = ((($sum * 10) % 11) % 10);
+
+            if ((int) $digits[$factor - 1] !== $digit) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function isValidCnpj(string $digits): bool
+    {
+        if (strlen($digits) !== 14 || preg_match('/^(\d)\1{13}$/', $digits)) {
+            return false;
+        }
+
+        $weights = [
+            [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+            [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+        ];
+
+        foreach ($weights as $index => $weightSet) {
+            $sum = 0;
+
+            foreach ($weightSet as $position => $weight) {
+                $sum += (int) $digits[$position] * $weight;
+            }
+
+            $remainder = $sum % 11;
+            $digit = $remainder < 2 ? 0 : 11 - $remainder;
+
+            if ((int) $digits[12 + $index] !== $digit) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

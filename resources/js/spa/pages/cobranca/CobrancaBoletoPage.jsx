@@ -2,6 +2,7 @@ import {
     BankOutlined,
     CheckCircleOutlined,
     CreditCardOutlined,
+    CopyOutlined,
     EyeOutlined,
     ExclamationCircleOutlined,
     FileTextOutlined,
@@ -190,6 +191,19 @@ function statusTone(status) {
 
 function getFirstValidationError(errors) {
     return Object.values(errors ?? {}).flat().find(Boolean) ?? '';
+}
+
+async function copyText(text) {
+    if (!text) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(text);
+        message.success('Link do boleto copiado.');
+    } catch (_error) {
+        message.error('Não foi possível copiar o link.');
+    }
 }
 
 export default function CobrancaBoletoPage() {
@@ -441,16 +455,11 @@ export default function CobrancaBoletoPage() {
                         </Typography.Text>
                         <Typography.Text type="secondary" className="spa-pix-row-subtitle">
                             {value}
+                            {record.raw_status ? ` • ${record.raw_status}` : ''}
                         </Typography.Text>
                     </Space>
                 </Space>
             ),
-        },
-        {
-            title: 'Tipo',
-            dataIndex: 'type',
-            width: 120,
-            render: (value) => <Tag color="gold">{value}</Tag>,
         },
         {
             title: 'Valor',
@@ -481,7 +490,7 @@ export default function CobrancaBoletoPage() {
         {
             title: '',
             key: 'actions',
-            width: 124,
+            width: 170,
             render: (_, record) => (
                 <Space size={8} wrap>
                     <Button
@@ -491,6 +500,14 @@ export default function CobrancaBoletoPage() {
                         onClick={() => openBoletoDetails(record)}
                         title="Ver detalhes"
                         aria-label="Ver detalhes"
+                    />
+                    <Button
+                        size="middle"
+                        icon={<CopyOutlined />}
+                        className="spa-pix-action-button spa-pix-action-button-copy"
+                        onClick={() => copyText(record.pdf_url || record.boleto_url || '')}
+                        title="Copiar PDF do boleto"
+                        aria-label="Copiar PDF do boleto"
                     />
                     {['Pago', 'Aprovado', 'Cancelado', 'Falha', 'Estornado'].includes(record.status) ? null : (
                         <Button

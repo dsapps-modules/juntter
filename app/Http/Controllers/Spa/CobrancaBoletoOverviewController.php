@@ -52,6 +52,12 @@ class CobrancaBoletoOverviewController extends Controller
                 'fee' => $this->formatMoney((int) ($boleto['fees'] ?? 0)),
                 'customer' => $customerName !== '' ? $customerName : 'Cliente',
                 'establishment' => $this->resolveEstablishmentName($boleto),
+                'pdf_url' => data_get($boleto, 'url')
+                    ?? data_get($boleto, 'boleto_url')
+                    ?? data_get($boleto, 'boleto.url'),
+                'boleto_url' => data_get($boleto, 'boleto_url')
+                    ?? data_get($boleto, 'url')
+                    ?? data_get($boleto, 'boleto.url'),
                 'created_at_sort' => $createdAt?->getTimestamp() ?? 0,
                 'created_at' => $createdAt?->format('d/m/Y H:i') ?? 'Sem data',
                 'detail_href' => '/cobranca/boleto/'.$this->resolveBoletoId($boleto),

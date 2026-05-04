@@ -205,9 +205,10 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('O sistema consulta o status do pagamento periodicamente');
         $response->assertSee('data-boleto-block', false);
         $response->assertSee('data-boleto-url', false);
-        $response->assertSee('data-boleto-barcode', false);
-        $response->assertSee('data-boleto-digitable-line', false);
-        $response->assertSee('data-copy-payment', false);
+        $response->assertSee('data-open-payment', false);
+        $response->assertDontSee('data-boleto-barcode', false);
+        $response->assertDontSee('data-boleto-digitable-line', false);
+        $response->assertDontSee('data-copy-payment', false);
     }
 
     public function test_paid_public_checkout_redirects_to_thank_you_page(): void
@@ -492,8 +493,125 @@ class RedirectedCheckoutTest extends TestCase
         $pageResponse->assertOk();
         $pageResponse->assertSee('Seu boleto');
         $pageResponse->assertSee('data-boleto-block', false);
-        $pageResponse->assertSee('Abrir boleto');
-        $pageResponse->assertSee('COPIAR LINHA DIGITÁVEL', false);
+        $pageResponse->assertDontSee('Abrir boleto');
+        $pageResponse->assertSee('ABRIR BOLETO', false);
+        $pageResponse->assertSee('Linha digitável', false);
+        $pageResponse->assertSee('Código de barras', false);
+        $pageResponse->assertSee('Pix (copia e cola)', false);
+        $pageResponse->assertSee('data-boleto-barcode', false);
+        $pageResponse->assertSee('data-boleto-digitable-line', false);
+        $pageResponse->assertSee('data-boleto-pix-copy-paste', false);
+    }
+
+    public function test_boleto_payment_rejects_invalid_document_before_gateway_call(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Professor Prado',
+            'customer_email' => 'profpradoif@gmail.com',
+            'customer_document' => '11111111111',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11911112222',
+            'zipcode' => '07174000',
+            'street' => 'Avenida Papa João Paulo I',
+            'number' => '1000',
+            'neighborhood' => 'Jardim Presidente Dutra',
+            'city' => 'Guarulhos',
+            'state' => 'SP',
+            'recipient_name' => 'Professor Prado',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->never())
+            ->method('createBoletoPayment');
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'O documento do pagador é inválido.');
+    }
+
+    public function test_checkout_status_refreshes_incomplete_boleto_details(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createBoletoPayment')
+            ->willReturn([
+                'gateway_transaction_id' => 'boleto-checkout-123',
+                'gateway_status' => 'PROCESSING',
+                'internal_status' => 'pending',
+                'boleto_url' => null,
+                'boleto_barcode' => null,
+                'boleto_digitable_line' => null,
+                'api_boleto' => [
+                    '_id' => 'boleto-checkout-123',
+                    'status' => 'PROCESSING',
+                ],
+            ]);
+        $paymentService->expects($this->once())
+            ->method('refreshBoletoPayment')
+            ->with('boleto-checkout-123')
+            ->willReturn([
+                'gateway_transaction_id' => 'boleto-checkout-123',
+                'gateway_status' => 'PROCESSING',
+                'internal_status' => 'pending',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                'api_boleto' => [
+                    '_id' => 'boleto-checkout-123',
+                    'status' => 'PROCESSING',
+                    'url' => 'https://example.test/boleto.pdf',
+                ],
+            ]);
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ])->assertOk();
+
+        $statusResponse = $this->getJson('/checkout/session/'.$session->session_token.'/status');
+
+        $statusResponse
+            ->assertOk()
+            ->assertJsonPath('payment_transaction.boleto_url', 'https://example.test/boleto.pdf')
+            ->assertJsonPath('payment_transaction.boleto_digitable_line', '23793.38128 60000.000000 01000.000000 1 98760000002000');
     }
 
     public function test_paytime_webhook_approves_order(): void
@@ -701,7 +819,7 @@ class RedirectedCheckoutTest extends TestCase
         $paymentService->expects($this->once())
             ->method('createBoletoPayment')
             ->willReturn([
-                'gateway_transaction_id' => 'boleto-checkout-123',
+                'gateway_transaction_id' => null,
                 'gateway_status' => 'PROCESSING',
                 'internal_status' => 'pending',
                 'boleto_url' => 'https://example.test/boleto.pdf',

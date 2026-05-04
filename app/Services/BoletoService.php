@@ -113,6 +113,10 @@ class BoletoService
             ?? $boleto['id']
             ?? data_get($boleto, 'boleto._id')
             ?? data_get($boleto, 'boleto.id')
+            ?? data_get($boleto, 'api_boleto._id')
+            ?? data_get($boleto, 'api_boleto.id')
+            ?? data_get($boleto, 'data._id')
+            ?? data_get($boleto, 'data.id')
             ?? null;
 
         if (! is_scalar($identificador) || trim((string) $identificador) === '') {

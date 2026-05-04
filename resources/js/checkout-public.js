@@ -560,27 +560,59 @@ function updatePaymentDetails(state, transaction) {
     if (boletoUrlElement) {
         const boletoUrl = transaction?.boleto_url || '#';
         boletoUrlElement.href = boletoUrl;
-        boletoUrlElement.textContent = boletoUrl === '#' ? 'Boleto ainda não disponível' : 'Abrir boleto';
+        boletoUrlElement.target = '_blank';
+        boletoUrlElement.rel = 'noreferrer';
+        if (transaction?.internal_status === 'failed') {
+            boletoUrlElement.textContent = 'Falha ao gerar boleto';
+        } else {
+            boletoUrlElement.textContent = boletoUrl === '#' ? 'Boleto ainda não disponível' : 'Abrir boleto';
+        }
     }
 
-    const boletoBarcodeElement = document.querySelector('[data-boleto-barcode]');
-    if (boletoBarcodeElement) {
-        boletoBarcodeElement.textContent = transaction?.boleto_barcode || 'O código de barras será exibido assim que o pagamento for criado.';
-    }
-
+    const boletoDigitableLine = transaction?.boleto_digitable_line || 'A linha digitável será exibida assim que o pagamento for criado.';
     const boletoDigitableLineElement = document.querySelector('[data-boleto-digitable-line]');
     if (boletoDigitableLineElement) {
-        boletoDigitableLineElement.textContent = transaction?.boleto_digitable_line || 'A linha digitável será exibida assim que o pagamento for criado.';
+        boletoDigitableLineElement.textContent = boletoDigitableLine;
     }
 
-    const copyButton = document.querySelector('[data-copy-payment]');
-    if (copyButton) {
+    const boletoBarcode = transaction?.boleto_barcode || 'O código de barras será exibido assim que o pagamento for criado.';
+    const boletoBarcodeElement = document.querySelector('[data-boleto-barcode]');
+    if (boletoBarcodeElement) {
+        boletoBarcodeElement.textContent = boletoBarcode;
+    }
+
+    const boletoPixCopyPaste = transaction?.pix_copy_paste || transaction?.pix_qr_code || 'O Pix copia e cola será exibido assim que o pagamento for criado.';
+    const boletoPixCopyPasteElement = document.querySelector('[data-boleto-pix-copy-paste]');
+    if (boletoPixCopyPasteElement) {
+        boletoPixCopyPasteElement.textContent = boletoPixCopyPaste;
+    }
+
+    const copyDigitableLineButton = document.querySelector('[data-copy-boleto-digitable-line]');
+    if (copyDigitableLineButton) {
+        copyDigitableLineButton.disabled = !Boolean(transaction?.boleto_digitable_line);
+    }
+
+    const copyBarcodeButton = document.querySelector('[data-copy-boleto-barcode]');
+    if (copyBarcodeButton) {
+        copyBarcodeButton.disabled = !Boolean(transaction?.boleto_barcode);
+    }
+
+    const copyPixButton = document.querySelector('[data-copy-boleto-pix-copy-paste]');
+    if (copyPixButton) {
+        copyPixButton.disabled = !Boolean(transaction?.pix_copy_paste || transaction?.pix_qr_code);
+    }
+
+    const paymentButton = document.querySelector('[data-open-payment]');
+    if (paymentButton) {
         if (method === 'pix') {
-            copyButton.textContent = 'COPIAR CÓDIGO PIX';
+            paymentButton.textContent = 'COPIAR CÓDIGO PIX';
+            paymentButton.disabled = !Boolean(transaction?.pix_copy_paste || transaction?.pix_qr_code);
         } else if (method === 'boleto') {
-            copyButton.textContent = 'COPIAR LINHA DIGITÁVEL';
+            paymentButton.textContent = transaction?.internal_status === 'failed' ? 'BOLETO INDISPONÍVEL' : 'ABRIR BOLETO';
+            paymentButton.disabled = !Boolean(transaction?.boleto_url);
         } else {
-            copyButton.textContent = 'COPIAR REFERÊNCIA';
+            paymentButton.textContent = 'COPIAR REFERÊNCIA';
+            paymentButton.disabled = false;
         }
     }
 
@@ -597,7 +629,23 @@ function updatePaymentDetails(state, transaction) {
 }
 
 function hasCompleteBoletoDetails(transaction) {
-    return Boolean(transaction?.boleto_url && transaction?.boleto_barcode && transaction?.boleto_digitable_line);
+    return Boolean(transaction?.boleto_url);
+}
+
+function hasFailedBoletoDetails(transaction) {
+    if (!transaction) {
+        return false;
+    }
+
+    if (String(transaction?.internal_status || '').toLowerCase() === 'failed') {
+        return true;
+    }
+
+    if (String(transaction?.gateway_status || '').toUpperCase() === 'FAILED') {
+        return true;
+    }
+
+    return Boolean(transaction?.response_payload?.polling_error || transaction?.response_payload?.message);
 }
 
 function stopPaymentRefreshTimer(state) {
@@ -780,6 +828,17 @@ async function refreshStatus(state) {
         } else if (state.currentStep === 'payment' && state.paymentTransaction?.payment_method === 'boleto') {
             updatePaymentDetails(state, state.paymentTransaction);
 
+            if (hasFailedBoletoDetails(state.paymentTransaction)) {
+                stopPaymentRefreshTimer(state);
+                setFeedback(
+                    state.paymentTransaction?.response_payload?.polling_error
+                        || state.paymentTransaction?.response_payload?.message
+                        || 'Não foi possível gerar o boleto.',
+                    'error',
+                );
+                return;
+            }
+
             if (hasCompleteBoletoDetails(state.paymentTransaction)) {
                 stopPaymentRefreshTimer(state);
             } else {
@@ -801,6 +860,22 @@ function refreshPaymentState(state) {
     });
 
     return state.paymentRefreshInFlight;
+}
+
+function openBoletoDocument(url) {
+    if (!url) {
+        return false;
+    }
+
+    const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (openedWindow) {
+        openedWindow.opener = null;
+        return true;
+    }
+
+    window.location.assign(url);
+    return true;
 }
 
 function copyText(value) {
@@ -1068,26 +1143,71 @@ function bindForms(state) {
     }
 }
 
-function bindPixCopy(state) {
-    const copyButton = document.querySelector('[data-copy-payment]');
+function bindPaymentAction(state) {
+    const actionButton = document.querySelector('[data-open-payment]');
+    const copyDigitableLineButton = document.querySelector('[data-copy-boleto-digitable-line]');
+    const copyBarcodeButton = document.querySelector('[data-copy-boleto-barcode]');
+    const copyPixButton = document.querySelector('[data-copy-boleto-pix-copy-paste]');
 
-    if (!copyButton) {
+    if (!actionButton) {
         return;
     }
 
-    copyButton.addEventListener('click', async () => {
+    actionButton.addEventListener('click', async () => {
         const method = state.paymentTransaction?.payment_method || state.session.payment_method;
+        const boletoUrl = state.paymentTransaction?.boleto_url || '';
         const paymentCode = method === 'boleto'
-            ? (state.paymentTransaction?.boleto_digitable_line || state.paymentTransaction?.boleto_barcode || state.paymentTransaction?.boleto_url)
+            ? boletoUrl
             : (state.paymentTransaction?.pix_copy_paste || state.paymentTransaction?.pix_qr_code);
 
         try {
+            if (method === 'boleto') {
+                if (!boletoUrl) {
+                    throw new Error('Boleto ainda não disponível.');
+                }
+
+                openBoletoDocument(boletoUrl);
+                setFeedback('Abrindo o boleto em uma nova aba.', 'success');
+                return;
+            }
+
             await copyText(paymentCode);
-            setFeedback(method === 'boleto'
-                ? 'Linha digitável copiada para a área de transferência.'
-                : 'Código Pix copiado para a área de transferência.', 'success');
+            setFeedback('Código Pix copiado para a área de transferência.', 'success');
         } catch (error) {
-            setFeedback(error.message || 'Não foi possível copiar o código.', 'error');
+            setFeedback(error.message || 'Não foi possível concluir a ação.', 'error');
+        }
+    });
+
+    copyDigitableLineButton?.addEventListener('click', async () => {
+        const value = state.paymentTransaction?.boleto_digitable_line || '';
+
+        try {
+            await copyText(value);
+            setFeedback('Linha digitável copiada para a área de transferência.', 'success');
+        } catch (error) {
+            setFeedback(error.message || 'Não foi possível copiar a linha digitável.', 'error');
+        }
+    });
+
+    copyBarcodeButton?.addEventListener('click', async () => {
+        const value = state.paymentTransaction?.boleto_barcode || '';
+
+        try {
+            await copyText(value);
+            setFeedback('Código de barras copiado para a área de transferência.', 'success');
+        } catch (error) {
+            setFeedback(error.message || 'Não foi possível copiar o código de barras.', 'error');
+        }
+    });
+
+    copyPixButton?.addEventListener('click', async () => {
+        const value = state.paymentTransaction?.pix_copy_paste || state.paymentTransaction?.pix_qr_code || '';
+
+        try {
+            await copyText(value);
+            setFeedback('Pix copia e cola copiado para a área de transferência.', 'success');
+        } catch (error) {
+            setFeedback(error.message || 'Não foi possível copiar o Pix copia e cola.', 'error');
         }
     });
 }
@@ -1107,6 +1227,9 @@ function resumeExistingPayment(state) {
 
     if (method === 'pix' && state.paymentTransaction.internal_status) {
         showWaitingPanel(state, state.paymentTransaction);
+    } else if (method === 'boleto' && hasFailedBoletoDetails(state.paymentTransaction)) {
+        showStep(state, 'payment');
+        updatePaymentDetails(state, state.paymentTransaction);
     } else if (method === 'boleto' && !hasCompleteBoletoDetails(state.paymentTransaction)) {
         showStep(state, 'payment');
         updatePaymentDetails(state, state.paymentTransaction);
@@ -1180,7 +1303,7 @@ function initCheckoutPublic() {
     updateSummary(config, state);
     bindNavigation(state);
     bindForms(state);
-    bindPixCopy(state);
+    bindPaymentAction(state);
     bindPaymentStateRefresh(state);
     updatePersonTypeUi(state);
 

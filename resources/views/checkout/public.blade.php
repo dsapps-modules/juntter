@@ -563,8 +563,28 @@
             width: fit-content;
         }
 
-        .boleto-card__actions {
-            margin-top: 0;
+        .boleto-card__copy-row {
+            display: grid;
+            gap: 8px;
+        }
+
+        .boleto-card__copy-group {
+            display: flex;
+            gap: 10px;
+            align-items: stretch;
+        }
+
+        .boleto-card__copy-group .boleto-card__value {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        .boleto-card__copy-group .btn {
+            align-self: stretch;
+            min-height: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .pix-code {
@@ -1043,28 +1063,35 @@
                     <div class="boleto-card__header">
                         <div>
                             <h3>Seu boleto</h3>
-                            <p>Abrir o documento e copiar a linha digitável.</p>
                         </div>
-                        <span class="payment-badge">Boleto</span>
                     </div>
 
                     <div class="boleto-card__grid">
-                        <div class="boleto-card__row">
-                            <span>Link do boleto</span>
-                            <a href="#" target="_blank" rel="noreferrer" class="boleto-card__value is-link" data-boleto-url>Abrir boleto</a>
-                        </div>
-                        <div class="boleto-card__row">
-                            <span>Código de barras</span>
-                            <strong class="boleto-card__value" data-boleto-barcode>--</strong>
-                        </div>
-                        <div class="boleto-card__row">
+                        <div class="boleto-card__row boleto-card__copy-row">
                             <span>Linha digitável</span>
-                            <strong class="boleto-card__value" data-boleto-digitable-line>--</strong>
+                            <div class="boleto-card__copy-group">
+                                <strong class="boleto-card__value" data-boleto-digitable-line>--</strong>
+                                <button class="btn btn-secondary" type="button" data-copy-boleto-digitable-line>Copiar</button>
+                            </div>
+                        </div>
+                        <div class="boleto-card__row boleto-card__copy-row">
+                            <span>Código de barras</span>
+                            <div class="boleto-card__copy-group">
+                                <strong class="boleto-card__value" data-boleto-barcode>--</strong>
+                                <button class="btn btn-secondary" type="button" data-copy-boleto-barcode>Copiar</button>
+                            </div>
+                        </div>
+                        <div class="boleto-card__row boleto-card__copy-row">
+                            <span>Pix (copia e cola)</span>
+                            <div class="boleto-card__copy-group">
+                                <strong class="boleto-card__value" data-boleto-pix-copy-paste>--</strong>
+                                <button class="btn btn-secondary" type="button" data-copy-boleto-pix-copy-paste>Copiar</button>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pix-copy-row boleto-card__actions">
-                        <button class="btn btn-primary" type="button" data-copy-payment>COPIAR LINHA DIGITÁVEL</button>
+                    <div class="pix-copy-row">
+                        <button class="btn btn-primary" type="button" data-open-payment>ABRIR BOLETO</button>
                     </div>
                 </section>
 

@@ -110,6 +110,36 @@ class PaytimeClient
         ];
     }
 
+    public function refreshBoletoPayment(string $gatewayTransactionId): array
+    {
+        $boleto = $this->boletoService->normalizarResposta(
+            $this->boletoService->consultarBoleto($gatewayTransactionId)
+        );
+
+        if ($this->isBoletoErrorResponse($boleto)) {
+            return [
+                'gateway_transaction_id' => $gatewayTransactionId,
+                'gateway_status' => 'FAILED',
+                'internal_status' => 'failed',
+                'boleto_url' => null,
+                'boleto_barcode' => null,
+                'boleto_digitable_line' => null,
+                'polling_error' => $boleto['message'] ?? 'Não foi possível gerar o boleto.',
+                'api_boleto' => $boleto,
+            ];
+        }
+
+        return [
+            'gateway_transaction_id' => $gatewayTransactionId,
+            'gateway_status' => $this->normalizeGatewayStatus($boleto['status'] ?? null),
+            'internal_status' => $this->normalizeBoletoInternalStatus($boleto['status'] ?? null),
+            'boleto_url' => $boleto['boleto_url'] ?? null,
+            'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
+            'boleto_digitable_line' => $boleto['boleto_digitable_line'] ?? null,
+            'api_boleto' => $boleto,
+        ];
+    }
+
     public function createCreditCardPayment(Order $order, array $cardData): array
     {
         $transactionId = 'ptc_'.Str::random(20);
@@ -218,22 +248,26 @@ class PaytimeClient
         $establishmentId = $this->resolveEstablishmentId($order);
         $checkoutSession = $order->checkoutSession;
         $checkoutLink = $order->checkoutLink;
-        $expiration = now()->addDays(7)->format('Y-m-d');
-        $paymentLimitDate = now()->addDays(8)->format('Y-m-d');
-        $discountLimitDate = now()->addDays(5)->format('Y-m-d');
+        $expirationDate = now()->addDays(7)->startOfDay();
+        $paymentLimitDate = now()->addDays(8)->startOfDay();
+        $discountLimitDate = now()->addDays(5)->startOfDay();
 
         if ($checkoutLink instanceof CheckoutLink && $checkoutLink->expires_at !== null) {
-            $expiration = $checkoutLink->expires_at->format('Y-m-d');
+            $expirationDate = $checkoutLink->expires_at->copy()->startOfDay();
         }
 
         if ($checkoutSession instanceof CheckoutSession && filled($checkoutSession->last_activity_at)) {
-            $paymentLimitDate = $checkoutSession->last_activity_at->copy()->addDays(1)->format('Y-m-d');
+            $paymentLimitDate = $checkoutSession->last_activity_at->copy()->addDay()->startOfDay();
+        }
+
+        if ($paymentLimitDate->lessThanOrEqualTo($expirationDate)) {
+            $paymentLimitDate = $expirationDate->copy()->addDay();
         }
 
         return [
             'amount' => $this->toCents($order->total),
-            'expiration' => $expiration,
-            'payment_limit_date' => $paymentLimitDate,
+            'expiration' => $expirationDate->format('Y-m-d'),
+            'payment_limit_date' => $paymentLimitDate->format('Y-m-d'),
             'recharge' => false,
             'client' => [
                 'first_name' => $firstName,
@@ -265,7 +299,7 @@ class PaytimeClient
                 'discount' => [
                     'mode' => 'PERCENTAGE',
                     'amount' => 5.0,
-                    'limit_date' => $discountLimitDate,
+                    'limit_date' => $discountLimitDate->format('Y-m-d'),
                 ],
             ],
             'extra_headers' => [
@@ -333,6 +367,15 @@ class PaytimeClient
         return in_array($normalized, ['PAID', 'APPROVED'], true) ? 'paid' : 'pending';
     }
 
+    private function isBoletoErrorResponse(array $boleto): bool
+    {
+        $status = $boleto['status'] ?? null;
+
+        return isset($boleto['message'])
+            && (is_int($status) || (is_string($status) && ctype_digit($status)))
+            && (int) $status >= 400;
+    }
+
     private function resolvePixExpiration(array $transaction): ?string
     {
         $expiresAt = $transaction['expected_on']
@@ -353,6 +396,10 @@ class PaytimeClient
             ?? $transaction['gateway_transaction_id']
             ?? $transaction['transaction_id']
             ?? $transaction['id']
+            ?? data_get($transaction, 'api_boleto._id')
+            ?? data_get($transaction, 'api_boleto.id')
+            ?? data_get($transaction, 'data._id')
+            ?? data_get($transaction, 'data.id')
             ?? null;
 
         if (! is_scalar($transactionId) || trim((string) $transactionId) === '') {

@@ -43,8 +43,19 @@ class SpaCobrancaBoletoTest extends TestCase
                         'status' => 'PENDING',
                         'amount' => 810,
                         'fees' => 190,
+                        'url' => 'https://example.test/boleto-123.pdf',
                         'customer_name' => 'Reginaldo do Prado',
                         'created_at' => '2026-05-04 13:43:00',
+                    ],
+                    [
+                        '_id' => 'boleto-456',
+                        'establishment' => ['id' => '5001', 'name' => 'CELCOIN'],
+                        'status' => 'PENDING',
+                        'amount' => 910,
+                        'fees' => 190,
+                        'url' => 'https://example.test/boleto-456.pdf',
+                        'customer_name' => 'Maria Cristina',
+                        'created_at' => '2026-05-04 14:03:00',
                     ],
                 ],
             ]);
@@ -55,11 +66,14 @@ class SpaCobrancaBoletoTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('summary.total_billets', 1)
-            ->assertJsonPath('summary.pending_billets', 1)
-            ->assertJsonPath('rows.0.code', 'boleto-123')
+            ->assertJsonPath('summary.total_billets', 2)
+            ->assertJsonPath('summary.pending_billets', 2)
+            ->assertJsonPath('rows.0.code', 'boleto-456')
             ->assertJsonPath('rows.0.type', 'Boleto')
-            ->assertJsonPath('rows.0.status', 'Pendente');
+            ->assertJsonPath('rows.0.status', 'Pendente')
+            ->assertJsonPath('rows.0.pdf_url', 'https://example.test/boleto-456.pdf')
+            ->assertJsonPath('rows.1.code', 'boleto-123')
+            ->assertJsonPath('rows.1.pdf_url', 'https://example.test/boleto-123.pdf');
     }
 
     public function test_cobranca_boleto_detail_returns_complete_gateway_data(): void

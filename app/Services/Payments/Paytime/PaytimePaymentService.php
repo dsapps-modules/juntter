@@ -19,6 +19,11 @@ class PaytimePaymentService implements PaymentGatewayInterface
         return $this->client->createBoletoPayment($order);
     }
 
+    public function refreshBoletoPayment(string $gatewayTransactionId): array
+    {
+        return $this->client->refreshBoletoPayment($gatewayTransactionId);
+    }
+
     public function createCreditCardPayment(Order $order, array $cardData): array
     {
         return $this->client->createCreditCardPayment($order, $cardData);
