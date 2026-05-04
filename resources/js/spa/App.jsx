@@ -7,6 +7,7 @@ import EstabelecimentoFormPage from './pages/EstabelecimentoFormPage';
 import HomePage from './pages/HomePage';
 import CobrancaPage from './pages/CobrancaPage';
 import CobrancaBoletoPage from './pages/cobranca/CobrancaBoletoPage';
+import CobrancaBoletoDetailPage from './pages/cobranca/CobrancaBoletoDetailPage';
 import CobrancaCartaoCreditoPage from './pages/cobranca/CobrancaCartaoCreditoPage';
 import CobrancaCreditoVistaPage from './pages/cobranca/CobrancaCreditoVistaPage';
 import CobrancaPlanoContratadoPage from './pages/cobranca/CobrancaPlanoContratadoPage';
@@ -81,6 +82,7 @@ export default function App() {
                         <Route path="cobranca/credito-vista" element={<CobrancaCreditoVistaPage />} />
                         <Route path="cobranca/cartao-credito" element={<CobrancaCartaoCreditoPage />} />
                         <Route path="cobranca/boleto" element={<CobrancaBoletoPage />} />
+                        <Route path="cobranca/boleto/:boletoId" element={<CobrancaBoletoDetailPage />} />
                         <Route path="cobranca/planos" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="cobranca/planos/:planoId" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="cobranca/saldoextrato" element={<CobrancaSaldoExtratoPage />} />

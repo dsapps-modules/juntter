@@ -595,6 +595,29 @@ function updatePaymentDetails(state, transaction) {
     }, method);
     updatePixExpiration(transaction);
 }
+
+function hasCompleteBoletoDetails(transaction) {
+    return Boolean(transaction?.boleto_url && transaction?.boleto_barcode && transaction?.boleto_digitable_line);
+}
+
+function stopPaymentRefreshTimer(state) {
+    if (state.paymentRefreshTimeout) {
+        window.clearTimeout(state.paymentRefreshTimeout);
+        state.paymentRefreshTimeout = null;
+    }
+}
+
+function schedulePaymentRefresh(state, delay = 2000) {
+    if (state.paymentRefreshTimeout) {
+        return;
+    }
+
+    state.paymentRefreshTimeout = window.setTimeout(() => {
+        state.paymentRefreshTimeout = null;
+        void refreshPaymentState(state);
+    }, delay);
+}
+
 function renderPixQrCode(payload, method) {
     const container = document.querySelector('[data-pix-qr]');
     const placeholder = document.querySelector('[data-pix-qr-placeholder]');
@@ -747,12 +770,21 @@ async function refreshStatus(state) {
         updateSummary(state.config, state);
 
         if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
+            stopPaymentRefreshTimer(state);
             redirectToThankYou(state);
             return;
         }
 
         if (state.currentStep === 'payment' && state.paymentTransaction?.payment_method === 'pix') {
             showWaitingPanel(state, state.paymentTransaction);
+        } else if (state.currentStep === 'payment' && state.paymentTransaction?.payment_method === 'boleto') {
+            updatePaymentDetails(state, state.paymentTransaction);
+
+            if (hasCompleteBoletoDetails(state.paymentTransaction)) {
+                stopPaymentRefreshTimer(state);
+            } else {
+                schedulePaymentRefresh(state);
+            }
         }
     } catch (error) {
         setFeedback(error.payload?.message || error.message || 'Falha ao atualizar o pagamento.', 'error');
@@ -1010,6 +1042,12 @@ function bindForms(state) {
 
                 if (state.paymentTransaction?.payment_method === 'pix') {
                     showWaitingPanel(state, state.paymentTransaction);
+                } else if (state.paymentTransaction?.payment_method === 'boleto') {
+                    if (hasCompleteBoletoDetails(state.paymentTransaction)) {
+                        stopPaymentRefreshTimer(state);
+                    } else {
+                        schedulePaymentRefresh(state);
+                    }
                 } else {
                     showStep(state, 'payment');
                 }
@@ -1062,12 +1100,17 @@ function resumeExistingPayment(state) {
     const method = state.paymentTransaction.payment_method || state.session.payment_method;
 
     if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
+        stopPaymentRefreshTimer(state);
         redirectToThankYou(state);
         return;
     }
 
     if (method === 'pix' && state.paymentTransaction.internal_status) {
         showWaitingPanel(state, state.paymentTransaction);
+    } else if (method === 'boleto' && !hasCompleteBoletoDetails(state.paymentTransaction)) {
+        showStep(state, 'payment');
+        updatePaymentDetails(state, state.paymentTransaction);
+        schedulePaymentRefresh(state);
     } else {
         showStep(state, 'payment');
         updatePaymentDetails(state, state.paymentTransaction);
@@ -1116,6 +1159,7 @@ function initCheckoutPublic() {
         session: config.session || {},
         order: config.order || null,
         paymentTransaction: config.paymentTransaction || null,
+        paymentRefreshTimeout: null,
         currentStep: config.currentStep || 'identification',
         visualStep: config.currentStep || 'identification',
         thankYouUrl: config.thankYouUrl,

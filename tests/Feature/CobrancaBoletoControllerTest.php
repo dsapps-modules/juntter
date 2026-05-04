@@ -79,24 +79,18 @@ class CobrancaBoletoControllerTest extends TestCase
             ->method('organiza')
             ->willReturnArgument(0);
         $boletoService->expects($this->once())
-            ->method('gerarBoleto')
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('gerarBoletoComConsulta')
             ->willReturn([
-                '_id' => '69cbfe074dcdced7abfe4544',
+                '_id' => 'boleto-123',
                 'status' => 'PROCESSING',
-                'url' => null,
-                'barcode' => null,
-                'digitable_line' => null,
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
                 'amount' => 1810,
             ]);
-        $boletoService->expects($this->once())
-            ->method('normalizarResposta')
-            ->willReturnCallback(function (array $boleto): array {
-                $boleto['boleto_url'] = $boleto['url'] ?? null;
-                $boleto['boleto_barcode'] = $boleto['barcode'] ?? null;
-                $boleto['boleto_digitable_line'] = $boleto['digitable_line'] ?? null;
-
-                return $boleto;
-            });
 
         $request = $this->makeRequest(false, $dadosValidados);
 
@@ -118,9 +112,10 @@ class CobrancaBoletoControllerTest extends TestCase
         $this->assertSame('Boleto criado com sucesso!', session('success'));
         $this->assertNull(session('error'));
         $this->assertSame([
-            'boleto_url' => null,
-            'boleto_barcode' => null,
-            'boleto_digitable_line' => null,
+            'boleto_id' => 'boleto-123',
+            'boleto_url' => 'https://example.test/boleto.pdf',
+            'boleto_barcode' => '12345678901234567890123456789012345678901234',
+            'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
             'amount' => 1810,
             'status' => 'PROCESSING',
         ], session('boleto_data'));
@@ -181,24 +176,18 @@ class CobrancaBoletoControllerTest extends TestCase
             ->method('organiza')
             ->willReturnArgument(0);
         $boletoService->expects($this->once())
-            ->method('gerarBoleto')
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('gerarBoletoComConsulta')
             ->willReturn([
                 '_id' => 'boleto-123',
                 'status' => 'PROCESSING',
-                'url' => 'https://example.test/boleto.pdf',
-                'barcode' => '12345678901234567890123456789012345678901234',
-                'digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
                 'amount' => 1810,
             ]);
-        $boletoService->expects($this->once())
-            ->method('normalizarResposta')
-            ->willReturnCallback(function (array $boleto): array {
-                $boleto['boleto_url'] = $boleto['url'] ?? null;
-                $boleto['boleto_barcode'] = $boleto['barcode'] ?? null;
-                $boleto['boleto_digitable_line'] = $boleto['digitable_line'] ?? null;
-
-                return $boleto;
-            });
 
         $request = $this->makeRequest(true, $dadosValidados);
 
@@ -221,6 +210,7 @@ class CobrancaBoletoControllerTest extends TestCase
             'success' => true,
             'message' => 'Boleto criado com sucesso!',
             'boleto_data' => [
+                'boleto_id' => 'boleto-123',
                 'boleto_url' => 'https://example.test/boleto.pdf',
                 'boleto_barcode' => '12345678901234567890123456789012345678901234',
                 'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
@@ -285,20 +275,14 @@ class CobrancaBoletoControllerTest extends TestCase
             ->method('organiza')
             ->willReturnArgument(0);
         $boletoService->expects($this->once())
-            ->method('gerarBoleto')
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('gerarBoletoComConsulta')
             ->willReturn([
                 'error' => 'API indisponível',
                 'message' => 'Falha temporária',
             ]);
-        $boletoService->expects($this->once())
-            ->method('normalizarResposta')
-            ->willReturnCallback(function (array $boleto): array {
-                $boleto['boleto_url'] = $boleto['url'] ?? null;
-                $boleto['boleto_barcode'] = $boleto['barcode'] ?? null;
-                $boleto['boleto_digitable_line'] = $boleto['digitable_line'] ?? null;
-
-                return $boleto;
-            });
 
         $request = $this->makeRequest(true, $dadosValidados);
 
@@ -323,9 +307,6 @@ class CobrancaBoletoControllerTest extends TestCase
             'paytime_error' => [
                 'error' => 'API indisponível',
                 'message' => 'Falha temporária',
-                'boleto_url' => null,
-                'boleto_barcode' => null,
-                'boleto_digitable_line' => null,
             ],
         ], $response->getData(true));
     }

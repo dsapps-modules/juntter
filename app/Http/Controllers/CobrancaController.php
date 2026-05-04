@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class CobrancaController extends Controller
 {
@@ -423,16 +424,15 @@ class CobrancaController extends Controller
             $dados['recharge'] = $request->boolean('recharge');
             $dados['instruction']['booklet'] = $request->boolean('instruction.booklet');
 
-            $boleto = $this->boletoService->normalizarResposta(
-                $this->boletoService->gerarBoleto($dados)
-            );
+            $boleto = $this->boletoService->gerarBoletoComConsulta($dados);
+            $boleto = $this->boletoService->normalizarResposta($boleto);
             Log::info("CobrancaController.criarBoleto#363\n".json_encode($boleto));
 
             // Verificar erro na resposta da API
             if (
                 isset($boleto['error']) ||
                 isset($boleto['errors']) ||
-                ! isset($boleto['_id']) && ! isset($boleto['id'])
+                blank($boleto['_id'] ?? $boleto['id'] ?? null)
             ) {
                 return $this->respondBoletoError(
                     $request,
@@ -443,6 +443,7 @@ class CobrancaController extends Controller
 
             // Filtrar apenas dados necessários para o frontend
             $filteredBoletoData = [
+                'boleto_id' => $boleto['_id'] ?? $boleto['id'] ?? null,
                 'boleto_url' => $boleto['boleto_url'] ?? null,
                 'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
                 'boleto_digitable_line' => $boleto['boleto_digitable_line'] ?? null,
@@ -604,19 +605,35 @@ class CobrancaController extends Controller
     /**
      * Detalhes do boleto (estrutura distinta da transação)
      */
-    public function detalhesBoleto($id)
+    public function detalhesBoleto(Request $request, string $id): JsonResponse|View|RedirectResponse
     {
         try {
-            $boleto = $this->boletoService->consultarBoleto($id);
+            $boleto = $this->boletoService->normalizarResposta(
+                $this->boletoService->consultarBoleto($id)
+            );
 
             if (! $boleto) {
                 return redirect()->route('cobranca.index')
                     ->with('error', 'Boleto não encontrado.');
             }
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'boleto' => $boleto,
+                ]);
+            }
+
             return view('cobranca.boleto-detalhes', compact('boleto'));
         } catch (\Exception $e) {
             Log::error('Erro ao buscar detalhes do boleto: '.$e->getMessage());
+
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao buscar detalhes do boleto: '.$e->getMessage(),
+                ], 500);
+            }
 
             return redirect()->route('cobranca.index')
                 ->with('error', 'Erro ao buscar detalhes do boleto: '.$e->getMessage());

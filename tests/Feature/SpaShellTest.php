@@ -172,6 +172,7 @@ class SpaShellTest extends TestCase
             '/app/cobranca/credito-vista',
             '/app/cobranca/cartao-credito',
             '/app/cobranca/boleto',
+            '/app/cobranca/boleto/example-id',
             '/app/cobranca/planos',
             '/app/cobranca/planos/123',
             '/app/cobranca/saldoextrato',

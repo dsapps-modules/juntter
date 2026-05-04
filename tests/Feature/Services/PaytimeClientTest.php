@@ -8,7 +8,9 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\ApiClientService;
+use App\Services\BoletoService;
 use App\Services\Payments\Paytime\PaytimeClient;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
@@ -40,12 +42,12 @@ class PaytimeClientTest extends TestCase
                         && $payload['client']['last_name'] === 'Silva'
                         && $payload['client']['email'] === 'maria@example.com'
                         && $payload['client']['phone'] === '11999999999'
-                            && $payload['client']['document'] === '12345678909'
-                            && $payload['extra_headers']['establishment_id'] === '127700'
-                            && $payload['session_id'] === 'checkout_'.$order->checkout_session_id
-                            && $payload['info_additional'][0]['value'] === $order->order_number
-                            && $payload['info_additional'][1]['value'] === (string) $order->checkout_link_id
-                            && $payload['info_additional'][2]['value'] === (string) $order->checkout_session_id;
+                        && $payload['client']['document'] === '12345678909'
+                        && $payload['extra_headers']['establishment_id'] === '127700'
+                        && $payload['session_id'] === 'checkout_'.$order->checkout_session_id
+                        && $payload['info_additional'][0]['value'] === $order->order_number
+                        && $payload['info_additional'][1]['value'] === (string) $order->checkout_link_id
+                        && $payload['info_additional'][2]['value'] === (string) $order->checkout_session_id;
                 }),
             )
             ->willReturn([
@@ -63,7 +65,9 @@ class PaytimeClientTest extends TestCase
                 'emv' => '00020126580014br.gov.bcb.pix123',
             ]);
 
-        $service = new PaytimeClient($apiClient);
+        $boletoService = new BoletoService($apiClient);
+
+        $service = new PaytimeClient($apiClient, $boletoService);
         $response = $service->createPixPayment($order);
 
         $this->assertSame('pix-api-123', $response['gateway_transaction_id']);
@@ -110,7 +114,9 @@ class PaytimeClientTest extends TestCase
         $apiClient->expects($this->never())
             ->method('get');
 
-        $service = new PaytimeClient($apiClient);
+        $boletoService = $this->createMock(BoletoService::class);
+
+        $service = new PaytimeClient($apiClient, $boletoService);
         $response = $service->createPixPayment($order);
 
         $this->assertSame('PENDING', $response['status']);
@@ -121,6 +127,75 @@ class PaytimeClientTest extends TestCase
                 && ($context['order_number'] ?? null) === 'JNT-2026-000001'
                 && isset($context['transaction_payload']['status'])
                 && $context['transaction_payload']['status'] === 'PENDING';
+        });
+    }
+
+    public function test_create_boleto_payment_uses_the_gateway_and_normalizes_the_response(): void
+    {
+        Log::spy();
+
+        $seller = $this->makeVendorUser('127700');
+        $product = $this->makeProduct($seller);
+        $checkoutLink = $this->makeCheckoutLink($seller, $product, [
+            'name' => 'Link Boleto Público',
+            'expires_at' => Carbon::parse('2026-05-12 10:00:00'),
+        ]);
+        $checkoutSession = $this->makeCheckoutSession($checkoutLink, [
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'zipcode' => '01001000',
+            'last_activity_at' => Carbon::parse('2026-05-04 10:00:00'),
+        ]);
+        $order = $this->makeOrder($seller, $checkoutLink, $checkoutSession, $product, [
+            'payment_method' => 'boleto',
+        ]);
+
+        $apiClient = $this->createMock(ApiClientService::class);
+        $apiClient->expects($this->once())
+            ->method('post')
+            ->with(
+                'marketplace/billets',
+                $this->callback(function (array $payload): bool {
+                    return $payload['amount'] === 15000;
+                }),
+            )
+            ->willReturn([
+                '_id' => 'boleto-api-123',
+                'status' => 'PROCESSING',
+                'url' => null,
+                'barcode' => null,
+                'digitable_line' => null,
+            ]);
+        $apiClient->expects($this->once())
+            ->method('get')
+            ->with('marketplace/billets/boleto-api-123')
+            ->willReturn([
+                '_id' => 'boleto-api-123',
+                'status' => 'PROCESSING',
+                'url' => 'https://example.test/boleto.pdf',
+                'barcode' => '12345678901234567890123456789012345678901234',
+                'digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+            ]);
+
+        $boletoService = new BoletoService($apiClient);
+        $service = new PaytimeClient($apiClient, $boletoService);
+        $response = $service->createBoletoPayment($order);
+
+        $this->assertSame('boleto-api-123', $response['gateway_transaction_id']);
+        $this->assertSame('PROCESSING', $response['gateway_status']);
+        $this->assertSame('pending', $response['internal_status']);
+        $this->assertSame('https://example.test/boleto.pdf', $response['boleto_url']);
+        $this->assertSame('12345678901234567890123456789012345678901234', $response['boleto_barcode']);
+        $this->assertSame('23793.38128 60000.000000 01000.000000 1 98760000002000', $response['boleto_digitable_line']);
+        $this->assertSame('boleto-api-123', $response['api_boleto']['_id']);
+
+        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
+            return $message === 'Paytime Boleto response received'
+                && ($context['transaction_id'] ?? null) === 'boleto-api-123';
         });
     }
 
@@ -155,9 +230,9 @@ class PaytimeClientTest extends TestCase
         ]);
     }
 
-    private function makeCheckoutLink(User $seller, Product $product): CheckoutLink
+    private function makeCheckoutLink(User $seller, Product $product, array $overrides = []): CheckoutLink
     {
-        return CheckoutLink::query()->create([
+        return CheckoutLink::query()->create(array_merge([
             'seller_id' => $seller->id,
             'product_id' => $product->id,
             'public_token' => CheckoutLink::generatePublicToken(),
@@ -174,12 +249,12 @@ class PaytimeClientTest extends TestCase
             'boleto_discount_type' => 'none',
             'boleto_discount_value' => 0,
             'free_shipping' => true,
-        ]);
+        ], $overrides));
     }
 
-    private function makeCheckoutSession(CheckoutLink $checkoutLink): CheckoutSession
+    private function makeCheckoutSession(CheckoutLink $checkoutLink, array $overrides = []): CheckoutSession
     {
-        return CheckoutSession::query()->create([
+        return CheckoutSession::query()->create(array_merge([
             'checkout_link_id' => $checkoutLink->id,
             'seller_id' => $checkoutLink->seller_id,
             'product_id' => $checkoutLink->product_id,
@@ -197,12 +272,12 @@ class PaytimeClientTest extends TestCase
             'customer_phone' => '11999999999',
             'recipient_name' => 'Maria Silva',
             'last_activity_at' => now(),
-        ]);
+        ], $overrides));
     }
 
-    private function makeOrder(User $seller, CheckoutLink $checkoutLink, CheckoutSession $checkoutSession, Product $product): Order
+    private function makeOrder(User $seller, CheckoutLink $checkoutLink, CheckoutSession $checkoutSession, Product $product, array $overrides = []): Order
     {
-        return Order::query()->create([
+        return Order::query()->create(array_merge([
             'seller_id' => $seller->id,
             'checkout_link_id' => $checkoutLink->id,
             'checkout_session_id' => $checkoutSession->id,
@@ -220,6 +295,6 @@ class PaytimeClientTest extends TestCase
             'shipping_total' => 0,
             'total' => 150.00,
             'payment_method' => 'pix',
-        ]);
+        ], $overrides));
     }
 }

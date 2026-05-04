@@ -29,6 +29,7 @@ Route::middleware('guest')->get('/login', function () {
     return view('auth.login');
 })->name('login');
 Route::redirect('/home', '/app/home')->name('home');
+
 Route::view('/app/{any?}', 'spa')
     ->where('any', '.*')
     ->name('spa');
@@ -66,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['nivel.acesso:vendedor'])->group(function () {
         Route::get('/vendedor/dashboard', [DashboardController::class, 'vendedorDashboard'])->name('vendedor.dashboard');
-        Route::get('/cobranca', fn () => redirect('/app/cobranca'))->name('cobranca.index');
+        Route::get('/cobranca', [CobrancaController::class, 'index'])->name('cobranca.index');
         Route::post('/cobranca/credito-vista', [CobrancaController::class, 'criarCreditoVista'])->name('cobranca.credito-vista.store');
         Route::get('/cobranca/planos', fn () => redirect('/app/cobranca/planos'))->name('cobranca.planos');
         Route::get('/cobranca/planos/{id}', fn ($id) => redirect('/app/cobranca/planos/'.$id))->name('cobranca.plano.detalhes');
@@ -79,7 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cobranca/simular', fn () => redirect('/app/cobranca/simular'))->name('cobranca.simular');
         Route::post('/cobranca/simular', [CobrancaController::class, 'simularTransacao'])->name('cobranca.transacao.simular');
         Route::get('/cobranca/transacao/{id}', fn () => redirect('/app/cobranca'))->name('cobranca.transacao.detalhes');
-        Route::get('/cobranca/boleto/{id}', fn () => redirect('/app/cobranca'))->name('cobranca.boleto.detalhes');
+        Route::get('/cobranca/boleto/{id}', [CobrancaController::class, 'detalhesBoleto'])->name('cobranca.boleto.detalhes');
         Route::get('/cobranca/transacao/{id}/qrcode', [CobrancaController::class, 'obterQrCodePix'])->name('cobranca.transacao.qrcode');
         Route::post('/cobranca/transacao/{id}/estornar', [CobrancaController::class, 'estornarTransacao'])->name('cobranca.transacao.estornar');
         Route::post('/cobranca/transacao/{id}/antifraud-auth', [CobrancaController::class, 'autenticarAntifraude'])->name('cobranca.transacao.antifraud-auth');

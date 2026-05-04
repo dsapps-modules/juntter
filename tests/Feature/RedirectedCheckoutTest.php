@@ -469,6 +469,7 @@ class RedirectedCheckoutTest extends TestCase
             'status' => 'delivery_completed',
             'current_step' => 'payment',
         ]);
+        $this->mockBoletoPaymentService();
 
         $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
             'payment_method' => 'boleto',
@@ -688,6 +689,27 @@ class RedirectedCheckoutTest extends TestCase
                 'api_qrcode' => [
                     'qrcode' => 'data:image/png;base64,ZmFrZQ==',
                     'emv' => '00020126580014br.gov.bcb.pix...',
+                ],
+            ]);
+
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+    }
+
+    private function mockBoletoPaymentService(): void
+    {
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createBoletoPayment')
+            ->willReturn([
+                'gateway_transaction_id' => 'boleto-checkout-123',
+                'gateway_status' => 'PROCESSING',
+                'internal_status' => 'pending',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                'api_boleto' => [
+                    '_id' => 'boleto-checkout-123',
+                    'status' => 'PROCESSING',
                 ],
             ]);
 
