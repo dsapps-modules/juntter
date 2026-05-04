@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
+use App\Models\Order;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PublicCheckoutController extends Controller
 {
-    public function show(Request $request, string $publicToken): View|\Illuminate\Http\Response
+    public function show(Request $request, string $publicToken): View|\Illuminate\Http\Response|RedirectResponse
     {
         $checkoutLink = CheckoutLink::query()
             ->with(['product', 'seller'])
@@ -23,10 +25,21 @@ class PublicCheckoutController extends Controller
         }
 
         $checkoutSession = $this->resolveSession($request, $checkoutLink);
+        $order = Order::query()
+            ->with(['paymentTransaction'])
+            ->where('checkout_session_id', $checkoutSession->id)
+            ->latest()
+            ->first();
+
+        if ($order?->status === 'paid') {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
 
         return view('checkout.public', [
             'checkoutLink' => $checkoutLink,
             'checkoutSession' => $checkoutSession,
+            'order' => $order,
+            'paymentTransaction' => $order?->paymentTransaction,
         ]);
     }
 

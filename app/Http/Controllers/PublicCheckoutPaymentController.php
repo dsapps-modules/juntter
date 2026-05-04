@@ -123,6 +123,7 @@ class PublicCheckoutPaymentController extends Controller
             'order' => $order->fresh(),
             'payment_transaction' => $paymentTransaction->fresh(),
             'pricing' => $pricing,
+            'thank_you_url' => route('checkout.public.thank-you', $checkoutSession->session_token),
         ]);
     }
 
@@ -136,6 +137,7 @@ class PublicCheckoutPaymentController extends Controller
             'checkout_session' => $checkoutSession,
             'order' => $order,
             'payment_transaction' => $transaction,
+            'thank_you_url' => route('checkout.public.thank-you', $checkoutSession->session_token),
         ]);
     }
 

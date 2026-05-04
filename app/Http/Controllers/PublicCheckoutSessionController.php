@@ -69,6 +69,11 @@ class PublicCheckoutSessionController extends Controller
     public function saveIdentification(StoreCheckoutIdentificationRequest $request, string $sessionToken): JsonResponse
     {
         $checkoutSession = $this->findSession($sessionToken);
+        $recipientName = $checkoutSession->recipient_name;
+
+        if (blank($recipientName) || $recipientName === $checkoutSession->customer_name) {
+            $recipientName = $request->input('customer_name');
+        }
 
         $checkoutSession->update([
             'customer_name' => $request->input('customer_name'),
@@ -80,6 +85,7 @@ class PublicCheckoutSessionController extends Controller
             'customer_company_name' => $request->input('customer_company_name'),
             'customer_state_registration' => $request->input('customer_state_registration'),
             'customer_is_state_registration_exempt' => $request->boolean('customer_is_state_registration_exempt'),
+            'recipient_name' => $recipientName,
             'status' => 'identification_completed',
             'current_step' => 'delivery',
             'last_activity_at' => now(),
