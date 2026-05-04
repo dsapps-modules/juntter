@@ -41,6 +41,7 @@ Route::post('/checkout/{publicToken}/session', [PublicCheckoutSessionController:
 Route::post('/checkout/session/{sessionToken}/identification', [PublicCheckoutSessionController::class, 'saveIdentification'])->name('checkout.public.identification');
 Route::post('/checkout/session/{sessionToken}/delivery', [PublicCheckoutSessionController::class, 'saveDelivery'])->name('checkout.public.delivery');
 Route::post('/checkout/session/{sessionToken}/payment', [PublicCheckoutPaymentController::class, 'startPayment'])->name('checkout.public.payment');
+Route::post('/checkout/session/{sessionToken}/payment/{transactionId}/antifraud-auth', [PublicCheckoutPaymentController::class, 'confirmAntifraudAuth'])->name('checkout.public.payment.antifraud-auth');
 Route::get('/checkout/session/{sessionToken}/status', [PublicCheckoutPaymentController::class, 'status'])->name('checkout.public.status');
 Route::get('/checkout/session/{sessionToken}/thank-you', [PublicCheckoutController::class, 'thankYou'])->name('checkout.public.thank-you');
 
@@ -72,6 +73,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cobranca/planos', fn () => redirect('/app/cobranca/planos'))->name('cobranca.planos');
         Route::get('/cobranca/planos/{id}', fn ($id) => redirect('/app/cobranca/planos/'.$id))->name('cobranca.plano.detalhes');
         Route::get('/cobranca/saldoextrato', fn () => redirect('/app/cobranca/saldoextrato'))->name('cobranca.saldoextrato');
+        Route::get('/cobranca/cartao-credito', fn () => redirect('/app/cobranca/cartao-credito'))->name('cobranca.cartao-credito');
 
         // Rotas de API para transações
         Route::post('/cobranca/transacao/credito', [CobrancaController::class, 'criarTransacaoCredito'])->name('cobranca.transacao.credito');

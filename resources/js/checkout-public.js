@@ -343,6 +343,8 @@ function hydrateSession(session, config) {
     fillInput('[name="city"]', session.city);
     fillInput('[name="state"]', session.state);
     fillInput('[name="recipient_name"]', session.recipient_name);
+    fillInput('[name="card[holder_name]"]', session.customer_name);
+    fillInput('[name="card[holder_document]"]', session.customer_document);
     const defaultPaymentMethod = session.payment_method
         || (config?.checkoutLink?.allowPix ? 'pix' : (config?.checkoutLink?.allowBoleto ? 'boleto' : (config?.checkoutLink?.allowCreditCard ? 'credit_card' : '')));
 
@@ -350,6 +352,166 @@ function hydrateSession(session, config) {
         fillInput('[name="payment_method"]', defaultPaymentMethod);
     }
     fillInput('[name="installments"]', session.installments || 1);
+}
+
+function updateInstallmentsVisibility(paymentForm, paymentMethod) {
+    if (!paymentForm) {
+        return;
+    }
+
+    const installmentsWrapper = paymentForm.querySelector('[data-installments-wrapper]');
+    const installmentsInput = paymentForm.querySelector('[name="installments"]');
+
+    if (!installmentsWrapper || !installmentsInput) {
+        return;
+    }
+
+    const shouldShowInstallments = paymentMethod === 'credit_card';
+
+    installmentsWrapper.hidden = !shouldShowInstallments;
+    installmentsInput.disabled = !shouldShowInstallments;
+    installmentsInput.required = shouldShowInstallments;
+
+    if (shouldShowInstallments && (!installmentsInput.value || Number(installmentsInput.value) < 1)) {
+        installmentsInput.value = '1';
+    }
+}
+
+function updateCreditCardFieldsVisibility(paymentForm, paymentMethod) {
+    if (!paymentForm) {
+        return;
+    }
+
+    const cardFieldsWrapper = paymentForm.querySelector('[data-card-fields-wrapper]');
+
+    if (!cardFieldsWrapper) {
+        return;
+    }
+
+    const shouldShowCardFields = paymentMethod === 'credit_card';
+
+    cardFieldsWrapper.hidden = !shouldShowCardFields;
+    cardFieldsWrapper.querySelectorAll('input, select, textarea').forEach((element) => {
+        element.disabled = !shouldShowCardFields;
+    });
+}
+
+function getAntifraudAuthUrl(config, transactionId) {
+    const template = String(config?.urls?.antifraudAuthTemplate || '');
+
+    if (!template || !transactionId) {
+        return '';
+    }
+
+    return template.replace('__TRANSACTION_ID__', encodeURIComponent(transactionId));
+}
+
+function buildCreditCard3DSRequest(state, paymentForm) {
+    const session = state.session || {};
+    const customerName = String(session.customer_name || '').trim() || 'Cliente';
+    const customerEmail = String(session.customer_email || '').trim();
+    const customerPhoneDigits = normalizeDigits(session.customer_phone || '');
+    const holderName = String(paymentForm?.querySelector('[name="card[holder_name]"]')?.value || customerName).trim() || customerName;
+    const cardNumber = normalizeDigits(paymentForm?.querySelector('[name="card[card_number]"]')?.value || '');
+    const expirationMonth = String(paymentForm?.querySelector('[name="card[expiration_month]"]')?.value || '').padStart(2, '0');
+    const expirationYear = String(paymentForm?.querySelector('[name="card[expiration_year]"]')?.value || '');
+    const installments = Math.max(1, Number(paymentForm?.querySelector('[name="installments"]')?.value || 1));
+    const amount = Math.round(Number(session.total || state.order?.total || 0) * 100);
+
+    return {
+        data: {
+            customer: {
+                name: customerName,
+                email: customerEmail,
+                phones: [
+                    {
+                        country: '55',
+                        area: customerPhoneDigits.slice(0, 2) || '00',
+                        number: customerPhoneDigits.slice(2) || customerPhoneDigits || '000000000',
+                        type: 'MOBILE',
+                    },
+                ],
+            },
+            paymentMethod: {
+                type: 'CREDIT_CARD',
+                installments,
+                card: {
+                    number: cardNumber,
+                    expMonth: expirationMonth,
+                    expYear: expirationYear,
+                    holder: {
+                        name: holderName,
+                    },
+                },
+            },
+            amount: {
+                value: amount,
+                currency: 'BRL',
+            },
+            billingAddress: {
+                street: String(session.street || ''),
+                number: String(session.number || ''),
+                complement: String(session.complement || ''),
+                regionCode: String(session.state || ''),
+                country: 'BRA',
+                city: String(session.city || ''),
+                postalCode: normalizeDigits(session.zipcode || ''),
+            },
+            shippingAddress: {
+                street: String(session.street || ''),
+                number: String(session.number || ''),
+                complement: String(session.complement || ''),
+                regionCode: String(session.state || ''),
+                country: 'BRA',
+                city: String(session.city || ''),
+                postalCode: normalizeDigits(session.zipcode || ''),
+            },
+            dataOnly: false,
+        },
+    };
+}
+
+async function confirmCreditCard3DS(state, paymentForm, transaction) {
+    const sessionId = transaction?.three_ds_session_id
+        || transaction?.session_id
+        || transaction?.response_payload?.session_id
+        || state.paymentTransaction?.three_ds_session_id
+        || state.paymentTransaction?.response_payload?.session_id;
+    const gatewayTransactionId = transaction?.gateway_transaction_id
+        || state.paymentTransaction?.gateway_transaction_id;
+    const authUrl = getAntifraudAuthUrl(state.config, gatewayTransactionId);
+
+    if (!sessionId) {
+        throw new Error('A sessão 3DS não foi informada pelo gateway.');
+    }
+
+    if (!gatewayTransactionId || !authUrl) {
+        throw new Error('Não foi possível preparar a confirmação 3DS.');
+    }
+
+    if (!window.PagSeguro?.setUp || !window.PagSeguro?.authenticate3DS) {
+        throw new Error('O SDK 3DS não está disponível.');
+    }
+
+    window.PagSeguro.setUp({
+        session: sessionId,
+        env: state.threeDsEnv || 'PROD',
+    });
+
+    const request = buildCreditCard3DSRequest(state, paymentForm);
+    const result = await window.PagSeguro.authenticate3DS(request);
+
+    return requestJson(authUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            id: result.id,
+            status: result.status,
+            authentication_status: result.authentication_status || 'NOT_AUTHENTICATED',
+        }),
+    });
 }
 
 function syncRecipientDefault(state) {
@@ -530,12 +692,14 @@ function updatePaymentDetails(state, transaction) {
     }
 
     if (statusText) {
-        statusText.textContent = method === 'pix' ? statusLabel : '';
+        statusText.textContent = statusLabel;
     }
 
     if (message) {
         if (method === 'pix') {
             message.textContent = 'Escaneie o código ou copie e cole o Pix. A página será atualizada automaticamente quando o pagamento for aprovado.';
+        } else if (method === 'credit_card' && (transaction?.requires_3ds || transaction?.response_payload?.requires_3ds || statusLabel === 'waiting_auth')) {
+            message.textContent = 'A transação foi criada e aguarda a autenticação 3DS do cartão.';
         } else {
             message.textContent = 'O pagamento foi enviado para processamento. A página acompanha a confirmação automaticamente.';
         }
@@ -795,6 +959,10 @@ function redirectToThankYou(state) {
 
 function isPaidOrder(order, paymentTransaction, session) {
     return String(order?.status || '').toLowerCase() === 'paid'
+        || (
+            String(paymentTransaction?.payment_method || '').toLowerCase() === 'credit_card'
+            && ['authorized', 'paid'].includes(String(paymentTransaction?.internal_status || '').toLowerCase())
+        )
         || String(paymentTransaction?.internal_status || '').toLowerCase() === 'paid'
         || String(session?.status || '').toLowerCase() === 'paid';
 }
@@ -1093,6 +1261,19 @@ function bindForms(state) {
     }
 
     if (paymentForm) {
+        const initialPaymentMethod = paymentForm.querySelector('[name="payment_method"]')?.value || '';
+        updateInstallmentsVisibility(paymentForm, initialPaymentMethod);
+        updateCreditCardFieldsVisibility(paymentForm, initialPaymentMethod);
+
+        paymentForm.addEventListener('change', (event) => {
+            if (!(event.target instanceof HTMLSelectElement) || event.target.name !== 'payment_method') {
+                return;
+            }
+
+            updateInstallmentsVisibility(paymentForm, event.target.value);
+            updateCreditCardFieldsVisibility(paymentForm, event.target.value);
+        });
+
         paymentForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             clearFeedback();
@@ -1114,6 +1295,7 @@ function bindForms(state) {
                 syncRecipientDefault(state);
                 updateSummary(state.config, state);
                 updatePaymentDetails(state, state.paymentTransaction);
+                let shouldShowStartedMessage = true;
 
                 if (state.paymentTransaction?.payment_method === 'pix') {
                     showWaitingPanel(state, state.paymentTransaction);
@@ -1123,10 +1305,50 @@ function bindForms(state) {
                     } else {
                         schedulePaymentRefresh(state);
                     }
+                } else if (state.paymentTransaction?.payment_method === 'credit_card') {
+                    const requires3ds = Boolean(
+                        state.paymentTransaction?.requires_3ds
+                        || state.paymentTransaction?.response_payload?.requires_3ds
+                        || payload.requires_3ds
+                    );
+                    const transactionStatus = String(state.paymentTransaction?.internal_status || '').toLowerCase();
+
+                    if (requires3ds) {
+                        shouldShowStartedMessage = false;
+                        setFeedback('Autenticação 3DS iniciada. Conclua o desafio do cartão.', 'success');
+                        const authResponse = await confirmCreditCard3DS(state, paymentForm, state.paymentTransaction);
+
+                        state.order = authResponse.order || state.order;
+                        state.paymentTransaction = authResponse.payment_transaction || state.paymentTransaction;
+                        state.session = authResponse.checkout_session || state.session;
+                        state.thankYouUrl = authResponse.thank_you_url || state.thankYouUrl;
+
+                        hydrateSession(state.session, state.config);
+                        syncRecipientDefault(state);
+                        updateSummary(state.config, state);
+                        updatePaymentDetails(state, state.paymentTransaction);
+                        setFeedback(authResponse.message || 'Autenticação 3DS processada com sucesso.', 'success');
+
+                        const confirmedStatus = String(state.paymentTransaction?.internal_status || '').toLowerCase();
+
+                        if (['authorized', 'paid'].includes(confirmedStatus) || isPaidOrder(state.order, state.paymentTransaction, state.session)) {
+                            stopPaymentRefreshTimer(state);
+                            redirectToThankYou(state);
+                            return;
+                        }
+                    } else if (['authorized', 'paid'].includes(transactionStatus)) {
+                        redirectToThankYou(state);
+                        return;
+                    } else {
+                        showStep(state, 'payment');
+                    }
                 } else {
                     showStep(state, 'payment');
                 }
-                setFeedback('Pagamento iniciado com sucesso. A confirmação será atualizada via webhook.', 'success');
+
+                if (shouldShowStartedMessage) {
+                    setFeedback('Pagamento iniciado com sucesso. A confirmação será atualizada via webhook.', 'success');
+                }
 
                 void refreshPaymentState(state);
             } catch (error) {
@@ -1283,6 +1505,7 @@ function initCheckoutPublic() {
         order: config.order || null,
         paymentTransaction: config.paymentTransaction || null,
         paymentRefreshTimeout: null,
+        threeDsEnv: root.dataset.threeDsEnv || 'PROD',
         currentStep: config.currentStep || 'identification',
         visualStep: config.currentStep || 'identification',
         thankYouUrl: config.thankYouUrl,

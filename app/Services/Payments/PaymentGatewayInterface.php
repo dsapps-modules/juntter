@@ -12,5 +12,7 @@ interface PaymentGatewayInterface
 
     public function createCreditCardPayment(Order $order, array $cardData): array;
 
+    public function confirmCreditCard3ds(string $gatewayTransactionId, array $authData): array;
+
     public function parseWebhook(array $payload, array $headers): array;
 }

@@ -67,6 +67,8 @@
                                             class="fas fa-file-invoice me-2"></i>Cobrança Única</a></li>
                                 <li><a class="dropdown-item" href="{{ url('/app/cobranca/simular') }}"><i
                                             class="fas fa-calculator me-2"></i>Simular Transação</a></li>
+                                <li><a class="dropdown-item" href="{{ url('/app/cobranca/cartao-credito') }}"><i
+                                            class="fas fa-credit-card me-2"></i>Cartão de Crédito</a></li>
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>

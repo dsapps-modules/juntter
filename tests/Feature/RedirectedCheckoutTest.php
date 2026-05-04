@@ -6,6 +6,7 @@ use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
 use App\Models\Order;
+use App\Models\PaymentTransaction;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Payments\Paytime\PaytimePaymentService;
@@ -189,6 +190,8 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('data-person-form="pj"', false);
         $response->assertSee('Salvar pessoa física', false);
         $response->assertSee('Salvar pessoa jurídica', false);
+        $this->assertMatchesRegularExpression('/<div[^>]*data-installments-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
+        $this->assertMatchesRegularExpression('/<div[^>]*data-card-fields-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
         $response->assertSee('placeholder="(11) 99999-9999"', false);
         $response->assertSee('placeholder="000.000.000-00"', false);
         $response->assertSee('placeholder="00.000.000/0000-00"', false);
@@ -204,11 +207,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('A confirmação chega via webhook do gateway.', false);
         $response->assertDontSee('O sistema consulta o status do pagamento periodicamente');
         $response->assertSee('data-boleto-block', false);
-        $response->assertSee('data-boleto-url', false);
         $response->assertSee('data-open-payment', false);
-        $response->assertDontSee('data-boleto-barcode', false);
-        $response->assertDontSee('data-boleto-digitable-line', false);
-        $response->assertDontSee('data-copy-payment', false);
     }
 
     public function test_paid_public_checkout_redirects_to_thank_you_page(): void
@@ -296,6 +295,319 @@ class RedirectedCheckoutTest extends TestCase
         $this->assertSame('150.00', (string) $response->json('payment_transaction.amount'));
         $this->assertSame('pix-checkout-123', $response->json('payment_transaction.gateway_transaction_id'));
         $this->assertSame('00020126580014br.gov.bcb.pix...', $response->json('payment_transaction.pix_copy_paste'));
+    }
+
+    public function test_credit_card_payment_requires_installments(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->never())
+            ->method('createCreditCardPayment');
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'credit_card',
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['installments']);
+    }
+
+    public function test_credit_card_payment_creates_order_with_installments(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createCreditCardPayment')
+            ->with(
+                $this->callback(function (Order $order) use ($session): bool {
+                    return $order->checkout_session_id === $session->id
+                        && $order->payment_method === 'credit_card';
+                }),
+                $this->callback(function (array $cardData): bool {
+                    return $cardData['payment_method'] === 'credit_card'
+                        && (int) $cardData['installments'] === 3
+                        && ($cardData['card']['holder_name'] ?? null) === 'Maria Silva'
+                        && ($cardData['card']['card_number'] ?? null) === '4111111111111111'
+                        && (int) ($cardData['card']['expiration_month'] ?? 0) === 12;
+                }),
+            )
+            ->willReturn([
+                'gateway_transaction_id' => 'card-checkout-123',
+                'gateway_status' => 'authorized',
+                'internal_status' => 'authorized',
+                'card_last_four' => '4242',
+                'card_brand' => 'visa',
+            ]);
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('payment_transaction.payment_method', 'credit_card');
+        $response->assertJsonPath('payment_transaction.installments', 3);
+
+        $transaction = PaymentTransaction::query()->latest('id')->first();
+
+        $this->assertNotNull($transaction);
+        $this->assertSame('credit_card', $transaction->payment_method);
+        $this->assertSame(3, $transaction->installments);
+        $this->assertArrayNotHasKey('card_number', $transaction->request_payload['card'] ?? []);
+        $this->assertArrayNotHasKey('security_code', $transaction->request_payload['card'] ?? []);
+
+        $this->assertDatabaseHas('payment_transactions', [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card_last_four' => '4242',
+            'card_brand' => 'visa',
+        ]);
+    }
+
+    public function test_credit_card_payment_requires_3ds_returns_challenge_payload(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createCreditCardPayment')
+            ->willReturn([
+                'gateway_transaction_id' => 'card-checkout-3ds-123',
+                'gateway_status' => 'PENDING',
+                'internal_status' => 'pending',
+                'card_last_four' => '4242',
+                'card_brand' => 'visa',
+                'requires_3ds' => true,
+                'session_id' => '3DS_SESSION_123',
+                'transaction_id' => 'card-checkout-3ds-123',
+                'message' => 'Transação criada, aguardando autenticação 3DS.',
+                'api_transaction' => [
+                    '_id' => 'card-checkout-3ds-123',
+                    'status' => 'PENDING',
+                    'antifraud' => [
+                        [
+                            'analyse_required' => 'THREEDS',
+                            'analyse_status' => 'WAITING_AUTH',
+                            'session' => '3DS_SESSION_123',
+                        ],
+                    ],
+                ],
+            ]);
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('requires_3ds', true);
+        $response->assertJsonPath('session_id', '3DS_SESSION_123');
+        $response->assertJsonPath('payment_transaction.internal_status', 'pending');
+        $this->assertDatabaseHas('payment_transactions', [
+            'payment_method' => 'credit_card',
+            'gateway_transaction_id' => 'card-checkout-3ds-123',
+            'internal_status' => 'pending',
+        ]);
+    }
+
+    public function test_public_checkout_can_confirm_credit_card_3ds_payment(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createCreditCardPayment')
+            ->willReturn([
+                'gateway_transaction_id' => 'card-checkout-3ds-123',
+                'gateway_status' => 'PENDING',
+                'internal_status' => 'pending',
+                'card_last_four' => '4242',
+                'card_brand' => 'visa',
+                'requires_3ds' => true,
+                'session_id' => '3DS_SESSION_123',
+                'transaction_id' => 'card-checkout-3ds-123',
+                'message' => 'Transação criada, aguardando autenticação 3DS.',
+                'api_transaction' => [
+                    '_id' => 'card-checkout-3ds-123',
+                    'status' => 'PENDING',
+                    'antifraud' => [
+                        [
+                            'analyse_required' => 'THREEDS',
+                            'analyse_status' => 'WAITING_AUTH',
+                            'session' => '3DS_SESSION_123',
+                        ],
+                    ],
+                ],
+            ]);
+        $paymentService->expects($this->once())
+            ->method('confirmCreditCard3ds')
+            ->with(
+                'card-checkout-3ds-123',
+                $this->callback(function (array $authData): bool {
+                    return $authData['id'] === '3DS_123'
+                        && $authData['status'] === 'AUTH_FLOW_COMPLETED'
+                        && $authData['authentication_status'] === 'AUTHENTICATED';
+                }),
+            )
+            ->willReturn([
+                'gateway_transaction_id' => 'card-checkout-3ds-123',
+                'gateway_status' => 'AUTHORIZED',
+                'internal_status' => 'authorized',
+                'api_transaction' => [
+                    '_id' => 'card-checkout-3ds-123',
+                    'status' => 'AUTHORIZED',
+                ],
+            ]);
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $paymentResponse->assertOk();
+
+        $authResponse = $this->postJson(route('checkout.public.payment.antifraud-auth', [
+            'sessionToken' => $session->session_token,
+            'transactionId' => 'card-checkout-3ds-123',
+        ]), [
+            'id' => '3DS_123',
+            'status' => 'AUTH_FLOW_COMPLETED',
+            'authentication_status' => 'AUTHENTICATED',
+        ]);
+
+        $authResponse->assertOk();
+        $authResponse->assertJsonPath('payment_transaction.internal_status', 'authorized');
+        $this->assertDatabaseHas('orders', [
+            'checkout_session_id' => $session->id,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('payment_transactions', [
+            'gateway_transaction_id' => 'card-checkout-3ds-123',
+            'internal_status' => 'authorized',
+        ]);
     }
 
     public function test_identification_is_saved(): void

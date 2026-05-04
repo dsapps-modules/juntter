@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $checkoutLink->name }} | Checkout Juntter</title>
     @vite(['resources/js/checkout-public.js'])
+    @if($checkoutLink->allow_credit_card)
+        <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
+    @endif
     <style>
         :root {
             --checkout-bg: #f4efe6;
@@ -702,6 +705,7 @@
             'identification' => route('checkout.public.identification', $checkoutSession->session_token),
             'delivery' => route('checkout.public.delivery', $checkoutSession->session_token),
             'payment' => route('checkout.public.payment', $checkoutSession->session_token),
+            'antifraudAuthTemplate' => route('checkout.public.payment', $checkoutSession->session_token).'/__TRANSACTION_ID__/antifraud-auth',
             'status' => route('checkout.public.status', $checkoutSession->session_token),
         ],
         'checkoutLink' => [
@@ -754,6 +758,7 @@
             'gateway_status' => $paymentTransaction->gateway_status,
             'internal_status' => $paymentTransaction->internal_status,
             'payment_method' => $paymentTransaction->payment_method,
+            'gateway_transaction_id' => $paymentTransaction->gateway_transaction_id,
             'pix_qr_code' => $paymentTransaction->pix_qr_code,
             'pix_copy_paste' => $paymentTransaction->pix_copy_paste,
             'pix_expires_at' => optional($paymentTransaction->pix_expires_at)->toIso8601String(),
@@ -762,13 +767,16 @@
             'boleto_digitable_line' => $paymentTransaction->boleto_digitable_line,
             'card_last_four' => $paymentTransaction->card_last_four,
             'card_brand' => $paymentTransaction->card_brand,
+            'requires_3ds' => (bool) data_get($paymentTransaction->response_payload, 'requires_3ds', false),
+            'three_ds_session_id' => data_get($paymentTransaction->response_payload, 'session_id'),
+            'response_payload' => $paymentTransaction->response_payload,
         ] : null,
     ];
 @endphp
 
 <script type="application/json" id="checkout-public-data">@json($checkoutPublicConfig)</script>
 
-<div class="checkout-shell" id="checkout-public-app">
+<div class="checkout-shell" id="checkout-public-app" data-3ds-env="{{ app()->environment('local') ? 'SANDBOX' : 'PROD' }}">
     <header class="hero">
         <div class="hero-top">
             <div>
@@ -1007,12 +1015,52 @@
                                 <p class="field-error" data-error-for="payment_method"></p>
                             </div>
 
-                            <div class="field">
+                            <div class="field" data-installments-wrapper @unless(($checkoutSession->payment_method ?? '') === 'credit_card') hidden @endunless>
                                 <label for="installments">Parcelas</label>
-                                <input id="installments" name="installments" type="number" min="1" max="18" value="1">
+                                <input id="installments" name="installments" type="number" min="1" max="18" value="1" required>
                                 <p class="field-error" data-error-for="installments"></p>
                             </div>
                         </div>
+
+                        @if($checkoutLink->allow_credit_card)
+                        <div class="field-grid" data-card-fields-wrapper @unless(($checkoutSession->payment_method ?? '') === 'credit_card') hidden @endunless>
+                            <div class="field field--full">
+                                <label for="card_holder_name">Nome no cartão</label>
+                                <input id="card_holder_name" name="card[holder_name]" value="" autocomplete="cc-name" required>
+                                <p class="field-error" data-error-for="card.holder_name"></p>
+                            </div>
+
+                            <div class="field field--full">
+                                <label for="card_holder_document">Documento do titular</label>
+                                <input id="card_holder_document" name="card[holder_document]" value="" inputmode="numeric" maxlength="18" placeholder="000.000.000-00" autocomplete="off" required>
+                                <p class="field-error" data-error-for="card.holder_document"></p>
+                            </div>
+
+                            <div class="field field--full">
+                                <label for="card_number">Número do cartão</label>
+                                <input id="card_number" name="card[card_number]" value="" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="cc-number" required>
+                                <p class="field-error" data-error-for="card.card_number"></p>
+                            </div>
+
+                            <div class="field">
+                                <label for="card_expiration_month">Validade - mês</label>
+                                <input id="card_expiration_month" name="card[expiration_month]" type="number" min="1" max="12" value="" inputmode="numeric" placeholder="MM" autocomplete="cc-exp-month" required>
+                                <p class="field-error" data-error-for="card.expiration_month"></p>
+                            </div>
+
+                            <div class="field">
+                                <label for="card_expiration_year">Validade - ano</label>
+                                <input id="card_expiration_year" name="card[expiration_year]" type="number" min="{{ now()->year }}" max="2099" value="" inputmode="numeric" placeholder="AAAA" autocomplete="cc-exp-year" required>
+                                <p class="field-error" data-error-for="card.expiration_year"></p>
+                            </div>
+
+                            <div class="field">
+                                <label for="card_security_code">CVV</label>
+                                <input id="card_security_code" name="card[security_code]" value="" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="cc-csc" required>
+                                <p class="field-error" data-error-for="card.security_code"></p>
+                            </div>
+                        </div>
+                        @endif
 
                         <div class="actions">
                             <button class="btn btn-secondary" type="button" data-back-to="delivery">Voltar</button>

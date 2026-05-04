@@ -29,6 +29,11 @@ class PaytimePaymentService implements PaymentGatewayInterface
         return $this->client->createCreditCardPayment($order, $cardData);
     }
 
+    public function confirmCreditCard3ds(string $gatewayTransactionId, array $authData): array
+    {
+        return $this->client->confirmCreditCard3ds($gatewayTransactionId, $authData);
+    }
+
     public function parseWebhook(array $payload, array $headers): array
     {
         return $this->client->parseWebhook($payload, $headers);

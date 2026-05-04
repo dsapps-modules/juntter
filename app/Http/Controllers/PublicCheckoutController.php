@@ -31,7 +31,10 @@ class PublicCheckoutController extends Controller
             ->latest()
             ->first();
 
-        if ($order?->status === 'paid') {
+        if (
+            in_array($order?->status, ['paid', 'authorized'], true)
+            || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
             return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
         }
 

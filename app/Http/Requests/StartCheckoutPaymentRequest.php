@@ -15,7 +15,14 @@ class StartCheckoutPaymentRequest extends FormRequest
     {
         return [
             'payment_method' => ['required', 'in:pix,boleto,credit_card'],
-            'installments' => ['nullable', 'integer', 'min:1', 'max:18'],
+            'installments' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:1', 'max:18'],
+            'card' => ['exclude_unless:payment_method,credit_card', 'required', 'array'],
+            'card.holder_name' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'max:255'],
+            'card.holder_document' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'max:18'],
+            'card.card_number' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'min:13', 'max:19'],
+            'card.expiration_month' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:1', 'max:12'],
+            'card.expiration_year' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:'.now()->year],
+            'card.security_code' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'min:3', 'max:4'],
             'card_last_four' => ['nullable', 'string', 'size:4'],
             'card_brand' => ['nullable', 'string', 'max:50'],
         ];

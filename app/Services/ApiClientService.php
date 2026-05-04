@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\Request;
 use App\Models\ApiToken;
 use Exception;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ApiClientService
 {
@@ -61,11 +61,11 @@ class ApiClientService
                 unset($options['json']['extra_headers']);
             }
 
-            Log::info("Paytime API Request", [
+            Log::info('Paytime API Request', [
                 'method' => $method,
                 'endpoint' => "{$this->baseUrl}/{$endpoint}",
                 'headers' => $headers,
-                'payload' => $options[$method === 'GET' ? 'query' : 'json'] ?? []
+                'payload' => $this->sanitizeSensitiveData($options[$method === 'GET' ? 'query' : 'json'] ?? []),
             ]);
 
             // Trata extra_headers para GET requests (query)
@@ -77,20 +77,20 @@ class ApiClientService
             }
 
             $response = Http::withHeaders($headers)
-                        ->withOptions([
-                            'force_ip_resolve' => 'v4',
-                            'connect_timeout' => 10,
-                            'timeout' => 30,
-                        ])
-                        ->beforeSending(function (Request $request) {
-                            // Log::info('Headers enviados', ['headers' => $request->headers()]);
-                            // Log::info('Query enviada',    ['query'   => $request->getUri()]);
-                        })
+                ->withOptions([
+                    'force_ip_resolve' => 'v4',
+                    'connect_timeout' => 10,
+                    'timeout' => 30,
+                ])
+                ->beforeSending(function (Request $request) {
+                    // Log::info('Headers enviados', ['headers' => $request->headers()]);
+                    // Log::info('Query enviada',    ['query'   => $request->getUri()]);
+                })
                 ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
 
             Log::info('Paytime API Response', [
                 'status' => $response->status(),
-                'body' => $response->json()
+                'body' => $this->sanitizeSensitiveData($response->json() ?? []),
             ]);
 
             if ($response->status() !== 401) {
@@ -103,6 +103,21 @@ class ApiClientService
         } while ($attempts < $this->maxRetries);
 
         throw new Exception("Erro 401 persistente após {$this->maxRetries} tentativas.");
+    }
+
+    private function sanitizeSensitiveData(array $payload): array
+    {
+        if (isset($payload['card']) && is_array($payload['card'])) {
+            unset($payload['card']['card_number'], $payload['card']['security_code'], $payload['card']['holder_document']);
+        }
+
+        if (isset($payload['client']) && is_array($payload['client'])) {
+            if (isset($payload['client']['document']) && is_string($payload['client']['document'])) {
+                $payload['client']['document'] = str_repeat('*', max(strlen($payload['client']['document']) - 4, 0)).substr($payload['client']['document'], -4);
+            }
+        }
+
+        return $payload;
     }
 
     private function getToken(): string
@@ -138,8 +153,8 @@ class ApiClientService
             ])
             ->post("{$this->baseUrl}/auth/login", $body);
 
-        if (!$response->successful()) {
-            throw new Exception('Falha ao renovar token: ' . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Falha ao renovar token: '.$response->body());
         }
 
         // echo "\n\nToken renovado com sucesso!\n";
@@ -153,7 +168,7 @@ class ApiClientService
 
             return $accessToken;
         } catch (Exception $e) {
-            throw new Exception('Erro ao atualizar token: ' . $e->getMessage());
+            throw new Exception('Erro ao atualizar token: '.$e->getMessage());
         }
     }
 }

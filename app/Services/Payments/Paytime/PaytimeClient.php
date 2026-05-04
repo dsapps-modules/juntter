@@ -8,7 +8,6 @@ use App\Models\Order;
 use App\Services\ApiClientService;
 use App\Services\BoletoService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 class PaytimeClient
@@ -142,14 +141,62 @@ class PaytimeClient
 
     public function createCreditCardPayment(Order $order, array $cardData): array
     {
-        $transactionId = 'ptc_'.Str::random(20);
+        $order->loadMissing(['seller.vendedor', 'checkoutSession', 'checkoutLink']);
+        $payload = $this->buildCreditCardPayload($order, $cardData);
+        $transaction = $this->apiClient->post('marketplace/transactions', $payload);
+        $transactionId = $this->resolveTransactionId($transaction);
+        $requires3ds = $this->requiresCreditCard3ds($transaction);
+
+        Log::info('Paytime credit card transaction response received', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'transaction_id' => $transactionId,
+            'transaction_keys' => array_keys($transaction),
+            'transaction_payload' => $transaction,
+        ]);
+
+        if ($transactionId === null) {
+            Log::warning('Paytime credit card transaction response did not include a transaction id', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'transaction_payload' => $transaction,
+            ]);
+        }
 
         return [
             'gateway_transaction_id' => $transactionId,
-            'gateway_status' => 'authorized',
-            'internal_status' => 'authorized',
-            'card_last_four' => $cardData['card_last_four'] ?? null,
-            'card_brand' => $cardData['card_brand'] ?? null,
+            'gateway_status' => $this->normalizeGatewayStatus($transaction['status'] ?? null),
+            'internal_status' => $requires3ds
+                ? 'pending'
+                : $this->normalizeCreditCardInternalStatus($transaction['status'] ?? null),
+            'card_last_four' => $this->resolveCardLastFour($transaction, $cardData),
+            'card_brand' => $this->resolveCardBrand($transaction, $cardData),
+            'installments' => $this->resolveCreditCardInstallments($transaction, $cardData),
+            'api_transaction' => $transaction,
+            'requires_3ds' => $requires3ds,
+            'session_id' => $requires3ds ? $this->resolveCreditCard3dsSessionId($transaction) : null,
+            'transaction_id' => $transactionId,
+            'message' => $requires3ds
+                ? 'Transação criada, aguardando autenticação 3DS.'
+                : 'Transação criada com sucesso.',
+        ];
+    }
+
+    public function confirmCreditCard3ds(string $gatewayTransactionId, array $authData): array
+    {
+        $transaction = $this->apiClient->post("marketplace/transactions/{$gatewayTransactionId}/antifraud-auth", $authData);
+
+        Log::info('Paytime credit card 3DS confirmation response received', [
+            'transaction_id' => $gatewayTransactionId,
+            'transaction_keys' => array_keys($transaction),
+            'transaction_payload' => $transaction,
+        ]);
+
+        return [
+            'gateway_transaction_id' => $this->resolveTransactionId($transaction) ?? $gatewayTransactionId,
+            'gateway_status' => $this->normalizeGatewayStatus($transaction['status'] ?? null),
+            'internal_status' => $this->normalizeCreditCardInternalStatus($transaction['status'] ?? null),
+            'api_transaction' => $transaction,
         ];
     }
 
@@ -308,6 +355,66 @@ class PaytimeClient
         ];
     }
 
+    private function buildCreditCardPayload(Order $order, array $cardData): array
+    {
+        $customerName = trim((string) $order->customer_name);
+        [$firstName, $lastName] = $this->splitName($customerName);
+        $establishmentId = $this->resolveEstablishmentId($order);
+        $checkoutSession = $order->checkoutSession;
+        $address = [
+            'street' => (string) ($checkoutSession?->street ?? ''),
+            'number' => (string) ($checkoutSession?->number ?? ''),
+            'complement' => (string) ($checkoutSession?->complement ?? ''),
+            'neighborhood' => (string) ($checkoutSession?->neighborhood ?? ''),
+            'city' => (string) ($checkoutSession?->city ?? ''),
+            'state' => (string) ($checkoutSession?->state ?? ''),
+            'zip_code' => $this->normalizeDigits((string) ($checkoutSession?->zipcode ?? '')),
+        ];
+        $card = $cardData['card'] ?? [];
+        $installments = (int) ($cardData['installments'] ?? 1);
+
+        return [
+            'payment_type' => 'CREDIT',
+            'amount' => $this->toCents($order->total),
+            'installments' => $installments > 0 ? $installments : 1,
+            'interest' => $this->resolveInterest(),
+            'client' => [
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => (string) $order->customer_email,
+                'phone' => $this->normalizeDigits((string) $order->customer_phone),
+                'document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
+                'address' => $address,
+            ],
+            'card' => [
+                'holder_name' => trim((string) ($card['holder_name'] ?? $order->customer_name)),
+                'holder_document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
+                'card_number' => $this->normalizeDigits((string) ($card['card_number'] ?? '')),
+                'expiration_month' => (int) ($card['expiration_month'] ?? 0),
+                'expiration_year' => (int) ($card['expiration_year'] ?? 0),
+                'security_code' => $this->normalizeDigits((string) ($card['security_code'] ?? '')),
+            ],
+            'extra_headers' => [
+                'establishment_id' => $establishmentId,
+            ],
+            'session_id' => 'checkout_'.($order->checkout_session_id ?? $order->id),
+            'info_additional' => [
+                [
+                    'key' => 'order_number',
+                    'value' => (string) $order->order_number,
+                ],
+                [
+                    'key' => 'checkout_link_id',
+                    'value' => (string) $order->checkout_link_id,
+                ],
+                [
+                    'key' => 'checkout_session_id',
+                    'value' => (string) $order->checkout_session_id,
+                ],
+            ],
+        ];
+    }
+
     /**
      * @return array{0: string, 1: string}
      */
@@ -360,6 +467,17 @@ class PaytimeClient
         return $normalized !== '' ? $normalized : 'pending';
     }
 
+    private function normalizeCreditCardInternalStatus(mixed $status): string
+    {
+        $normalized = strtoupper(trim((string) $status));
+
+        if (in_array($normalized, ['PAID', 'APPROVED', 'CONFIRMED', 'SUCCESS'], true)) {
+            return 'paid';
+        }
+
+        return $normalized !== '' ? strtolower($normalized) : 'pending';
+    }
+
     private function normalizeBoletoInternalStatus(mixed $status): string
     {
         $normalized = strtoupper(trim((string) $status));
@@ -407,6 +525,64 @@ class PaytimeClient
         }
 
         return (string) $transactionId;
+    }
+
+    private function resolveCardBrand(array $transaction, array $cardData): ?string
+    {
+        $brand = data_get($transaction, 'card.brand_name')
+            ?? data_get($transaction, 'card.brand')
+            ?? data_get($transaction, 'brand_name')
+            ?? data_get($transaction, 'brand')
+            ?? $cardData['card_brand']
+            ?? null;
+
+        if (! is_scalar($brand) || trim((string) $brand) === '') {
+            return null;
+        }
+
+        return strtoupper(trim((string) $brand));
+    }
+
+    private function resolveCardLastFour(array $transaction, array $cardData): ?string
+    {
+        $lastFour = data_get($transaction, 'card.last4_digits')
+            ?? data_get($transaction, 'card.last4')
+            ?? data_get($transaction, 'last4_digits')
+            ?? data_get($transaction, 'last4')
+            ?? $cardData['card_last_four']
+            ?? null;
+
+        if (! is_scalar($lastFour)) {
+            return null;
+        }
+
+        $normalized = $this->normalizeDigits((string) $lastFour);
+
+        return $normalized !== '' ? str_pad(substr($normalized, -4), 4, '0', STR_PAD_LEFT) : null;
+    }
+
+    private function resolveCreditCardInstallments(array $transaction, array $cardData): int
+    {
+        $installments = data_get($transaction, 'installments') ?? $cardData['installments'] ?? 1;
+
+        return max(1, (int) $installments);
+    }
+
+    private function requiresCreditCard3ds(array $transaction): bool
+    {
+        return strtoupper((string) data_get($transaction, 'antifraud.0.analyse_required')) === 'THREEDS'
+            && strtoupper((string) data_get($transaction, 'antifraud.0.analyse_status')) === 'WAITING_AUTH';
+    }
+
+    private function resolveCreditCard3dsSessionId(array $transaction): ?string
+    {
+        $sessionId = data_get($transaction, 'antifraud.0.session');
+
+        if (! is_scalar($sessionId) || trim((string) $sessionId) === '') {
+            return null;
+        }
+
+        return (string) $sessionId;
     }
 
     private function resolveInterest(): string

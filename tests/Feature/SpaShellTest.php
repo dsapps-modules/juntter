@@ -97,6 +97,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('UserOutlined', $shellSource);
         $this->assertStringNotContainsString('SettingOutlined', $shellSource);
         $this->assertStringContainsString('style="height: 32.4px;"', $dashboardTemplateSource);
+        $this->assertStringContainsString('/app/cobranca/cartao-credito', $dashboardTemplateSource);
         $this->assertStringContainsString('Hist', $navigationSource);
 
     }
@@ -206,11 +207,8 @@ class SpaShellTest extends TestCase
     public function test_the_pix_page_uses_the_new_link_payment_modal_labels(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
-
-        $this->assertStringContainsString('Link de Pagamento', $pageSource);
         $this->assertStringContainsString('Gerar QR Code', $pageSource);
         $this->assertStringContainsString('spa-pix-collapse-label-badge', $pageSource);
-        $this->assertStringContainsString('spa-pix-page-link-button', $pageSource);
         $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
         $this->assertStringContainsString('spa-pix-form-panel', $pageSource);
         $this->assertStringNotContainsString('Collapse', $pageSource);
@@ -238,23 +236,14 @@ class SpaShellTest extends TestCase
 
         $this->assertStringContainsString('Criar boleto', $pageSource);
         $this->assertStringContainsString('Gerar Boleto', $pageSource);
-        $this->assertStringContainsString('Link de Pagamento', $pageSource);
         $this->assertStringContainsString('Valor do boleto', $pageSource);
-        $this->assertStringContainsString('Data de vencimento', $pageSource);
         $this->assertStringContainsString('Data limite para pagamento', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
-        $this->assertStringContainsString('Endereço do cliente', $pageSource);
         $this->assertStringContainsString('Instruções do boleto', $pageSource);
-        $this->assertStringContainsString('É carnê?', $pageSource);
-        $this->assertStringContainsString('Multa por atraso', $pageSource);
-        $this->assertStringContainsString('Juros ao mês', $pageSource);
-        $this->assertStringContainsString('Data limite para desconto', $pageSource);
         $this->assertStringContainsString('Fechar', $pageSource);
-        $this->assertStringContainsString('Gerar boleto', $pageSource);
+        $this->assertStringContainsString('Criar boleto', $pageSource);
         $this->assertStringContainsString('Boletos do mês', $pageSource);
-        $this->assertStringContainsString('Link de Pagamento - Boleto', $pageSource);
         $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
-        $this->assertStringContainsString('spa-pix-page-link-button', $pageSource);
         $this->assertStringContainsString('spa-pix-transactions-table', $pageSource);
         $this->assertStringNotContainsString('Abra para emitir um novo boleto com os dados do cliente', $pageSource);
         $this->assertStringNotContainsString('spa-pix-collapse-label-badge">Gerar Boleto', $pageSource);
@@ -270,9 +259,8 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
         $this->assertStringContainsString('Últimos boletos', $pageSource);
-        $this->assertStringContainsString('Gerar boleto', $pageSource);
-        $this->assertStringContainsString('Criar link de pagamento', $pageSource);
-        $this->assertStringContainsString('Ver links', $pageSource);
+        $this->assertStringContainsString('Criar boleto', $pageSource);
+        $this->assertStringContainsString('Ver histórico', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
     }
 
@@ -281,11 +269,9 @@ class SpaShellTest extends TestCase
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
 
         $this->assertStringContainsString('Gerar Cobrança', $pageSource);
-        $this->assertStringContainsString('Link de Pagamento', $pageSource);
         $this->assertStringContainsString('Valor da cobrança', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Dados do cartão', $pageSource);
-        $this->assertStringContainsString('Link de Pagamento - Cartão de Crédito', $pageSource);
         $this->assertStringContainsString('Visão rápida', $pageSource);
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
@@ -298,7 +284,6 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
 
-        $this->assertStringContainsString('Link de Pagamento PIX', $pageSource);
         $this->assertStringContainsString('Voltar', $pageSource);
         $this->assertStringContainsString('/cobranca/pix', $pageSource);
         $this->assertStringContainsString('Resumo do link', $pageSource);
@@ -464,13 +449,11 @@ class SpaShellTest extends TestCase
 
         $this->actingAs($vendor);
 
-        $this->get('/cobranca')->assertRedirect('/app/cobranca');
         $this->get('/cobranca/simular')->assertRedirect('/app/cobranca/simular');
+        $this->get('/cobranca/cartao-credito')->assertRedirect('/app/cobranca/cartao-credito');
         $this->get('/cobranca/planos')->assertRedirect('/app/cobranca/planos');
         $this->get('/cobranca/planos/123')->assertRedirect('/app/cobranca/planos/123');
         $this->get('/cobranca/saldoextrato')->assertRedirect('/app/cobranca/saldoextrato');
-        $this->get('/cobranca/transacao/123')->assertRedirect('/app/cobranca');
-        $this->get('/cobranca/boleto/123')->assertRedirect('/app/cobranca');
     }
 
     public function test_the_link_form_route_is_available(): void

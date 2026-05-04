@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConfirmCheckoutAntifraudAuthRequest;
 use App\Http\Requests\StartCheckoutPaymentRequest;
 use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
@@ -37,6 +38,7 @@ class PublicCheckoutPaymentController extends Controller
         abort_unless($this->paymentMethodIsAllowed($checkoutLink, $paymentMethod), 422, 'Método de pagamento indisponível para este checkout.');
 
         $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod);
+        $validatedRequest = $request->validated();
 
         $checkoutSession->update([
             'payment_method' => $paymentMethod,
@@ -108,8 +110,8 @@ class PublicCheckoutPaymentController extends Controller
             'boleto_digitable_line' => $gatewayResponse['boleto_digitable_line'] ?? null,
             'card_last_four' => $gatewayResponse['card_last_four'] ?? null,
             'card_brand' => $gatewayResponse['card_brand'] ?? null,
-            'installments' => $request->integer('installments') ?: null,
-            'request_payload' => $request->validated(),
+            'installments' => $paymentMethod === 'credit_card' ? $request->integer('installments') : null,
+            'request_payload' => $this->sanitizePaymentRequestPayload($validatedRequest),
             'response_payload' => $gatewayResponse,
         ]);
 
@@ -136,6 +138,59 @@ class PublicCheckoutPaymentController extends Controller
             'order' => $order->fresh(),
             'payment_transaction' => $paymentTransaction->fresh(),
             'pricing' => $pricing,
+            'requires_3ds' => (bool) ($gatewayResponse['requires_3ds'] ?? false),
+            'session_id' => $gatewayResponse['session_id'] ?? null,
+            'transaction_id' => $gatewayResponse['transaction_id'] ?? $gatewayTransactionId,
+            'thank_you_url' => route('checkout.public.thank-you', $checkoutSession->session_token),
+        ]);
+    }
+
+    public function confirmAntifraudAuth(
+        ConfirmCheckoutAntifraudAuthRequest $request,
+        string $sessionToken,
+        string $transactionId
+    ): JsonResponse {
+        $checkoutSession = $this->findSession($sessionToken);
+        $order = Order::query()
+            ->where('checkout_session_id', $checkoutSession->id)
+            ->latest()
+            ->firstOrFail();
+        $paymentTransaction = PaymentTransaction::query()
+            ->where('order_id', $order->id)
+            ->where('gateway_transaction_id', $transactionId)
+            ->firstOrFail();
+
+        abort_unless($paymentTransaction->payment_method === 'credit_card', 422, 'A autenticação 3DS só se aplica a cartão de crédito.');
+
+        $validated = $request->validated();
+        $gatewayResponse = $this->paymentService->confirmCreditCard3ds($transactionId, $validated);
+
+        $paymentTransaction->fill([
+            'gateway_status' => $gatewayResponse['gateway_status'] ?? $paymentTransaction->gateway_status,
+            'internal_status' => $gatewayResponse['internal_status'] ?? $paymentTransaction->internal_status,
+            'response_payload' => $gatewayResponse,
+        ])->save();
+
+        if (strtolower((string) ($gatewayResponse['internal_status'] ?? '')) === 'paid') {
+            $order->update([
+                'status' => 'paid',
+            ]);
+        }
+
+        CheckoutEvent::query()->create([
+            'checkout_session_id' => $checkoutSession->id,
+            'checkout_link_id' => $checkoutSession->checkout_link_id,
+            'seller_id' => $checkoutSession->seller_id,
+            'event_type' => 'payment_auth_completed',
+            'step' => 'payment',
+            'metadata' => $validated,
+        ]);
+
+        return response()->json([
+            'message' => 'Autenticação 3DS processada com sucesso.',
+            'checkout_session' => $checkoutSession->fresh(),
+            'order' => $order->fresh(),
+            'payment_transaction' => $paymentTransaction->fresh(),
             'thank_you_url' => route('checkout.public.thank-you', $checkoutSession->session_token),
         ]);
     }
@@ -215,6 +270,17 @@ class PublicCheckoutPaymentController extends Controller
         }
 
         return (string) $transactionId;
+    }
+
+    private function sanitizePaymentRequestPayload(array $payload): array
+    {
+        if (! isset($payload['card']) || ! is_array($payload['card'])) {
+            return $payload;
+        }
+
+        unset($payload['card']['card_number'], $payload['card']['security_code'], $payload['card']['holder_document']);
+
+        return $payload;
     }
 
     private function isValidCheckoutDocument(string $document, string $documentType): bool
