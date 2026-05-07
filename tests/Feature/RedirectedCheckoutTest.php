@@ -23,7 +23,6 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/seller/products', [
             'name' => 'Curso Laravel',
-            'slug' => 'curso-laravel',
             'description' => 'Descrição do curso',
             'short_description' => 'Curso prático',
             'sku' => 'SKU-001',

@@ -7,12 +7,55 @@ const statusOptions = [
     { value: 'inactive', label: 'Inativo' },
 ];
 
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+});
+
+function formatCurrencyInput(value) {
+    if (value === null || value === undefined || value === '') {
+        return '';
+    }
+
+    const numericValue = typeof value === 'number'
+        ? value
+        : Number(String(value).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'));
+
+    if (Number.isNaN(numericValue)) {
+        return '';
+    }
+
+    return currencyFormatter.format(numericValue);
+}
+
+function parseCurrencyInput(value) {
+    if (typeof value !== 'string') {
+        return value;
+    }
+
+    const normalizedValue = value
+        .replace(/\s?R\$\s?/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.');
+
+    if (normalizedValue === '') {
+        return '';
+    }
+
+    const numericValue = Number(normalizedValue);
+
+    return Number.isNaN(numericValue) ? '' : numericValue;
+}
+
 export default function CheckoutProductFormPage() {
     const navigate = useNavigate();
     const params = useParams();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(Boolean(params.productId && params.productId !== 'novo'));
     const [saving, setSaving] = useState(false);
+    const [selectedImageFile, setSelectedImageFile] = useState(null);
+    const [currentImagePath, setCurrentImagePath] = useState('');
+    const [imagePreviewUrl, setImagePreviewUrl] = useState('');
     const isEditing = Boolean(params.productId && params.productId !== 'novo');
 
     useEffect(() => {
@@ -21,6 +64,9 @@ export default function CheckoutProductFormPage() {
                 status: 'active',
                 price: 0,
             });
+            setSelectedImageFile(null);
+            setCurrentImagePath('');
+            setImagePreviewUrl('');
 
             setLoading(false);
             return;
@@ -45,7 +91,10 @@ export default function CheckoutProductFormPage() {
                 const data = await response.json();
                 form.setFieldsValue({
                     ...data.product,
+                    price: Number(data.product.price ?? 0),
                 });
+                setSelectedImageFile(null);
+                setCurrentImagePath(data.product.image_path ?? '');
             } catch (error) {
                 if (error.name !== 'AbortError') {
                     message.error(error.message || 'Falha ao carregar o produto.');
@@ -60,19 +109,52 @@ export default function CheckoutProductFormPage() {
         return () => controller.abort();
     }, [form, isEditing, params.productId]);
 
+    useEffect(() => {
+        if (selectedImageFile) {
+            const previewUrl = URL.createObjectURL(selectedImageFile);
+            setImagePreviewUrl(previewUrl);
+
+            return () => URL.revokeObjectURL(previewUrl);
+        }
+
+        if (currentImagePath) {
+            setImagePreviewUrl(`/storage/${currentImagePath}`);
+            return;
+        }
+
+        setImagePreviewUrl('');
+    }, [currentImagePath, selectedImageFile]);
+
     async function handleSubmit(values) {
         setSaving(true);
 
         try {
+            const payload = new FormData();
+
+            Object.entries(values).forEach(([key, value]) => {
+                if (value !== null && value !== undefined && value !== '') {
+                    payload.append(key, String(value));
+                }
+            });
+
+            if (isEditing) {
+                payload.append('_method', 'PUT');
+            }
+
+            if (selectedImageFile) {
+                payload.append('image', selectedImageFile);
+            } else if (currentImagePath) {
+                payload.append('image_path', currentImagePath);
+            }
+
             const response = await fetch(isEditing ? `/seller/products/${params.productId}` : '/seller/products', {
-                method: isEditing ? 'PUT' : 'POST',
+                method: 'POST',
                 headers: {
                     Accept: 'application/json',
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify(values),
+                body: payload,
             });
 
             const data = await response.json();
@@ -127,30 +209,108 @@ export default function CheckoutProductFormPage() {
                         <Spin />
                     ) : (
                         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-                            <Form.Item label="Nome do produto" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item label="Slug" name="slug">
-                                <Input />
-                            </Form.Item>
-                            <Form.Item label="Resumo curto" name="short_description">
-                                <Input />
-                            </Form.Item>
-                            <Form.Item label="Descrição" name="description">
-                                <Input.TextArea rows={4} />
-                            </Form.Item>
-                            <Form.Item label="SKU" name="sku">
-                                <Input />
-                            </Form.Item>
-                            <Form.Item label="Imagem" name="image_path">
-                                <Input />
-                            </Form.Item>
-                            <Form.Item label="Preço" name="price" rules={[{ required: true, message: 'Informe o preço.' }]}>
-                                <InputNumber className="w-full" min={0.01} step={0.01} />
-                            </Form.Item>
-                            <Form.Item label="Status" name="status" initialValue="active" rules={[{ required: true }]}>
-                                <Select options={statusOptions} />
-                            </Form.Item>
+                            <Row gutter={24} align="stretch">
+                                <Col xs={24} lg={17}>
+                                    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                        <Form.Item label="Nome do produto" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
+                                            <Input />
+                                        </Form.Item>
+                                        <Form.Item label="Resumo curto" name="short_description">
+                                            <Input />
+                                        </Form.Item>
+                                        <Form.Item label="Descrição" name="description">
+                                            <Input.TextArea rows={4} />
+                                        </Form.Item>
+                                    </Space>
+                                </Col>
+
+                                <Col xs={24} lg={7}>
+                                    <div
+                                        className="h-full rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4"
+                                        style={{
+                                            minHeight: '100%',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                        }}
+                                    >
+                                        <Typography.Text strong className="block">
+                                            Imagem
+                                        </Typography.Text>
+                                        <Input
+                                            type="file"
+                                            accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                                            className="mt-3"
+                                            onChange={(event) => {
+                                                setSelectedImageFile(event.target.files?.[0] ?? null);
+                                            }}
+                                        />
+                                        <Typography.Text type="secondary" className="mt-2 block">
+                                            Aceita arquivos JPG e PNG.
+                                        </Typography.Text>
+
+                                        <div
+                                            className="mx-auto mt-4 flex items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white"
+                                            style={{
+                                                aspectRatio: '1 / 1',
+                                                width: '100%',
+                                                maxWidth: '260px',
+                                                flex: '0 0 auto',
+                                                maxHeight: '260px',
+                                            }}
+                                        >
+                                            {imagePreviewUrl ? (
+                                                <img
+                                                    src={imagePreviewUrl}
+                                                    alt="Pré-visualização da imagem do produto"
+                                                    className="h-full w-full object-contain p-4"
+                                                />
+                                            ) : (
+                                                <div className="px-6 text-center">
+                                                    <Typography.Title level={5} style={{ marginBottom: 8 }}>
+                                                        Nenhuma imagem enviada
+                                                    </Typography.Title>
+                                                    <Typography.Text type="secondary">
+                                                        O preview aparecerá aqui após selecionar um arquivo.
+                                                    </Typography.Text>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {currentImagePath && !selectedImageFile ? (
+                                            <Typography.Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 12 }}>
+                                                Imagem atual: {currentImagePath}
+                                            </Typography.Paragraph>
+                                        ) : null}
+                                    </div>
+                                </Col>
+                            </Row>
+                            <Row gutter={16} className="product-form-inline-row">
+                                <Col xs={24} md={8}>
+                                    <Form.Item label="Preço" name="price" rules={[{ required: true, message: 'Informe o preço.' }]}>
+                                        <InputNumber
+                                            className="w-full"
+                                            style={{ width: '100%' }}
+                                            min={0.01}
+                                            step={0.01}
+                                            precision={2}
+                                            formatter={formatCurrencyInput}
+                                            parser={parseCurrencyInput}
+                                            placeholder="R$ 0,00"
+                                            aria-label="Preço do produto"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <Form.Item label="SKU" name="sku">
+                                        <Input />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <Form.Item label="Status" name="status" initialValue="active" rules={[{ required: true }]}>
+                                        <Select options={statusOptions} />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
                             <Space>
                                 <Button type="primary" htmlType="submit" loading={saving}>
                                     Salvar

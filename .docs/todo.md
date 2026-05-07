@@ -4,26 +4,7 @@ descontochegou
 JuntterAcesso745!
 
 
-
-**Histórico**
-[x] Limitar a exibição em função de seletor mês/ano
-
-**Pix**
-[x] Form + implementação
-[x] Criar link para pix
-[x] Corrigir geração do qrcode na página do link de pagamento
-
-**Boleto**
-[x] Form + implementação
-[x] Criar link no painel direiro
-
-**Cartão**
-[x] Form + implementação
-[x] Criar link no painel direiro
-[x] Crédito à vista também no painel
-
 **Sidebar**
-[x] Remover grupo 'Links de Pagamento'
 [ ] Criar grupo usuários
 [ ] Cadastrar usuário do estabelecimento
 

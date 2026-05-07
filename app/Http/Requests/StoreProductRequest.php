@@ -15,10 +15,10 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'short_description' => ['nullable', 'string', 'max:255'],
             'sku' => ['nullable', 'string', 'max:100'],
+            'image' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
             'image_path' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0.01'],
             'status' => ['required', 'in:active,inactive'],

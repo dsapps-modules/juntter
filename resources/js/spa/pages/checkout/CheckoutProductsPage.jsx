@@ -3,6 +3,18 @@ import { Button, Card, Col, Empty, Row, Space, Spin, Table, Tag, Typography, mes
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+function getProductImageUrl(imagePath) {
+    if (!imagePath) {
+        return '';
+    }
+
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/')) {
+        return imagePath;
+    }
+
+    return `/storage/${imagePath}`;
+}
+
 export default function CheckoutProductsPage() {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
@@ -85,7 +97,6 @@ export default function CheckoutProductsPage() {
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     name: product.name,
-                    slug: product.slug,
                     description: product.description,
                     short_description: product.short_description,
                     sku: product.sku,
@@ -130,6 +141,33 @@ export default function CheckoutProductsPage() {
                             dataSource={products}
                             pagination={false}
                             columns={[
+                                {
+                                    title: 'Imagem',
+                                    dataIndex: 'image_path',
+                                    width: 96,
+                                    render: (value, record) => {
+                                        const imageUrl = getProductImageUrl(value ?? record.image_path);
+
+                                        return (
+                                            <div
+                                                className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                                                style={{ width: 56, height: 56 }}
+                                            >
+                                                {imageUrl ? (
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={`Miniatura de ${record.name}`}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                                                        Sem imagem
+                                                    </Typography.Text>
+                                                )}
+                                            </div>
+                                        );
+                                    },
+                                },
                                 {
                                     title: 'Produto',
                                     dataIndex: 'name',
