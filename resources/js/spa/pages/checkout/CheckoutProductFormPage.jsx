@@ -8,8 +8,8 @@ const statusOptions = [
     { value: 'inactive', label: 'Inativo' },
 ];
 
-function getProductImageUrl(imagePath) {
-    if (!imagePath) {
+function getProductImageUrl(productId, imagePath) {
+    if (!productId || !imagePath) {
         return '';
     }
 
@@ -17,7 +17,7 @@ function getProductImageUrl(imagePath) {
         return imagePath;
     }
 
-    return `/storage/${imagePath}`;
+    return `/seller/products/${productId}/image`;
 }
 
 export default function CheckoutProductFormPage() {
@@ -70,7 +70,7 @@ export default function CheckoutProductFormPage() {
                 });
                 setSelectedImageFile(null);
                 setCurrentImagePath(data.product.image_path ?? '');
-                setCurrentImageUrl(data.product.image_url ?? '');
+                setCurrentImageUrl(getProductImageUrl(params.productId, data.product.image_path ?? data.product.image_url ?? ''));
             } catch (error) {
                 if (error.name !== 'AbortError') {
                     message.error(error.message || 'Falha ao carregar o produto.');
@@ -99,7 +99,7 @@ export default function CheckoutProductFormPage() {
         }
 
         if (currentImagePath) {
-            setImagePreviewUrl(getProductImageUrl(currentImagePath));
+            setImagePreviewUrl(getProductImageUrl(params.productId, currentImagePath));
             return;
         }
 

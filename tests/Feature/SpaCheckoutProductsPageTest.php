@@ -15,7 +15,9 @@ class SpaCheckoutProductsPageTest extends TestCase
         $this->assertStringContainsString('const [statusLoadingProductId, setStatusLoadingProductId] = useState(null);', $componentSource);
         $this->assertStringContainsString("title: 'Imagem'", $componentSource);
         $this->assertStringContainsString("dataIndex: 'image_url'", $componentSource);
-        $this->assertStringContainsString("const imageUrl = value ?? record.image_url ?? record.image_path ?? '';", $componentSource);
+        $this->assertStringContainsString('function getProductImageUrl(product) {', $componentSource);
+        $this->assertStringContainsString('return product.image_url ?? `/seller/products/${product.id}/image`;', $componentSource);
+        $this->assertStringContainsString('const imageUrl = value ?? getProductImageUrl(record);', $componentSource);
         $this->assertStringContainsString('alt={`Miniatura de ${record.name}`}', $componentSource);
         $this->assertStringContainsString('style={{ minWidth: 0, maxWidth: \'100%\' }}', $componentSource);
         $this->assertStringContainsString('ellipsis', $componentSource);

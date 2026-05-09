@@ -33,7 +33,7 @@ class SellerProductImageUploadTest extends TestCase
 
         $response = $this->actingAs($seller)->post('/seller/products', [
             'name' => 'Produto com imagem',
-            'description' => 'DescriÃ§Ã£o',
+            'description' => 'Descrição',
             'short_description' => 'Resumo',
             'sku' => 'SKU-001',
             'image' => UploadedFile::fake()->image('produto.png'),
@@ -74,7 +74,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto Teste',
             'slug' => Str::slug('Produto Teste'),
-            'description' => 'DescriÃ§Ã£o inicial',
+            'description' => 'Descrição inicial',
             'short_description' => 'Resumo inicial',
             'sku' => 'SKU-123',
             'image_path' => $initialPath,
@@ -84,7 +84,7 @@ class SellerProductImageUploadTest extends TestCase
 
         $response = $this->actingAs($seller)->post('/seller/products/'.$product->id, [
             'name' => 'Produto Teste Atualizado',
-            'description' => 'DescriÃ§Ã£o atualizada',
+            'description' => 'Descrição atualizada',
             'short_description' => 'Resumo atualizado',
             'sku' => 'SKU-456',
             'image' => UploadedFile::fake()->image('produto-novo.jpg'),
@@ -116,7 +116,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto Teste',
             'slug' => Str::slug('Produto Teste'),
-            'description' => 'DescriÃƒÂ§ÃƒÂ£o',
+            'description' => 'Descrição',
             'short_description' => 'Resumo',
             'sku' => 'SKU-789',
             'image_path' => 'products/produto-teste.png',
@@ -165,7 +165,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto com imagem',
             'slug' => Str::slug('Produto com imagem'),
-            'description' => 'DescriÃ§Ã£o',
+            'description' => 'Descrição',
             'short_description' => 'Resumo',
             'sku' => 'SKU-777',
             'image_path' => $path,
@@ -186,8 +186,8 @@ class SellerProductImageUploadTest extends TestCase
         $seller = $this->createSeller();
 
         $response = $this->actingAs($seller)->post('/seller/products', [
-            'name' => 'Produto invÃ¡lido',
-            'description' => 'DescriÃ§Ã£o',
+            'name' => 'Produto inválido',
+            'description' => 'Descrição',
             'short_description' => 'Resumo',
             'sku' => 'SKU-999',
             'image' => UploadedFile::fake()->create('documento.gif', 10, 'image/gif'),
@@ -210,9 +210,10 @@ class SellerProductImageUploadTest extends TestCase
         $this->assertStringContainsString("maxWidth: '260px'", $componentSource);
         $this->assertStringContainsString('mx-auto mt-4 flex items-center justify-center', $componentSource);
         $this->assertStringContainsString('object-contain p-4', $componentSource);
-        $this->assertStringContainsString('const [currentImageUrl, setCurrentImageUrl] = useState(\'\');', $componentSource);
-        $this->assertStringContainsString('setCurrentImageUrl(data.product.image_url ?? \'\');', $componentSource);
+        $this->assertStringContainsString('function getProductImageUrl(productId, imagePath) {', $componentSource);
+        $this->assertStringContainsString('return `/seller/products/${productId}/image`;', $componentSource);
+        $this->assertStringContainsString('setCurrentImageUrl(getProductImageUrl(params.productId, data.product.image_path ?? data.product.image_url ?? \'\'));', $componentSource);
         $this->assertStringContainsString('if (currentImageUrl) {', $componentSource);
-        $this->assertStringContainsString('setImagePreviewUrl(getProductImageUrl(currentImagePath));', $componentSource);
+        $this->assertStringContainsString('setImagePreviewUrl(getProductImageUrl(params.productId, currentImagePath));', $componentSource);
     }
 }

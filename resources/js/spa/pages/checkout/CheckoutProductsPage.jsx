@@ -106,6 +106,18 @@ export default function CheckoutProductsPage() {
         }
     }
 
+    function getProductImageUrl(product) {
+        if (!product?.id || !product?.image_path) {
+            return product?.image_url ?? '';
+        }
+
+        if (product.image_path.startsWith('http://') || product.image_path.startsWith('https://') || product.image_path.startsWith('/')) {
+            return product.image_path;
+        }
+
+        return product.image_url ?? `/seller/products/${product.id}/image`;
+    }
+
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
@@ -134,7 +146,7 @@ export default function CheckoutProductsPage() {
                                     dataIndex: 'image_url',
                                     width: 96,
                                     render: (value, record) => {
-                                        const imageUrl = value ?? record.image_url ?? record.image_path ?? '';
+                                        const imageUrl = value ?? getProductImageUrl(record);
 
                                         return (
                                             <div

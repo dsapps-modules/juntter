@@ -48,7 +48,7 @@ class SellerProductController extends Controller
             return response()->json([
                 'message' => 'Produto criado com sucesso.',
                 'product' => $product,
-            ], 201);
+            ], 201, [], JSON_INVALID_UTF8_SUBSTITUTE);
         }
 
         return redirect()->route('spa', ['any' => 'seller/products'])
@@ -94,7 +94,7 @@ class SellerProductController extends Controller
             return response()->json([
                 'message' => 'Produto atualizado com sucesso.',
                 'product' => $product->fresh(),
-            ]);
+            ], 200, [], JSON_INVALID_UTF8_SUBSTITUTE);
         }
 
         return redirect()->route('spa', ['any' => 'seller/products'])
