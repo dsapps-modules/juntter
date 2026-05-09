@@ -3,18 +3,6 @@ import { Button, Card, Col, Empty, Row, Space, Spin, Table, Tag, Typography, mes
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function getProductImageUrl(imagePath) {
-    if (!imagePath) {
-        return '';
-    }
-
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/')) {
-        return imagePath;
-    }
-
-    return `/storage/${imagePath}`;
-}
-
 export default function CheckoutProductsPage() {
     const navigate = useNavigate();
     const [products, setProducts] = useState([]);
@@ -143,21 +131,27 @@ export default function CheckoutProductsPage() {
                             columns={[
                                 {
                                     title: 'Imagem',
-                                    dataIndex: 'image_path',
+                                    dataIndex: 'image_url',
                                     width: 96,
                                     render: (value, record) => {
-                                        const imageUrl = getProductImageUrl(value ?? record.image_path);
+                                        const imageUrl = value ?? record.image_url ?? record.image_path ?? '';
 
                                         return (
                                             <div
                                                 className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-50"
-                                                style={{ width: 56, height: 56 }}
+                                                style={{ width: 56, height: 56, flex: '0 0 56px', lineHeight: 0 }}
                                             >
                                                 {imageUrl ? (
                                                     <img
                                                         src={imageUrl}
                                                         alt={`Miniatura de ${record.name}`}
                                                         className="h-full w-full object-cover"
+                                                        style={{
+                                                            display: 'block',
+                                                            maxWidth: '100%',
+                                                            maxHeight: '100%',
+                                                            objectFit: 'cover',
+                                                        }}
                                                     />
                                                 ) : (
                                                     <Typography.Text type="secondary" style={{ fontSize: 11 }}>
@@ -172,9 +166,17 @@ export default function CheckoutProductsPage() {
                                     title: 'Produto',
                                     dataIndex: 'name',
                                     render: (value, record) => (
-                                        <Space direction="vertical" size={0}>
-                                            <Typography.Text strong>{value}</Typography.Text>
-                                            <Typography.Text type="secondary">{record.short_description}</Typography.Text>
+                                        <Space direction="vertical" size={0} style={{ minWidth: 0, maxWidth: '100%' }}>
+                                            <Typography.Text strong ellipsis style={{ display: 'block', maxWidth: '100%' }}>
+                                                {value}
+                                            </Typography.Text>
+                                            <Typography.Text
+                                                type="secondary"
+                                                ellipsis
+                                                style={{ display: 'block', maxWidth: '100%' }}
+                                            >
+                                                {record.short_description}
+                                            </Typography.Text>
                                         </Space>
                                     ),
                                 },

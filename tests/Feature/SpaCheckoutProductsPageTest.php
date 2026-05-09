@@ -14,8 +14,11 @@ class SpaCheckoutProductsPageTest extends TestCase
         $this->assertStringContainsString('async function toggleProductStatus(product)', $componentSource);
         $this->assertStringContainsString('const [statusLoadingProductId, setStatusLoadingProductId] = useState(null);', $componentSource);
         $this->assertStringContainsString("title: 'Imagem'", $componentSource);
-        $this->assertStringContainsString('getProductImageUrl(', $componentSource);
+        $this->assertStringContainsString("dataIndex: 'image_url'", $componentSource);
+        $this->assertStringContainsString("const imageUrl = value ?? record.image_url ?? record.image_path ?? '';", $componentSource);
         $this->assertStringContainsString('alt={`Miniatura de ${record.name}`}', $componentSource);
+        $this->assertStringContainsString('style={{ minWidth: 0, maxWidth: \'100%\' }}', $componentSource);
+        $this->assertStringContainsString('ellipsis', $componentSource);
         $this->assertStringContainsString('Sem imagem', $componentSource);
         $this->assertStringContainsString('statusLoadingProductId === record.id ? <Spin size="small" /> : null', $componentSource);
         $this->assertStringContainsString("aria-busy={statusLoadingProductId === record.id ? 'true' : undefined}", $componentSource);

@@ -120,6 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/seller/products', [SellerProductController::class, 'index'])->name('seller.products.index');
         Route::post('/seller/products', [SellerProductController::class, 'store'])->name('seller.products.store');
+        Route::get('/seller/products/{product}/image', [SellerProductController::class, 'image'])->name('seller.products.image');
         Route::get('/seller/products/{product}', [SellerProductController::class, 'show'])->name('seller.products.show');
         Route::put('/seller/products/{product}', [SellerProductController::class, 'update'])->name('seller.products.update');
         Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy'])->name('seller.products.destroy');

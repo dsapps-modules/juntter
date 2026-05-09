@@ -8,6 +8,18 @@ const statusOptions = [
     { value: 'inactive', label: 'Inativo' },
 ];
 
+function getProductImageUrl(imagePath) {
+    if (!imagePath) {
+        return '';
+    }
+
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('/')) {
+        return imagePath;
+    }
+
+    return `/storage/${imagePath}`;
+}
+
 export default function CheckoutProductFormPage() {
     const navigate = useNavigate();
     const params = useParams();
@@ -16,6 +28,7 @@ export default function CheckoutProductFormPage() {
     const [saving, setSaving] = useState(false);
     const [selectedImageFile, setSelectedImageFile] = useState(null);
     const [currentImagePath, setCurrentImagePath] = useState('');
+    const [currentImageUrl, setCurrentImageUrl] = useState('');
     const [imagePreviewUrl, setImagePreviewUrl] = useState('');
     const isEditing = Boolean(params.productId && params.productId !== 'novo');
 
@@ -27,6 +40,7 @@ export default function CheckoutProductFormPage() {
             });
             setSelectedImageFile(null);
             setCurrentImagePath('');
+            setCurrentImageUrl('');
             setImagePreviewUrl('');
 
             setLoading(false);
@@ -56,6 +70,7 @@ export default function CheckoutProductFormPage() {
                 });
                 setSelectedImageFile(null);
                 setCurrentImagePath(data.product.image_path ?? '');
+                setCurrentImageUrl(data.product.image_url ?? '');
             } catch (error) {
                 if (error.name !== 'AbortError') {
                     message.error(error.message || 'Falha ao carregar o produto.');
@@ -78,13 +93,18 @@ export default function CheckoutProductFormPage() {
             return () => URL.revokeObjectURL(previewUrl);
         }
 
+        if (currentImageUrl) {
+            setImagePreviewUrl(currentImageUrl);
+            return;
+        }
+
         if (currentImagePath) {
-            setImagePreviewUrl(`/storage/${currentImagePath}`);
+            setImagePreviewUrl(getProductImageUrl(currentImagePath));
             return;
         }
 
         setImagePreviewUrl('');
-    }, [currentImagePath, selectedImageFile]);
+    }, [currentImagePath, currentImageUrl, selectedImageFile]);
 
     async function handleSubmit(values) {
         setSaving(true);

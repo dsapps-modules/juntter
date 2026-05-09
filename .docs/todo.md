@@ -3,9 +3,7 @@ projetosoulpsi@gmail.com
 descontochegou
 JuntterAcesso745!
 
-
 Cliente pode personalizar logotipo
-Ver erro na miniatura do produto
 Erro nos cálculos de taxas de cartão
 
 - MSD

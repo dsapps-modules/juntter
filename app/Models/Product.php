@@ -27,6 +27,10 @@ class Product extends Model
         'price' => 'decimal:2',
     ];
 
+    protected $appends = [
+        'image_url',
+    ];
+
     public function seller(): BelongsTo
     {
         return $this->belongsTo(User::class, 'seller_id');
@@ -40,5 +44,18 @@ class Product extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! filled($this->image_path)) {
+            return null;
+        }
+
+        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://') || str_starts_with($this->image_path, '/')) {
+            return $this->image_path;
+        }
+
+        return route('seller.products.image', ['product' => $this->getKey()]);
     }
 }

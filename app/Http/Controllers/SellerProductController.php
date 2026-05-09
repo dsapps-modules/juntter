@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class SellerProductController extends Controller
 {
@@ -63,6 +64,15 @@ class SellerProductController extends Controller
         }
 
         return view('seller.products.show', compact('product'));
+    }
+
+    public function image(Request $request, Product $product): BinaryFileResponse
+    {
+        $this->authorize('view', $product);
+
+        abort_unless(filled($product->image_path) && Storage::disk('public')->exists($product->image_path), 404);
+
+        return response()->file(Storage::disk('public')->path($product->image_path));
     }
 
     public function update(StoreProductRequest $request, Product $product): JsonResponse|RedirectResponse

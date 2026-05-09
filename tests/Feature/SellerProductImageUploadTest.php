@@ -45,10 +45,13 @@ class SellerProductImageUploadTest extends TestCase
 
         $response->assertCreated();
         $storedSlug = $response->json('product.slug');
+        $storedProductId = $response->json('product.id');
         $storedImagePath = $response->json('product.image_path');
+        $storedImageUrl = $response->json('product.image_url');
 
         $this->assertSame('produto-com-imagem', $storedSlug);
         $this->assertIsString($storedImagePath);
+        $this->assertSame(route('seller.products.image', ['product' => $storedProductId]), $storedImageUrl);
         $this->assertTrue(Str::startsWith($storedImagePath, 'products/'));
 
         $product = Product::query()->first();
@@ -103,6 +106,79 @@ class SellerProductImageUploadTest extends TestCase
         $this->assertSame('inactive', $product->status);
     }
 
+    public function test_product_exposes_a_public_image_url_attribute(): void
+    {
+        Storage::fake('public');
+
+        $seller = $this->createSeller();
+
+        $product = Product::query()->create([
+            'seller_id' => $seller->id,
+            'name' => 'Produto Teste',
+            'slug' => Str::slug('Produto Teste'),
+            'description' => 'DescriÃ§Ã£o',
+            'short_description' => 'Resumo',
+            'sku' => 'SKU-789',
+            'image_path' => 'products/produto-teste.png',
+            'price' => 79.90,
+            'status' => 'active',
+        ]);
+
+        $this->assertSame(route('seller.products.image', $product), $product->image_url);
+    }
+
+    public function test_the_products_index_view_renders_image_thumbnails(): void
+    {
+        Storage::fake('public');
+
+        $seller = $this->createSeller();
+
+        $product = Product::query()->create([
+            'seller_id' => $seller->id,
+            'name' => 'Produto com miniatura',
+            'slug' => Str::slug('Produto com miniatura'),
+            'description' => 'Descri��o',
+            'short_description' => 'Resumo',
+            'sku' => 'SKU-555',
+            'image_path' => 'products/produto-miniatura.png',
+            'price' => 45.00,
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($seller)->get('/seller/products');
+
+        $response->assertOk();
+        $response->assertSee('Miniatura de Produto com miniatura', false);
+        $response->assertSee(route('seller.products.image', $product), false);
+    }
+
+    public function test_image_route_serves_the_product_image_file(): void
+    {
+        Storage::fake('public');
+
+        $seller = $this->createSeller();
+
+        $upload = UploadedFile::fake()->image('produto.png');
+        $path = $upload->store('products', 'public');
+
+        $product = Product::query()->create([
+            'seller_id' => $seller->id,
+            'name' => 'Produto com imagem',
+            'slug' => Str::slug('Produto com imagem'),
+            'description' => 'Descrição',
+            'short_description' => 'Resumo',
+            'sku' => 'SKU-777',
+            'image_path' => $path,
+            'price' => 45.00,
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($seller)->get(route('seller.products.image', $product));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'image/png');
+    }
+
     public function test_store_rejects_files_that_are_not_jpg_or_png(): void
     {
         Storage::fake('public');
@@ -134,5 +210,9 @@ class SellerProductImageUploadTest extends TestCase
         $this->assertStringContainsString("maxWidth: '260px'", $componentSource);
         $this->assertStringContainsString('mx-auto mt-4 flex items-center justify-center', $componentSource);
         $this->assertStringContainsString('object-contain p-4', $componentSource);
+        $this->assertStringContainsString('const [currentImageUrl, setCurrentImageUrl] = useState(\'\');', $componentSource);
+        $this->assertStringContainsString('setCurrentImageUrl(data.product.image_url ?? \'\');', $componentSource);
+        $this->assertStringContainsString('if (currentImageUrl) {', $componentSource);
+        $this->assertStringContainsString('setImagePreviewUrl(getProductImageUrl(currentImagePath));', $componentSource);
     }
 }
