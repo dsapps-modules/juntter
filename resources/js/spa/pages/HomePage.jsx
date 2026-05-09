@@ -3,6 +3,7 @@ import {
     CheckCircleFilled,
     ClockCircleFilled,
     CreditCardOutlined,
+    FileExcelFilled,
     DownOutlined,
     HomeOutlined,
     MinusCircleFilled,
@@ -133,6 +134,8 @@ export default function HomePage() {
     const [distributionCollapsed, setDistributionCollapsed] = useState(false);
     const [statusCollapsed, setStatusCollapsed] = useState(false);
     const showBankAccountLink = payload.user?.nivel_acesso === 'vendedor';
+    const canDownloadEstablishments = ['admin', 'super_admin'].includes(payload.user?.nivel_acesso);
+    const canDownloadClients = payload.user?.nivel_acesso === 'vendedor';
 
     useEffect(() => {
         const controller = new AbortController();
@@ -210,6 +213,25 @@ export default function HomePage() {
                 )}
 
                 <div className="spa-dashboard-toolbar-filters">
+                    {canDownloadEstablishments ? (
+                        <Button
+                            type="text"
+                            href="/estabelecimentos/export"
+                            icon={<FileExcelFilled style={{ fontSize: '23.4px' }} />}
+                            title="Exportar estabelecimentos"
+                            aria-label="Exportar estabelecimentos"
+                            className="spa-dashboard-toolbar-excel-button"
+                        />
+                    ) : canDownloadClients ? (
+                        <Button
+                            type="text"
+                            href="/seller/clients/export"
+                            icon={<FileExcelFilled style={{ fontSize: '23.4px' }} />}
+                            title="Exportar clientes"
+                            aria-label="Exportar clientes"
+                            className="spa-dashboard-toolbar-excel-button"
+                        />
+                    ) : null}
                     <Select
                         value={month}
                         options={monthOptions}

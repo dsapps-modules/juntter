@@ -4,8 +4,6 @@ descontochegou
 JuntterAcesso745!
 
 
-Preço
-Vendedor baixar csv
 Cliente pode personalizar logotipo
 Ver erro na miniatura do produto
 Erro nos cálculos de taxas de cartão

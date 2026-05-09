@@ -102,6 +102,34 @@ class SpaShellTest extends TestCase
 
     }
 
+    public function test_the_home_page_exposes_the_establishments_excel_export_link_for_admins(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/HomePage.jsx'));
+        $stylesSource = file_get_contents(base_path('resources/css/app.css'));
+
+        $this->assertStringContainsString('FileExcelFilled', $pageSource);
+        $this->assertStringContainsString('/estabelecimentos/export', $pageSource);
+        $this->assertStringContainsString("nivel_acesso === 'vendedor'", $pageSource);
+        $this->assertStringContainsString("['admin', 'super_admin'].includes(payload.user?.nivel_acesso)", $pageSource);
+        $this->assertStringContainsString("FileExcelFilled style={{ fontSize: '23.4px' }}", $pageSource);
+        $this->assertStringContainsString('title="Exportar estabelecimentos"', $pageSource);
+        $this->assertStringNotContainsString('Exportar estabelecimentos</Button>', $pageSource);
+        $this->assertStringContainsString('.spa-dashboard-toolbar-excel-button.ant-btn', $stylesSource);
+        $this->assertStringContainsString('color: #21a366', $stylesSource);
+        $this->assertStringContainsString('font-size: 23.4px', $stylesSource);
+    }
+
+    public function test_the_home_page_exposes_the_clients_excel_export_link_for_vendors(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/HomePage.jsx'));
+
+        $this->assertStringContainsString('/seller/clients/export', $pageSource);
+        $this->assertStringContainsString('title="Exportar clientes"', $pageSource);
+        $this->assertStringContainsString("payload.user?.nivel_acesso === 'vendedor'", $pageSource);
+        $this->assertStringContainsString('FileExcelFilled style={{ fontSize: \'23.4px\' }}', $pageSource);
+        $this->assertStringNotContainsString('Exportar clientes</Button>', $pageSource);
+    }
+
     public function test_the_top_sidebar_items_are_back_in_home_before_cobranca(): void
     {
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));

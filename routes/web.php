@@ -12,6 +12,7 @@ use App\Http\Controllers\PublicCheckoutController;
 use App\Http\Controllers\PublicCheckoutPaymentController;
 use App\Http\Controllers\PublicCheckoutSessionController;
 use App\Http\Controllers\SellerCheckoutLinkController;
+use App\Http\Controllers\SellerClientExportController;
 use App\Http\Controllers\SellerProductController;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -122,6 +123,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/seller/products/{product}', [SellerProductController::class, 'show'])->name('seller.products.show');
         Route::put('/seller/products/{product}', [SellerProductController::class, 'update'])->name('seller.products.update');
         Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy'])->name('seller.products.destroy');
+
+        Route::get('/seller/clients/export', [SellerClientExportController::class, 'export'])->name('seller.clients.export');
 
         Route::get('/seller/checkout-links', [SellerCheckoutLinkController::class, 'index'])->name('seller.checkout-links.index');
         Route::post('/seller/checkout-links', [SellerCheckoutLinkController::class, 'store'])->name('seller.checkout-links.store');

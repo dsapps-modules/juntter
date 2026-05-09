@@ -941,6 +941,20 @@ a {
     gap: 10px;
 }
 
+.spa-dashboard-toolbar-excel-button.ant-btn {
+    color: #21a366;
+}
+
+.spa-dashboard-toolbar-excel-button.ant-btn:hover,
+.spa-dashboard-toolbar-excel-button.ant-btn:focus {
+    color: #1e8a55;
+    background: rgba(33, 163, 102, 0.1);
+}
+
+.spa-dashboard-toolbar-excel-button .anticon {
+    font-size: 23.4px;
+}
+
 .spa-toolbar-select {
     min-width: 108px;
 }
