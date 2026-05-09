@@ -87,8 +87,8 @@ Importante: não versione segredos. Use `sample_env.txt`/`sample_env_teste.txt` 
 Configure o endpoint no painel do Paytime (use `PAYTIME_BASE_URL` e chaves sandbox/produção adequadas). Trate assinaturas/validação conforme requisitos do provedor, se aplicável.
 
 ## Testes
-- Unitários: `phpunit` via `php artisan test` ou `vendor/bin/phpunit`.
-- Dusk (browser): requer Chrome/Chromedriver compatíveis. Use `php artisan dusk` (configure ambiente de teste antes de rodar).
+- Unitários e feature: `php artisan test`.
+- E2E: `npm run test:e2e` com Playwright, apontando para a aplicacao em execucao.
 
 ## Deploy
 - Servidor web apontando para `public/`.
@@ -106,4 +106,3 @@ Configure o endpoint no painel do Paytime (use `PAYTIME_BASE_URL` e chaves sandb
 
 ## Suporte
 Para dúvidas sobre o projeto (estrutura, rotas, integrações ou ajustes), abra uma issue interna ou entre em contato com a equipe responsável pelo Checkout Juntter.
-
