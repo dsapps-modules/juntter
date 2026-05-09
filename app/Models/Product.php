@@ -56,6 +56,6 @@ class Product extends Model
             return $this->image_path;
         }
 
-        return route('seller.products.image', ['product' => $this->getKey()]);
+        return route('seller.products.image', ['product' => $this->getKey()], false);
     }
 }

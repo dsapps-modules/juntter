@@ -51,7 +51,7 @@ class SellerProductImageUploadTest extends TestCase
 
         $this->assertSame('produto-com-imagem', $storedSlug);
         $this->assertIsString($storedImagePath);
-        $this->assertSame(route('seller.products.image', ['product' => $storedProductId]), $storedImageUrl);
+        $this->assertSame(route('seller.products.image', ['product' => $storedProductId], false), $storedImageUrl);
         $this->assertTrue(Str::startsWith($storedImagePath, 'products/'));
 
         $product = Product::query()->first();
@@ -124,7 +124,7 @@ class SellerProductImageUploadTest extends TestCase
             'status' => 'active',
         ]);
 
-        $this->assertSame(route('seller.products.image', $product), $product->image_url);
+        $this->assertSame(route('seller.products.image', $product, false), $product->image_url);
     }
 
     public function test_the_products_index_view_renders_image_thumbnails(): void
@@ -149,7 +149,7 @@ class SellerProductImageUploadTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Miniatura de Produto com miniatura', false);
-        $response->assertSee(route('seller.products.image', $product), false);
+        $response->assertSee(route('seller.products.image', $product, false), false);
     }
 
     public function test_image_route_serves_the_product_image_file(): void
@@ -173,7 +173,7 @@ class SellerProductImageUploadTest extends TestCase
             'status' => 'active',
         ]);
 
-        $response = $this->actingAs($seller)->get(route('seller.products.image', $product));
+        $response = $this->actingAs($seller)->get(route('seller.products.image', $product, false));
 
         $response->assertOk();
         $response->assertHeader('content-type', 'image/png');
