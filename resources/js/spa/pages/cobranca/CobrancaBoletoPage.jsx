@@ -32,6 +32,7 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MoneyInputField from '../../components/form/MoneyInputField';
 
 const stateOptions = [
     'AC',
@@ -578,7 +579,7 @@ export default function CobrancaBoletoPage() {
                                                 name="amount"
                                                 rules={[{ required: true, message: 'Informe o valor do boleto.' }]}
                                             >
-                                                <Input size="large" placeholder="0,00" inputMode="decimal" />
+                                                <MoneyInputField size="large" placeholder="0,00" />
                                             </Form.Item>
                                         </Col>
                                         <Col xs={24} md={8}>
@@ -751,7 +752,7 @@ export default function CobrancaBoletoPage() {
                                         <Row gutter={[16, 16]}>
                                             <Col xs={24} md={8}>
                                                 <Form.Item
-                                                    label="Multa"
+                                                    label="Multa (%)"
                                                     name={['instruction', 'late_fee', 'amount']}
                                                     rules={[{ required: true, message: 'Informe a multa.' }]}
                                                 >
@@ -760,7 +761,7 @@ export default function CobrancaBoletoPage() {
                                             </Col>
                                             <Col xs={24} md={8}>
                                                 <Form.Item
-                                                    label="Juros"
+                                                    label="Juros (%)"
                                                     name={['instruction', 'interest', 'amount']}
                                                     rules={[{ required: true, message: 'Informe os juros.' }]}
                                                 >
@@ -769,7 +770,7 @@ export default function CobrancaBoletoPage() {
                                             </Col>
                                             <Col xs={24} md={8}>
                                                 <Form.Item
-                                                    label="Desconto"
+                                                    label="Desconto (%)"
                                                     name={['instruction', 'discount', 'amount']}
                                                     rules={[{ required: true, message: 'Informe o desconto.' }]}
                                                 >

@@ -1,6 +1,7 @@
 import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, Switch, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
 
 const statusOptions = [
     { value: 'active', label: 'Ativo' },
@@ -70,6 +71,7 @@ export default function CheckoutLinkFormPage() {
                     const checkoutLink = linkData.checkout_link;
                     form.setFieldsValue({
                         ...checkoutLink,
+                        unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
                         visual_config: checkoutLink.visual_config ? JSON.stringify({ ...visualDefaults, ...checkoutLink.visual_config }, null, 2) : JSON.stringify(visualDefaults, null, 2),
                     });
                 } else {
@@ -82,7 +84,7 @@ export default function CheckoutLinkFormPage() {
                         pix_discount_type: 'none',
                         boleto_discount_type: 'none',
                         free_shipping: true,
-                        unit_price: 0,
+                        unit_price: formatCurrencyInput(0),
                         visual_config: JSON.stringify(visualDefaults, null, 2),
                     });
                 }
@@ -106,6 +108,7 @@ export default function CheckoutLinkFormPage() {
         try {
             const payload = {
                 ...values,
+                unit_price: parseCurrencyInput(values.unit_price),
                 visual_config: values.visual_config ? JSON.parse(values.visual_config) : null,
             };
 
@@ -192,7 +195,7 @@ export default function CheckoutLinkFormPage() {
                                 </Col>
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Preço unitário" name="unit_price" rules={[{ required: true }]}>
-                                        <InputNumber className="w-full" min={0.01} step={0.01} />
+                                        <MoneyInputField className="w-full" />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>

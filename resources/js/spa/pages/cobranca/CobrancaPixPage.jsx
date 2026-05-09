@@ -34,6 +34,7 @@ import {
 } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MoneyInputField from '../../components/form/MoneyInputField';
 
 const interestOptions = [
     { label: 'Cliente', value: 'CLIENT' },
@@ -649,7 +650,7 @@ export default function CobrancaPixPage() {
                                                 name="amount"
                                                 rules={[{ required: true, message: 'Informe o valor da transação.' }]}
                                             >
-                                                <Input size="large" placeholder="0,00" inputMode="decimal" />
+                                                <MoneyInputField size="large" placeholder="0,00" />
                                             </Form.Item>
                                         </Col>
                                         <Col xs={24} md={12}>
@@ -898,7 +899,7 @@ export default function CobrancaPixPage() {
                                 name="valor"
                                 rules={[{ required: true, message: 'Informe o valor do link.' }]}
                             >
-                                <Input size="large" placeholder="R$ 5,55" />
+                                <MoneyInputField size="large" placeholder="R$ 5,55" />
                             </Form.Item>
                         </Col>
                     </Row>

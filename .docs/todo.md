@@ -4,6 +4,22 @@ descontochegou
 JuntterAcesso745!
 
 
+Preço
+Vendedor baixar csv
+Cliente pode personalizar logotipo
+Ver erro na miniatura do produto
+Erro nos cálculos de taxas de cartão
+
+- MSD
+--- volume de igrejas
+--- vendas da maquininha
+- quais são as minhas taxas
+- onde poderei ver o meu split
+
+Pessoa jurídica
+- dados do administrador
+--- nome, cpf, nascimento
+
 **Sidebar**
 [ ] Criar grupo usuários
 [ ] Cadastrar usuário do estabelecimento

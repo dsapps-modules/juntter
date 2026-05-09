@@ -33,6 +33,7 @@ import {
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MoneyInputField from '../../components/form/MoneyInputField';
 
 const stateOptions = [
     'AC',
@@ -684,7 +685,7 @@ export default function CobrancaCartaoCreditoPage() {
                                                         name="amount"
                                                         rules={[{ required: true, message: 'Informe o valor da cobrança.' }]}
                                                     >
-                                                        <Input size="large" placeholder="0,00" />
+                                                        <MoneyInputField size="large" placeholder="0,00" />
                                                     </Form.Item>
                                                 </Col>
                                                 <Col xs={24} md={8}>
@@ -1064,7 +1065,7 @@ export default function CobrancaCartaoCreditoPage() {
                                 name="valor"
                                 rules={[{ required: true, message: 'Informe o valor do link.' }]}
                             >
-                                <Input size="large" placeholder="R$ 25,00" />
+                                <MoneyInputField size="large" placeholder="R$ 25,00" />
                             </Form.Item>
                         </Col>
                     </Row>

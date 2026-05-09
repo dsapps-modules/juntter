@@ -1,4 +1,5 @@
-import { InputNumber, Typography } from 'antd';
+import { Typography } from 'antd';
+import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../form/MoneyInputField';
 
 export default function PaymentAmountField({
     value,
@@ -31,14 +32,12 @@ export default function PaymentAmountField({
             >
                 Valor
             </Typography.Text>
-            <InputNumber
-                value={value}
-                onChange={onChange}
-                min={0}
-                step={0.01}
-                precision={2}
-                formatter={formatter}
-                parser={parser}
+            <MoneyInputField
+                value={formatter ? formatter(value) : formatCurrencyInput(value)}
+                onChange={(nextValue) => {
+                    const parsedValue = parser ? parser(nextValue) : parseCurrencyInput(nextValue);
+                    onChange?.(typeof parsedValue === 'number' ? parsedValue : Number(parsedValue));
+                }}
                 className="spa-sim-input"
                 style={{
                     flex: isRightAligned ? '0 0 260px' : '1 1 auto',
@@ -46,7 +45,7 @@ export default function PaymentAmountField({
                     minWidth: '200px',
                 }}
                 placeholder="0,00"
-                aria-label="Informar valor da compra"
+                ariaLabel="Informar valor da compra"
             />
         </div>
     );

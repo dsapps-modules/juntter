@@ -1,51 +1,12 @@
-import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, Typography, message } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Space, Spin, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
 
 const statusOptions = [
     { value: 'active', label: 'Ativo' },
     { value: 'inactive', label: 'Inativo' },
 ];
-
-const currencyFormatter = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-});
-
-function formatCurrencyInput(value) {
-    if (value === null || value === undefined || value === '') {
-        return '';
-    }
-
-    const numericValue = typeof value === 'number'
-        ? value
-        : Number(String(value).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'));
-
-    if (Number.isNaN(numericValue)) {
-        return '';
-    }
-
-    return currencyFormatter.format(numericValue);
-}
-
-function parseCurrencyInput(value) {
-    if (typeof value !== 'string') {
-        return value;
-    }
-
-    const normalizedValue = value
-        .replace(/\s?R\$\s?/g, '')
-        .replace(/\./g, '')
-        .replace(',', '.');
-
-    if (normalizedValue === '') {
-        return '';
-    }
-
-    const numericValue = Number(normalizedValue);
-
-    return Number.isNaN(numericValue) ? '' : numericValue;
-}
 
 export default function CheckoutProductFormPage() {
     const navigate = useNavigate();
@@ -62,7 +23,7 @@ export default function CheckoutProductFormPage() {
         if (!isEditing) {
             form.setFieldsValue({
                 status: 'active',
-                price: 0,
+                price: formatCurrencyInput(0),
             });
             setSelectedImageFile(null);
             setCurrentImagePath('');
@@ -91,7 +52,7 @@ export default function CheckoutProductFormPage() {
                 const data = await response.json();
                 form.setFieldsValue({
                     ...data.product,
-                    price: Number(data.product.price ?? 0),
+                    price: formatCurrencyInput(data.product.price ?? 0),
                 });
                 setSelectedImageFile(null);
                 setCurrentImagePath(data.product.image_path ?? '');
@@ -129,9 +90,14 @@ export default function CheckoutProductFormPage() {
         setSaving(true);
 
         try {
+            const submissionValues = {
+                ...values,
+                price: parseCurrencyInput(values.price),
+            };
+
             const payload = new FormData();
 
-            Object.entries(values).forEach(([key, value]) => {
+            Object.entries(submissionValues).forEach(([key, value]) => {
                 if (value !== null && value !== undefined && value !== '') {
                     payload.append(key, String(value));
                 }
@@ -286,18 +252,12 @@ export default function CheckoutProductFormPage() {
                             </Row>
                             <Row gutter={16} className="product-form-inline-row">
                                 <Col xs={24} md={8}>
-                                    <Form.Item label="Preço" name="price" rules={[{ required: true, message: 'Informe o preço.' }]}>
-                                        <InputNumber
-                                            className="w-full"
-                                            style={{ width: '100%' }}
-                                            min={0.01}
-                                            step={0.01}
-                                            precision={2}
-                                            formatter={formatCurrencyInput}
-                                            parser={parseCurrencyInput}
-                                            placeholder="R$ 0,00"
-                                            aria-label="Preço do produto"
-                                        />
+                                    <Form.Item
+                                        label="Preço"
+                                        name="price"
+                                        rules={[{ required: true, message: 'Informe o preço.' }]}
+                                    >
+                                        <MoneyInputField ariaLabel="Preço do produto" className="w-full" />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>
@@ -329,3 +289,4 @@ export default function CheckoutProductFormPage() {
         </Row>
     );
 }
+
