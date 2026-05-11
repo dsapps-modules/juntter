@@ -35,7 +35,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
-import { isValidDocument } from '../../documentValidation';
+import { formatDocument, isValidDocument } from '../../documentValidation';
 
 const interestOptions = [
     { label: 'Cliente', value: 'CLIENT' },
@@ -703,8 +703,9 @@ export default function CobrancaPixPage() {
                                                     label="CPF/CNPJ"
                                                     name={['client', 'document']}
                                                     rules={[{ validator: documentValidator }]}
+                                                    normalize={formatDocument}
                                                 >
-                                                    <Input size="large" placeholder="000.000.000-00" />
+                                                    <Input size="large" placeholder="CPF/CNPJ" inputMode="numeric" maxLength={18} />
                                                 </Form.Item>
                                             </Col>
                                             <Col xs={24} md={12}>
@@ -982,8 +983,9 @@ export default function CobrancaPixPage() {
                                         label="CPF/CNPJ"
                                         name={['dados_cliente_preenchidos', 'documento']}
                                         rules={[{ validator: documentValidator }]}
+                                        normalize={formatDocument}
                                     >
-                                        <Input size="large" placeholder="000.000.000-00" />
+                                        <Input size="large" placeholder="CPF/CNPJ" inputMode="numeric" maxLength={18} />
                                     </Form.Item>
                                 </Col>
                             </Row>

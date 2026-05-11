@@ -2,6 +2,54 @@ export function normalizeDigits(value) {
     return String(value ?? '').replace(/\D+/g, '');
 }
 
+export function formatCpf(value) {
+    const digits = normalizeDigits(value).slice(0, 11);
+
+    if (!digits) {
+        return '';
+    }
+
+    if (digits.length <= 3) {
+        return digits;
+    }
+
+    if (digits.length <= 6) {
+        return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    }
+
+    if (digits.length <= 9) {
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    }
+
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+export function formatCnpj(value) {
+    const digits = normalizeDigits(value).slice(0, 14);
+
+    if (!digits) {
+        return '';
+    }
+
+    if (digits.length <= 2) {
+        return digits;
+    }
+
+    if (digits.length <= 5) {
+        return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    }
+
+    if (digits.length <= 8) {
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+    }
+
+    if (digits.length <= 12) {
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    }
+
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
 export function isValidCpf(value) {
     const cpf = normalizeDigits(value);
 
@@ -80,4 +128,18 @@ export function isValidDocument(value) {
     }
 
     return false;
+}
+
+export function getDocumentType(value) {
+    const digits = normalizeDigits(value);
+
+    if (digits.length > 11) {
+        return 'cnpj';
+    }
+
+    return 'cpf';
+}
+
+export function formatDocument(value) {
+    return getDocumentType(value) === 'cnpj' ? formatCnpj(value) : formatCpf(value);
 }
