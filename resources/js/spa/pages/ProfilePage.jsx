@@ -186,7 +186,7 @@ export default function ProfilePage() {
             }));
             setCompanyLogoFile(null);
             setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? profile.avatar_url ?? '');
-            setLogoUploadStatus('Logotipo salvo e já publicado na página pública.');
+            setLogoUploadStatus('Logotipo atualizado com sucesso');
         } catch (uploadError) {
             setLogoUploadStatus('');
             setError(uploadError.message || 'Falha ao enviar o logotipo.');
@@ -211,7 +211,7 @@ export default function ProfilePage() {
                 avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
                 company_logo_url: payload.profile?.avatar_url ?? current.company_logo_url,
             }));
-            setLogoUploadStatus(companyLogoFile ? 'Logotipo salvo e já publicado na página pública.' : '');
+            setLogoUploadStatus(companyLogoFile ? 'Logotipo atualizado com sucesso' : '');
             setCompanyLogoFile(null);
             setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? profile.avatar_url ?? '');
         } catch (submitError) {

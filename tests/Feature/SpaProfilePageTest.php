@@ -32,7 +32,7 @@ class SpaProfilePageTest extends TestCase
         $this->assertStringContainsString('jpg, png e webp', $pageSource);
         $this->assertStringContainsString('accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"', $pageSource);
         $this->assertStringContainsString('Enviando logotipo...', $pageSource);
-        $this->assertStringContainsString('Logotipo salvo e já publicado na página pública.', $pageSource);
+        $this->assertStringContainsString('Logotipo atualizado com sucesso', $pageSource);
         $this->assertStringContainsString('Logotipo ativo', $pageSource);
         $this->assertStringNotContainsString('spa-mini-surface', $pageSource);
         $this->assertStringNotContainsString('/change-password', $pageSource);
