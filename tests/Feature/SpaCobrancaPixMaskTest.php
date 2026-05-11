@@ -10,6 +10,7 @@ class SpaCobrancaPixMaskTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
+        $this->assertStringContainsString("interest: 'CLIENT'", $pageSource);
         $this->assertSame(2, substr_count($pageSource, 'normalize={formatDocument}'));
         $this->assertSame(2, substr_count($pageSource, 'inputMode="numeric"'));
         $this->assertSame(2, substr_count($pageSource, 'maxLength={18}'));

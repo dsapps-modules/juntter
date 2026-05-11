@@ -51,7 +51,7 @@ const defaultOverview = {
 
 const initialValues = {
     amount: '',
-    interest: undefined,
+    interest: 'CLIENT',
     client: {
         first_name: '',
         last_name: '',
