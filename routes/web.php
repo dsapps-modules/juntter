@@ -31,7 +31,23 @@ Route::middleware('guest')->get('/login', function () {
 })->name('login');
 Route::redirect('/home', '/app/home')->name('home');
 
+Route::view('/app/login', 'spa')
+    ->middleware('guest')
+    ->name('spa.login');
+
+Route::view('/app/forgot-password', 'spa')
+    ->middleware('guest')
+    ->name('spa.forgot-password');
+
+Route::view('/app/reset-password/{token}', 'spa')
+    ->middleware('guest')
+    ->name('spa.reset-password');
+
+Route::view('/app/verify-email', 'spa')
+    ->name('spa.verify-email');
+
 Route::view('/app/{any?}', 'spa')
+    ->middleware('auth')
     ->where('any', '.*')
     ->name('spa');
 

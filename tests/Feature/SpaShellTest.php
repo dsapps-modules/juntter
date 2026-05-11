@@ -12,8 +12,29 @@ class SpaShellTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function authenticateVendor(): User
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+
+        return $user;
+    }
+
+    public function test_guest_users_are_redirected_to_the_login_page_from_the_spa_shell(): void
+    {
+        $response = $this->get('/app/cobranca/pix');
+
+        $response->assertRedirect('/login');
+    }
+
     public function test_the_spa_shell_is_available_at_the_app_route(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app');
 
         $response->assertOk();
@@ -22,6 +43,8 @@ class SpaShellTest extends TestCase
 
     public function test_nested_spa_routes_return_the_same_shell(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/painel');
 
         $response->assertOk();
@@ -30,6 +53,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_home_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/home');
 
         $response->assertOk();
@@ -77,6 +102,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_profile_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/perfil');
 
         $response->assertOk();
@@ -196,6 +223,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_new_cobranca_pages_are_available(): void
     {
+        $this->authenticateVendor();
+
         foreach ([
             '/app/cobranca/pix',
             '/app/cobranca/credito-vista',
@@ -328,6 +357,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_cobranca_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/cobranca');
 
         $response->assertOk();
@@ -336,6 +367,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_links_pagamento_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/links-pagamento');
 
         $response->assertOk();
@@ -344,6 +377,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_vendedores_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/vendedores');
 
         $response->assertOk();
@@ -352,6 +387,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_establishment_details_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/estabelecimentos/1');
 
         $response->assertOk();
@@ -360,6 +397,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_vendedores_access_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/vendedores/acesso');
 
         $response->assertOk();
@@ -368,6 +407,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_vendedores_faturamento_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/vendedores/faturamento');
 
         $response->assertOk();
@@ -486,6 +527,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_link_form_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/links-pagamento/novo');
 
         $response->assertOk();
@@ -494,6 +537,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_link_edit_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/links-pagamento/1/editar');
 
         $response->assertOk();
@@ -502,6 +547,8 @@ class SpaShellTest extends TestCase
 
     public function test_the_establishment_edit_route_is_available(): void
     {
+        $this->authenticateVendor();
+
         $response = $this->get('/app/estabelecimentos/1/editar');
 
         $response->assertOk();
