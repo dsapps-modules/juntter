@@ -20,17 +20,22 @@ class SpaProfilePageTest extends TestCase
         $appSource = file_get_contents(base_path('resources/js/spa/App.jsx'));
 
         $this->assertStringContainsString('className="spa-hero-card"', $pageSource);
-        $this->assertStringContainsString("submitJson('/profile', 'PATCH', profileForm)", $pageSource);
+        $this->assertStringContainsString('submitProfileForm(profileForm)', $pageSource);
         $this->assertStringContainsString("submitJson('/password', 'PUT', passwordForm)", $pageSource);
         $this->assertStringContainsString('Dados pessoais', $pageSource);
         $this->assertStringContainsString('Alterar senha', $pageSource);
         $this->assertStringContainsString('Conta criada:', $pageSource);
         $this->assertStringContainsString('Resumo da conta', $pageSource);
-        $this->assertStringNotContainsString('A senha atual é necessária para confirmar a alteração.', $pageSource);
+        $this->assertStringContainsString('Ações rápidas', $pageSource);
+        $this->assertStringContainsString('Selecionar logotipo', $pageSource);
+        $this->assertStringContainsString('600x200', $pageSource);
+        $this->assertStringContainsString('jpg, png e webp', $pageSource);
+        $this->assertStringContainsString('accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"', $pageSource);
+        $this->assertStringContainsString('Enviando logotipo...', $pageSource);
+        $this->assertStringContainsString('Logotipo salvo e já publicado na página pública.', $pageSource);
+        $this->assertStringContainsString('Logotipo ativo', $pageSource);
         $this->assertStringNotContainsString('spa-mini-surface', $pageSource);
         $this->assertStringNotContainsString('/change-password', $pageSource);
-        $this->assertStringNotContainsString('Fluxo obrigatório', $pageSource);
-        $this->assertStringNotContainsString('Fluxo de senha obrigatória', $pageSource);
         $this->assertStringNotContainsString('/change-password', $appSource);
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicCheckoutController;
 use App\Http\Controllers\PublicCheckoutPaymentController;
 use App\Http\Controllers\PublicCheckoutSessionController;
+use App\Http\Controllers\PublicCompanyLogoController;
 use App\Http\Controllers\SellerCheckoutLinkController;
 use App\Http\Controllers\SellerClientExportController;
 use App\Http\Controllers\SellerProductController;
@@ -50,6 +51,9 @@ Route::view('/app/{any?}', 'spa')
     ->middleware('auth')
     ->where('any', '.*')
     ->name('spa');
+
+Route::get('/company-logo', [PublicCompanyLogoController::class, 'show'])
+    ->name('company-logo.show');
 
 Route::get('/checkout/{publicToken}', [PublicCheckoutController::class, 'show'])
     ->where('publicToken', 'chk_[A-Za-z0-9]+')

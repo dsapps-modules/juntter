@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\LinkPagamento;
+use App\Models\Vendedor;
 use App\Services\BoletoService;
 use App\Services\CreditoService;
 use App\Services\PixService;
@@ -49,7 +50,10 @@ class PagamentoClienteController extends Controller
                 abort(410, 'Este link de pagamento não está mais ativo');
             }
 
-            return view('pagamento.cliente', compact('link'));
+            return view('pagamento.cliente', [
+                'link' => $link,
+                'sellerLogoUrl' => $this->resolveSellerLogoUrl($link),
+            ]);
 
         } catch (\Exception $e) {
             Log::error('Erro ao mostrar página de pagamento: '.$e->getMessage());
@@ -59,7 +63,9 @@ class PagamentoClienteController extends Controller
 
     public function pagamentoSucesso()
     {
-        return view('pagamento.sucesso');
+        return view('pagamento.sucesso', [
+            'sellerLogoUrl' => asset('img/logo/juntter_webp_640_174.webp'),
+        ]);
     }
 
     /**
@@ -525,5 +531,23 @@ class PagamentoClienteController extends Controller
                 'message' => 'Erro ao processar autenticação: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    private function resolveSellerLogoUrl(LinkPagamento $link): string
+    {
+        $vendorWithLogo = Vendedor::query()
+            ->with('user')
+            ->where('estabelecimento_id', $link->estabelecimento_id)
+            ->orderByRaw("CASE WHEN sub_nivel = 'admin_loja' THEN 0 ELSE 1 END")
+            ->get()
+            ->first(function (Vendedor $vendor): bool {
+                return filled($vendor->user?->avatar_url);
+            });
+
+        if ($vendorWithLogo?->user?->avatar_url) {
+            return $vendorWithLogo->user->avatar_url;
+        }
+
+        return asset('img/logo/juntter_webp_640_174.webp');
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -30,18 +31,33 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse|JsonResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
+        $previousLogoPath = $user->company_logo_path;
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($validated);
+
+        if ($request->hasFile('company_logo')) {
+            $user->company_logo_path = $request->file('company_logo')->store('company-logos', 'public');
         }
 
-        $request->user()->save();
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        if (filled($previousLogoPath) && $previousLogoPath !== $user->company_logo_path) {
+            Storage::disk('public')->delete($previousLogoPath);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
                 'message' => 'Perfil atualizado com sucesso.',
                 'redirect' => '/app/perfil',
+                'profile' => [
+                    'avatar_url' => $user->avatar_url,
+                ],
             ]);
         }
 

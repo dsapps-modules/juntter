@@ -1,11 +1,13 @@
-import { MailOutlined, LockOutlined, SaveOutlined, UserOutlined } from '@ant-design/icons';
+import { MailOutlined, LockOutlined, SaveOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Col, Divider, Input, Row, Space, Tag, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const defaultProfile = {
     name: '',
     email: '',
+    avatar_url: '',
+    company_logo_url: '',
     nivel_acesso: '',
     nivel_label: '',
     verified: false,
@@ -26,11 +28,16 @@ function formatLabel(value, fallback) {
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [savingProfile, setSavingProfile] = useState(false);
+    const [savingLogo, setSavingLogo] = useState(false);
     const [savingPassword, setSavingPassword] = useState(false);
     const [resendingVerification, setResendingVerification] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [logoUploadStatus, setLogoUploadStatus] = useState('');
     const [profile, setProfile] = useState(defaultProfile);
+    const [companyLogoFile, setCompanyLogoFile] = useState(null);
+    const [companyLogoPreviewUrl, setCompanyLogoPreviewUrl] = useState('');
+    const companyLogoInputRef = useRef(null);
     const [profileForm, setProfileForm] = useState({
         name: '',
         email: '',
@@ -69,6 +76,8 @@ export default function ProfilePage() {
                     name: nextProfile.name ?? '',
                     email: nextProfile.email ?? '',
                 });
+                setCompanyLogoFile(null);
+                setLogoUploadStatus('');
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
                     setError(fetchError.message || 'Falha ao carregar o perfil.');
@@ -82,6 +91,18 @@ export default function ProfilePage() {
 
         return () => controller.abort();
     }, []);
+
+    useEffect(() => {
+        if (!companyLogoFile) {
+            setCompanyLogoPreviewUrl(profile.avatar_url ?? profile.company_logo_url ?? '');
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(companyLogoFile);
+        setCompanyLogoPreviewUrl(objectUrl);
+
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [companyLogoFile, profile.avatar_url, profile.company_logo_url]);
 
     async function submitJson(url, method, body) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -108,6 +129,72 @@ export default function ProfilePage() {
         return payload;
     }
 
+    async function submitProfileForm(body) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const formData = new FormData();
+
+        formData.append('_method', 'PATCH');
+        formData.append('name', body.name ?? '');
+        formData.append('email', body.email ?? '');
+
+        if (body.companyLogoFile) {
+            formData.append('company_logo', body.companyLogoFile);
+        }
+
+        const response = await fetch('/profile', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken ?? '',
+            },
+            credentials: 'same-origin',
+            body: formData,
+        });
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+            const firstError = Object.values(payload.errors ?? {}).flat().shift();
+            throw new Error(firstError ?? payload.message ?? 'Operação não concluída.');
+        }
+
+        return payload;
+    }
+
+    async function uploadCompanyLogo(file) {
+        if (!file) {
+            return;
+        }
+
+        setSavingLogo(true);
+        setError('');
+        setLogoUploadStatus('Enviando logotipo...');
+
+        try {
+            const payload = await submitProfileForm({
+                ...profileForm,
+                companyLogoFile: file,
+            });
+
+            setSuccess(payload.message ?? 'Perfil atualizado com sucesso.');
+            setProfile((current) => ({
+                ...current,
+                ...profileForm,
+                avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
+                company_logo_url: payload.profile?.avatar_url ?? current.company_logo_url,
+            }));
+            setCompanyLogoFile(null);
+            setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? profile.avatar_url ?? '');
+            setLogoUploadStatus('Logotipo salvo e já publicado na página pública.');
+        } catch (uploadError) {
+            setLogoUploadStatus('');
+            setError(uploadError.message || 'Falha ao enviar o logotipo.');
+        } finally {
+            setSavingLogo(false);
+        }
+    }
+
     async function handleProfileSubmit(event) {
         event.preventDefault();
         setSavingProfile(true);
@@ -115,18 +202,18 @@ export default function ProfilePage() {
         setSuccess('');
 
         try {
-            const payload = await submitJson('/profile', 'PATCH', profileForm);
+            const payload = await submitProfileForm(profileForm);
             setSuccess(payload.message ?? 'Perfil atualizado com sucesso.');
-
-            if (payload.redirect) {
-                window.location.assign(payload.redirect);
-                return;
-            }
 
             setProfile((current) => ({
                 ...current,
                 ...profileForm,
+                avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
+                company_logo_url: payload.profile?.avatar_url ?? current.company_logo_url,
             }));
+            setLogoUploadStatus(companyLogoFile ? 'Logotipo salvo e já publicado na página pública.' : '');
+            setCompanyLogoFile(null);
+            setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? profile.avatar_url ?? '');
         } catch (submitError) {
             setError(submitError.message || 'Falha ao atualizar o perfil.');
         } finally {
@@ -339,6 +426,65 @@ export default function ProfilePage() {
 
                         <Space direction="vertical" size={8} style={{ width: '100%' }}>
                             <Link to="/home">Ir para o painel</Link>
+                        </Space>
+
+                        <Divider />
+
+                        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                            <div>
+                                <Typography.Text strong>Logotipo da empresa</Typography.Text>
+                                <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4 }}>
+                                    Tamanho ideal: 600x200. Tipos aceitos: jpg, png e webp.
+                                </Typography.Text>
+                            </div>
+
+                            <input
+                                ref={companyLogoInputRef}
+                                type="file"
+                                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                                hidden
+                                onChange={(event) => {
+                                    const file = event.target.files?.[0] ?? null;
+                                    setCompanyLogoFile(file);
+                                    void uploadCompanyLogo(file);
+                                }}
+                            />
+
+                            <Button
+                                icon={<UploadOutlined />}
+                                onClick={() => companyLogoInputRef.current?.click()}
+                                loading={savingLogo}
+                                block
+                            >
+                                Selecionar logotipo
+                            </Button>
+
+                            {logoUploadStatus ? <Alert type="success" showIcon message={logoUploadStatus} /> : null}
+
+                            {companyLogoPreviewUrl ? (
+                                <div
+                                    style={{
+                                        padding: 16,
+                                        borderRadius: 16,
+                                        border: '1px solid rgba(0, 0, 0, 0.08)',
+                                        background: 'rgba(255, 255, 255, 0.72)',
+                                    }}
+                                >
+                                    <Typography.Text strong style={{ display: 'block', marginBottom: 8 }}>
+                                        {companyLogoFile ? 'Pré-visualização local' : 'Logotipo ativo'}
+                                    </Typography.Text>
+                                    <img
+                                        src={companyLogoPreviewUrl}
+                                        alt="Pré-visualização do logotipo"
+                                        style={{
+                                            display: 'block',
+                                            maxWidth: '100%',
+                                            maxHeight: 92,
+                                            objectFit: 'contain',
+                                        }}
+                                    />
+                                </div>
+                            ) : null}
                         </Space>
                     </Space>
                 </Card>

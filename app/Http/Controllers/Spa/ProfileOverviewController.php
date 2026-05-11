@@ -23,6 +23,7 @@ class ProfileOverviewController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'avatar_url' => $user->avatar_url ?? null,
+                'company_logo_url' => $user->avatar_url ?? null,
                 'nivel_acesso' => $user->nivel_acesso,
                 'nivel_label' => $this->roleLabel($user->nivel_acesso),
                 'verified' => $user->hasVerifiedEmail(),

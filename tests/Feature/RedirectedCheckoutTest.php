@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\Payments\Paytime\PaytimePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class RedirectedCheckoutTest extends TestCase
@@ -207,6 +208,26 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('O sistema consulta o status do pagamento periodicamente');
         $response->assertSee('data-boleto-block', false);
         $response->assertSee('data-open-payment', false);
+    }
+
+    public function test_active_public_checkout_uses_the_seller_logo_when_available(): void
+    {
+        Storage::fake('public');
+
+        Storage::disk('public')->put('company-logos/custom-logo.png', 'fake-image-content');
+
+        $user = $this->makeVendorUser();
+        $user->forceFill([
+            'company_logo_path' => 'company-logos/custom-logo.png',
+        ])->save();
+
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+
+        $response = $this->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee(route('company-logo.show', ['path' => 'company-logos/custom-logo.png']), false);
+        $response->assertDontSee(asset('img/logo/juntter_webp_640_174.webp'), false);
     }
 
     public function test_paid_public_checkout_redirects_to_thank_you_page(): void

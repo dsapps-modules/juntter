@@ -23,6 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'nivel_acesso',
         'email_verified_at',
+        'company_logo_path',
     ];
 
     /**
@@ -43,6 +44,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+    ];
+
+    protected $appends = [
+        'avatar_url',
     ];
 
     /**
@@ -91,6 +96,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function vendedor()
     {
         return $this->hasOne(Vendedor::class);
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (filled($this->company_logo_path)) {
+            return route('company-logo.show', ['path' => $this->company_logo_path]);
+        }
+
+        return null;
     }
 
     /**
