@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DocumentValidator;
 use App\Models\LinkPagamento;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class LinkPagamentoController extends Controller
 {
@@ -93,7 +96,20 @@ class LinkPagamentoController extends Controller
 
                 'dados_cliente_preenchidos.email' => 'nullable|email|max:255',
                 'dados_cliente_preenchidos.telefone' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.documento' => 'nullable|string|max:20',
+                'dados_cliente_preenchidos.documento' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    function (string $attribute, mixed $value, Closure $fail): void {
+                        if (blank($value)) {
+                            return;
+                        }
+
+                        if (! DocumentValidator::isValidDocument((string) $value)) {
+                            $fail('O documento informado é inválido.');
+                        }
+                    },
+                ],
                 'dados_cliente_preenchidos.endereco' => 'nullable|array',
                 'dados_cliente_preenchidos.endereco.rua' => 'nullable|string|max:255',
                 'dados_cliente_preenchidos.endereco.numero' => 'nullable|string|max:20',
@@ -151,6 +167,10 @@ class LinkPagamentoController extends Controller
                 ->with('success', 'Link de pagamento criado com sucesso!');
 
         } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
+
             Log::error('Erro ao criar link de pagamento: '.$e->getMessage());
 
             if ($request->expectsJson()) {
@@ -222,7 +242,20 @@ class LinkPagamentoController extends Controller
 
                 'dados_cliente_preenchidos.email' => 'nullable|email|max:255',
                 'dados_cliente_preenchidos.telefone' => 'nullable|string|max:20',
-                'dados_cliente_preenchidos.documento' => 'nullable|string|max:20',
+                'dados_cliente_preenchidos.documento' => [
+                    'nullable',
+                    'string',
+                    'max:20',
+                    function (string $attribute, mixed $value, Closure $fail): void {
+                        if (blank($value)) {
+                            return;
+                        }
+
+                        if (! DocumentValidator::isValidDocument((string) $value)) {
+                            $fail('O documento informado é inválido.');
+                        }
+                    },
+                ],
                 'dados_cliente_preenchidos.endereco' => 'nullable|array',
                 'dados_cliente_preenchidos.endereco.rua' => 'nullable|string|max:255',
                 'dados_cliente_preenchidos.endereco.numero' => 'nullable|string|max:20',
@@ -276,6 +309,10 @@ class LinkPagamentoController extends Controller
                 ->with('success', 'Link de pagamento atualizado com sucesso!');
 
         } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
+
             Log::error('Erro ao atualizar link de pagamento: '.$e->getMessage());
 
             if ($request->expectsJson()) {

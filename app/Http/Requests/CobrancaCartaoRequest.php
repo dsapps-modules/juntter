@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\DocumentValidator;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CobrancaCartaoRequest extends FormRequest
@@ -28,7 +30,16 @@ class CobrancaCartaoRequest extends FormRequest
             'interest' => 'required|in:CLIENT,ESTABLISHMENT',
             'client.first_name' => 'required|string|max:20',
             'client.last_name' => 'nullable|string|max:128',
-            'client.document' => 'required|string|max:20',
+            'client.document' => [
+                'required',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (! DocumentValidator::isValidDocument((string) $value)) {
+                        $fail('O documento informado é inválido.');
+                    }
+                },
+            ],
             'client.phone' => 'required|string|max:18',
             'client.email' => 'required|email',
             'client.address.street' => 'required|string|max:255',
@@ -39,7 +50,20 @@ class CobrancaCartaoRequest extends FormRequest
             'client.address.state' => 'required|string|size:2',
             'client.address.zip_code' => 'required|string|size:9',
             'card.holder_name' => 'required|string|max:64',
-            'card.holder_document' => 'nullable|string|max:20',
+            'card.holder_document' => [
+                'nullable',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (blank($value)) {
+                        return;
+                    }
+
+                    if (! DocumentValidator::isValidDocument((string) $value)) {
+                        $fail('O documento do portador é inválido.');
+                    }
+                },
+            ],
             'card.card_number' => 'required|string|min:13|max:19',
             'card.expiration_month' => 'required|integer|min:1|max:12',
             'card.expiration_year' => 'required|integer|min:2025',

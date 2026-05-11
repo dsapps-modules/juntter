@@ -10,12 +10,21 @@ import { Alert, Button, Card, Col, DatePicker, Divider, Input, InputNumber, Row,
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { isValidDocument } from '../documentValidation';
 
 const paymentTypes = [
     { label: 'Cartão', value: 'CARTAO', icon: <CreditCardOutlined /> },
     { label: 'PIX', value: 'PIX', icon: <QrcodeOutlined /> },
     { label: 'Boleto', value: 'BOLETO', icon: <BankOutlined /> },
 ];
+
+function getDocumentValidationMessage(document) {
+    if (!document) {
+        return '';
+    }
+
+    return isValidDocument(document) ? '' : 'O documento informado é inválido.';
+}
 
 const initialState = {
     tipo_pagamento: 'CARTAO',
@@ -255,6 +264,14 @@ export default function LinkPagamentoFormPage() {
         setSubmitting(true);
         setError('');
         setSuccess('');
+
+        const documentError = getDocumentValidationMessage(formState.dados_cliente_preenchidos.documento);
+
+        if (documentError) {
+            setError(documentError);
+            setSubmitting(false);
+            return;
+        }
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');

@@ -201,10 +201,11 @@
                                     <label for="titular" class="form-label fw-bold">Titular</label>
                                     <input type="text" class="form-control" id="titular" placeholder="Nome do titular" required>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="documento" class="form-label fw-bold">Documento</label>
-                                    <input type="text" class="form-control" id="documento" placeholder="CPF/CNPJ" required>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="documento" class="form-label fw-bold">Documento</label>
+                                <input type="text" class="form-control" id="documento" placeholder="CPF/CNPJ" required
+                                    inputmode="numeric" maxlength="18">
+                            </div>
                             </div>
 
                             <div class="row">
@@ -289,4 +290,3 @@
     </div>
 </div>
 @endsection
-

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\DocumentValidator;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StartCheckoutPaymentRequest extends FormRequest
@@ -18,7 +20,17 @@ class StartCheckoutPaymentRequest extends FormRequest
             'installments' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:1', 'max:18'],
             'card' => ['exclude_unless:payment_method,credit_card', 'required', 'array'],
             'card.holder_name' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'max:255'],
-            'card.holder_document' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'max:18'],
+            'card.holder_document' => [
+                'exclude_unless:payment_method,credit_card',
+                'required',
+                'string',
+                'max:18',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (! DocumentValidator::isValidDocument((string) $value)) {
+                        $fail('O documento do titular é inválido.');
+                    }
+                },
+            ],
             'card.card_number' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'min:13', 'max:19'],
             'card.expiration_month' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:1', 'max:12'],
             'card.expiration_year' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:'.now()->year],

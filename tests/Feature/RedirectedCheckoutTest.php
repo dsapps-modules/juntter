@@ -364,6 +364,53 @@ class RedirectedCheckoutTest extends TestCase
             ->assertJsonValidationErrors(['installments']);
     }
 
+    public function test_credit_card_payment_rejects_invalid_holder_document(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '111.111.111-11',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['card.holder_document']);
+
+        $errors = $response->json('errors');
+
+        $this->assertSame('O documento do titular é inválido.', $errors['card.holder_document'][0] ?? null);
+    }
+
     public function test_credit_card_payment_creates_order_with_installments(): void
     {
         $seller = $this->makeVendorUser();
@@ -639,7 +686,7 @@ class RedirectedCheckoutTest extends TestCase
         $response = $this->postJson('/checkout/session/'.$session->session_token.'/identification', [
             'customer_name' => 'Maria Silva',
             'customer_email' => 'maria@example.com',
-            'customer_document' => '12345678909',
+            'customer_document' => '123.456.789-09',
             'customer_document_type' => 'cpf',
             'customer_phone' => '11999999999',
         ]);
@@ -651,6 +698,87 @@ class RedirectedCheckoutTest extends TestCase
             'recipient_name' => 'Maria Silva',
             'status' => 'identification_completed',
             'current_step' => 'delivery',
+        ]);
+    }
+
+    public function test_identification_rejects_invalid_cpf(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/identification', [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '111.111.111-11',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['customer_document'])
+            ->assertJsonPath('errors.customer_document.0', 'O CPF informado é inválido.');
+
+        $this->assertDatabaseMissing('checkout_sessions', [
+            'id' => $session->id,
+            'customer_name' => 'Maria Silva',
+            'status' => 'identification_completed',
+        ]);
+    }
+
+    public function test_identification_is_saved_for_cnpj(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/identification', [
+            'customer_name' => 'Empresa Exemplo LTDA',
+            'customer_email' => 'financeiro@empresaexemplo.test',
+            'customer_company_name' => 'Empresa Exemplo LTDA',
+            'customer_document' => '04.252.011/0001-10',
+            'customer_document_type' => 'cnpj',
+            'customer_phone' => '11999999999',
+            'customer_state_registration' => 'ISENTO',
+            'customer_is_state_registration_exempt' => true,
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'customer_name' => 'Empresa Exemplo LTDA',
+            'customer_company_name' => 'Empresa Exemplo LTDA',
+            'customer_document_type' => 'cnpj',
+            'status' => 'identification_completed',
+            'current_step' => 'delivery',
+        ]);
+    }
+
+    public function test_identification_rejects_invalid_cnpj(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/identification', [
+            'customer_name' => 'Empresa Exemplo LTDA',
+            'customer_email' => 'financeiro@empresaexemplo.test',
+            'customer_company_name' => 'Empresa Exemplo LTDA',
+            'customer_document' => '11.111.111/1111-11',
+            'customer_document_type' => 'cnpj',
+            'customer_phone' => '11999999999',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['customer_document'])
+            ->assertJsonPath('errors.customer_document.0', 'O CNPJ informado é inválido.');
+
+        $this->assertDatabaseMissing('checkout_sessions', [
+            'id' => $session->id,
+            'customer_company_name' => 'Empresa Exemplo LTDA',
+            'status' => 'identification_completed',
         ]);
     }
 

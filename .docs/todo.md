@@ -3,13 +3,12 @@ projetosoulpsi@gmail.com
 descontochegou
 JuntterAcesso745!
 
-Cliente pode personalizar logotipo
-Erro nos cálculos de taxas de cartão
 Form de cadastro de clientes
 - PJ: CNPJ, email, responsável, cpf, nascimento, celular/zap
 - PF: CPF, nome, email, nascimento, ramo de atuação, celular/zap
 
 Revisar: geração de links, boletos
+Erro nos cálculos de taxas de cartão
 
 - MSD
 --- volume de igrejas

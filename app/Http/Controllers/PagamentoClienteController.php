@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DocumentValidator;
 use App\Models\LinkPagamento;
 use App\Models\Vendedor;
 use App\Services\BoletoService;
@@ -11,6 +12,7 @@ use App\Services\TransacaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class PagamentoClienteController extends Controller
 {
@@ -86,7 +88,16 @@ class PagamentoClienteController extends Controller
                 'installments' => 'nullable|integer|min:1|max:18',
                 'client.first_name' => 'required|string|max:255',
                 'client.last_name' => 'nullable|string|max:255',
-                'client.document' => 'required|string|max:18',
+                'client.document' => [
+                    'required',
+                    'string',
+                    'max:18',
+                    function (string $attribute, mixed $value, \Closure $fail): void {
+                        if (! DocumentValidator::isValidDocument((string) $value)) {
+                            $fail('O documento informado é inválido.');
+                        }
+                    },
+                ],
                 'client.phone' => 'required|string|max:20',
                 'client.email' => 'required|email',
                 'client.address.street' => 'required|string|max:255',
@@ -97,7 +108,20 @@ class PagamentoClienteController extends Controller
                 'client.address.state' => 'required|string|size:2',
                 'client.address.zip_code' => 'required|string|size:9',
                 'card.holder_name' => 'required|string|max:255',
-                'card.holder_document' => 'nullable|string|max:18',
+                'card.holder_document' => [
+                    'nullable',
+                    'string',
+                    'max:18',
+                    function (string $attribute, mixed $value, \Closure $fail): void {
+                        if (blank($value)) {
+                            return;
+                        }
+
+                        if (! DocumentValidator::isValidDocument((string) $value)) {
+                            $fail('O documento do portador é inválido.');
+                        }
+                    },
+                ],
                 'card.card_number' => 'required|string|min:13|max:19',
                 'card.expiration_month' => 'required|integer|min:1|max:12',
                 'card.expiration_year' => 'required|integer|min:2025',
@@ -179,7 +203,9 @@ class PagamentoClienteController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao processar pagamento com cartão: '.$e->getMessage());
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
 
             return response()->json(['error' => 'Erro ao processar pagamento: '.$e->getMessage()], 500);
         }
@@ -338,7 +364,9 @@ class PagamentoClienteController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao processar PIX via link: '.$e->getMessage());
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
 
             return response()->json(['error' => 'Erro ao processar PIX: '.$e->getMessage()], 500);
         }
@@ -468,7 +496,9 @@ class PagamentoClienteController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Erro ao processar boleto via link: '.$e->getMessage());
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
 
             return response()->json(['error' => 'Erro ao processar boleto: '.$e->getMessage()], 500);
         }

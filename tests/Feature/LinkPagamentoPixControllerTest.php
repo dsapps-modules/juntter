@@ -44,6 +44,35 @@ class LinkPagamentoPixControllerTest extends TestCase
         $this->assertSame('/app/links-pagamento-pix/'.$link->id, $response->json('redirect'));
     }
 
+    public function test_store_rejects_invalid_prefilled_document(): void
+    {
+        $user = $this->makeVendorUser('127700');
+
+        $response = $this
+            ->actingAs($user)
+            ->postJson('/links-pagamento-pix', [
+                'descricao' => 'Link de teste',
+                'valor' => '5,55',
+                'juros' => 'CLIENT',
+                'data_expiracao' => now()->addDay()->format('Y-m-d'),
+                'dados_cliente_preenchidos' => [
+                    'nome' => 'Maria',
+                    'sobrenome' => 'Silva',
+                    'email' => 'maria@example.com',
+                    'telefone' => '(11) 99999-9999',
+                    'documento' => '111.111.111-11',
+                ],
+            ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['dados_cliente_preenchidos.documento']);
+
+        $errors = $response->json('errors');
+
+        $this->assertSame('O documento informado é inválido.', $errors['dados_cliente_preenchidos.documento'][0] ?? null);
+    }
+
     public function test_show_redirects_to_the_pix_detail_spa_route(): void
     {
         $user = $this->makeVendorUser('127700');

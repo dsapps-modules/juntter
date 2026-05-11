@@ -23,7 +23,7 @@
             <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">CPF/CNPJ {!! $type == 'opcional' ? '' : '<span class="text-danger">*</span>' !!}</label>
                 <input type="text" name="client[document]" value="{{ old('client.document') }}" class="form-control"
-                    placeholder="000.000.000-00">
+                    placeholder="000.000.000-00" inputmode="numeric" maxlength="18">
             </div>
             @if ($usePhone)
                 <div class="col-md-6 mb-3">

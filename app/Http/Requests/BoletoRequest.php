@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\DocumentValidator;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BoletoRequest extends FormRequest
@@ -28,7 +30,16 @@ class BoletoRequest extends FormRequest
             'recharge' => 'nullable|boolean',
             'client.first_name' => 'required|string|max:25',
             'client.last_name' => 'required|string|max:128',
-            'client.document' => 'required|string|max:20',
+            'client.document' => [
+                'required',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (! DocumentValidator::isValidDocument((string) $value)) {
+                        $fail('O documento informado é inválido.');
+                    }
+                },
+            ],
             'client.email' => 'required|email',
             'client.address.street' => 'required|string|max:128',
             'client.address.number' => 'required|string|max:10',

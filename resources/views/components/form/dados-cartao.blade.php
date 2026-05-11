@@ -14,7 +14,7 @@
             <div class="col-md-6 mb-3">
                 <label class="form-label fw-bold">CPF/CNPJ do titular</label>
                 <input type="text" name="card[holder_document]" value="{{ old('card.holder_document') }}"
-                    class="form-control" placeholder="000.000.000-00">
+                    class="form-control" placeholder="000.000.000-00" inputmode="numeric" maxlength="18">
             </div>
         </div>
         <div class="row">

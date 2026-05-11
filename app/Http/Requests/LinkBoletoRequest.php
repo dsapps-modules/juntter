@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\DocumentValidator;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LinkBoletoRequest extends FormRequest
@@ -33,7 +35,16 @@ class LinkBoletoRequest extends FormRequest
             'dados_cliente_preenchidos.sobrenome' => 'required|string|max:255',
             'dados_cliente_preenchidos.email' => 'required|email|max:255',
             'dados_cliente_preenchidos.telefone' => 'required|string|max:20',
-            'dados_cliente_preenchidos.documento' => 'required|string|max:20',
+            'dados_cliente_preenchidos.documento' => [
+                'required',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (! DocumentValidator::isValidDocument((string) $value)) {
+                        $fail('O documento informado é inválido.');
+                    }
+                },
+            ],
             'dados_cliente_preenchidos.endereco' => 'required|array',
             'dados_cliente_preenchidos.endereco.rua' => 'required|string|max:255',
             'dados_cliente_preenchidos.endereco.numero' => 'required|string|max:20',

@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DocumentValidator;
 use App\Http\Requests\LinkBoletoRequest;
 use App\Models\LinkPagamento;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class LinkPagamentoBoletoController extends Controller
 {
@@ -194,7 +197,16 @@ class LinkPagamentoBoletoController extends Controller
                 'dados_cliente_preenchidos.sobrenome' => 'required|string|max:255',
                 'dados_cliente_preenchidos.email' => 'required|email|max:255',
                 'dados_cliente_preenchidos.telefone' => 'required|string|max:20',
-                'dados_cliente_preenchidos.documento' => 'required|string|max:20',
+                'dados_cliente_preenchidos.documento' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    function (string $attribute, mixed $value, Closure $fail): void {
+                        if (! DocumentValidator::isValidDocument((string) $value)) {
+                            $fail('O documento informado é inválido.');
+                        }
+                    },
+                ],
                 'dados_cliente_preenchidos.endereco' => 'required|array',
                 'dados_cliente_preenchidos.endereco.rua' => 'required|string|max:255',
                 'dados_cliente_preenchidos.endereco.numero' => 'required|string|max:20',
@@ -267,6 +279,10 @@ class LinkPagamentoBoletoController extends Controller
                 ->with('success', 'Link de pagamento Boleto atualizado com sucesso!');
 
         } catch (\Exception $e) {
+            if ($e instanceof ValidationException) {
+                throw $e;
+            }
+
             Log::error('Erro ao atualizar link de pagamento Boleto: '.$e->getMessage());
 
             if ($request->expectsJson()) {

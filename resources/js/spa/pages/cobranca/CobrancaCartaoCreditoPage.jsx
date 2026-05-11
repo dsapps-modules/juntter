@@ -34,6 +34,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
+import { isValidDocument } from '../../documentValidation';
 
 const stateOptions = [
     'AC',
@@ -143,6 +144,16 @@ const linkInitialValues = {
         documento: '',
     },
 };
+
+function documentValidator(_, value) {
+    if (!value) {
+        return Promise.resolve();
+    }
+
+    return isValidDocument(value)
+        ? Promise.resolve()
+        : Promise.reject(new Error('O documento informado é inválido.'));
+}
 
 function getCurrentPeriod() {
     const now = new Date();
@@ -732,13 +743,16 @@ export default function CobrancaCartaoCreditoPage() {
 
                                                 <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={12}>
-                                                        <Form.Item
-                                                            label="Documento"
-                                                            name={['client', 'document']}
-                                                            rules={[{ required: true, message: 'Informe o documento.' }]}
-                                                        >
-                                                            <Input size="large" placeholder="000.000.000-00" />
-                                                        </Form.Item>
+                                                    <Form.Item
+                                                        label="Documento"
+                                                        name={['client', 'document']}
+                                                        rules={[
+                                                            { required: true, message: 'Informe o documento.' },
+                                                            { validator: documentValidator },
+                                                        ]}
+                                                    >
+                                                        <Input size="large" placeholder="000.000.000-00" />
+                                                    </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={12}>
                                                         <Form.Item
@@ -844,7 +858,11 @@ export default function CobrancaCartaoCreditoPage() {
                                                         </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={12}>
-                                                        <Form.Item label="Documento do portador" name={['card', 'holder_document']}>
+                                                        <Form.Item
+                                                            label="Documento do portador"
+                                                            name={['card', 'holder_document']}
+                                                            rules={[{ validator: documentValidator }]}
+                                                        >
                                                             <Input size="large" placeholder="CPF/CNPJ do portador" />
                                                         </Form.Item>
                                                     </Col>
@@ -1141,7 +1159,11 @@ export default function CobrancaCartaoCreditoPage() {
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={8}>
-                                <Form.Item label="Documento" name={['dados_cliente_preenchidos', 'documento']}>
+                                <Form.Item
+                                    label="Documento"
+                                    name={['dados_cliente_preenchidos', 'documento']}
+                                    rules={[{ validator: documentValidator }]}
+                                >
                                     <Input size="large" placeholder="000.000.000-00" />
                                 </Form.Item>
                             </Col>

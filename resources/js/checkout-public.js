@@ -109,6 +109,86 @@ function formatCnpj(value) {
     return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
 }
 
+function isValidCpf(value) {
+    const cpf = normalizeDigits(value);
+
+    if (cpf.length !== 11) {
+        return false;
+    }
+
+    if (/^(\d)\1{10}$/.test(cpf)) {
+        return false;
+    }
+
+    for (let digitPosition = 9; digitPosition < 11; digitPosition += 1) {
+        let sum = 0;
+
+        for (let index = 0; index < digitPosition; index += 1) {
+            sum += Number(cpf[index]) * ((digitPosition + 1) - index);
+        }
+
+        const calculatedDigit = ((sum * 10) % 11) % 10;
+
+        if (Number(cpf[digitPosition]) !== calculatedDigit) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function isValidCnpj(value) {
+    const cnpj = normalizeDigits(value);
+
+    if (cnpj.length !== 14) {
+        return false;
+    }
+
+    if (/^(\d)\1{13}$/.test(cnpj)) {
+        return false;
+    }
+
+    const digits = cnpj.split('').map((digit) => Number(digit));
+    const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+    let sum = 0;
+    for (let index = 0; index < 12; index += 1) {
+        sum += digits[index] * weights1[index];
+    }
+
+    let remainder = sum % 11;
+    let firstDigit = remainder < 2 ? 0 : 11 - remainder;
+
+    if (digits[12] !== firstDigit) {
+        return false;
+    }
+
+    sum = 0;
+    for (let index = 0; index < 13; index += 1) {
+        sum += digits[index] * weights2[index];
+    }
+
+    remainder = sum % 11;
+    const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+
+    return digits[13] === secondDigit;
+}
+
+function isValidDocument(value) {
+    const digits = normalizeDigits(value);
+
+    if (digits.length === 11) {
+        return isValidCpf(digits);
+    }
+
+    if (digits.length === 14) {
+        return isValidCnpj(digits);
+    }
+
+    return false;
+}
+
 function formatIdentificationDocument(value, documentType) {
     return documentType === 'cnpj' ? formatCnpj(value) : formatCpf(value);
 }
@@ -592,6 +672,65 @@ function syncIdentificationDraftFromForm(state, form) {
         ...state.identificationDraft,
         ...collectFormValues(form),
     };
+}
+
+function validateIdentificationForm(form) {
+    const documentType = identificationDocumentType(form);
+    const documentField = form?.querySelector('[name="customer_document"]');
+
+    if (documentType === 'cpf' && !isValidCpf(documentField?.value || '')) {
+        setFieldErrors({
+            customer_document: ['CPF inválido.'],
+        });
+        setFeedback('Informe um CPF válido antes de continuar.', 'error');
+
+        if (documentField instanceof HTMLInputElement) {
+            documentField.focus();
+        }
+
+        return false;
+    }
+
+    if (documentType === 'cnpj' && !isValidCnpj(documentField?.value || '')) {
+        setFieldErrors({
+            customer_document: ['CNPJ inválido.'],
+        });
+        setFeedback('Informe um CNPJ válido antes de continuar.', 'error');
+
+        if (documentField instanceof HTMLInputElement) {
+            documentField.focus();
+        }
+
+        return false;
+    }
+
+    return true;
+}
+
+function validatePaymentForm(paymentForm) {
+    const paymentMethod = String(paymentForm?.querySelector('[name="payment_method"]')?.value || '');
+
+    if (paymentMethod !== 'credit_card') {
+        return true;
+    }
+
+    const holderDocumentField = paymentForm?.querySelector('[name="card[holder_document]"]');
+    const holderDocument = holderDocumentField?.value || '';
+
+    if (!isValidDocument(holderDocument)) {
+        setFieldErrors({
+            'card.holder_document': ['Informe um CPF/CNPJ válido.'],
+        });
+        setFeedback('Informe um CPF/CNPJ válido para o titular do cartão.', 'error');
+
+        if (holderDocumentField instanceof HTMLInputElement) {
+            holderDocumentField.focus();
+        }
+
+        return false;
+    }
+
+    return true;
 }
 
 function getIdentificationForms() {
@@ -1118,6 +1257,11 @@ function bindForms(state) {
             event.preventDefault();
             clearFeedback();
             clearFieldErrors();
+
+            if (!validateIdentificationForm(identificationForm)) {
+                return;
+            }
+
             setBusy(identificationForm, true, 'Salvando...');
 
             try {
@@ -1278,6 +1422,11 @@ function bindForms(state) {
             event.preventDefault();
             clearFeedback();
             clearFieldErrors();
+
+            if (!validatePaymentForm(paymentForm)) {
+                return;
+            }
+
             setBusy(paymentForm, true, 'Gerando pagamento...');
 
             try {

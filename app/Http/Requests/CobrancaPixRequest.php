@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\DocumentValidator;
+use Closure;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CobrancaPixRequest extends FormRequest
@@ -27,7 +29,20 @@ class CobrancaPixRequest extends FormRequest
             'interest' => 'required|in:CLIENT,ESTABLISHMENT',
             'client.first_name' => 'nullable|string|max:20',
             'client.last_name' => 'nullable|string|max:255',
-            'client.document' => 'nullable|string|max:20',
+            'client.document' => [
+                'nullable',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if (blank($value)) {
+                        return;
+                    }
+
+                    if (! DocumentValidator::isValidDocument((string) $value)) {
+                        $fail('O documento informado é inválido.');
+                    }
+                },
+            ],
             'client.phone' => 'nullable|string|max:18',
             'client.email' => 'nullable|email',
             'info_additional' => 'nullable|string|max:500',

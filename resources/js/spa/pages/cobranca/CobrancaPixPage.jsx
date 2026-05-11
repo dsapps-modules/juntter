@@ -35,6 +35,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
+import { isValidDocument } from '../../documentValidation';
 
 const interestOptions = [
     { label: 'Cliente', value: 'CLIENT' },
@@ -90,6 +91,16 @@ function formatPeriodLabel(period) {
 
 function getFirstValidationError(errors) {
     return Object.values(errors ?? {}).flat().find(Boolean) ?? '';
+}
+
+function documentValidator(_, value) {
+    if (!value) {
+        return Promise.resolve();
+    }
+
+    return isValidDocument(value)
+        ? Promise.resolve()
+        : Promise.reject(new Error('O documento informado é inválido.'));
 }
 
 export default function CobrancaPixPage() {
@@ -688,7 +699,11 @@ export default function CobrancaPixPage() {
 
                                         <Row gutter={[16, 16]}>
                                             <Col xs={24} md={12}>
-                                                <Form.Item label="CPF/CNPJ" name={['client', 'document']}>
+                                                <Form.Item
+                                                    label="CPF/CNPJ"
+                                                    name={['client', 'document']}
+                                                    rules={[{ validator: documentValidator }]}
+                                                >
                                                     <Input size="large" placeholder="000.000.000-00" />
                                                 </Form.Item>
                                             </Col>
@@ -963,7 +978,11 @@ export default function CobrancaPixPage() {
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>
-                                    <Form.Item label="CPF/CNPJ" name={['dados_cliente_preenchidos', 'documento']}>
+                                    <Form.Item
+                                        label="CPF/CNPJ"
+                                        name={['dados_cliente_preenchidos', 'documento']}
+                                        rules={[{ validator: documentValidator }]}
+                                    >
                                         <Input size="large" placeholder="000.000.000-00" />
                                     </Form.Item>
                                 </Col>

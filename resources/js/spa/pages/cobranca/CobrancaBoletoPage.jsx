@@ -33,6 +33,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
+import { isValidDocument } from '../../documentValidation';
 
 const stateOptions = [
     'AC',
@@ -115,6 +116,16 @@ const boletoInitialValues = {
         },
     },
 };
+
+function documentValidator(_, value) {
+    if (!value) {
+        return Promise.resolve();
+    }
+
+    return isValidDocument(value)
+        ? Promise.resolve()
+        : Promise.reject(new Error('O documento informado é inválido.'));
+}
 
 function getCurrentPeriod() {
     const now = new Date();
@@ -632,7 +643,10 @@ export default function CobrancaBoletoPage() {
                                                 <Form.Item
                                                     label="CPF/CNPJ"
                                                     name={['client', 'document']}
-                                                    rules={[{ required: true, message: 'Informe o documento.' }]}
+                                                    rules={[
+                                                        { required: true, message: 'Informe o documento.' },
+                                                        { validator: documentValidator },
+                                                    ]}
                                                 >
                                                     <Input size="large" placeholder="000.000.000-00" />
                                                 </Form.Item>
@@ -937,4 +951,3 @@ export default function CobrancaBoletoPage() {
         </Row>
     );
 }
-
