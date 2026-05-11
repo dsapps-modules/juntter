@@ -9,6 +9,7 @@ use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class PublicCheckoutSessionController extends Controller
 {
@@ -63,6 +64,54 @@ class PublicCheckoutSessionController extends Controller
             'message' => 'Checkout session pronta.',
             'checkout_session' => $checkoutSession,
             'checkout_link' => $checkoutLink,
+        ]);
+    }
+
+    public function lookupCompanyByCnpj(string $cnpj): JsonResponse
+    {
+        $digits = preg_replace('/\D+/', '', $cnpj) ?? '';
+
+        if (strlen($digits) !== 14 || preg_match('/^(\d)\1{13}$/', $digits) === 1) {
+            return response()->json([
+                'message' => 'CNPJ inválido.',
+            ], 422);
+        }
+
+        $response = Http::timeout(8)
+            ->acceptJson()
+            ->get('https://brasilapi.com.br/api/cnpj/v1/'.$digits);
+
+        if ($response->status() === 404) {
+            return response()->json([
+                'message' => 'CNPJ não encontrado.',
+            ], 404);
+        }
+
+        if (! $response->successful()) {
+            return response()->json([
+                'message' => 'Não foi possível consultar o CNPJ.',
+            ], 502);
+        }
+
+        $payload = $response->json();
+        $companyName = $this->resolveCompanyNameFromLookup($payload);
+
+        if ($companyName === null) {
+            return response()->json([
+                'message' => 'Não foi possível identificar os dados da empresa.',
+            ], 502);
+        }
+
+        $responsible = $this->resolveResponsibleFromLookup($payload);
+
+        return response()->json([
+            'cnpj' => $digits,
+            'company_name' => $companyName,
+            'email' => $this->resolveEmailFromLookup($payload),
+            'phone' => $this->resolvePhoneFromLookup($payload),
+            'responsible_name' => data_get($responsible, 'name'),
+            'responsible_document' => data_get($responsible, 'document'),
+            'trade_name' => data_get($payload, 'nome_fantasia'),
         ]);
     }
 
@@ -142,5 +191,95 @@ class PublicCheckoutSessionController extends Controller
     private function findSession(string $sessionToken): CheckoutSession
     {
         return CheckoutSession::query()->where('session_token', $sessionToken)->firstOrFail();
+    }
+
+    private function resolveCompanyNameFromLookup(mixed $payload): ?string
+    {
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        foreach (['razao_social', 'nome_fantasia'] as $key) {
+            $value = data_get($payload, $key);
+
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveEmailFromLookup(mixed $payload): ?string
+    {
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        $candidates = [
+            data_get($payload, 'email'),
+            data_get($payload, 'emails.0'),
+            data_get($payload, 'contato.email'),
+            data_get($payload, 'contact.email'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (! is_string($candidate)) {
+                continue;
+            }
+
+            $email = trim($candidate);
+
+            if ($email !== '') {
+                return $email;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolvePhoneFromLookup(mixed $payload): ?string
+    {
+        if (! is_array($payload)) {
+            return null;
+        }
+
+        foreach (['ddd_telefone_1', 'ddd_telefone_2'] as $key) {
+            $phone = data_get($payload, $key);
+
+            if (! is_string($phone)) {
+                continue;
+            }
+
+            $digits = preg_replace('/\D+/', '', $phone) ?? '';
+
+            if (strlen($digits) === 10 || strlen($digits) === 11) {
+                return $digits;
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveResponsibleFromLookup(mixed $payload): array
+    {
+        if (! is_array($payload)) {
+            return [];
+        }
+
+        $firstPartner = data_get($payload, 'qsa.0');
+
+        if (! is_array($firstPartner)) {
+            return [];
+        }
+
+        $name = data_get($firstPartner, 'nome_socio') ?? data_get($firstPartner, 'nome_representante_legal');
+        $document = data_get($firstPartner, 'cnpj_cpf_do_socio') ?? data_get($firstPartner, 'cpf_representante_legal');
+        $documentDigits = is_string($document) ? preg_replace('/\D+/', '', $document) ?? '' : '';
+
+        return [
+            'name' => is_string($name) && trim($name) !== '' ? trim($name) : null,
+            'document' => strlen($documentDigits) === 11 ? $documentDigits : null,
+        ];
     }
 }

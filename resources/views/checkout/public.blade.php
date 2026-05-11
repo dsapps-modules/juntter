@@ -705,6 +705,7 @@
             'identification' => route('checkout.public.identification', $checkoutSession->session_token),
             'delivery' => route('checkout.public.delivery', $checkoutSession->session_token),
             'payment' => route('checkout.public.payment', $checkoutSession->session_token),
+            'cnpjLookupTemplate' => route('checkout.public.cnpj.lookup', ['cnpj' => '__CNPJ__']),
             'antifraudAuthTemplate' => route('checkout.public.payment', $checkoutSession->session_token).'/__TRANSACTION_ID__/antifraud-auth',
             'status' => route('checkout.public.status', $checkoutSession->session_token),
         ],

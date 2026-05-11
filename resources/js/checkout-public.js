@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { QRCodeSVG } from '@rc-component/qrcode';
 
 const stepOrder = ['identification', 'delivery', 'payment', 'waiting'];
+const cnpjCompanyLookupCache = new Map();
 
 const stepLabels = {
     identification: 'Identificação',
@@ -650,6 +651,11 @@ function applyIdentificationMask(form, target) {
 
     if (target.name === 'customer_document') {
         target.value = formatIdentificationDocument(target.value, identificationDocumentType(form));
+        return;
+    }
+
+    if (target.name === 'customer_responsible_document') {
+        target.value = formatCpf(target.value);
     }
 }
 
@@ -677,6 +683,28 @@ function syncIdentificationDraftFromForm(state, form) {
 
 function validateIdentificationForm(form) {
     return validateIdentificationDocument(form, { focusOnError: true });
+}
+
+function validateResponsibleCpf(form, { focusOnError = false } = {}) {
+    const documentField = form?.querySelector('[name="customer_responsible_document"]');
+
+    if (!isValidCpf(documentField?.value || '')) {
+        setFieldErrors({
+            customer_responsible_document: ['CPF inválido.'],
+        });
+
+        if (focusOnError && documentField instanceof HTMLInputElement) {
+            documentField.focus();
+        }
+
+        return false;
+    }
+
+    setFieldErrors({
+        customer_responsible_document: [],
+    });
+
+    return true;
 }
 
 function validateIdentificationDocument(form, { focusOnError = false } = {}) {
@@ -715,6 +743,68 @@ function validateIdentificationDocument(form, { focusOnError = false } = {}) {
     clearFeedback();
 
     return true;
+}
+
+async function lookupCompanyDataByCnpj(state, form) {
+    const documentField = form?.querySelector('[name="customer_document"]');
+    const cnpjDigits = normalizeDigits(documentField?.value || '');
+
+    if (cnpjDigits.length !== 14) {
+        return false;
+    }
+
+    const cachedData = cnpjCompanyLookupCache.get(cnpjDigits);
+
+    if (cachedData) {
+        applyCompanyLookupToForm(state, form, cachedData);
+        return true;
+    }
+
+    const lookupTemplate = String(state?.config?.urls?.cnpjLookupTemplate || '');
+
+    if (!lookupTemplate) {
+        return false;
+    }
+
+    try {
+        const payload = await requestJson(lookupTemplate.replace('__CNPJ__', cnpjDigits), {
+            method: 'GET',
+        });
+        if (!payload?.company_name) {
+            return false;
+        }
+
+        cnpjCompanyLookupCache.set(cnpjDigits, payload);
+        applyCompanyLookupToForm(state, form, payload);
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
+function applyCompanyLookupToForm(state, form, payload) {
+    const mappings = {
+        customer_company_name: payload?.company_name || '',
+        customer_email: payload?.email || '',
+        customer_phone: payload?.phone || '',
+        customer_name: payload?.responsible_name || '',
+        customer_responsible_document: payload?.responsible_document || '',
+    };
+
+    Object.entries(mappings).forEach(([field, value]) => {
+        if (value) {
+            fillFormField(form, `[name="${field}"]`, value);
+        }
+    });
+
+    syncIdentificationDraftFromForm(state, form);
+    setFieldErrors({
+        customer_company_name: [],
+        customer_email: [],
+        customer_phone: [],
+        customer_name: [],
+        customer_responsible_document: [],
+    });
 }
 
 function validatePaymentForm(paymentForm) {
@@ -1261,6 +1351,10 @@ function bindForms(state) {
             if (event.target instanceof HTMLInputElement && event.target.name === 'customer_document') {
                 setFieldErrors({ customer_document: [] });
             }
+
+            if (event.target instanceof HTMLInputElement && event.target.name === 'customer_responsible_document') {
+                setFieldErrors({ customer_responsible_document: [] });
+            }
         });
 
         identificationForm.addEventListener('change', () => {
@@ -1269,7 +1363,13 @@ function bindForms(state) {
 
         identificationForm.addEventListener('blur', (event) => {
             if (event.target instanceof HTMLInputElement && event.target.name === 'customer_document') {
-                validateIdentificationDocument(identificationForm);
+                if (validateIdentificationDocument(identificationForm)) {
+                    lookupCompanyDataByCnpj(state, identificationForm);
+                }
+            }
+
+            if (event.target instanceof HTMLInputElement && event.target.name === 'customer_responsible_document') {
+                validateResponsibleCpf(identificationForm);
             }
         }, true);
 
@@ -1278,7 +1378,7 @@ function bindForms(state) {
             clearFeedback();
             clearFieldErrors();
 
-            if (!validateIdentificationForm(identificationForm)) {
+            if (!validateIdentificationForm(identificationForm) || !validateResponsibleCpf(identificationForm, { focusOnError: true })) {
                 return;
             }
 

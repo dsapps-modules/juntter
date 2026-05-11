@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\Payments\Paytime\PaytimePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -815,6 +816,35 @@ class RedirectedCheckoutTest extends TestCase
             'customer_company_name' => 'Empresa Exemplo LTDA',
             'status' => 'identification_completed',
         ]);
+    }
+
+    public function test_cnpj_lookup_returns_company_data(): void
+    {
+        Http::fake([
+            'brasilapi.com.br/api/cnpj/v1/*' => Http::response([
+                'razao_social' => 'Empresa Exemplo LTDA',
+                'nome_fantasia' => 'Empresa Exemplo',
+                'email' => '[email protected]',
+                'ddd_telefone_1' => '11988887777',
+                'qsa' => [
+                    [
+                        'nome_socio' => 'João da Silva',
+                        'cnpj_cpf_do_socio' => '123.456.789-09',
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $response = $this->getJson('/checkout/cnpj/04252011000110');
+
+        $response->assertOk();
+        $response->assertJsonPath('cnpj', '04252011000110');
+        $response->assertJsonPath('company_name', 'Empresa Exemplo LTDA');
+        $response->assertJsonPath('email', '[email protected]');
+        $response->assertJsonPath('phone', '11988887777');
+        $response->assertJsonPath('responsible_name', 'João da Silva');
+        $response->assertJsonPath('responsible_document', '12345678909');
+        $response->assertJsonPath('trade_name', 'Empresa Exemplo');
     }
 
     public function test_identification_rejects_invalid_cnpj(): void

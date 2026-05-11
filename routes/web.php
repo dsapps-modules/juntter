@@ -59,6 +59,9 @@ Route::get('/checkout/{publicToken}', [PublicCheckoutController::class, 'show'])
     ->where('publicToken', 'chk_[A-Za-z0-9]+')
     ->name('checkout.public.show');
 Route::post('/checkout/{publicToken}/session', [PublicCheckoutSessionController::class, 'createOrResume'])->name('checkout.public.session');
+Route::get('/checkout/cnpj/{cnpj}', [PublicCheckoutSessionController::class, 'lookupCompanyByCnpj'])
+    ->where('cnpj', '[0-9]{14}')
+    ->name('checkout.public.cnpj.lookup');
 Route::post('/checkout/session/{sessionToken}/identification', [PublicCheckoutSessionController::class, 'saveIdentification'])->name('checkout.public.identification');
 Route::post('/checkout/session/{sessionToken}/delivery', [PublicCheckoutSessionController::class, 'saveDelivery'])->name('checkout.public.delivery');
 Route::post('/checkout/session/{sessionToken}/payment', [PublicCheckoutPaymentController::class, 'startPayment'])->name('checkout.public.payment');
