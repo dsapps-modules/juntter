@@ -627,7 +627,8 @@ function applyIdentificationDraftToForm(form, draft, personType) {
         customer_document: draft.customer_document ?? '',
         customer_birth_date: draft.customer_birth_date ?? '',
         customer_company_name: draft.customer_company_name ?? '',
-        customer_state_registration: draft.customer_state_registration ?? '',
+        customer_responsible_document: draft.customer_responsible_document ?? '',
+        customer_responsible_birth_date: draft.customer_responsible_birth_date ?? '',
     };
 
     Object.entries(mergedValues).forEach(([field, value]) => {
@@ -675,6 +676,10 @@ function syncIdentificationDraftFromForm(state, form) {
 }
 
 function validateIdentificationForm(form) {
+    return validateIdentificationDocument(form, { focusOnError: true });
+}
+
+function validateIdentificationDocument(form, { focusOnError = false } = {}) {
     const documentType = identificationDocumentType(form);
     const documentField = form?.querySelector('[name="customer_document"]');
 
@@ -684,7 +689,7 @@ function validateIdentificationForm(form) {
         });
         setFeedback('Informe um CPF válido antes de continuar.', 'error');
 
-        if (documentField instanceof HTMLInputElement) {
+        if (focusOnError && documentField instanceof HTMLInputElement) {
             documentField.focus();
         }
 
@@ -697,12 +702,17 @@ function validateIdentificationForm(form) {
         });
         setFeedback('Informe um CNPJ válido antes de continuar.', 'error');
 
-        if (documentField instanceof HTMLInputElement) {
+        if (focusOnError && documentField instanceof HTMLInputElement) {
             documentField.focus();
         }
 
         return false;
     }
+
+    setFieldErrors({
+        customer_document: [],
+    });
+    clearFeedback();
 
     return true;
 }
@@ -1247,11 +1257,21 @@ function bindForms(state) {
         identificationForm.addEventListener('input', (event) => {
             applyIdentificationMask(identificationForm, event.target);
             syncIdentificationDraftFromForm(state, identificationForm);
+
+            if (event.target instanceof HTMLInputElement && event.target.name === 'customer_document') {
+                setFieldErrors({ customer_document: [] });
+            }
         });
 
         identificationForm.addEventListener('change', () => {
             syncIdentificationDraftFromForm(state, identificationForm);
         });
+
+        identificationForm.addEventListener('blur', (event) => {
+            if (event.target instanceof HTMLInputElement && event.target.name === 'customer_document') {
+                validateIdentificationDocument(identificationForm);
+            }
+        }, true);
 
         identificationForm.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -1666,7 +1686,8 @@ function initCheckoutPublic() {
             customer_document: config.session?.customer_document || '',
             customer_birth_date: config.session?.customer_birth_date || '',
             customer_company_name: config.session?.customer_company_name || '',
-            customer_state_registration: config.session?.customer_state_registration || '',
+            customer_responsible_document: config.session?.customer_responsible_document || '',
+            customer_responsible_birth_date: config.session?.customer_responsible_birth_date || '',
         },
     };
 

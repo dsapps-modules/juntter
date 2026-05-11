@@ -190,6 +190,38 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('data-person-form="pj"', false);
         $response->assertSee('Salvar pessoa física', false);
         $response->assertSee('Salvar pessoa jurídica', false);
+        $response->assertSee('Nome da empresa', false);
+        $response->assertSee('Nome do responsável', false);
+        $response->assertSee('CPF do responsável', false);
+        $response->assertSee('Nascimento do responsável', false);
+        $response->assertSee('Celular', false);
+        $response->assertDontSee('Inscrição estadual');
+        $response->assertDontSee('Razão social');
+        $pjFormContent = $response->getContent();
+        $this->assertMatchesRegularExpression('/<form id="checkout-identification-pj-form".*?<\/form>/s', $pjFormContent);
+        $this->assertMatchesRegularExpression(
+            '/<div class="field">\s*<label for="customer_document_pj">CNPJ<\/label>.*?<div class="field">\s*<label for="customer_email_pj">E-mail<\/label>/s',
+            $pjFormContent
+        );
+        preg_match('/<form id="checkout-identification-pj-form".*?<\/form>/s', $pjFormContent, $pjFormMatches);
+        $pjFormMarkup = $pjFormMatches[0] ?? '';
+        $expectedFieldOrder = [
+            'CNPJ',
+            'E-mail',
+            'Nome da empresa',
+            'Nome do responsável',
+            'CPF do responsável',
+            'Nascimento do responsável',
+            'Celular',
+        ];
+
+        $lastPosition = -1;
+        foreach ($expectedFieldOrder as $expectedField) {
+            $position = strpos($pjFormMarkup, $expectedField);
+            $this->assertIsInt($position);
+            $this->assertGreaterThan($lastPosition, $position);
+            $lastPosition = $position;
+        }
         $this->assertMatchesRegularExpression('/<div[^>]*data-installments-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
         $this->assertMatchesRegularExpression('/<div[^>]*data-card-fields-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
         $response->assertSee('placeholder="(11) 99999-9999"', false);
@@ -739,9 +771,9 @@ class RedirectedCheckoutTest extends TestCase
             'customer_company_name' => 'Empresa Exemplo LTDA',
             'customer_document' => '04.252.011/0001-10',
             'customer_document_type' => 'cnpj',
+            'customer_responsible_document' => '123.456.789-09',
+            'customer_responsible_birth_date' => '1990-01-01',
             'customer_phone' => '11999999999',
-            'customer_state_registration' => 'ISENTO',
-            'customer_is_state_registration_exempt' => true,
         ]);
 
         $response->assertOk();
@@ -749,9 +781,39 @@ class RedirectedCheckoutTest extends TestCase
             'id' => $session->id,
             'customer_name' => 'Empresa Exemplo LTDA',
             'customer_company_name' => 'Empresa Exemplo LTDA',
+            'customer_responsible_document' => '123.456.789-09',
             'customer_document_type' => 'cnpj',
             'status' => 'identification_completed',
             'current_step' => 'delivery',
+        ]);
+    }
+
+    public function test_identification_rejects_missing_required_pj_fields(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/identification', [
+            'customer_name' => 'Empresa Exemplo LTDA',
+            'customer_email' => 'financeiro@empresaexemplo.test',
+            'customer_company_name' => 'Empresa Exemplo LTDA',
+            'customer_document' => '04.252.011/0001-10',
+            'customer_document_type' => 'cnpj',
+            'customer_phone' => '11999999999',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors([
+                'customer_responsible_document',
+                'customer_responsible_birth_date',
+            ]);
+
+        $this->assertDatabaseMissing('checkout_sessions', [
+            'id' => $session->id,
+            'customer_company_name' => 'Empresa Exemplo LTDA',
+            'status' => 'identification_completed',
         ]);
     }
 

@@ -26,6 +26,8 @@ class CheckoutSession extends Model
         'customer_phone',
         'customer_birth_date',
         'customer_company_name',
+        'customer_responsible_document',
+        'customer_responsible_birth_date',
         'customer_state_registration',
         'customer_is_state_registration_exempt',
         'zipcode',
@@ -47,6 +49,7 @@ class CheckoutSession extends Model
 
     protected $casts = [
         'customer_birth_date' => 'date',
+        'customer_responsible_birth_date' => 'date',
         'customer_is_state_registration_exempt' => 'boolean',
         'subtotal' => 'decimal:2',
         'discount_total' => 'decimal:2',

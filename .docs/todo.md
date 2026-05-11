@@ -4,7 +4,7 @@ descontochegou
 JuntterAcesso745!
 
 Form de cadastro de clientes
-- PJ: CNPJ, email, responsável, cpf, nascimento, celular/zap
+- PJ: CNPJ, email, nome da empresa, nome responsável, cpf responsavel, nascimento responsavel, celular/zap
 - PF: CPF, nome, email, nascimento, ramo de atuação, celular/zap
 
 Revisar: geração de links, boletos

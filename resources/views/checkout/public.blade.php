@@ -731,8 +731,8 @@
             'customer_phone' => $checkoutSession->customer_phone,
             'customer_birth_date' => optional($checkoutSession->customer_birth_date)->format('Y-m-d'),
             'customer_company_name' => $checkoutSession->customer_company_name,
-            'customer_state_registration' => $checkoutSession->customer_state_registration,
-            'customer_is_state_registration_exempt' => (bool) $checkoutSession->customer_is_state_registration_exempt,
+            'customer_responsible_document' => $checkoutSession->customer_responsible_document,
+            'customer_responsible_birth_date' => optional($checkoutSession->customer_responsible_birth_date)->format('Y-m-d'),
             'zipcode' => $checkoutSession->zipcode,
             'street' => $checkoutSession->street,
             'number' => $checkoutSession->number,
@@ -877,8 +877,20 @@
                         @csrf
                         <input type="hidden" name="customer_document_type" value="cnpj">
                         <div class="field-grid">
+                            <div class="field">
+                                <label for="customer_document_pj">CNPJ</label>
+                                <input id="customer_document_pj" name="customer_document" value="{{ $checkoutSession->customer_document }}" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" required>
+                                <p class="field-error" data-error-for="customer_document"></p>
+                            </div>
+
+                            <div class="field">
+                                <label for="customer_email_pj">E-mail</label>
+                                <input id="customer_email_pj" name="customer_email" type="email" value="{{ $checkoutSession->customer_email }}" required>
+                                <p class="field-error" data-error-for="customer_email"></p>
+                            </div>
+
                             <div class="field field--full">
-                                <label for="customer_company_name_pj">Razão social</label>
+                                <label for="customer_company_name_pj">Nome da empresa</label>
                                 <input id="customer_company_name_pj" name="customer_company_name" value="{{ $checkoutSession->customer_company_name }}" required>
                                 <p class="field-error" data-error-for="customer_company_name"></p>
                             </div>
@@ -890,29 +902,22 @@
                             </div>
 
                             <div class="field">
-                                <label for="customer_email_pj">E-mail</label>
-                                <input id="customer_email_pj" name="customer_email" type="email" value="{{ $checkoutSession->customer_email }}" required>
-                                <p class="field-error" data-error-for="customer_email"></p>
+                                <label for="customer_responsible_document_pj">CPF do responsável</label>
+                                <input id="customer_responsible_document_pj" name="customer_responsible_document" value="{{ $checkoutSession->customer_responsible_document }}" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" required>
+                                <p class="field-error" data-error-for="customer_responsible_document"></p>
                             </div>
 
                             <div class="field">
-                                <label for="customer_phone_pj">Telefone</label>
+                                <label for="customer_responsible_birth_date_pj">Nascimento do responsável</label>
+                                <input id="customer_responsible_birth_date_pj" name="customer_responsible_birth_date" type="date" value="{{ optional($checkoutSession->customer_responsible_birth_date)->format('Y-m-d') }}" required>
+                                <p class="field-error" data-error-for="customer_responsible_birth_date"></p>
+                            </div>
+
+                            <div class="field">
+                                <label for="customer_phone_pj">Celular</label>
                                 <input id="customer_phone_pj" name="customer_phone" value="{{ $checkoutSession->customer_phone }}" inputmode="numeric" maxlength="15" placeholder="(11) 99999-9999" required>
                                 <p class="field-error" data-error-for="customer_phone"></p>
                             </div>
-
-                            <div class="field">
-                                <label for="customer_document_pj">CNPJ</label>
-                                <input id="customer_document_pj" name="customer_document" value="{{ $checkoutSession->customer_document }}" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" required>
-                                <p class="field-error" data-error-for="customer_document"></p>
-                            </div>
-
-                            <div class="field">
-                                <label for="customer_state_registration_pj">Inscrição estadual</label>
-                                <input id="customer_state_registration_pj" name="customer_state_registration" value="{{ $checkoutSession->customer_state_registration }}">
-                                <p class="field-error" data-error-for="customer_state_registration"></p>
-                            </div>
-
                         </div>
 
                         <div class="actions">

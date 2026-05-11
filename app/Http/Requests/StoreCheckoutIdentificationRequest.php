@@ -37,10 +37,20 @@ class StoreCheckoutIdentificationRequest extends FormRequest
             ],
             'customer_document_type' => ['required', 'in:cpf,cnpj'],
             'customer_phone' => ['required', 'string', 'max:20'],
-            'customer_birth_date' => ['nullable', 'date'],
-            'customer_company_name' => ['nullable', 'string', 'max:255'],
-            'customer_state_registration' => ['nullable', 'string', 'max:100'],
-            'customer_is_state_registration_exempt' => ['nullable', 'boolean'],
+            'customer_birth_date' => ['required_if:customer_document_type,cpf', 'nullable', 'date'],
+            'customer_company_name' => ['required_if:customer_document_type,cnpj', 'nullable', 'string', 'max:255'],
+            'customer_responsible_document' => [
+                'required_if:customer_document_type,cnpj',
+                'nullable',
+                'string',
+                'max:20',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ($this->input('customer_document_type') === 'cnpj' && ! $this->isValidCpf((string) $value)) {
+                        $fail('O CPF informado é inválido.');
+                    }
+                },
+            ],
+            'customer_responsible_birth_date' => ['required_if:customer_document_type,cnpj', 'nullable', 'date'],
         ];
     }
 
