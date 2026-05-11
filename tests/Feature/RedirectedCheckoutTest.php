@@ -178,7 +178,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('Quantidade:');
         $response->assertDontSee('Token da sessão:');
         $response->assertSee('checkout-logo-image', false);
-        $response->assertSee(asset('img/logo/juntter_webp_640_174.webp'), false);
+        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertSee('id="checkout-public-app"', false);
         $response->assertSee('data-step-panel="identification"', false);
         $response->assertSee('data-step-panel="waiting"', false);
@@ -259,8 +259,26 @@ class RedirectedCheckoutTest extends TestCase
         $response = $this->get(route('checkout.public.show', $link->public_token));
 
         $response->assertOk();
-        $response->assertSee(route('company-logo.show', ['path' => 'company-logos/custom-logo.png']), false);
+        $response->assertSee('/company-logo?path=company-logos%2Fcustom-logo.png', false);
         $response->assertDontSee(asset('img/logo/juntter_webp_640_174.webp'), false);
+    }
+
+    public function test_active_public_checkout_falls_back_to_default_logo_when_company_logo_file_is_missing(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $user->forceFill([
+            'company_logo_path' => 'company-logos/missing-logo.png',
+        ])->save();
+
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+
+        $response = $this->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
+        $response->assertDontSee('/company-logo?path=company-logos%2Fmissing-logo.png', false);
     }
 
     public function test_paid_public_checkout_redirects_to_thank_you_page(): void

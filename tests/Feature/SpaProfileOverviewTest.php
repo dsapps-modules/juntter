@@ -32,7 +32,7 @@ class SpaProfileOverviewTest extends TestCase
             ->assertJsonPath('profile.name', 'Maria Silva')
             ->assertJsonPath('profile.email', 'maria@example.com')
             ->assertJsonPath('profile.nivel_acesso', 'vendedor')
-            ->assertJsonPath('profile.avatar_url', route('company-logo.show', ['path' => 'company-logos/logo.png']))
-            ->assertJsonPath('profile.company_logo_url', route('company-logo.show', ['path' => 'company-logos/logo.png']));
+            ->assertJsonPath('profile.avatar_url', '/company-logo?path=company-logos%2Flogo.png')
+            ->assertJsonPath('profile.company_logo_url', '/company-logo?path=company-logos%2Flogo.png');
     }
 }

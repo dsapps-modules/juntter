@@ -7,6 +7,7 @@ use App\Models\CheckoutSession;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PublicCheckoutController extends Controller
@@ -43,6 +44,7 @@ class PublicCheckoutController extends Controller
             'checkoutSession' => $checkoutSession,
             'order' => $order,
             'paymentTransaction' => $order?->paymentTransaction,
+            'sellerLogoUrl' => $this->resolveSellerLogoUrl($checkoutLink),
         ]);
     }
 
@@ -94,5 +96,16 @@ class PublicCheckoutController extends Controller
         $request->session()->put($cookieKey, $checkoutSession->session_token);
 
         return $checkoutSession;
+    }
+
+    private function resolveSellerLogoUrl(CheckoutLink $checkoutLink): string
+    {
+        $companyLogoPath = $checkoutLink->seller?->company_logo_path;
+
+        if (filled($companyLogoPath) && Storage::disk('public')->exists($companyLogoPath)) {
+            return '/company-logo?path='.rawurlencode($companyLogoPath);
+        }
+
+        return '/img/logo/juntter_webp_640_174.webp';
     }
 }

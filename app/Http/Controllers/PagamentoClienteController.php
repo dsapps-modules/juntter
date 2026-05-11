@@ -66,7 +66,7 @@ class PagamentoClienteController extends Controller
     public function pagamentoSucesso()
     {
         return view('pagamento.sucesso', [
-            'sellerLogoUrl' => asset('img/logo/juntter_webp_640_174.webp'),
+            'sellerLogoUrl' => '/img/logo/juntter_webp_640_174.webp',
         ]);
     }
 
@@ -571,13 +571,13 @@ class PagamentoClienteController extends Controller
             ->orderByRaw("CASE WHEN sub_nivel = 'admin_loja' THEN 0 ELSE 1 END")
             ->get()
             ->first(function (Vendedor $vendor): bool {
-                return filled($vendor->user?->avatar_url);
+                return filled($vendor->user?->company_logo_path);
             });
 
-        if ($vendorWithLogo?->user?->avatar_url) {
-            return $vendorWithLogo->user->avatar_url;
+        if ($vendorWithLogo?->user?->company_logo_path) {
+            return '/company-logo?path='.rawurlencode($vendorWithLogo->user->company_logo_path);
         }
 
-        return asset('img/logo/juntter_webp_640_174.webp');
+        return '/img/logo/juntter_webp_640_174.webp';
     }
 }

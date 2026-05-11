@@ -692,10 +692,6 @@
 </head>
 <body>
 @php
-    $sellerLogoUrl = filled($checkoutLink->seller?->avatar_url ?? null)
-        ? $checkoutLink->seller->avatar_url
-        : asset('img/logo/juntter_webp_640_174.webp');
-
     $checkoutPublicConfig = [
         'sessionToken' => $checkoutSession->session_token,
         'publicToken' => $checkoutLink->public_token,
@@ -787,7 +783,12 @@
             </div>
 
             <div class="help-card checkout-logo-card" style="max-width: 320px;">
-                <img src="{{ $sellerLogoUrl }}" alt="{{ $checkoutLink->seller?->name ?? 'Juntter' }}" class="checkout-logo-image">
+                <img
+                    src="{{ $sellerLogoUrl }}"
+                    alt="{{ $checkoutLink->seller?->name ?? 'Juntter' }}"
+                    class="checkout-logo-image"
+                    onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
+                >
             </div>
         </div>
 

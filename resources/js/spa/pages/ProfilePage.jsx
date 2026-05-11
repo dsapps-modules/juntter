@@ -476,6 +476,13 @@ export default function ProfilePage() {
                                     <img
                                         src={companyLogoPreviewUrl}
                                         alt="Pré-visualização do logotipo"
+                                        onError={(event) => {
+                                            if (event.currentTarget.src.endsWith('/img/logo/juntter_webp_640_174.webp')) {
+                                                return;
+                                            }
+
+                                            event.currentTarget.src = '/img/logo/juntter_webp_640_174.webp';
+                                        }}
                                         style={{
                                             display: 'block',
                                             maxWidth: '100%',

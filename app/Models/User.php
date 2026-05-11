@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -100,8 +101,8 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function getAvatarUrlAttribute(): ?string
     {
-        if (filled($this->company_logo_path)) {
-            return route('company-logo.show', ['path' => $this->company_logo_path]);
+        if (filled($this->company_logo_path) && Storage::disk('public')->exists($this->company_logo_path)) {
+            return '/company-logo?path='.rawurlencode($this->company_logo_path);
         }
 
         return null;

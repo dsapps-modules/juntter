@@ -27,7 +27,12 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-4">
-                    <img src="{{ $sellerLogoUrl }}" alt="{{ $link->estabelecimento_id ? 'Logotipo da empresa' : 'Juntter' }}" class="checkout-logo">
+                    <img
+                        src="{{ $sellerLogoUrl }}"
+                        alt="{{ $link->estabelecimento_id ? 'Logotipo da empresa' : 'Juntter' }}"
+                        class="checkout-logo"
+                        onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
+                    >
                 </div>
             </div>
             <div class="checkout-steps">

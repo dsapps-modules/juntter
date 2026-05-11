@@ -23,8 +23,8 @@ class PagamentoClienteControllerTest extends TestCase
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
-        $response->assertSee(route('company-logo.show', ['path' => 'company-logos/logo-publico.png']), false);
-        $response->assertDontSee(asset('img/logo/juntter_webp_640_174.webp'), false);
+        $response->assertSee('/company-logo?path=company-logos%2Flogo-publico.png', false);
+        $response->assertSee("onerror=\"this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';\"", false);
     }
 
     public function test_public_payment_page_falls_back_to_default_logo_when_company_logo_is_missing(): void
@@ -35,7 +35,7 @@ class PagamentoClienteControllerTest extends TestCase
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
-        $response->assertSee(asset('img/logo/juntter_webp_640_174.webp'), false);
+        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
     }
 
     private function makeVendorUser(string $establishmentId, ?string $companyLogoPath = null): User

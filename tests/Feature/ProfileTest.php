@@ -69,7 +69,7 @@ class ProfileTest extends TestCase
         $user->refresh();
 
         $this->assertNotNull($user->company_logo_path);
-        $this->assertSame(route('company-logo.show', ['path' => $user->company_logo_path]), $user->avatar_url);
+        $this->assertSame('/company-logo?path='.rawurlencode($user->company_logo_path), $user->avatar_url);
         Storage::disk('public')->assertExists($user->company_logo_path);
     }
 
