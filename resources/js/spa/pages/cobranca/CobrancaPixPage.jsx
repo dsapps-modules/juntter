@@ -103,6 +103,28 @@ function documentValidator(_, value) {
         : Promise.reject(new Error('O documento informado é inválido.'));
 }
 
+function formatPhone(value) {
+    const digits = String(value ?? '').replace(/\D+/g, '').slice(0, 11);
+
+    if (!digits) {
+        return '';
+    }
+
+    if (digits.length <= 2) {
+        return `(${digits}`;
+    }
+
+    if (digits.length <= 6) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    }
+
+    if (digits.length <= 10) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export default function CobrancaPixPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
@@ -709,8 +731,12 @@ export default function CobrancaPixPage() {
                                                 </Form.Item>
                                             </Col>
                                             <Col xs={24} md={12}>
-                                                <Form.Item label="Telefone" name={['client', 'phone']}>
-                                                    <Input size="large" placeholder="(00) 00000-0000" />
+                                                <Form.Item
+                                                    label="Telefone"
+                                                    name={['client', 'phone']}
+                                                    normalize={formatPhone}
+                                                >
+                                                    <Input size="large" placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
                                                 </Form.Item>
                                             </Col>
                                         </Row>
@@ -997,8 +1023,12 @@ export default function CobrancaPixPage() {
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={12}>
-                                    <Form.Item label="Telefone" name={['dados_cliente_preenchidos', 'telefone']}>
-                                        <Input size="large" placeholder="(00) 00000-0000" />
+                                    <Form.Item
+                                        label="Telefone"
+                                        name={['dados_cliente_preenchidos', 'telefone']}
+                                        normalize={formatPhone}
+                                    >
+                                        <Input size="large" placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
                                     </Form.Item>
                                 </Col>
                             </Row>
