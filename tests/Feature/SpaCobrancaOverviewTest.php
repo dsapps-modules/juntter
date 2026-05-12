@@ -13,7 +13,7 @@ class SpaCobrancaOverviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_cobranca_overview_returns_transaction_and_link_data(): void
+    public function test_cobranca_overview_returns_transaction_and_pix_link_data(): void
     {
         $user = User::factory()->create([
             'name' => 'Test User',
@@ -34,8 +34,20 @@ class SpaCobrancaOverviewTest extends TestCase
 
         LinkPagamento::create([
             'estabelecimento_id' => '5001',
-            'codigo_unico' => 'link_teste_01',
-            'descricao' => 'Link de teste',
+            'codigo_unico' => 'link_pix_01',
+            'descricao' => 'Link Pix de teste',
+            'valor' => 125.00,
+            'valor_centavos' => 12500,
+            'parcelas' => [1, 2, 3],
+            'juros' => 'CLIENT',
+            'status' => 'ATIVO',
+            'tipo_pagamento' => 'PIX',
+        ]);
+
+        LinkPagamento::create([
+            'estabelecimento_id' => '5001',
+            'codigo_unico' => 'link_cartao_01',
+            'descricao' => 'Link cartao de teste',
             'valor' => 125.00,
             'valor_centavos' => 12500,
             'parcelas' => [1, 2, 3],
@@ -53,7 +65,8 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonPath('summary.paid_transactions', 1)
             ->assertJsonPath('summary.active_links', 1)
             ->assertJsonPath('rows.0.customer', 'Cliente Teste')
-            ->assertJsonPath('link_rows.0.title', 'Link de teste');
+            ->assertJsonPath('link_rows.0.title', 'Link Pix de teste')
+            ->assertJsonCount(1, 'link_rows');
     }
 
     public function test_cobranca_overview_filters_transactions_by_selected_period(): void

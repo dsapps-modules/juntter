@@ -185,4 +185,27 @@ class PaytimeTransactionWebhookTest extends TestCase
 
         $this->assertTrue(true);
     }
+
+    public function test_it_processes_updated_sub_transactions_in_the_job_handler(): void
+    {
+        $payload = [
+            'event' => 'updated-sub-transaction',
+            'data' => [
+                '_id' => 'sub-transaction-123',
+                'status' => 'PAID',
+            ],
+        ];
+
+        $job = new ProcessPaytimeTransactionWebhook($payload);
+
+        $service = $this->createMock(PaytimeTransactionSyncService::class);
+        $service->expects($this->once())
+            ->method('syncWebhookPayload')
+            ->with($payload)
+            ->willReturn(null);
+
+        $job->handle($service);
+
+        $this->assertTrue(true);
+    }
 }

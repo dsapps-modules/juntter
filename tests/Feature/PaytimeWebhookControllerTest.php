@@ -106,6 +106,48 @@ class PaytimeWebhookControllerTest extends TestCase
         });
     }
 
+    public function test_it_dispatches_the_updated_sub_transaction_handler_from_the_single_paytime_webhook_route(): void
+    {
+        Queue::fake();
+        Log::shouldReceive('info')
+            ->once()
+            ->withArgs(function (string $message, array $context): bool {
+                return $message === 'Paytime webhook received for updated-sub-transaction'
+                    && ($context['event'] ?? null) === 'updated-sub-transaction'
+                    && ($context['transaction_id'] ?? null) === 'transaction-789'
+                    && (int) ($context['establishment_id'] ?? 0) === 127700
+                    && ($context['status'] ?? null) === 'PAID'
+                    && (int) ($context['amount'] ?? 0) === 100
+                    && in_array('establishment', $context['data_keys'] ?? [], true);
+            })
+            ->andReturnNull();
+
+        $response = $this
+            ->withBasicAuth('webhook-user', 'webhook-pass')
+            ->postJson('/api/webhook/paytime', [
+                'event' => 'updated-sub-transaction',
+                'data' => [
+                    '_id' => 'transaction-789',
+                    'status' => 'PAID',
+                    'amount' => 100,
+                    'type' => 'PIX',
+                    'establishment' => [
+                        'id' => 127700,
+                    ],
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Paytime webhook received',
+        ]);
+
+        Queue::assertPushed(ProcessPaytimeTransactionWebhook::class, function (ProcessPaytimeTransactionWebhook $job): bool {
+            return ($job->payload['event'] ?? null) === 'updated-sub-transaction'
+                && ($job->payload['data']['_id'] ?? null) === 'transaction-789';
+        });
+    }
+
     public function test_it_returns_ok_for_unsupported_events_without_dispatching_jobs(): void
     {
         Queue::fake();

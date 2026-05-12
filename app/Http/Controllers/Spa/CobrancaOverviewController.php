@@ -30,7 +30,8 @@ class CobrancaOverviewController extends Controller
         $transactionsQuery = PaytimeTransaction::query()
             ->with('establishment:id,fantasy_name,first_name,last_name');
 
-        $linksQuery = LinkPagamento::query();
+        $linksQuery = LinkPagamento::query()
+            ->where('tipo_pagamento', 'PIX');
 
         if ($isRestricted) {
             $transactionsQuery->where('establishment_id', (string) $establishmentId);

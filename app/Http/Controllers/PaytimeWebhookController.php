@@ -105,7 +105,16 @@ class PaytimeWebhookController extends Controller
 
     private function handleUpdatedSubTransaction(array $payload): void
     {
-        Log::info('Paytime webhook received for updated-sub-transaction', ['event' => 'updated-sub-transaction']);
+        Log::info('Paytime webhook received for updated-sub-transaction', [
+            'event' => 'updated-sub-transaction',
+            'transaction_id' => $payload['data']['_id'] ?? null,
+            'establishment_id' => $payload['data']['establishment']['id'] ?? ($payload['data']['establishment_id'] ?? null),
+            'status' => $payload['data']['status'] ?? null,
+            'amount' => $payload['data']['amount'] ?? null,
+            'created_at' => $payload['data']['created_at'] ?? null,
+            'data_keys' => array_keys($payload['data'] ?? []),
+        ]);
+        Queue::push(new ProcessPaytimeTransactionWebhook($this->payloadWithEvent($payload, 'updated-sub-transaction')));
     }
 
     private function handleNewBillet(array $payload): void
