@@ -235,10 +235,12 @@ export default function CobrancaPixPage() {
     function getStatusColor(status) {
         switch (status) {
             case 'Ativo':
+                return 'gold';
             case 'Pago':
             case 'Aprovado':
                 return 'green';
             case 'Inativo':
+                return 'red';
             case 'Cancelado':
             case 'Falha':
             case 'Estornado':
@@ -373,6 +375,12 @@ export default function CobrancaPixPage() {
         {
             title: 'Data',
             dataIndex: 'created_at',
+            render: (value, record) => (
+                <Space direction="vertical" size={4}>
+                    <Typography.Text>{value}</Typography.Text>
+                    <Tag color={getStatusColor(record.status)}>{record.status}</Tag>
+                </Space>
+            ),
             width: 180,
         },
         {
@@ -863,9 +871,6 @@ export default function CobrancaPixPage() {
                                     <Button block onClick={() => navigate('/links-pagamento')}>
                                         Ver links
                                     </Button>
-                                    <Button block onClick={() => refreshOverview()}>
-                                        Atualizar painel
-                                    </Button>
                                 </Space>
                             </Card>
 
@@ -882,7 +887,7 @@ export default function CobrancaPixPage() {
                                                 </Space>
                                                 <Space wrap>
                                                     <Tag color="green">{item.amount}</Tag>
-                                                    <Tag color={item.status === 'Ativo' ? 'green' : 'gold'}>{item.status}</Tag>
+                                                    <Tag color={getStatusColor(item.status)}>{item.status}</Tag>
                                                 </Space>
                                                 <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
                                                 <Button size="small" onClick={() => navigate(`/links-pagamento-pix/${item.id}`)}>

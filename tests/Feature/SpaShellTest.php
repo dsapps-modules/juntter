@@ -283,8 +283,21 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Últimos links', $pageSource);
         $this->assertStringContainsString('Criar link PIX', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
-        $this->assertStringContainsString('Atualizar painel', $pageSource);
+        $this->assertStringNotContainsString('Atualizar painel', $pageSource);
         $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
+    }
+
+    public function test_the_pix_page_shows_status_below_the_transaction_date(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
+
+        $this->assertStringContainsString("title: 'Data'", $pageSource);
+        $this->assertStringContainsString('dataIndex: \'created_at\'', $pageSource);
+        $this->assertStringContainsString('render: (value, record) =>', $pageSource);
+        $this->assertStringContainsString('<Typography.Text>{value}</Typography.Text>', $pageSource);
+        $this->assertStringContainsString('<Tag color={getStatusColor(record.status)}>{record.status}</Tag>', $pageSource);
+        $this->assertStringContainsString("case 'Ativo':\n                return 'gold';", $pageSource);
+        $this->assertStringContainsString("case 'Inativo':\n                return 'red';", $pageSource);
     }
 
     public function test_the_boleto_page_contains_the_form_sections(): void
