@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\PaytimeTransaction;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 
 class PaytimeTransactionSyncService
 {
@@ -27,7 +28,20 @@ class PaytimeTransactionSyncService
             ) ?? now();
         }
 
-        $transaction->save();
+        try {
+            $transaction->save();
+        } catch (QueryException $exception) {
+            if (! $this->isDuplicateExternalIdException($exception)) {
+                throw $exception;
+            }
+
+            $transaction = PaytimeTransaction::query()
+                ->where('external_id', $externalId)
+                ->firstOrFail();
+
+            $transaction->fill($this->mapAttributes($data, $context));
+            $transaction->save();
+        }
 
         return $transaction;
     }
@@ -101,5 +115,12 @@ class PaytimeTransactionSyncService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function isDuplicateExternalIdException(QueryException $exception): bool
+    {
+        return in_array($exception->errorInfo[0] ?? null, ['23000', 23000], true)
+            && in_array($exception->errorInfo[1] ?? null, [1062, '1062'], true)
+            && str_contains($exception->getMessage(), 'Duplicate entry');
     }
 }

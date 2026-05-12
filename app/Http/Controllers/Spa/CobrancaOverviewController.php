@@ -45,7 +45,11 @@ class CobrancaOverviewController extends Controller
         $transactions = $this->applyPeriodFilter($transactionsQuery, $selectedPeriod)
             ->orderByDesc('created_at')
             ->get();
-        $links = $this->applyPeriodFilter($linksQuery, $selectedPeriod)
+        $linkedPaymentLinkReferences = $this->resolveLinkedPaymentLinkReferences($transactions);
+        $links = $this->excludeLinksWithTransactions(
+            $this->applyPeriodFilter($linksQuery, $selectedPeriod),
+            $linkedPaymentLinkReferences
+        )
             ->orderByDesc('created_at')
             ->get();
 
@@ -205,6 +209,72 @@ class CobrancaOverviewController extends Controller
             $period->copy()->startOfMonth(),
             $period->copy()->endOfMonth(),
         ]);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\PaytimeTransaction>  $transactions
+     * @return array{ids: array<int, int>, codes: array<int, string>}
+     */
+    private function resolveLinkedPaymentLinkReferences(Collection $transactions): array
+    {
+        $ids = [];
+        $codes = [];
+
+        foreach ($transactions as $transaction) {
+            $metadata = $transaction->metadata ?? [];
+
+            foreach ($this->extractInfoAdditionalItems($metadata) as $item) {
+                $key = $item['key'] ?? null;
+                $value = $item['value'] ?? null;
+
+                if ($key === 'link_pagamento_id' && is_numeric($value)) {
+                    $ids[] = (int) $value;
+                }
+
+                if ($key === 'codigo_unico' && is_string($value) && trim($value) !== '') {
+                    $codes[] = trim($value);
+                }
+            }
+        }
+
+        return [
+            'ids' => array_values(array_unique($ids)),
+            'codes' => array_values(array_unique($codes)),
+        ];
+    }
+
+    /**
+     * @param  array{ids: array<int, int>, codes: array<int, string>}  $references
+     */
+    private function excludeLinksWithTransactions(Builder $query, array $references): Builder
+    {
+        if ($references['ids'] !== []) {
+            $query->whereNotIn('id', $references['ids']);
+        }
+
+        if ($references['codes'] !== []) {
+            $query->whereNotIn('codigo_unico', $references['codes']);
+        }
+
+        return $query;
+    }
+
+    /**
+     * @return array<int, array{key?: mixed, value?: mixed}>
+     */
+    private function extractInfoAdditionalItems(array $metadata): array
+    {
+        $items = [];
+
+        foreach (['info_additional', 'data.info_additional'] as $path) {
+            $value = data_get($metadata, $path);
+
+            if (is_array($value)) {
+                $items = array_merge($items, $value);
+            }
+        }
+
+        return $items;
     }
 
     private function resolveSelectedPeriod(string $selectedPeriod): string
