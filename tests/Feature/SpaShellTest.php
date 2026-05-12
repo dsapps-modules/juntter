@@ -284,6 +284,11 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Criar link PIX', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
         $this->assertStringNotContainsString('Atualizar painel', $pageSource);
+        $this->assertStringContainsString('const pixSummary = useMemo(() => ({', $pageSource);
+        $this->assertStringContainsString('total_transactions: pixTransactionRows.length', $pageSource);
+        $this->assertStringContainsString(')).length + activePixLinksCount', $pageSource);
+        $this->assertStringContainsString("['Transações', pixSummary.total_transactions]", $pageSource);
+        $this->assertStringContainsString("['Pagas', pixSummary.paid_transactions]", $pageSource);
         $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
     }
 
@@ -295,7 +300,9 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('dataIndex: \'created_at\'', $pageSource);
         $this->assertStringContainsString('render: (value, record) =>', $pageSource);
         $this->assertStringContainsString('<Typography.Text>{value}</Typography.Text>', $pageSource);
-        $this->assertStringContainsString('<Tag color={getStatusColor(record.status)}>{record.status}</Tag>', $pageSource);
+        $this->assertStringContainsString('function getPaymentStatus(record)', $pageSource);
+        $this->assertStringContainsString("return record.raw_status === 'PAID' || record.status === 'Pago' ? 'Pago' : 'Pendente';", $pageSource);
+        $this->assertStringContainsString('<Tag color={getStatusColor(getPaymentStatus(record))}>{getPaymentStatus(record)}</Tag>', $pageSource);
         $this->assertStringContainsString("case 'Ativo':\n                return 'gold';", $pageSource);
         $this->assertStringContainsString("case 'Inativo':\n                return 'red';", $pageSource);
     }

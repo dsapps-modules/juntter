@@ -213,22 +213,38 @@ export default function CobrancaPixPage() {
         return Array.from(optionsByValue.values());
     }, [currentPeriod, overview.periods]);
 
-    const pixRows = useMemo(() => {
-        const transactionRows = (overview.rows ?? []).filter((row) => row.type === 'PIX').map((row) => ({
+    const pixTransactionRows = useMemo(() => (
+        (overview.rows ?? []).filter((row) => row.type === 'PIX').map((row) => ({
             ...row,
             kind: row.kind ?? 'transaction',
-        }));
-        const linkRows = (overview.link_rows ?? []).map((row) => ({
+        }))
+    ), [overview.rows]);
+
+    const pixLinkRows = useMemo(() => (
+        (overview.link_rows ?? []).map((row) => ({
             ...row,
             kind: 'link',
-        }));
+        }))
+    ), [overview.link_rows]);
 
-        return [...transactionRows, ...linkRows].sort(
+    const pixRows = useMemo(() => (
+        [...pixTransactionRows, ...pixLinkRows].sort(
             (left, right) => (right.created_at_sort ?? 0) - (left.created_at_sort ?? 0),
-        );
-    }, [overview.link_rows, overview.rows]);
+        )
+    ), [pixLinkRows, pixTransactionRows]);
 
-    const summary = overview.summary ?? {};
+    const activePixLinksCount = pixLinkRows.filter((row) => row.raw_status === 'ATIVO' || row.status === 'Ativo').length;
+
+    const pixSummary = useMemo(() => ({
+        total_transactions: pixTransactionRows.length,
+        paid_transactions: pixTransactionRows.filter((row) => row.raw_status === 'PAID' || row.status === 'Pago').length,
+        pending_transactions: pixTransactionRows.filter((row) => (
+            ['PENDING', 'APPROVED', 'PROCESSING'].includes(row.raw_status)
+            || ['Pendente', 'Aprovado', 'Processando'].includes(row.status)
+        )).length + activePixLinksCount,
+        active_links: activePixLinksCount,
+    }), [activePixLinksCount, pixTransactionRows]);
+
     const recentLinks = overview.recent_links ?? [];
     const linkCustomerEnabled = Form.useWatch('dados_cliente_preenchidos_habilitado', linkForm);
 
@@ -248,6 +264,10 @@ export default function CobrancaPixPage() {
             default:
                 return 'gold';
         }
+    }
+
+    function getPaymentStatus(record) {
+        return record.raw_status === 'PAID' || record.status === 'Pago' ? 'Pago' : 'Pendente';
     }
 
     function getTransactionStatusTone(status) {
@@ -378,7 +398,7 @@ export default function CobrancaPixPage() {
             render: (value, record) => (
                 <Space direction="vertical" size={4}>
                     <Typography.Text>{value}</Typography.Text>
-                    <Tag color={getStatusColor(record.status)}>{record.status}</Tag>
+                    <Tag color={getStatusColor(getPaymentStatus(record))}>{getPaymentStatus(record)}</Tag>
                 </Space>
             ),
             width: 180,
@@ -845,10 +865,10 @@ export default function CobrancaPixPage() {
 
                             <Row gutter={[12, 12]}>
                                 {[
-                                    ['Transações', summary.total_transactions ?? 0],
-                                    ['Pagas', summary.paid_transactions ?? 0],
-                                    ['Pendentes', summary.pending_transactions ?? 0],
-                                    ['Links ativos', summary.active_links ?? 0],
+                                    ['Transações', pixSummary.total_transactions],
+                                    ['Pagas', pixSummary.paid_transactions],
+                                    ['Pendentes', pixSummary.pending_transactions],
+                                    ['Links ativos', pixSummary.active_links],
                                 ].map(([label, value]) => (
                                     <Col xs={12} sm={12} key={label}>
                                         <Card size="small" bordered={false} className="spa-pix-mini-stat-card">
