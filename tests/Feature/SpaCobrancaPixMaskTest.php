@@ -34,6 +34,40 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertSame(2, substr_count($pageSource, 'maxLength={15}'));
     }
 
+    public function test_cobranca_cartao_credito_page_looks_up_address_from_zipcode(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
+
+        $this->assertStringContainsString('function formatZipcode(value)', $pageSource);
+        $this->assertStringContainsString('normalize={formatZipcode}', $pageSource);
+        $this->assertStringContainsString('maxLength={9}', $pageSource);
+        $this->assertStringContainsString('async function lookupAddressByZipcode(zipcode)', $pageSource);
+        $this->assertStringContainsString('https://viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $pageSource);
+        $this->assertStringContainsString('async function handleZipcodeBlur()', $pageSource);
+        $this->assertStringContainsString('street: address.logradouro || \'\'', $pageSource);
+        $this->assertStringContainsString('neighborhood: address.bairro || \'\'', $pageSource);
+        $this->assertStringContainsString('city: address.localidade || \'\'', $pageSource);
+        $this->assertStringContainsString('state: address.uf || undefined', $pageSource);
+        $this->assertStringContainsString('onBlur={handleZipcodeBlur}', $pageSource);
+    }
+
+    public function test_cobranca_boleto_page_looks_up_address_from_zipcode(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
+
+        $this->assertStringContainsString('function formatZipcode(value)', $pageSource);
+        $this->assertStringContainsString('normalize={formatZipcode}', $pageSource);
+        $this->assertStringContainsString('maxLength={9}', $pageSource);
+        $this->assertStringContainsString('async function lookupAddressByZipcode(zipcode)', $pageSource);
+        $this->assertStringContainsString('https://viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $pageSource);
+        $this->assertStringContainsString('async function handleZipcodeBlur()', $pageSource);
+        $this->assertStringContainsString('street: address.logradouro || \'\'', $pageSource);
+        $this->assertStringContainsString('neighborhood: address.bairro || \'\'', $pageSource);
+        $this->assertStringContainsString('city: address.localidade || \'\'', $pageSource);
+        $this->assertStringContainsString('state: address.uf || undefined', $pageSource);
+        $this->assertStringContainsString('onBlur={handleZipcodeBlur}', $pageSource);
+    }
+
     public function test_cobranca_pix_page_uses_phone_mask_in_both_phone_fields(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));

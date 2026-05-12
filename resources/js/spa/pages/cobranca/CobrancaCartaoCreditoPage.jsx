@@ -177,6 +177,40 @@ function formatPhone(value) {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
+function normalizeDigits(value) {
+    return String(value ?? '').replace(/\D+/g, '');
+}
+
+function formatZipcode(value) {
+    const digits = normalizeDigits(value).slice(0, 8);
+
+    if (digits.length <= 5) {
+        return digits;
+    }
+
+    return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
+async function lookupAddressByZipcode(zipcode) {
+    const response = await fetch(`https://viacep.com.br/ws/${normalizeDigits(zipcode)}/json/`, {
+        headers: {
+            Accept: 'application/json',
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Não foi possível consultar o CEP.');
+    }
+
+    const payload = await response.json();
+
+    if (payload.erro) {
+        throw new Error('CEP não encontrado.');
+    }
+
+    return payload;
+}
+
 function getCurrentPeriod() {
     const now = new Date();
 
@@ -432,6 +466,32 @@ export default function CobrancaCartaoCreditoPage() {
 
     function closeResultModal() {
         setResultModalOpen(false);
+    }
+
+    async function handleZipcodeBlur() {
+        const zipcode = form.getFieldValue(['client', 'address', 'zip_code']);
+
+        if (normalizeDigits(zipcode).length !== 8) {
+            return;
+        }
+
+        try {
+            const address = await lookupAddressByZipcode(zipcode);
+
+            form.setFieldsValue({
+                client: {
+                    address: {
+                        zip_code: zipcode,
+                        street: address.logradouro || '',
+                        neighborhood: address.bairro || '',
+                        city: address.localidade || '',
+                        state: address.uf || undefined,
+                    },
+                },
+            });
+        } catch (error) {
+            message.error(error.message || 'Não foi possível consultar o CEP.');
+        }
     }
 
     async function handleSubmit(values) {
@@ -807,8 +867,9 @@ export default function CobrancaCartaoCreditoPage() {
                                                             label="CEP"
                                                             name={['client', 'address', 'zip_code']}
                                                             rules={[{ required: true, message: 'Informe o CEP.' }]}
+                                                            normalize={formatZipcode}
                                                         >
-                                                            <Input size="large" placeholder="00000-000" />
+                                                            <Input size="large" placeholder="00000-000" onBlur={handleZipcodeBlur} inputMode="numeric" maxLength={9} />
                                                         </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={16}>
