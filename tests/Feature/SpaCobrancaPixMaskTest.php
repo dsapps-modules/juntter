@@ -15,6 +15,16 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertSame(2, substr_count($pageSource, 'maxLength={18}'));
     }
 
+    public function test_cobranca_cartao_credito_page_uses_the_shared_document_mask_in_all_document_fields(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
+
+        $this->assertStringContainsString("import { formatDocument, isValidDocument } from '../../documentValidation';", $pageSource);
+        $this->assertSame(3, substr_count($pageSource, 'normalize={formatDocument}'));
+        $this->assertSame(3, substr_count($pageSource, 'maxLength={18}'));
+        $this->assertSame(3, substr_count($pageSource, 'inputMode="numeric"'));
+    }
+
     public function test_cobranca_pix_page_uses_phone_mask_in_both_phone_fields(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));

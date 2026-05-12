@@ -355,6 +355,23 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
         $this->assertStringContainsString("style={{ minWidth: 176, width: 'auto' }}", $pageSource);
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
+        $this->assertLessThan(
+            strpos($pageSource, 'label="Rua"'),
+            strpos($pageSource, 'label="CEP"')
+        );
+        $this->assertLessThan(
+            strpos($pageSource, 'label="Complemento"'),
+            strpos($pageSource, 'label="Número"')
+        );
+        $this->assertSame(1, substr_count($pageSource, "name={['client', 'address', 'number']}"));
+        $this->assertLessThan(
+            strpos($pageSource, 'label="Bairro"'),
+            strpos($pageSource, 'label="Complemento"')
+        );
+        $this->assertLessThan(
+            strpos($pageSource, 'label="Cidade"'),
+            strpos($pageSource, 'label="Estado"')
+        );
     }
 
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void

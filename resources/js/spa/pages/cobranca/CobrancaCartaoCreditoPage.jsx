@@ -34,7 +34,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
-import { isValidDocument } from '../../documentValidation';
+import { formatDocument, isValidDocument } from '../../documentValidation';
 
 const stateOptions = [
     'AC',
@@ -743,16 +743,17 @@ export default function CobrancaCartaoCreditoPage() {
 
                                                 <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={12}>
-                                                    <Form.Item
-                                                        label="Documento"
-                                                        name={['client', 'document']}
-                                                        rules={[
-                                                            { required: true, message: 'Informe o documento.' },
-                                                            { validator: documentValidator },
-                                                        ]}
-                                                    >
-                                                        <Input size="large" placeholder="000.000.000-00" />
-                                                    </Form.Item>
+                                                        <Form.Item
+                                                            label="Documento"
+                                                            name={['client', 'document']}
+                                                            rules={[
+                                                                { required: true, message: 'Informe o documento.' },
+                                                                { validator: documentValidator },
+                                                            ]}
+                                                            normalize={formatDocument}
+                                                        >
+                                                            <Input size="large" placeholder="CPF/CNPJ" inputMode="numeric" maxLength={18} />
+                                                        </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={12}>
                                                         <Form.Item
@@ -778,53 +779,6 @@ export default function CobrancaCartaoCreditoPage() {
                                                 </Row>
 
                                                 <Row gutter={[16, 16]}>
-                                                    <Col xs={24} md={18}>
-                                                        <Form.Item
-                                                            label="Rua"
-                                                            name={['client', 'address', 'street']}
-                                                            rules={[{ required: true, message: 'Informe a rua.' }]}
-                                                        >
-                                                            <Input size="large" placeholder="Nome da rua" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                    <Col xs={24} md={6}>
-                                                        <Form.Item label="Número" name={['client', 'address', 'number']}>
-                                                            <Input size="large" placeholder="123" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                </Row>
-
-                                                <Row gutter={[16, 16]}>
-                                                    <Col xs={24} md={10}>
-                                                        <Form.Item
-                                                            label="Bairro"
-                                                            name={['client', 'address', 'neighborhood']}
-                                                            rules={[{ required: true, message: 'Informe o bairro.' }]}
-                                                        >
-                                                            <Input size="large" placeholder="Centro" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                    <Col xs={24} md={10}>
-                                                        <Form.Item
-                                                            label="Cidade"
-                                                            name={['client', 'address', 'city']}
-                                                            rules={[{ required: true, message: 'Informe a cidade.' }]}
-                                                        >
-                                                            <Input size="large" placeholder="Nome da cidade" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                    <Col xs={24} md={4}>
-                                                        <Form.Item
-                                                            label="Estado"
-                                                            name={['client', 'address', 'state']}
-                                                            rules={[{ required: true, message: 'Selecione o estado.' }]}
-                                                        >
-                                                            <Select size="large" options={stateOptions} placeholder="UF" />
-                                                        </Form.Item>
-                                                    </Col>
-                                                </Row>
-
-                                                <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={8}>
                                                         <Form.Item
                                                             label="CEP"
@@ -835,8 +789,55 @@ export default function CobrancaCartaoCreditoPage() {
                                                         </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={16}>
+                                                        <Form.Item
+                                                            label="Rua"
+                                                            name={['client', 'address', 'street']}
+                                                            rules={[{ required: true, message: 'Informe a rua.' }]}
+                                                        >
+                                                            <Input size="large" placeholder="Nome da rua" />
+                                                        </Form.Item>
+                                                    </Col>
+                                                </Row>
+
+                                                <Row gutter={[16, 16]}>
+                                                    <Col xs={24} md={6}>
+                                                        <Form.Item label="Número" name={['client', 'address', 'number']}>
+                                                            <Input size="large" placeholder="123" />
+                                                        </Form.Item>
+                                                    </Col>
+                                                    <Col xs={24} md={8}>
                                                         <Form.Item label="Complemento" name={['client', 'address', 'complement']}>
                                                             <Input size="large" placeholder="Apto 101" />
+                                                        </Form.Item>
+                                                    </Col>
+                                                    <Col xs={24} md={10}>
+                                                        <Form.Item
+                                                            label="Bairro"
+                                                            name={['client', 'address', 'neighborhood']}
+                                                            rules={[{ required: true, message: 'Informe o bairro.' }]}
+                                                        >
+                                                            <Input size="large" placeholder="Centro" />
+                                                        </Form.Item>
+                                                    </Col>
+                                                </Row>
+
+                                                <Row gutter={[16, 16]}>
+                                                    <Col xs={24} md={6}>
+                                                        <Form.Item
+                                                            label="Estado"
+                                                            name={['client', 'address', 'state']}
+                                                            rules={[{ required: true, message: 'Selecione o estado.' }]}
+                                                        >
+                                                            <Select size="large" options={stateOptions} placeholder="UF" />
+                                                        </Form.Item>
+                                                    </Col>
+                                                    <Col xs={24} md={18}>
+                                                        <Form.Item
+                                                            label="Cidade"
+                                                            name={['client', 'address', 'city']}
+                                                            rules={[{ required: true, message: 'Informe a cidade.' }]}
+                                                        >
+                                                            <Input size="large" placeholder="Nome da cidade" />
                                                         </Form.Item>
                                                     </Col>
                                                 </Row>
@@ -862,8 +863,9 @@ export default function CobrancaCartaoCreditoPage() {
                                                             label="Documento do portador"
                                                             name={['card', 'holder_document']}
                                                             rules={[{ validator: documentValidator }]}
+                                                            normalize={formatDocument}
                                                         >
-                                                            <Input size="large" placeholder="CPF/CNPJ do portador" />
+                                                            <Input size="large" placeholder="CPF/CNPJ do portador" inputMode="numeric" maxLength={18} />
                                                         </Form.Item>
                                                     </Col>
                                                 </Row>
@@ -1163,8 +1165,9 @@ export default function CobrancaCartaoCreditoPage() {
                                     label="Documento"
                                     name={['dados_cliente_preenchidos', 'documento']}
                                     rules={[{ validator: documentValidator }]}
+                                    normalize={formatDocument}
                                 >
-                                    <Input size="large" placeholder="000.000.000-00" />
+                                    <Input size="large" placeholder="CPF/CNPJ" inputMode="numeric" maxLength={18} />
                                 </Form.Item>
                             </Col>
                             <Col xs={24} md={12}>
@@ -1325,3 +1328,4 @@ export default function CobrancaCartaoCreditoPage() {
         </Row>
     );
 }
+
