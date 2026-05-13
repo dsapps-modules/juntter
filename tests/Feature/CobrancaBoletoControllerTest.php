@@ -220,7 +220,7 @@ class CobrancaBoletoControllerTest extends TestCase
         ], $response->getData(true));
     }
 
-    public function test_criar_transacao_credito_accepts_zero_padded_expiration_month(): void
+    public function test_post_cobranca_transacao_credito_accepts_zero_padded_expiration_month(): void
     {
         $dadosValidados = [
             'payment_type' => 'CREDIT',

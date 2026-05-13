@@ -45,8 +45,7 @@ class CreditoService
 
         // Converter campos para tipos corretos para a API
         $dados['installments'] = (int) ($dados['installments'] ?? 1); // Default para 1 se não enviado
-        $expirationMonth = (int) ($dados['card']['expiration_month'] ?? 0);
-        $dados['card']['expiration_month'] = str_pad((string) $expirationMonth, 2, '0', STR_PAD_LEFT);
+        $dados['card']['expiration_month'] = (int) ($dados['card']['expiration_month'] ?? 0);
         $dados['card']['expiration_year'] = (int) $dados['card']['expiration_year'];
 
         return $dados;

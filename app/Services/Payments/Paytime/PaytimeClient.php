@@ -390,7 +390,7 @@ class PaytimeClient
                 'holder_name' => trim((string) ($card['holder_name'] ?? $order->customer_name)),
                 'holder_document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
                 'card_number' => $this->normalizeDigits((string) ($card['card_number'] ?? '')),
-                'expiration_month' => str_pad((string) ((int) ($card['expiration_month'] ?? 0)), 2, '0', STR_PAD_LEFT),
+                'expiration_month' => (int) ($card['expiration_month'] ?? 0),
                 'expiration_year' => (int) ($card['expiration_year'] ?? 0),
                 'security_code' => $this->normalizeDigits((string) ($card['security_code'] ?? '')),
             ],

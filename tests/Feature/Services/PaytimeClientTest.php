@@ -246,7 +246,7 @@ class PaytimeClientTest extends TestCase
                         && $payload['card']['holder_name'] === 'Maria Silva'
                         && $payload['card']['holder_document'] === '12345678909'
                         && $payload['card']['card_number'] === '4111111111111111'
-                        && $payload['card']['expiration_month'] === '12'
+                        && $payload['card']['expiration_month'] === 12
                         && $payload['card']['expiration_year'] === 2027
                         && $payload['card']['security_code'] === '123'
                         && $payload['extra_headers']['establishment_id'] === '127700'
@@ -325,7 +325,7 @@ class PaytimeClientTest extends TestCase
                 $this->callback(function (array $payload) use (&$sentPayload): bool {
                     $sentPayload = $payload;
 
-                    return $payload['card']['expiration_month'] === '07';
+                    return $payload['card']['expiration_month'] === 7;
                 }),
             )
             ->willReturn([
@@ -353,7 +353,7 @@ class PaytimeClientTest extends TestCase
         ]);
 
         $this->assertSame('card-api-124', $response['gateway_transaction_id']);
-        $this->assertSame('07', $sentPayload['card']['expiration_month']);
+        $this->assertSame(7, $sentPayload['card']['expiration_month']);
     }
 
     public function test_create_credit_card_payment_flags_3ds_when_gateway_requires_authentication(): void
