@@ -220,6 +220,80 @@ class CobrancaBoletoControllerTest extends TestCase
         ], $response->getData(true));
     }
 
+    public function test_criar_transacao_credito_accepts_zero_padded_expiration_month(): void
+    {
+        $dadosValidados = [
+            'payment_type' => 'CREDIT',
+            'amount' => '20,00',
+            'installments' => 1,
+            'interest' => 'CLIENT',
+            'client' => [
+                'first_name' => 'Maria',
+                'last_name' => 'Silva',
+                'document' => '123.456.789-09',
+                'phone' => '(11) 99999-9999',
+                'email' => 'maria@example.com',
+                'address' => [
+                    'street' => 'Rua A',
+                    'number' => '100',
+                    'complement' => 'Apto 1',
+                    'neighborhood' => 'Centro',
+                    'city' => 'Botucatu',
+                    'state' => 'SP',
+                    'zip_code' => '18600-000',
+                ],
+            ],
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '123.456.789-09',
+                'card_number' => '4111111111111111',
+                'expiration_month' => '07',
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ];
+
+        $user = User::factory()->make([
+            'nivel_acesso' => 'vendedor',
+        ]);
+
+        $user->setRelation('vendedor', new Vendedor([
+            'user_id' => $user->id,
+            'estabelecimento_id' => '127700',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]));
+
+        $creditoService = $this->createMock(CreditoService::class);
+        $creditoService->expects($this->once())
+            ->method('organiza')
+            ->with($this->callback(function (array $dados): bool {
+                return ($dados['card']['expiration_month'] ?? null) === '07';
+            }))
+            ->willReturnArgument(0);
+        $creditoService->expects($this->once())
+            ->method('criarTransacaoCredito')
+            ->willReturn([
+                '_id' => 'credit-123',
+                'status' => 'AUTHORIZED',
+            ]);
+
+        $this->instance(CreditoService::class, $creditoService);
+        $this->instance(TransacaoService::class, $this->createMock(TransacaoService::class));
+        $this->instance(PixService::class, $this->createMock(PixService::class));
+        $this->instance(BoletoService::class, $this->createMock(BoletoService::class));
+        $this->instance(EstabelecimentoService::class, $this->createMock(EstabelecimentoService::class));
+
+        $response = $this->actingAs($user)->postJson('/cobranca/transacao/credito', $dadosValidados);
+
+        $response->assertOk();
+        $response->assertExactJson([
+            'success' => true,
+            'message' => 'Pagamento processado com sucesso',
+        ]);
+    }
+
     public function test_criar_boleto_retorna_erro_json_quando_api_nao_entrega_id(): void
     {
         $dadosValidados = [

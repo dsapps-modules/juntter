@@ -65,7 +65,7 @@ class CobrancaCartaoRequest extends FormRequest
                 },
             ],
             'card.card_number' => 'required|string|min:13|max:19',
-            'card.expiration_month' => 'required|integer|min:1|max:12',
+            'card.expiration_month' => 'required|numeric|min:1|max:12',
             'card.expiration_year' => 'required|integer|min:2025',
             'card.security_code' => 'required|string|min:3|max:4',
         ];

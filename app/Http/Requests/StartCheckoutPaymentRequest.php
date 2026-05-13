@@ -32,7 +32,7 @@ class StartCheckoutPaymentRequest extends FormRequest
                 },
             ],
             'card.card_number' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'min:13', 'max:19'],
-            'card.expiration_month' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:1', 'max:12'],
+            'card.expiration_month' => ['exclude_unless:payment_method,credit_card', 'required', 'numeric', 'min:1', 'max:12'],
             'card.expiration_year' => ['exclude_unless:payment_method,credit_card', 'required', 'integer', 'min:'.now()->year],
             'card.security_code' => ['exclude_unless:payment_method,credit_card', 'required', 'string', 'min:3', 'max:4'],
             'card_last_four' => ['nullable', 'string', 'size:4'],
