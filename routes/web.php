@@ -158,6 +158,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/seller/checkout-links/{checkoutLink}/activate', [SellerCheckoutLinkController::class, 'activate'])->name('seller.checkout-links.activate');
         Route::post('/seller/checkout-links/{checkoutLink}/deactivate', [SellerCheckoutLinkController::class, 'deactivate'])->name('seller.checkout-links.deactivate');
         Route::get('/seller/checkout-links/{checkoutLink}/sales', [SellerCheckoutLinkController::class, 'sales'])->name('seller.checkout-links.sales');
+        Route::get('/seller/checkout-links/{checkoutLink}/sales/{order}', [SellerCheckoutLinkController::class, 'salesDetail'])->name('seller.checkout-links.sales-detail');
     });
 });
 

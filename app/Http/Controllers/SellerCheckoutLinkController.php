@@ -185,6 +185,36 @@ class SellerCheckoutLinkController extends Controller
         return view('seller.checkout-links.sales', compact('checkoutLink', 'orders'));
     }
 
+    public function salesDetail(Request $request, CheckoutLink $checkoutLink, Order $order): JsonResponse|View
+    {
+        $this->authorize('view', $checkoutLink);
+        abort_unless($order->checkout_link_id === $checkoutLink->id, 404);
+
+        $order->load([
+            'checkoutSession',
+            'paymentTransaction',
+            'product',
+            'seller',
+            'checkoutLink',
+        ]);
+
+        $order->setAttribute('status', $this->resolveDisplayStatus($order));
+        if ($order->paymentTransaction) {
+            $order->paymentTransaction->setAttribute('internal_status', $this->resolvePaymentDisplayStatus($order));
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'order' => $order,
+                'checkout_session' => $order->checkoutSession,
+                'payment_transaction' => $order->paymentTransaction,
+                'checkout_link' => $checkoutLink,
+            ]);
+        }
+
+        return redirect()->to('/app/seller/checkout-links/'.$checkoutLink->id.'/vendas/'.$order->id);
+    }
+
     private function resolveDisplayStatus(Order $order): string
     {
         if ($this->isPaidOrder($order)) {
@@ -192,6 +222,31 @@ class SellerCheckoutLinkController extends Controller
         }
 
         return (string) $order->status;
+    }
+
+    private function resolvePaymentDisplayStatus(Order $order): string
+    {
+        $paymentStatus = strtolower((string) ($order->paymentTransaction?->internal_status ?? ''));
+
+        if (in_array($paymentStatus, ['paid', 'authorized'], true)) {
+            return 'paid';
+        }
+
+        $gatewayTransactionId = $order->paymentTransaction?->gateway_transaction_id;
+
+        if (! is_string($gatewayTransactionId) || $gatewayTransactionId === '') {
+            return $paymentStatus !== '' ? $paymentStatus : 'pending';
+        }
+
+        $paytimeStatus = strtolower((string) PaytimeTransaction::query()
+            ->where('external_id', $gatewayTransactionId)
+            ->value('status'));
+
+        if (in_array($paytimeStatus, ['paid', 'approved', 'confirmed', 'success'], true)) {
+            return 'paid';
+        }
+
+        return $paymentStatus !== '' ? $paymentStatus : 'pending';
     }
 
     private function isPaidOrder(Order $order): bool

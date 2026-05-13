@@ -453,6 +453,82 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertJsonPath('total_sales', 100);
     }
 
+    public function test_checkout_link_sales_detail_endpoint_returns_customer_delivery_and_payment_data(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'recipient_name' => 'Maria Silva',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 12',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $order = Order::query()->create([
+            'seller_id' => $link->seller_id,
+            'checkout_link_id' => $link->id,
+            'checkout_session_id' => $session->id,
+            'product_id' => $link->product_id,
+            'order_number' => 'JNT-2026-000125',
+            'status' => 'pending',
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'subtotal' => 100.00,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => 100.00,
+            'payment_method' => 'pix',
+        ]);
+
+        PaymentTransaction::query()->create([
+            'order_id' => $order->id,
+            'seller_id' => $seller->id,
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'trx-detail-123',
+            'gateway_status' => 'PAID',
+            'internal_status' => 'pending',
+            'payment_method' => 'pix',
+            'amount' => 100.00,
+        ]);
+
+        PaytimeTransaction::query()->create([
+            'external_id' => 'trx-detail-123',
+            'establishment_id' => 155463,
+            'type' => 'PIX',
+            'status' => 'PAID',
+            'amount' => 10000,
+            'original_amount' => 10000,
+            'fees' => 0,
+            'installments' => 1,
+        ]);
+
+        $response = $this->actingAs($seller)->getJson('/seller/checkout-links/'.$link->id.'/sales/'.$order->id);
+
+        $response->assertOk();
+        $response->assertJsonPath('order.status', 'paid');
+        $response->assertJsonPath('payment_transaction.internal_status', 'paid');
+        $response->assertJsonPath('order.customer_name', 'Maria Silva');
+        $response->assertJsonPath('checkout_session.city', 'São Paulo');
+        $response->assertJsonPath('checkout_session.neighborhood', 'Centro');
+        $response->assertJsonPath('payment_transaction.gateway_transaction_id', 'trx-detail-123');
+        $response->assertJsonPath('checkout_link.id', $link->id);
+    }
+
     public function test_inactive_public_checkout_returns_unavailable_page(): void
     {
         $user = $this->makeVendorUser();

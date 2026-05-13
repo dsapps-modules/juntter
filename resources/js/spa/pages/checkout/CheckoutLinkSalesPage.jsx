@@ -1,8 +1,9 @@
 import { Card, Col, Empty, Row, Space, Statistic, Table, Tag, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function CheckoutLinkSalesPage() {
+    const navigate = useNavigate();
     const params = useParams();
     const [sales, setSales] = useState([]);
     const [summary, setSummary] = useState({ total_sales: 0 });
@@ -68,6 +69,10 @@ export default function CheckoutLinkSalesPage() {
                             loading={loading}
                             dataSource={sales}
                             pagination={false}
+                            onRow={(record) => ({
+                                onClick: () => navigate(`/seller/checkout-links/${params.checkoutLinkId}/vendas/${record.id}`),
+                                style: { cursor: 'pointer' },
+                            })}
                             columns={[
                                 {
                                     title: 'Pedido',
