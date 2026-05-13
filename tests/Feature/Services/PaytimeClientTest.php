@@ -246,7 +246,7 @@ class PaytimeClientTest extends TestCase
                         && $payload['card']['holder_name'] === 'Maria Silva'
                         && $payload['card']['holder_document'] === '12345678909'
                         && $payload['card']['card_number'] === '4111111111111111'
-                        && $payload['card']['expiration_month'] === 12
+                        && $payload['card']['expiration_month'] === '12'
                         && $payload['card']['expiration_year'] === 2027
                         && $payload['card']['security_code'] === '123'
                         && $payload['extra_headers']['establishment_id'] === '127700'
@@ -294,6 +294,66 @@ class PaytimeClientTest extends TestCase
                 && ($context['transaction_id'] ?? null) === 'card-api-123'
                 && in_array('_id', $context['transaction_keys'] ?? [], true);
         });
+    }
+
+    public function test_create_credit_card_payment_preserves_zero_padded_expiration_month(): void
+    {
+        Log::spy();
+
+        $seller = $this->makeVendorUser('127700');
+        $product = $this->makeProduct($seller);
+        $checkoutLink = $this->makeCheckoutLink($seller, $product);
+        $checkoutSession = $this->makeCheckoutSession($checkoutLink, [
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'zipcode' => '01001000',
+        ]);
+        $order = $this->makeOrder($seller, $checkoutLink, $checkoutSession, $product, [
+            'payment_method' => 'credit_card',
+        ]);
+
+        $sentPayload = [];
+        $apiClient = $this->createMock(ApiClientService::class);
+        $apiClient->expects($this->once())
+            ->method('post')
+            ->with(
+                'marketplace/transactions',
+                $this->callback(function (array $payload) use (&$sentPayload): bool {
+                    $sentPayload = $payload;
+
+                    return $payload['card']['expiration_month'] === '07';
+                }),
+            )
+            ->willReturn([
+                '_id' => 'card-api-124',
+                'status' => 'AUTHORIZED',
+                'card' => [
+                    'brand_name' => 'MASTERCARD',
+                    'last4_digits' => '1111',
+                ],
+            ]);
+
+        $boletoService = new BoletoService($apiClient);
+        $service = new PaytimeClient($apiClient, $boletoService);
+        $response = $service->createCreditCardPayment($order, [
+            'payment_method' => 'credit_card',
+            'installments' => 1,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '123.456.789-09',
+                'card_number' => '4111 1111 1111 1111',
+                'expiration_month' => 7,
+                'expiration_year' => 2027,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $this->assertSame('card-api-124', $response['gateway_transaction_id']);
+        $this->assertSame('07', $sentPayload['card']['expiration_month']);
     }
 
     public function test_create_credit_card_payment_flags_3ds_when_gateway_requires_authentication(): void
