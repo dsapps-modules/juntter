@@ -1378,7 +1378,13 @@ function bindForms(state) {
             clearFeedback();
             clearFieldErrors();
 
-            if (!validateIdentificationForm(identificationForm) || !validateResponsibleCpf(identificationForm, { focusOnError: true })) {
+            const personFormType = String(identificationForm.dataset.personForm || 'pf');
+            const shouldValidateResponsibleDocument = personFormType === 'pj';
+
+            if (
+                !validateIdentificationForm(identificationForm)
+                || (shouldValidateResponsibleDocument && !validateResponsibleCpf(identificationForm, { focusOnError: true }))
+            ) {
                 return;
             }
 

@@ -865,7 +865,7 @@
 
                             <div class="field">
                                 <label for="customer_birth_date_pf">Data de nascimento</label>
-                                <input id="customer_birth_date_pf" name="customer_birth_date" type="date" value="{{ optional($checkoutSession->customer_birth_date)->format('Y-m-d') }}">
+                                <input id="customer_birth_date_pf" name="customer_birth_date" type="date" value="{{ optional($checkoutSession->customer_birth_date)->format('Y-m-d') }}" required>
                                 <p class="field-error" data-error-for="customer_birth_date"></p>
                             </div>
                         </div>

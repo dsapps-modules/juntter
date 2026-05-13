@@ -191,6 +191,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('data-person-form="pj"', false);
         $response->assertSee('Salvar pessoa física', false);
         $response->assertSee('Salvar pessoa jurídica', false);
+        $this->assertMatchesRegularExpression('/<input id="customer_birth_date_pf" name="customer_birth_date" type="date"[^>]*required[^>]*>/', $response->getContent());
         $response->assertSee('Nome da empresa', false);
         $response->assertSee('Nome do responsável', false);
         $response->assertSee('CPF do responsável', false);
@@ -241,6 +242,14 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('O sistema consulta o status do pagamento periodicamente');
         $response->assertSee('data-boleto-block', false);
         $response->assertSee('data-open-payment', false);
+
+        $componentSource = file_get_contents(base_path('resources/js/checkout-public.js'));
+
+        $this->assertIsString($componentSource);
+        $this->assertStringContainsString("const personFormType = String(identificationForm.dataset.personForm || 'pf');", $componentSource);
+        $this->assertStringContainsString("const shouldValidateResponsibleDocument = personFormType === 'pj';", $componentSource);
+        $this->assertStringContainsString('!validateIdentificationForm(identificationForm)', $componentSource);
+        $this->assertStringContainsString('shouldValidateResponsibleDocument && !validateResponsibleCpf(identificationForm, { focusOnError: true })', $componentSource);
     }
 
     public function test_active_public_checkout_refreshes_session_price_when_link_changes_before_payment(): void
