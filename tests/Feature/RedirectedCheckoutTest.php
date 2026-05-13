@@ -243,6 +243,36 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('data-open-payment', false);
     }
 
+    public function test_active_public_checkout_refreshes_session_price_when_link_changes_before_payment(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'total_price' => 100.00,
+        ]);
+        $session = $this->makeCheckoutSession($link);
+
+        $link->update([
+            'unit_price' => 150.00,
+            'total_price' => 150.00,
+        ]);
+
+        $response = $this->withSession([
+            'checkout_session_token.'.$link->public_token => $session->session_token,
+        ])->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('R$ 150,00', false);
+        $response->assertDontSee('R$ 100,00', false);
+
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'subtotal' => 150.00,
+            'total' => 150.00,
+        ]);
+    }
+
     public function test_active_public_checkout_uses_the_seller_logo_when_available(): void
     {
         Storage::fake('public');
@@ -739,6 +769,7 @@ class RedirectedCheckoutTest extends TestCase
             'customer_email' => 'maria@example.com',
             'customer_document' => '123.456.789-09',
             'customer_document_type' => 'cpf',
+            'customer_birth_date' => '1990-01-01',
             'customer_phone' => '11999999999',
         ]);
 

@@ -7,6 +7,7 @@ use App\Http\Requests\StoreCheckoutIdentificationRequest;
 use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
+use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -46,6 +47,8 @@ class PublicCheckoutSessionController extends Controller
                 'total' => $checkoutLink->total_price,
                 'last_activity_at' => now(),
             ]);
+        } else {
+            $checkoutSession = $this->syncSessionPricing($checkoutSession, $checkoutLink);
         }
 
         CheckoutEvent::query()->firstOrCreate([
@@ -65,6 +68,33 @@ class PublicCheckoutSessionController extends Controller
             'checkout_session' => $checkoutSession,
             'checkout_link' => $checkoutLink,
         ]);
+    }
+
+    private function syncSessionPricing(CheckoutSession $checkoutSession, CheckoutLink $checkoutLink): CheckoutSession
+    {
+        if (Order::query()->where('checkout_session_id', $checkoutSession->id)->exists()) {
+            return $checkoutSession;
+        }
+
+        $expectedTotal = round((float) $checkoutLink->total_price, 2);
+
+        if (
+            (float) $checkoutSession->subtotal === $expectedTotal
+            && (float) $checkoutSession->total === $expectedTotal
+            && (int) $checkoutSession->product_id === (int) $checkoutLink->product_id
+        ) {
+            return $checkoutSession;
+        }
+
+        $checkoutSession->forceFill([
+            'product_id' => $checkoutLink->product_id,
+            'subtotal' => $expectedTotal,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => $expectedTotal,
+        ])->save();
+
+        return $checkoutSession->fresh();
     }
 
     public function lookupCompanyByCnpj(string $cnpj): JsonResponse
