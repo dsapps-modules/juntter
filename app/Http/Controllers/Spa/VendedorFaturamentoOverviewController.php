@@ -36,6 +36,7 @@ class VendedorFaturamentoOverviewController extends Controller
                 DB::raw('COUNT(id) as qtd')
             )
             ->whereBetween('created_at', [$dataInicio, $dataFim])
+            ->where('status', 'PAID')
             ->groupBy('establishment_id');
 
         $rows = DB::table('paytime_establishments as e')

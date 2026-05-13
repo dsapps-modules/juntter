@@ -46,13 +46,15 @@ class DashboardOverviewController extends Controller
             $transactionsQuery->where('establishment_id', $user->getEstabelecimentoId());
         }
 
-        $totalTransactions = (clone $transactionsQuery)->count();
-        $grossAmount = (int) (clone $transactionsQuery)->sum('original_amount');
-        $netAmount = (int) (clone $transactionsQuery)->sum('amount');
+        $settledTransactionsQuery = (clone $transactionsQuery)->where('status', 'PAID');
+
+        $totalTransactions = (int) (clone $settledTransactionsQuery)->count();
+        $grossAmount = (int) (clone $settledTransactionsQuery)->sum('original_amount');
+        $netAmount = (int) (clone $settledTransactionsQuery)->sum('amount');
         $totalFees = max(0, $grossAmount - $netAmount);
         $averageTicket = $totalTransactions > 0 ? (int) round($netAmount / $totalTransactions) : 0;
 
-        $transactionsByType = (clone $transactionsQuery)
+        $transactionsByType = (clone $settledTransactionsQuery)
             ->selectRaw('type, COUNT(*) as total, SUM(amount) as amount, SUM(original_amount) as original_amount')
             ->groupBy('type')
             ->get()
@@ -70,17 +72,17 @@ class DashboardOverviewController extends Controller
             'blocked_establishments' => $blockedEstablishments,
             'total_transactions' => $totalTransactions,
             'pending_transactions' => (clone $transactionsQuery)->whereIn('status', ['PENDING', 'APPROVED', 'PROCESSING'])->count(),
-            'today_transactions' => (clone $transactionsQuery)->whereDate('created_at', Carbon::today())->count(),
+            'today_transactions' => (clone $settledTransactionsQuery)->whereDate('created_at', Carbon::today())->count(),
             'total_revenue' => $this->formatMoney($netAmount),
         ];
 
-        $transactionStats = (clone $transactionsQuery)
+        $transactionStats = (clone $settledTransactionsQuery)
             ->selectRaw('establishment_id, COUNT(*) as total_transactions, SUM(amount) as total_amount, MAX(created_at) as last_activity')
             ->groupBy('establishment_id')
             ->get()
             ->keyBy('establishment_id');
 
-        $recentTransactions = (clone $transactionsQuery)
+        $recentTransactions = (clone $settledTransactionsQuery)
             ->orderByDesc('created_at')
             ->limit(6)
             ->get();
@@ -211,7 +213,7 @@ class DashboardOverviewController extends Controller
             ],
         ];
 
-        $statusSections = $this->statusSections($transactionsByStatus, $totalTransactions);
+        $statusSections = $this->statusSections($transactionsByStatus, $transactionsByStatus->sum('total'));
 
         return response()->json([
             'user' => [
