@@ -152,7 +152,7 @@ function documentValidator(_, value) {
 
     return isValidDocument(value)
         ? Promise.resolve()
-        : Promise.reject(new Error('O documento informado ÃƒÆ’Ã†â€™Ãƒâ€šÂ© invÃƒÆ’Ã†â€™Ãƒâ€šÂ¡lido.'));
+        : Promise.reject(new Error('O documento informado é inválido.'));
 }
 
 function formatPhone(value) {
@@ -199,13 +199,13 @@ async function lookupAddressByZipcode(zipcode) {
     });
 
     if (!response.ok) {
-        throw new Error('NÃ£o foi possÃ­vel consultar o CEP.');
+        throw new Error('Não foi possível consultar o CEP.');
     }
 
     const payload = await response.json();
 
     if (payload.erro) {
-        throw new Error('CEP nÃ£o encontrado.');
+        throw new Error('CEP não encontrado.');
     }
 
     return payload;
@@ -357,7 +357,7 @@ export default function CobrancaCartaoCreditoPage() {
                 });
 
                 if (!response.ok) {
-                    throw new Error('NÃƒÆ’Ã†â€™Ãƒâ€šÂ£o foi possÃƒÆ’Ã†â€™Ãƒâ€šÂ­vel carregar as transaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂµes de cartÃƒÆ’Ã†â€™Ãƒâ€šÂ£o.');
+                    throw new Error('Não foi possível carregar as transações de cartão.');
                 }
 
                 const data = await response.json();
@@ -374,7 +374,7 @@ export default function CobrancaCartaoCreditoPage() {
                 if (fetchError.name !== 'AbortError') {
                     setFeedback({
                         type: 'error',
-                        message: fetchError.message || 'Falha ao carregar as transaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂµes de cartÃƒÆ’Ã†â€™Ãƒâ€šÂ£o.',
+                        message: fetchError.message || 'Falha ao carregar as transações de cartão.',
                     });
                 }
             } finally {
@@ -497,7 +497,7 @@ export default function CobrancaCartaoCreditoPage() {
                 },
             });
         } catch (error) {
-            message.error(error.message || 'NÃƒÆ’Ã†â€™Ãƒâ€šÂ£o foi possÃƒÆ’Ã†â€™Ãƒâ€šÂ­vel consultar o CEP.');
+            message.error(error.message || 'Não foi possível consultar o CEP.');
         }
     }
 
@@ -555,14 +555,14 @@ export default function CobrancaCartaoCreditoPage() {
                 throw new Error(
                     result.message ||
                         getFirstValidationError(result.errors) ||
-                        'NÃƒÆ’Ã†â€™Ãƒâ€šÂ£o foi possÃƒÆ’Ã†â€™Ãƒâ€šÂ­vel criar a cobranÃƒÆ’Ã†â€™Ãƒâ€šÂ§a de cartÃƒÆ’Ã†â€™Ãƒâ€šÂ£o.',
+                        'Não foi possível criar a cobrança de cartão.',
                 );
             }
 
             setTransactionResult(result);
             setFeedback({
                 type: 'success',
-                message: result.message ?? 'TransaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂ£o de cartÃƒÆ’Ã†â€™Ãƒâ€šÂ£o criada com sucesso.',
+                message: result.message ?? 'Transação de cartão criada com sucesso.',
             });
 
             if (result.requires_3ds) {
@@ -577,7 +577,7 @@ export default function CobrancaCartaoCreditoPage() {
         } catch (error) {
             setFeedback({
                 type: 'error',
-                message: error.message || 'Falha ao criar a transaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂ£o de cartÃƒÆ’Ã†â€™Ãƒâ€šÂ£o.',
+                message: error.message || 'Falha ao criar a transação de cartão.',
             });
         } finally {
             setSubmitting(false);
@@ -623,7 +623,7 @@ export default function CobrancaCartaoCreditoPage() {
 
             if (!response.ok) {
                 const firstError = Object.values(result.errors ?? {}).flat().shift();
-                throw new Error(firstError ?? result.message ?? 'NÃƒÆ’Ã†â€™Ãƒâ€šÂ£o foi possÃƒÆ’Ã†â€™Ãƒâ€šÂ­vel salvar o link.');
+                throw new Error(firstError ?? result.message ?? 'Não foi possível salvar o link.');
             }
 
             message.success(result.message ?? 'Link de pagamento criado com sucesso.');
@@ -639,8 +639,8 @@ export default function CobrancaCartaoCreditoPage() {
     function copyTransactionId() {
         copyTextToClipboard(
             transactionResult?.transaction_id ?? '',
-            'ID da transaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂ£o copiado.',
-            'NÃƒÆ’Ã†â€™Ãƒâ€šÂ£o foi possÃƒÆ’Ã†â€™Ãƒâ€šÂ­vel copiar o ID da transaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂ£o.',
+            'ID da transação copiado.',
+            'Não foi possível copiar o ID da transação.',
         );
     }
 
@@ -745,7 +745,7 @@ export default function CobrancaCartaoCreditoPage() {
                                 className="spa-pix-collapse-label-badge spa-pix-page-toggle-button"
                                 onClick={handleToggleForm}
                             >
-                                Gerar CobranÃƒÆ’Ã†â€™Ãƒâ€šÂ§a
+                                Gerar Cobrança
                             </Button>
                             <Button
                                 icon={<LinkOutlined />}
@@ -781,9 +781,9 @@ export default function CobrancaCartaoCreditoPage() {
                                             <Row gutter={[16, 16]}>
                                                 <Col xs={24} md={8}>
                                                     <Form.Item
-                                                        label='Valor da cobranÃƒÆ’Ã†â€™Ãƒâ€šÂ§a'
+                                                        label='Valor da cobrança'
                                                         name="amount"
-                                                        rules={[{ required: true, message: 'Informe o valor da cobranÃƒÆ’Ã†â€™Ãƒâ€šÂ§a.' }]}
+                                                        rules={[{ required: true, message: 'Informe o valor da cobrança.' }]}
                                                     >
                                                         <MoneyInputField size="large" placeholder="0,00" />
                                                     </Form.Item>
@@ -861,7 +861,7 @@ export default function CobrancaCartaoCreditoPage() {
                                                         <Form.Item
                                                             label="E-mail"
                                                             name={['client', 'email']}
-                                                            rules={[{ required: true, type: 'email', message: 'Informe um e-mail vÃƒÆ’Â¡lido.' }]}
+                                                            rules={[{ required: true, type: 'email', message: 'Informe um e-mail válido.' }]}
                                                         >
                                                             <Input size="large" placeholder="email@exemplo.com" />
                                                         </Form.Item>
@@ -891,7 +891,7 @@ export default function CobrancaCartaoCreditoPage() {
                                                 </Row>
                                                 <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={6}>
-                                                        <Form.Item label="NÃƒÆ’Âºmero" name={['client', 'address', 'number']}> 
+                                                        <Form.Item label="Número" name={['client', 'address', 'number']}> 
                                                             <Input size="large" placeholder="123" />
                                                         </Form.Item>
                                                     </Col>
@@ -935,17 +935,17 @@ export default function CobrancaCartaoCreditoPage() {
 
                                             <Card className="spa-pix-subcard" bordered={false}>
                                                 <Typography.Text className="spa-pix-section-label">
-                                                    Dados do cartÃ£o
+                                                    Dados do cartão
                                                 </Typography.Text>
 
                                                 <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={12}>
                                                         <Form.Item
-                                                            label="Nome no cartÃ£o"
+                                                            label="Nome no cartão"
                                                             name={['card', 'holder_name']}
-                                                            rules={[{ required: true, message: 'Informe o nome no cartÃ£o.' }]}
+                                                            rules={[{ required: true, message: 'Informe o nome no cartão.' }]}
                                                         >
-                                                            <Input size="large" placeholder="Nome impresso no cartÃ£o" />
+                                                            <Input size="large" placeholder="Nome impresso no cartão" />
                                                         </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={12}>
@@ -963,18 +963,18 @@ export default function CobrancaCartaoCreditoPage() {
                                                 <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={12}>
                                                         <Form.Item
-                                                            label="NÃºmero do cartÃ£o"
+                                                            label="Número do cartão"
                                                             name={['card', 'card_number']}
-                                                            rules={[{ required: true, message: 'Informe o nÃºmero do cartÃ£o.' }]}
+                                                            rules={[{ required: true, message: 'Informe o número do cartão.' }]}
                                                         >
                                                             <Input size="large" placeholder="0000 0000 0000 0000" />
                                                         </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={12}>
                                                         <Form.Item
-                                                            label="CÃ³digo de seguranÃ§a"
+                                                            label="Código de segurança"
                                                             name={['card', 'security_code']}
-                                                            rules={[{ required: true, message: 'Informe o cÃ³digo de seguranÃ§a.' }]}
+                                                            rules={[{ required: true, message: 'Informe o código de segurança.' }]}
                                                         >
                                                             <Input size="large" placeholder="123" />
                                                         </Form.Item>
@@ -984,18 +984,18 @@ export default function CobrancaCartaoCreditoPage() {
                                                 <Row gutter={[16, 16]}>
                                                     <Col xs={24} md={8}>
                                                         <Form.Item
-                                                            label="MÃªs de expiraÃ§Ã£o"
+                                                            label="Mês de expiração"
                                                             name={['card', 'expiration_month']}
-                                                            rules={[{ required: true, message: 'Selecione o mÃªs de expiraÃ§Ã£o.' }]}
+                                                            rules={[{ required: true, message: 'Selecione o mês de expiração.' }]}
                                                         >
                                                             <Select size="large" options={monthOptions} placeholder="MM" />
                                                         </Form.Item>
                                                     </Col>
                                                     <Col xs={24} md={8}>
                                                         <Form.Item
-                                                            label="Ano de expiraÃ§Ã£o"
+                                                            label="Ano de expiração"
                                                             name={['card', 'expiration_year']}
-                                                            rules={[{ required: true, message: 'Selecione o ano de expiraÃ§Ã£o.' }]}
+                                                            rules={[{ required: true, message: 'Selecione o ano de expiração.' }]}
                                                         >
                                                             <Select size="large" options={yearOptions} placeholder="AAAA" />
                                                         </Form.Item>
@@ -1011,7 +1011,7 @@ export default function CobrancaCartaoCreditoPage() {
                                                         icon={<SendOutlined />}
                                                         className="spa-primary-button"
                                                     >
-                                                        Criar cobranÃƒÆ’Ã†â€™Ãƒâ€šÂ§a
+                                                        Criar cobrança
                                                     </Button>
                                                 </div>
                                             </Card>
@@ -1039,7 +1039,7 @@ export default function CobrancaCartaoCreditoPage() {
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 6 }} />
                             ) : creditRows.length === 0 ? (
-                                <Empty description='Nenhuma transaÃƒÆ’Ã†â€™Ãƒâ€šÂ§ÃƒÆ’Ã†â€™Ãƒâ€šÂ£o de cartÃƒÆ’Ã†â€™Ãƒâ€šÂ£o encontrada' />
+                                <Empty description='Nenhuma transação de cartão encontrada' />
                             ) : (
                                 <Table
                                     rowKey="id"
@@ -1062,7 +1062,7 @@ export default function CobrancaCartaoCreditoPage() {
                         title={(
                             <Space align="center" size={10} className="spa-pix-sidebar-title">
                                 <BankOutlined className="spa-pix-sidebar-title-icon" />
-                                <span>VisÃ£o rÃ¡pida</span>
+                                <span>Visão rápida</span>
                             </Space>
                         )}
                         bordered={false}
@@ -1071,7 +1071,7 @@ export default function CobrancaCartaoCreditoPage() {
 
                             <Row gutter={[12, 12]}>
                                 {[
-                                    ['TransaÃ§Ãµes', creditSummary.total_transactions],
+                                    ['Transações', creditSummary.total_transactions],
                                     ['Aprovadas', creditSummary.approved_transactions],
                                     ['Pendentes', creditSummary.pending_transactions],
                                     ['Links ativos', creditSummary.active_links],
@@ -1092,7 +1092,7 @@ export default function CobrancaCartaoCreditoPage() {
                             <Card size="small" title="Atalhos" bordered={false}>
                                 <Space direction="vertical" size={10} style={{ width: '100%' }}>
                                     <Button type="primary" block onClick={openLinkModal} className="spa-primary-button">
-                                        Criar link de cartÃ£o
+                                        Criar link de cartão
                                     </Button>
                                     <Button block onClick={() => navigate('/links-pagamento')}>
                                         Ver links
@@ -1103,7 +1103,7 @@ export default function CobrancaCartaoCreditoPage() {
                                 </Space>
                             </Card>
 
-                            <Card size="small" title="Ãšltimos links" bordered={false}>
+                            <Card size="small" title="Últimos links" bordered={false}>
                                 {recentLinks.length === 0 ? (
                                     <Empty description="Nenhum link recente encontrado." />
                                 ) : (
@@ -1153,10 +1153,10 @@ export default function CobrancaCartaoCreditoPage() {
                     <div className="spa-pix-link-modal-header">
                         <div>
                             <Typography.Title level={3} className="spa-pix-link-modal-title">
-                                Link de Pagamento - CartÃ£o de CrÃ©dito
+                                Link de Pagamento - Cartão de Crédito
                             </Typography.Title>
                             <Typography.Text type="secondary">
-                                Configure um link para pagamento com cartÃ£o de crÃ©dito.
+                                Configure um link para pagamento com cartão de crédito.
                             </Typography.Text>
                         </div>
                     </div>
@@ -1165,8 +1165,8 @@ export default function CobrancaCartaoCreditoPage() {
 
                     <Row gutter={[16, 16]}>
                         <Col xs={24} md={12}>
-                            <Form.Item label="DescriÃ§Ã£o" name="descricao">
-                                <Input size="large" placeholder="Descreva o que o cliente estÃ¡ pagando" />
+                            <Form.Item label="Descrição" name="descricao">
+                                <Input size="large" placeholder="Descreva o que o cliente está pagando" />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
@@ -1291,7 +1291,7 @@ export default function CobrancaCartaoCreditoPage() {
             <Modal
                 open={resultModalOpen && Boolean(transactionResult)}
                 onCancel={closeResultModal}
-                title="CobranÃ§a de cartÃ£o"
+                title="Cobrança de cartão"
                 footer={[
                     <Button key="close" onClick={closeResultModal}>
                         Fechar
@@ -1307,7 +1307,7 @@ export default function CobrancaCartaoCreditoPage() {
                             type={transactionResult.requires_3ds ? 'warning' : 'success'}
                             showIcon
                             icon={transactionResult.requires_3ds ? <ReloadOutlined /> : <CheckCircleOutlined />}
-                            message={transactionResult.message ?? 'TransaÃ§Ã£o criada com sucesso.'}
+                            message={transactionResult.message ?? 'Transação criada com sucesso.'}
                         />
 
                         {transactionResult.requires_3ds ? (
@@ -1338,12 +1338,12 @@ export default function CobrancaCartaoCreditoPage() {
                                 </Row>
 
                                 <Typography.Text type="secondary">
-                                    A transaÃ§Ã£o aguarda autenticaÃ§Ã£o 3DS antes da conclusÃ£o.
+                                    A transação aguarda autenticação 3DS antes da conclusão.
                                 </Typography.Text>
                             </>
                         ) : (
                             <Typography.Text type="secondary">
-                                A transaÃ§Ã£o foi enviada para processamento.
+                                A transação foi enviada para processamento.
                             </Typography.Text>
                         )}
                     </Space>
@@ -1353,7 +1353,7 @@ export default function CobrancaCartaoCreditoPage() {
             <Modal
                 open={detailsModalOpen && Boolean(selectedTransaction)}
                 onCancel={closeTransactionDetails}
-                title="Detalhes da transaÃ§Ã£o"
+                title="Detalhes da transação"
                 footer={[
                     <Button key="close" onClick={closeTransactionDetails}>
                         Fechar
