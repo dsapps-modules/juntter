@@ -355,6 +355,9 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
         $this->assertStringContainsString("style={{ minWidth: 176, width: 'auto' }}", $pageSource);
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
+        $this->assertStringContainsString('const yearOptions = Array.from({ length: 10 }, (_, index) => {', $pageSource);
+        $this->assertStringContainsString('const year = new Date().getFullYear() + index;', $pageSource);
+        $this->assertStringNotContainsString('length: 6', $pageSource);
         $this->assertStringContainsString('const creditSummary = useMemo(() => {', $pageSource);
         $this->assertStringContainsString("approved_transactions: creditRows.filter((row) => ['PAID', 'APPROVED'].includes(row.raw_status)).length", $pageSource);
         $this->assertStringContainsString("pending_transactions: creditRows.filter((row) => ['PENDING', 'PROCESSING'].includes(row.raw_status)).length", $pageSource);

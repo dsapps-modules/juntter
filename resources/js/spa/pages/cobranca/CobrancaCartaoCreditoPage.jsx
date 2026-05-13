@@ -80,7 +80,7 @@ const monthOptions = Array.from({ length: 12 }, (_, index) => {
     };
 });
 
-const yearOptions = Array.from({ length: 6 }, (_, index) => {
+const yearOptions = Array.from({ length: 10 }, (_, index) => {
     const year = new Date().getFullYear() + index;
 
     return {
@@ -1418,4 +1418,3 @@ export default function CobrancaCartaoCreditoPage() {
         </Row>
     );
 }
-
