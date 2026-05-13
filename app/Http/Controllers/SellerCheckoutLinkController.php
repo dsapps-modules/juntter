@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCheckoutLinkRequest;
 use App\Models\CheckoutLink;
 use App\Models\Order;
+use App\Models\PaytimeTransaction;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -163,7 +164,16 @@ class SellerCheckoutLinkController extends Controller
     {
         $this->authorize('view', $checkoutLink);
 
-        $orders = Order::query()->where('checkout_link_id', $checkoutLink->id)->get();
+        $orders = Order::query()
+            ->where('checkout_link_id', $checkoutLink->id)
+            ->with(['paymentTransaction'])
+            ->latest()
+            ->get()
+            ->map(function (Order $order): Order {
+                $order->setAttribute('status', $this->resolveDisplayStatus($order));
+
+                return $order;
+            });
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -173,5 +183,41 @@ class SellerCheckoutLinkController extends Controller
         }
 
         return view('seller.checkout-links.sales', compact('checkoutLink', 'orders'));
+    }
+
+    private function resolveDisplayStatus(Order $order): string
+    {
+        if ($this->isPaidOrder($order)) {
+            return 'paid';
+        }
+
+        return (string) $order->status;
+    }
+
+    private function isPaidOrder(Order $order): bool
+    {
+        $orderStatus = strtolower((string) $order->status);
+
+        if ($orderStatus === 'paid') {
+            return true;
+        }
+
+        $paymentStatus = strtolower((string) ($order->paymentTransaction?->internal_status ?? ''));
+
+        if (in_array($paymentStatus, ['paid', 'authorized'], true)) {
+            return true;
+        }
+
+        $gatewayTransactionId = $order->paymentTransaction?->gateway_transaction_id;
+
+        if (! is_string($gatewayTransactionId) || $gatewayTransactionId === '') {
+            return false;
+        }
+
+        $paytimeStatus = strtolower((string) PaytimeTransaction::query()
+            ->where('external_id', $gatewayTransactionId)
+            ->value('status'));
+
+        return in_array($paytimeStatus, ['paid', 'approved', 'confirmed', 'success'], true);
     }
 }

@@ -7,6 +7,7 @@ use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
+use App\Models\PaytimeTransaction;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Payments\Paytime\PaytimePaymentService;
@@ -351,6 +352,105 @@ class RedirectedCheckoutTest extends TestCase
         ])->get(route('checkout.public.show', $link->public_token));
 
         $response->assertRedirect(route('checkout.public.thank-you', $session->session_token));
+    }
+
+    public function test_checkout_link_sales_endpoint_uses_the_payment_transaction_status_for_paid_orders(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link);
+
+        $order = Order::query()->create([
+            'seller_id' => $link->seller_id,
+            'checkout_link_id' => $link->id,
+            'checkout_session_id' => $session->id,
+            'product_id' => $link->product_id,
+            'order_number' => 'JNT-2026-000123',
+            'status' => 'pending',
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'subtotal' => 100.00,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => 100.00,
+            'payment_method' => 'pix',
+        ]);
+
+        PaymentTransaction::query()->create([
+            'order_id' => $order->id,
+            'seller_id' => $seller->id,
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'trx-paid-123',
+            'gateway_status' => 'PAID',
+            'internal_status' => 'paid',
+            'payment_method' => 'pix',
+            'amount' => 100.00,
+        ]);
+
+        $response = $this->actingAs($seller)->getJson('/seller/checkout-links/'.$link->id.'/sales');
+
+        $response->assertOk();
+        $response->assertJsonPath('orders.0.status', 'paid');
+        $response->assertJsonPath('total_sales', 100);
+    }
+
+    public function test_checkout_link_sales_endpoint_uses_the_synced_paytime_transaction_status_when_payment_transaction_is_still_pending(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link);
+
+        $order = Order::query()->create([
+            'seller_id' => $link->seller_id,
+            'checkout_link_id' => $link->id,
+            'checkout_session_id' => $session->id,
+            'product_id' => $link->product_id,
+            'order_number' => 'JNT-2026-000124',
+            'status' => 'pending',
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'subtotal' => 100.00,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => 100.00,
+            'payment_method' => 'pix',
+        ]);
+
+        PaymentTransaction::query()->create([
+            'order_id' => $order->id,
+            'seller_id' => $seller->id,
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'trx-synced-paid-123',
+            'gateway_status' => 'PENDING',
+            'internal_status' => 'pending',
+            'payment_method' => 'pix',
+            'amount' => 100.00,
+        ]);
+
+        PaytimeTransaction::query()->create([
+            'external_id' => 'trx-synced-paid-123',
+            'establishment_id' => 155463,
+            'type' => 'PIX',
+            'status' => 'PAID',
+            'amount' => 10000,
+            'original_amount' => 10000,
+            'fees' => 0,
+            'installments' => 1,
+        ]);
+
+        $response = $this->actingAs($seller)->getJson('/seller/checkout-links/'.$link->id.'/sales');
+
+        $response->assertOk();
+        $response->assertJsonPath('orders.0.status', 'paid');
+        $response->assertJsonPath('total_sales', 100);
     }
 
     public function test_inactive_public_checkout_returns_unavailable_page(): void
