@@ -248,17 +248,17 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaSaldoExtratoPage.jsx'));
 
-        $this->assertStringContainsString('Extrato do período', $pageSource);
+        $this->assertStringContainsString('Extrato do perodo', $pageSource);
         $this->assertStringContainsString('Resumo financeiro', $pageSource);
         $this->assertStringContainsString('Saldo atual', $pageSource);
-        $this->assertStringContainsString('Lançamentos futuros', $pageSource);
-        $this->assertStringContainsString('Sem lançamentos para o período selecionado.', $pageSource);
-        $this->assertStringContainsString('Selecionar mês', $pageSource);
+        $this->assertStringContainsString('Lanamentos futuros', $pageSource);
+        $this->assertStringContainsString('Sem lanamentos para o perodo selecionado.', $pageSource);
+        $this->assertStringContainsString('Selecionar ms', $pageSource);
         $this->assertStringContainsString('Selecionar ano', $pageSource);
         $this->assertStringContainsString('spa-saldoextrato-sidebar-card', $pageSource);
         $this->assertStringContainsString('spa-saldoextrato-table-card', $pageSource);
         $this->assertStringNotContainsString('Conta corrente', $pageSource);
-        $this->assertStringNotContainsString('Espaço reservado para saldos', $pageSource);
+        $this->assertStringNotContainsString('Espao reservado para saldos', $pageSource);
     }
 
     public function test_the_pix_page_uses_the_new_link_payment_modal_labels(): void
@@ -277,17 +277,17 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
-        $this->assertStringContainsString('Visão rápida', $pageSource);
+        $this->assertStringContainsString('Viso rpida', $pageSource);
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('Últimos links', $pageSource);
+        $this->assertStringContainsString('ltimos links', $pageSource);
         $this->assertStringContainsString('Criar link PIX', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
         $this->assertStringNotContainsString('Atualizar painel', $pageSource);
         $this->assertStringContainsString('const pixSummary = useMemo(() => ({', $pageSource);
         $this->assertStringContainsString('total_transactions: pixTransactionRows.length', $pageSource);
         $this->assertStringContainsString(')).length + activePixLinksCount', $pageSource);
-        $this->assertStringContainsString("['Transações', pixSummary.total_transactions]", $pageSource);
+        $this->assertStringContainsString("['Transaes', pixSummary.total_transactions]", $pageSource);
         $this->assertStringContainsString("['Pagas', pixSummary.paid_transactions]", $pageSource);
         $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
     }
@@ -316,10 +316,10 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Valor do boleto', $pageSource);
         $this->assertStringContainsString('Data limite para pagamento', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
-        $this->assertStringContainsString('Instruções do boleto', $pageSource);
+        $this->assertStringContainsString('Instrues do boleto', $pageSource);
         $this->assertStringContainsString('Fechar', $pageSource);
         $this->assertStringContainsString('Criar boleto', $pageSource);
-        $this->assertStringContainsString('Boletos do mês', $pageSource);
+        $this->assertStringContainsString('Boletos do ms', $pageSource);
         $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
         $this->assertStringContainsString('spa-pix-transactions-table', $pageSource);
         $this->assertStringNotContainsString('Abra para emitir um novo boleto com os dados do cliente', $pageSource);
@@ -332,12 +332,12 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
 
-        $this->assertStringContainsString('Visão rápida', $pageSource);
+        $this->assertStringContainsString('Viso rpida', $pageSource);
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('Últimos boletos', $pageSource);
+        $this->assertStringContainsString('ltimos boletos', $pageSource);
         $this->assertStringContainsString('Criar boleto', $pageSource);
-        $this->assertStringContainsString('Ver histórico', $pageSource);
+        $this->assertStringContainsString('Ver histrico', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
     }
 
@@ -355,6 +355,12 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
         $this->assertStringContainsString("style={{ minWidth: 176, width: 'auto' }}", $pageSource);
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
+        $this->assertStringContainsString('const creditSummary = useMemo(() => {', $pageSource);
+        $this->assertStringContainsString("approved_transactions: creditRows.filter((row) => ['PAID', 'APPROVED'].includes(row.raw_status)).length", $pageSource);
+        $this->assertStringContainsString("pending_transactions: creditRows.filter((row) => ['PENDING', 'PROCESSING'].includes(row.raw_status)).length", $pageSource);
+        $this->assertStringContainsString("['Aprovadas', creditSummary.approved_transactions]", $pageSource);
+        $this->assertStringContainsString("['Pendentes', creditSummary.pending_transactions]", $pageSource);
+        $this->assertStringNotContainsString("['Aprovadas', summary.paid_transactions ?? 0]", $pageSource);
         $this->assertLessThan(
             strpos($pageSource, 'label="Rua"'),
             strpos($pageSource, 'label="CEP"')
