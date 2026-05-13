@@ -235,20 +235,17 @@ export default function CheckoutProductFormPage() {
                                         </Typography.Text>
 
                                         <div
-                                            className="mx-auto mt-4 flex items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-white"
+                                            className="spa-product-image-preview mx-auto mt-4"
                                             style={{
-                                                aspectRatio: '1 / 1',
                                                 width: '100%',
-                                                maxWidth: '260px',
                                                 flex: '0 0 auto',
-                                                maxHeight: '260px',
                                             }}
                                         >
                                             {imagePreviewUrl ? (
                                                 <img
                                                     src={imagePreviewUrl}
                                                     alt="Pré-visualização da imagem do produto"
-                                                    className="h-full w-full object-contain p-4"
+                                                    className="spa-product-image-preview-image"
                                                 />
                                             ) : (
                                                 <div className="px-6 text-center">
