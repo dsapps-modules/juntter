@@ -521,7 +521,7 @@ export default function CobrancaBoletoPage() {
 
             window.setTimeout(() => {
                 window.location.reload();
-            }, 3000);
+            }, 6000);
         } catch (error) {
             setFeedback({
                 type: 'error',
