@@ -65,6 +65,49 @@ const stateOptions = [
     'TO',
 ].map((value) => ({ value, label: value }));
 
+const stateOptionsByValue = new Set(stateOptions.map((option) => option.value));
+
+const stateAbbreviationsByName = {
+    Acre: 'AC',
+    Alagoas: 'AL',
+    Amapá: 'AP',
+    Amapa: 'AP',
+    Amazonas: 'AM',
+    Bahia: 'BA',
+    Ceará: 'CE',
+    Ceara: 'CE',
+    'Distrito Federal': 'DF',
+    'Espírito Santo': 'ES',
+    'Espirito Santo': 'ES',
+    'Goiás': 'GO',
+    'Goias': 'GO',
+    'Maranhão': 'MA',
+    'Maranhao': 'MA',
+    'Mato Grosso': 'MT',
+    'Mato Grosso do Sul': 'MS',
+    'Minas Gerais': 'MG',
+    'Pará': 'PA',
+    'Para': 'PA',
+    'Paraíba': 'PB',
+    'Paraiba': 'PB',
+    'Paraná': 'PR',
+    'Parana': 'PR',
+    'Pernambuco': 'PE',
+    'Piauí': 'PI',
+    'Piaui': 'PI',
+    'Rio de Janeiro': 'RJ',
+    'Rio Grande do Norte': 'RN',
+    'Rio Grande do Sul': 'RS',
+    'Rondônia': 'RO',
+    'Rondonia': 'RO',
+    'Roraima': 'RR',
+    'Santa Catarina': 'SC',
+    'São Paulo': 'SP',
+    'Sao Paulo': 'SP',
+    'Sergipe': 'SE',
+    'Tocantins': 'TO',
+};
+
 const defaultOverview = {
     summary: {
         total_billets: 0,
@@ -139,6 +182,18 @@ function formatZipcode(value) {
     }
 
     return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
+function resolveStateValue(address) {
+    const stateCode = String(address?.uf ?? '').trim().toUpperCase();
+
+    if (stateOptionsByValue.has(stateCode)) {
+        return stateCode;
+    }
+
+    const stateName = String(address?.estado ?? '').trim();
+
+    return stateAbbreviationsByName[stateName] ?? undefined;
 }
 
 async function lookupAddressByZipcode(zipcode) {
@@ -365,6 +420,7 @@ export default function CobrancaBoletoPage() {
 
         try {
             const address = await lookupAddressByZipcode(zipcode);
+            const stateValue = resolveStateValue(address);
 
             form.setFieldsValue({
                 client: {
@@ -373,10 +429,12 @@ export default function CobrancaBoletoPage() {
                         street: address.logradouro || '',
                         neighborhood: address.bairro || '',
                         city: address.localidade || '',
-                        state: address.uf || undefined,
+                        state: stateValue,
                     },
                 },
             });
+
+            form.setFieldValue(['client', 'address', 'state'], stateValue);
         } catch (error) {
             message.error(error.message || 'Não foi possível consultar o CEP.');
         }
