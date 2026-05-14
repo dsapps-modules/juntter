@@ -374,27 +374,30 @@ class PaytimeClient
         $card = $cardData['card'] ?? [];
         $installments = (int) ($cardData['installments'] ?? 1);
 
+        $customer = [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => (string) $order->customer_email,
+            'phone' => $phoneParts['number'],
+            'phones' => [
+                [
+                    'country' => '55',
+                    'area' => $phoneParts['area'],
+                    'number' => $phoneParts['number'],
+                    'type' => 'MOBILE',
+                ],
+            ],
+            'document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
+            'address' => $address,
+        ];
+
         return [
             'payment_type' => 'CREDIT',
             'amount' => $this->toCents($order->total),
             'installments' => $installments > 0 ? $installments : 1,
             'interest' => $this->resolveInterest(),
-            'client' => [
-                'first_name' => $firstName,
-                'last_name' => $lastName,
-                'email' => (string) $order->customer_email,
-                'phone' => $phoneParts['number'],
-                'phones' => [
-                    [
-                        'country' => '55',
-                        'area' => $phoneParts['area'],
-                        'number' => $phoneParts['number'],
-                        'type' => 'MOBILE',
-                    ],
-                ],
-                'document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
-                'address' => $address,
-            ],
+            'customer' => $customer,
+            'client' => $customer,
             'card' => [
                 'holder_name' => trim((string) ($card['holder_name'] ?? $order->customer_name)),
                 'holder_document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
