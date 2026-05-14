@@ -231,15 +231,11 @@ class PaytimeClientTest extends TestCase
                         && $payload['amount'] === 15000
                         && $payload['installments'] === 3
                         && $payload['interest'] === 'CLIENT'
-                        && $payload['customer']['first_name'] === 'Maria'
-                        && $payload['customer']['phones'][0]['area'] === '11'
-                        && $payload['customer']['phones'][0]['number'] === '999999999'
                         && $payload['client']['first_name'] === 'Maria'
                         && $payload['client']['last_name'] === 'Silva'
                         && $payload['client']['email'] === 'maria@example.com'
-                        && $payload['client']['phone'] === '999999999'
-                        && $payload['client']['phones'][0]['area'] === '11'
-                        && $payload['client']['phones'][0]['number'] === '999999999'
+                        && $payload['client']['phone'] === '11999999999'
+                        && ! isset($payload['customer'])
                         && $payload['client']['document'] === '12345678909'
                         && $payload['client']['address']['street'] === 'Rua A'
                         && $payload['client']['address']['number'] === '100'
@@ -301,7 +297,7 @@ class PaytimeClientTest extends TestCase
         });
     }
 
-    public function test_create_credit_card_payment_splits_a_ten_digit_phone_into_area_and_local_number(): void
+    public function test_create_credit_card_payment_normalizes_phone_digits_without_nested_customer_phones(): void
     {
         Log::spy();
 
@@ -329,12 +325,10 @@ class PaytimeClientTest extends TestCase
             ->with(
                 'marketplace/transactions',
                 $this->callback(function (array $payload): bool {
-                    return $payload['customer']['phone'] === '926003909'
-                        && $payload['customer']['phones'][0]['area'] === '11'
-                        && $payload['customer']['phones'][0]['number'] === '926003909'
-                        && $payload['client']['phone'] === '926003909'
-                        && $payload['client']['phones'][0]['area'] === '11'
-                        && $payload['client']['phones'][0]['number'] === '926003909';
+                    return $payload['client']['phone'] === '1126003909'
+                        && ! isset($payload['customer'])
+                        && $payload['client']['first_name'] === 'Maria'
+                        && $payload['client']['document'] === '12345678909';
                 }),
             )
             ->willReturn([
