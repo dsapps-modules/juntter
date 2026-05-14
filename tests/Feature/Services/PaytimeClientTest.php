@@ -296,6 +296,65 @@ class PaytimeClientTest extends TestCase
         });
     }
 
+    public function test_create_credit_card_payment_resolves_a_nested_transaction_id_when_the_gateway_wraps_the_response(): void
+    {
+        Log::spy();
+
+        $seller = $this->makeVendorUser('127700');
+        $product = $this->makeProduct($seller);
+        $checkoutLink = $this->makeCheckoutLink($seller, $product);
+        $checkoutSession = $this->makeCheckoutSession($checkoutLink, [
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'zipcode' => '01001000',
+        ]);
+        $order = $this->makeOrder($seller, $checkoutLink, $checkoutSession, $product, [
+            'payment_method' => 'credit_card',
+        ]);
+
+        $apiClient = $this->createMock(ApiClientService::class);
+        $apiClient->expects($this->once())
+            ->method('post')
+            ->willReturn([
+                'status' => 'AUTHORIZED',
+                'card' => [
+                    'brand_name' => 'VISA',
+                    'last4_digits' => '1111',
+                ],
+                'data' => [
+                    'transaction' => [
+                        '_id' => 'card-api-nested-123',
+                    ],
+                ],
+            ]);
+
+        $boletoService = new BoletoService($apiClient);
+        $service = new PaytimeClient($apiClient, $boletoService);
+        $response = $service->createCreditCardPayment($order, [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '123.456.789-09',
+                'card_number' => '4111 1111 1111 1111',
+                'expiration_month' => 12,
+                'expiration_year' => 2027,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $this->assertSame('card-api-nested-123', $response['gateway_transaction_id']);
+        $this->assertSame('card-api-nested-123', $response['transaction_id']);
+        $this->assertSame('AUTHORIZED', $response['gateway_status']);
+        $this->assertSame('authorized', $response['internal_status']);
+        $this->assertSame('1111', $response['card_last_four']);
+        $this->assertSame('VISA', $response['card_brand']);
+    }
+
     public function test_create_credit_card_payment_preserves_zero_padded_expiration_month(): void
     {
         Log::spy();

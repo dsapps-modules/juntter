@@ -514,6 +514,16 @@ class PaytimeClient
             ?? $transaction['gateway_transaction_id']
             ?? $transaction['transaction_id']
             ?? $transaction['id']
+            ?? data_get($transaction, 'transaction._id')
+            ?? data_get($transaction, 'transaction.id')
+            ?? data_get($transaction, 'transaction.transaction_id')
+            ?? data_get($transaction, 'data.transaction._id')
+            ?? data_get($transaction, 'data.transaction.id')
+            ?? data_get($transaction, 'data.transaction.transaction_id')
+            ?? data_get($transaction, 'data.result._id')
+            ?? data_get($transaction, 'data.result.id')
+            ?? data_get($transaction, 'data.response._id')
+            ?? data_get($transaction, 'data.response.id')
             ?? data_get($transaction, 'api_boleto._id')
             ?? data_get($transaction, 'api_boleto.id')
             ?? data_get($transaction, 'data._id')

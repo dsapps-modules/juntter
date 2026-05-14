@@ -10,8 +10,8 @@ Erro nos cálculos de taxas de cartão
 [x] cobrança cartão de crédito criada paga
 [x] cobrança cartão de crédito taxa cliente
 [x] cobrança cartão de crédito taxa vendedor
-[ ] link pagamento cartão sem dados
-[ ] link pagamento cartão com dados
+[x] link pagamento cartão sem dados
+[x] link pagamento cartão com dados
 [ ] checkout externo com cartão
 [ ] cobrança por boleto
 [ ] link pagamento boleto
@@ -19,6 +19,9 @@ Erro nos cálculos de taxas de cartão
 [ ] fluxo forms checkout
 [ ] histórico: somatório
 [ ] botão de refresh: eliminar?
+[ ] pagamento crédito: link: levar para página de obrigado
+[ ] pagamento crédito: link: com dados, incluir endereço
+
 
 
 - MSD
