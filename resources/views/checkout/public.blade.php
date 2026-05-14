@@ -1071,7 +1071,7 @@
 
                         <div class="actions">
                             <button class="btn btn-secondary" type="button" data-back-to="delivery">Voltar</button>
-                            <button class="btn btn-primary" type="submit">Gerar pagamento</button>
+                            <button class="btn btn-primary" type="submit">Pagar</button>
                         </div>
                     </form>
                 </section>
