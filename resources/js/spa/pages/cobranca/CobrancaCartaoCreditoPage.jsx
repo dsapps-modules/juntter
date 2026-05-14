@@ -530,6 +530,13 @@ export default function CobrancaCartaoCreditoPage() {
         setResultModalOpen(false);
     }
 
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    }
+
     async function handleZipcodeBlur() {
         const zipcode = form.getFieldValue(['client', 'address', 'zip_code']);
 
@@ -623,15 +630,15 @@ export default function CobrancaCartaoCreditoPage() {
                 message: result.message ?? 'Transação de cartão criada com sucesso.',
             });
 
+            scrollToTop();
+
             if (result.requires_3ds) {
                 setResultModalOpen(true);
             }
 
-            await refreshOverview();
-
-            if (!result.requires_3ds) {
-                resetTransactionForm();
-            }
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 3000);
         } catch (error) {
             setFeedback({
                 type: 'error',

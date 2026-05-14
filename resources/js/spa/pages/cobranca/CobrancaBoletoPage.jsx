@@ -411,6 +411,13 @@ export default function CobrancaBoletoPage() {
         setSelectedPeriod(nextPeriod);
     }
 
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth',
+        });
+    }
+
     async function handleZipcodeBlur() {
         const zipcode = form.getFieldValue(['client', 'address', 'zip_code']);
 
@@ -510,8 +517,11 @@ export default function CobrancaBoletoPage() {
                 type: 'success',
                 message: result.message ?? 'Boleto criado com sucesso.',
             });
-            form.resetFields();
-            await refreshOverview();
+            scrollToTop();
+
+            window.setTimeout(() => {
+                window.location.reload();
+            }, 3000);
         } catch (error) {
             setFeedback({
                 type: 'error',
