@@ -234,7 +234,9 @@ class PaytimeClientTest extends TestCase
                         && $payload['client']['first_name'] === 'Maria'
                         && $payload['client']['last_name'] === 'Silva'
                         && $payload['client']['email'] === 'maria@example.com'
-                        && $payload['client']['phone'] === '11999999999'
+                        && $payload['client']['phone'] === '999999999'
+                        && $payload['client']['phones'][0]['area'] === '11'
+                        && $payload['client']['phones'][0]['number'] === '999999999'
                         && $payload['client']['document'] === '12345678909'
                         && $payload['client']['address']['street'] === 'Rua A'
                         && $payload['client']['address']['number'] === '100'
@@ -294,6 +296,68 @@ class PaytimeClientTest extends TestCase
                 && ($context['transaction_id'] ?? null) === 'card-api-123'
                 && in_array('_id', $context['transaction_keys'] ?? [], true);
         });
+    }
+
+    public function test_create_credit_card_payment_splits_a_ten_digit_phone_into_area_and_local_number(): void
+    {
+        Log::spy();
+
+        $seller = $this->makeVendorUser('127700');
+        $product = $this->makeProduct($seller);
+        $checkoutLink = $this->makeCheckoutLink($seller, $product);
+        $checkoutSession = $this->makeCheckoutSession($checkoutLink, [
+            'customer_phone' => '11 2600-3909',
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'zipcode' => '01001000',
+        ]);
+        $order = $this->makeOrder($seller, $checkoutLink, $checkoutSession, $product, [
+            'payment_method' => 'credit_card',
+            'customer_phone' => '11 2600-3909',
+        ]);
+
+        $apiClient = $this->createMock(ApiClientService::class);
+        $apiClient->expects($this->once())
+            ->method('post')
+            ->with(
+                'marketplace/transactions',
+                $this->callback(function (array $payload): bool {
+                    return $payload['client']['phone'] === '26003909'
+                        && $payload['client']['phones'][0]['area'] === '11'
+                        && $payload['client']['phones'][0]['number'] === '26003909';
+                }),
+            )
+            ->willReturn([
+                '_id' => 'card-api-phone-123',
+                'status' => 'AUTHORIZED',
+                'card' => [
+                    'brand_name' => 'VISA',
+                    'last4_digits' => '1111',
+                ],
+            ]);
+
+        $boletoService = new BoletoService($apiClient);
+        $service = new PaytimeClient($apiClient, $boletoService);
+        $response = $service->createCreditCardPayment($order, [
+            'payment_method' => 'credit_card',
+            'installments' => 3,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '123.456.789-09',
+                'card_number' => '4111 1111 1111 1111',
+                'expiration_month' => 12,
+                'expiration_year' => 2027,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $this->assertSame('card-api-phone-123', $response['gateway_transaction_id']);
+        $this->assertSame('AUTHORIZED', $response['gateway_status']);
+        $this->assertSame('authorized', $response['internal_status']);
     }
 
     public function test_create_credit_card_payment_resolves_a_nested_transaction_id_when_the_gateway_wraps_the_response(): void

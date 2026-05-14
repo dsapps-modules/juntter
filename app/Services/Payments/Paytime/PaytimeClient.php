@@ -361,6 +361,7 @@ class PaytimeClient
         [$firstName, $lastName] = $this->splitName($customerName);
         $establishmentId = $this->resolveEstablishmentId($order);
         $checkoutSession = $order->checkoutSession;
+        $phoneParts = $this->resolvePhoneParts((string) $order->customer_phone);
         $address = [
             'street' => (string) ($checkoutSession?->street ?? ''),
             'number' => (string) ($checkoutSession?->number ?? ''),
@@ -382,7 +383,15 @@ class PaytimeClient
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => (string) $order->customer_email,
-                'phone' => $this->normalizeDigits((string) $order->customer_phone),
+                'phone' => $phoneParts['number'],
+                'phones' => [
+                    [
+                        'country' => '55',
+                        'area' => $phoneParts['area'],
+                        'number' => $phoneParts['number'],
+                        'type' => 'MOBILE',
+                    ],
+                ],
                 'document' => $this->normalizeDigits((string) ($card['holder_document'] ?? $order->customer_document)),
                 'address' => $address,
             ],
@@ -598,5 +607,36 @@ class PaytimeClient
     private function resolveInterest(): string
     {
         return 'CLIENT';
+    }
+
+    /**
+     * @return array{area: string, number: string}
+     */
+    private function resolvePhoneParts(string $phone): array
+    {
+        $digits = $this->normalizeDigits($phone);
+
+        if ($digits === '') {
+            return [
+                'area' => '00',
+                'number' => '',
+            ];
+        }
+
+        if (str_starts_with($digits, '55') && strlen($digits) > 11) {
+            $digits = substr($digits, 2);
+        }
+
+        if (strlen($digits) > 9) {
+            return [
+                'area' => substr($digits, 0, 2),
+                'number' => substr($digits, 2, 9),
+            ];
+        }
+
+        return [
+            'area' => '00',
+            'number' => substr($digits, 0, 9),
+        ];
     }
 }
