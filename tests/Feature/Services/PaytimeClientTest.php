@@ -326,9 +326,9 @@ class PaytimeClientTest extends TestCase
             ->with(
                 'marketplace/transactions',
                 $this->callback(function (array $payload): bool {
-                    return $payload['client']['phone'] === '26003909'
+                    return $payload['client']['phone'] === '926003909'
                         && $payload['client']['phones'][0]['area'] === '11'
-                        && $payload['client']['phones'][0]['number'] === '26003909';
+                        && $payload['client']['phones'][0]['number'] === '926003909';
                 }),
             )
             ->willReturn([

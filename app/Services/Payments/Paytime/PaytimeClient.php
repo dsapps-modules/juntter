@@ -628,9 +628,15 @@ class PaytimeClient
         }
 
         if (strlen($digits) > 9) {
+            $localNumber = substr($digits, 2, 9);
+
+            if (strlen($localNumber) === 8) {
+                $localNumber = '9'.$localNumber;
+            }
+
             return [
                 'area' => substr($digits, 0, 2),
-                'number' => substr($digits, 2, 9),
+                'number' => $localNumber,
             ];
         }
 
