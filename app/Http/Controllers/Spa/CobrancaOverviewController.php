@@ -32,10 +32,13 @@ class CobrancaOverviewController extends Controller
 
         $linksQuery = LinkPagamento::query()
             ->where('tipo_pagamento', 'PIX');
+        $cardLinksQuery = LinkPagamento::query()
+            ->where('tipo_pagamento', 'CARTAO');
 
         if ($isRestricted) {
             $transactionsQuery->where('establishment_id', (string) $establishmentId);
             $linksQuery->where('estabelecimento_id', (string) $establishmentId);
+            $cardLinksQuery->where('estabelecimento_id', (string) $establishmentId);
         }
 
         $periods = $this->buildPeriodOptions(
@@ -143,6 +146,40 @@ class CobrancaOverviewController extends Controller
             ];
         });
 
+        $recentPixLinks = (clone $linksQuery)
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get()
+            ->map(function (LinkPagamento $link): array {
+                return [
+                    'id' => $link->id,
+                    'title' => $link->titulo ?? $link->descricao ?? 'Link de pagamento',
+                    'status' => $this->formatLinkStatus($link->status),
+                    'amount' => $link->valor_formatado,
+                    'type' => $this->formatLinkType($link->tipo_pagamento ?? 'PIX'),
+                    'expires_at' => $link->data_expiracao?->format('d/m/Y H:i') ?? 'Sem expiração',
+                    'code' => $link->codigo_unico,
+                ];
+            })
+            ->values();
+
+        $recentCardLinks = $cardLinksQuery
+            ->orderByDesc('created_at')
+            ->limit(2)
+            ->get()
+            ->map(function (LinkPagamento $link): array {
+                return [
+                    'id' => $link->id,
+                    'title' => $link->titulo ?? $link->descricao ?? 'Link de pagamento',
+                    'status' => $this->formatLinkStatus($link->status),
+                    'amount' => $link->valor_formatado,
+                    'type' => $this->formatLinkType($link->tipo_pagamento ?? 'CARTAO'),
+                    'expires_at' => $link->data_expiracao?->format('d/m/Y H:i') ?? 'Sem expiração',
+                    'code' => $link->codigo_unico,
+                ];
+            })
+            ->values();
+
         return response()->json([
             'seller_name' => trim((string) $user->name) !== '' ? $user->name : 'Vendedor',
             'summary' => $summary,
@@ -158,6 +195,8 @@ class CobrancaOverviewController extends Controller
             'link_rows' => $linkRows,
             'selected' => $selected,
             'recent_links' => $recentLinks->values(),
+            'recent_pix_links' => $recentPixLinks,
+            'recent_card_links' => $recentCardLinks,
         ]);
     }
 

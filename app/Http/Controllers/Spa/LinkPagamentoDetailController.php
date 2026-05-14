@@ -32,6 +32,8 @@ class LinkPagamentoDetailController extends Controller
                 'descricao' => $linkPagamento->descricao,
                 'valor' => (string) $linkPagamento->valor,
                 'parcelas' => $linkPagamento->parcelas,
+                'parcelas_maximas' => $linkPagamento->parcelas_maximas,
+                'parcelas_permitidas' => $linkPagamento->parcelas_permitidas,
                 'juros' => $linkPagamento->juros,
                 'status' => $linkPagamento->status,
                 'data_expiracao' => $linkPagamento->data_expiracao?->format('Y-m-d'),

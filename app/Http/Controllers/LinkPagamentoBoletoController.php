@@ -157,7 +157,7 @@ class LinkPagamentoBoletoController extends Controller
      */
     public function show($id)
     {
-        return redirect('/app/links-pagamento/'.$id.'/editar');
+        return redirect('/app/links-pagamento/'.$id);
     }
 
     /**

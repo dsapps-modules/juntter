@@ -50,14 +50,23 @@ class LinksPagamentoOverviewController extends Controller
                 'description' => $link->descricao ?? 'Sem descrição',
                 'status' => $this->formatStatus($link->status),
                 'type' => $this->formatType($link->tipo_pagamento),
+                'raw_type' => $link->tipo_pagamento,
                 'amount' => $link->valor_formatado,
                 'max_installments' => $link->parcelas_maximas,
                 'expires_at' => $link->data_expiracao?->format('d/m/Y H:i') ?? 'Sem expiração',
                 'return_url' => $link->url_retorno,
                 'webhook_url' => $link->url_webhook,
                 'created_at' => Carbon::parse($link->created_at)->format('d/m/Y H:i'),
+                'detail_href' => '/links-pagamento/'.$link->id,
             ];
         });
+
+        $recentCardLinks = $rows
+            ->filter(function (array $link): bool {
+                return ($link['raw_type'] ?? null) === 'CARTAO';
+            })
+            ->take(2)
+            ->values();
 
         $selected = $rows->first() ?? [
             'id' => null,
@@ -85,6 +94,7 @@ class LinksPagamentoOverviewController extends Controller
             'rows' => $rows->values(),
             'selected' => $selected,
             'recent_links' => $rows->take(5)->values(),
+            'recent_card_links' => $recentCardLinks,
         ]);
     }
 

@@ -391,6 +391,7 @@ export default function CobrancaCartaoCreditoPage() {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
     const [reloadToken, setReloadToken] = useState(0);
+    const [recentLinksState, setRecentLinksState] = useState([]);
     const [overview, setOverview] = useState(defaultOverview);
 
     useEffect(() => {
@@ -423,8 +424,8 @@ export default function CobrancaCartaoCreditoPage() {
                     link_rows: data.link_rows ?? [],
                     periods: data.periods ?? current.periods,
                     selected_period: data.selected_period ?? current.selected_period,
-                    recent_links: data.recent_links ?? current.recent_links,
                 }));
+                setRecentLinksState((current) => (current.length === 0 ? (data.recent_card_links ?? []).slice(0, 2) : current));
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
                     setFeedback({
@@ -471,8 +472,8 @@ export default function CobrancaCartaoCreditoPage() {
     }, [overview.rows]);
 
     const recentLinks = useMemo(() => {
-        return (overview.recent_links ?? []).filter((item) => item.type === 'Cartao' || item.type === 'Cartão');
-    }, [overview.recent_links]);
+        return recentLinksState;
+    }, [recentLinksState]);
 
     const creditSummary = useMemo(() => {
         return {
@@ -493,6 +494,30 @@ export default function CobrancaCartaoCreditoPage() {
         }
 
         setSelectedPeriod(nextPeriod);
+    }
+
+    async function refreshRecentLinks() {
+        try {
+            const params = new URLSearchParams();
+            params.set('period', selectedPeriod);
+
+            const response = await fetch(`/api/spa/cobranca${params.toString() !== '' ? `?${params.toString()}` : ''}`, {
+                headers: {
+                    Accept: 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            setRecentLinksState((data.recent_card_links ?? []).slice(0, 2));
+        } catch {
+            // Mantém o snapshot atual se a recarga falhar.
+        }
     }
 
     function openTransactionDetails(record) {
@@ -693,6 +718,7 @@ export default function CobrancaCartaoCreditoPage() {
 
             message.success(result.message ?? 'Link de pagamento criado com sucesso.');
             closeLinkModal();
+            await refreshRecentLinks();
             await refreshOverview();
         } catch (error) {
             message.error(error.message || 'Falha ao salvar o link.');
@@ -1173,8 +1199,20 @@ export default function CobrancaCartaoCreditoPage() {
                                     <Empty description="Nenhum link recente encontrado." />
                                 ) : (
                                     <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                        {recentLinks.slice(0, 5).map((item) => (
-                                            <div key={item.id} className="spa-pix-side-link-item">
+                                        {recentLinks.slice(0, 2).map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="spa-pix-side-link-item"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => navigate(`/links-pagamento/${item.id}`)}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                        event.preventDefault();
+                                                        navigate(`/links-pagamento/${item.id}`);
+                                                    }
+                                                }}
+                                            >
                                                 <Space direction="vertical" size={2} style={{ width: '100%' }}>
                                                     <Typography.Text strong>{item.title}</Typography.Text>
                                                     <Typography.Text type="secondary">{item.code}</Typography.Text>
@@ -1184,9 +1222,6 @@ export default function CobrancaCartaoCreditoPage() {
                                                     <Tag color={item.status === 'Ativo' ? 'green' : 'gold'}>{item.status}</Tag>
                                                 </Space>
                                                 <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
-                                                <Button size="small" onClick={() => navigate(`/links-pagamento/${item.id}/editar`)}>
-                                                    Abrir
-                                                </Button>
                                             </div>
                                         ))}
                                     </Space>
@@ -1483,3 +1518,4 @@ export default function CobrancaCartaoCreditoPage() {
         </Row>
     );
 }
+

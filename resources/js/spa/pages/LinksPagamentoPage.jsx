@@ -1,7 +1,29 @@
-import { BankOutlined, CreditCardOutlined, EllipsisOutlined, QrcodeOutlined, ThunderboltOutlined } from '@ant-design/icons';
-import { Alert, Avatar, Button, Card, Col, Divider, Empty, Input, List, Row, Segmented, Skeleton, Space, Statistic, Table, Tag, Timeline, Typography } from 'antd';
+import {
+    CreditCardOutlined,
+    EllipsisOutlined,
+    EyeOutlined,
+    ThunderboltOutlined,
+} from '@ant-design/icons';
+import {
+    Alert,
+    Avatar,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Empty,
+    Input,
+    List,
+    Row,
+    Segmented,
+    Skeleton,
+    Space,
+    Statistic,
+    Table,
+    Tag,
+    Typography,
+} from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const defaultPayload = {
@@ -17,7 +39,6 @@ const defaultPayload = {
         total_value: 'R$ 0,00',
     },
     rows: [],
-    selected: null,
     recent_links: [],
     actions: [],
 };
@@ -31,6 +52,10 @@ const filterMatcher = {
     Pagos: (item) => item.status === 'Pago',
 };
 
+function buildDetailHref(record) {
+    return record.detail_href || `/links-pagamento/${record.id}`;
+}
+
 export default function LinksPagamentoPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -38,6 +63,7 @@ export default function LinksPagamentoPage() {
     const [payload, setPayload] = useState(defaultPayload);
     const [filter, setFilter] = useState('Todos');
     const [searchTerm, setSearchTerm] = useState('');
+    const [reloadToken, setReloadToken] = useState(0);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -65,7 +91,6 @@ export default function LinksPagamentoPage() {
                     ...data,
                     summary: data.summary ?? current.summary,
                     rows: data.rows ?? [],
-                    selected: data.selected ?? data.rows?.[0] ?? null,
                     recent_links: data.recent_links ?? [],
                     actions: data.actions ?? [],
                 }));
@@ -81,16 +106,17 @@ export default function LinksPagamentoPage() {
         loadOverview();
 
         return () => controller.abort();
-    }, []);
+    }, [reloadToken]);
 
     const visibleRows = useMemo(() => {
+        const term = searchTerm.toLowerCase();
+
         return payload.rows.filter((item) => {
             const text = `${item.title} ${item.description} ${item.type} ${item.status}`.toLowerCase();
-            return text.includes(searchTerm.toLowerCase()) && (filterMatcher[filter] ?? filterMatcher.Todos)(item);
+
+            return text.includes(term) && (filterMatcher[filter] ?? filterMatcher.Todos)(item);
         });
     }, [filter, payload.rows, searchTerm]);
-
-    const selectedRow = visibleRows.find((item) => item.id === payload.selected?.id) ?? visibleRows[0] ?? payload.selected;
 
     const columns = [
         {
@@ -98,9 +124,7 @@ export default function LinksPagamentoPage() {
             dataIndex: 'title',
             render: (_, record) => (
                 <Space size={14}>
-                    <Avatar className="spa-row-avatar">
-                        {record.type?.slice(0, 2)?.toUpperCase() ?? 'LK'}
-                    </Avatar>
+                    <Avatar className="spa-row-avatar">{record.type?.slice(0, 2)?.toUpperCase() ?? 'LK'}</Avatar>
                     <div>
                         <Typography.Text strong>{record.title}</Typography.Text>
                         <div>
@@ -161,7 +185,11 @@ export default function LinksPagamentoPage() {
                                         value={searchTerm}
                                         onChange={(event) => setSearchTerm(event.target.value)}
                                     />
-                                    <Button icon={<ThunderboltOutlined />} className="spa-secondary-button">
+                                    <Button
+                                        icon={<ThunderboltOutlined />}
+                                        className="spa-secondary-button"
+                                        onClick={() => setReloadToken((current) => current + 1)}
+                                    >
                                         Atualizar
                                     </Button>
                                 </Space>
@@ -185,11 +213,9 @@ export default function LinksPagamentoPage() {
                                     pagination={false}
                                     className="spa-table"
                                     onRow={(record) => ({
-                                        onClick: () => setPayload((current) => ({ ...current, selected: record })),
+                                        onClick: () => navigate(buildDetailHref(record)),
+                                        style: { cursor: 'pointer' },
                                     })}
-                                    rowClassName={(record) =>
-                                        record.id === selectedRow?.id ? 'spa-table-row-selected' : ''
-                                    }
                                 />
                             )}
                         </Card>
@@ -198,91 +224,91 @@ export default function LinksPagamentoPage() {
             </Col>
 
             <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title={selectedRow ? `Quick View: ${selectedRow.title}` : 'Quick View'} extra={<EllipsisOutlined />}>
-                    {!selectedRow ? (
-                        <Empty description="Selecione um link para ver detalhes" />
-                    ) : (
-                        <>
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Statistic title="Valor" value={selectedRow.amount} />
+                <Card
+                    className="spa-quick-view-card"
+                    title={(
+                        <Space align="center" size={10}>
+                            <EllipsisOutlined />
+                            <span>Ações e atalhos</span>
+                        </Space>
+                    )}
+                    bordered={false}
+                >
+                    <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                        <Row gutter={[12, 12]}>
+                            {[
+                                ['Cartão', payload.summary.card_links],
+                                ['PIX', payload.summary.pix_links],
+                                ['Boleto', payload.summary.boleto_links],
+                                ['Pagos', payload.summary.paid_links],
+                            ].map(([label, value]) => (
+                                <Col xs={12} sm={12} key={label}>
+                                    <Card size="small" bordered={false} className="spa-pix-mini-stat-card">
+                                        <Typography.Text type="secondary">{label}</Typography.Text>
+                                        <div>
+                                            <Typography.Title level={3} style={{ marginBottom: 0 }}>
+                                                {value}
+                                            </Typography.Title>
+                                        </div>
+                                    </Card>
                                 </Col>
-                                <Col span={12}>
-                                    <Statistic title="Parcelas" value={`${selectedRow.max_installments}x`} />
-                                </Col>
-                            </Row>
+                            ))}
+                        </Row>
 
-                            <Divider />
-
-                            <Space direction="vertical" size={10} className="spa-detail-stack">
-                                <Space wrap>
-                                    <Tag color="gold">{selectedRow.type}</Tag>
-                                    <Tag color={selectedRow.status === 'Ativo' ? 'green' : 'volcano'}>{selectedRow.status}</Tag>
-                                </Space>
-                                <Typography.Text strong>{selectedRow.title}</Typography.Text>
-                                <Typography.Text type="secondary">{selectedRow.description}</Typography.Text>
-                                <Typography.Text type="secondary">{selectedRow.created_at}</Typography.Text>
-                                <Typography.Text type="secondary">Expira em {selectedRow.expires_at}</Typography.Text>
-                            </Space>
-
-                            <Divider />
-
-                            <Typography.Title level={4} className="spa-section-title">
-                                Ações rápidas
-                            </Typography.Title>
-
-                            <Space wrap>
-                                <Button type="primary" icon={<CreditCardOutlined />} onClick={() => navigate('/links-pagamento/novo')}>
+                        <Card size="small" title="Atalhos" bordered={false}>
+                            <Space direction="vertical" size={10} style={{ width: '100%' }}>
+                                <Button type="primary" block onClick={() => navigate('/links-pagamento/novo')}>
                                     Novo link
                                 </Button>
-                                <Button onClick={() => navigate(`/links-pagamento/${selectedRow.id}/editar`)}>
-                                    Editar
+                                <Button block onClick={() => navigate('/links-pagamento/novo?tipo=PIX')}>
+                                    Novo PIX
+                                </Button>
+                                <Button block onClick={() => navigate('/links-pagamento/novo?tipo=BOLETO')}>
+                                    Novo boleto
                                 </Button>
                             </Space>
+                        </Card>
 
-                            <List
-                                dataSource={payload.actions}
-                                renderItem={(item) => (
-                                    <List.Item className="spa-quick-link-item">
-                                        <Link to={item.href} className="spa-quick-link">
-                                            <Space align="start" size={14}>
-                                                <div className="spa-quick-link-icon">
-                                                    {item.title.includes('PIX') ? <QrcodeOutlined /> : item.title.includes('boleto') ? <BankOutlined /> : <CreditCardOutlined />}
-                                                </div>
-                                                <div>
-                                                    <Typography.Text strong>{item.title}</Typography.Text>
-                                                    <div>
-                                                        <Typography.Text type="secondary">{item.description}</Typography.Text>
-                                                    </div>
-                                                </div>
+                        <Card size="small" title="Últimos links" bordered={false}>
+                            {payload.recent_links.length === 0 ? (
+                                <Empty description="Nenhum link recente encontrado." />
+                            ) : (
+                                <List
+                                    dataSource={payload.recent_links}
+                                    renderItem={(item) => (
+                                        <List.Item className="spa-quick-link-item">
+                                            <Space direction="vertical" size={2} style={{ width: '100%' }}>
+                                                <Typography.Text strong>{item.title}</Typography.Text>
+                                                <Typography.Text type="secondary">{item.code}</Typography.Text>
+                                                <Space wrap>
+                                                    <Tag color="green">{item.amount}</Tag>
+                                                    <Tag color={item.status === 'Ativo' ? 'green' : 'gold'}>{item.status}</Tag>
+                                                </Space>
+                                                <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
+                                                <Button
+                                                    size="small"
+                                                    icon={<EyeOutlined />}
+                                                    onClick={() => navigate(buildDetailHref(item))}
+                                                >
+                                                    Abrir detalhes
+                                                </Button>
                                             </Space>
-                                        </Link>
-                                    </List.Item>
-                                )}
-                            />
+                                        </List.Item>
+                                    )}
+                                />
+                            )}
+                        </Card>
 
-                            <Divider />
+                        <Divider />
 
-                            <Typography.Title level={4} className="spa-section-title">
-                                Atividade
-                            </Typography.Title>
-
-                            <Timeline
-                                items={visibleRows.slice(0, 4).map((item) => ({
-                                    color: item.status === 'Ativo' ? 'green' : 'gold',
-                                    children: (
-                                        <div>
-                                            <div>{item.title}</div>
-                                            <Typography.Text type="secondary">
-                                                {item.type} • {item.created_at}
-                                            </Typography.Text>
-                                        </div>
-                                    ),
-                                }))}
-                                className="spa-timeline"
-                            />
-                        </>
-                    )}
+                        <Typography.Title level={4} className="spa-section-title">
+                            Observação
+                        </Typography.Title>
+                        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                            Cada linha da lista abre a página de detalhes do link, onde é possível copiar a URL pública,
+                            editar, ativar/desativar e excluir o cadastro.
+                        </Typography.Paragraph>
+                    </Space>
                 </Card>
             </Col>
         </Row>

@@ -21,6 +21,7 @@ import CheckoutLinkSalesPage from './pages/checkout/CheckoutLinkSalesPage';
 import CheckoutProductFormPage from './pages/checkout/CheckoutProductFormPage';
 import CheckoutProductsPage from './pages/checkout/CheckoutProductsPage';
 import LinksPagamentoPage from './pages/LinksPagamentoPage';
+import LinkPagamentoDetailPage from './pages/LinkPagamentoDetailPage';
 import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
 import LinkPagamentoPixDetailPage from './pages/LinkPagamentoPixDetailPage';
 import VendedoresPage from './pages/VendedoresPage';
@@ -90,6 +91,7 @@ export default function App() {
                         <Route path="cobranca/simular" element={<CobrancaSimularPage />} />
                         <Route path="links-pagamento" element={<LinksPagamentoPage />} />
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
+                        <Route path="links-pagamento/:linkId" element={<LinkPagamentoDetailPage />} />
                         <Route path="links-pagamento-pix/:linkId" element={<LinkPagamentoPixDetailPage />} />
                         <Route path="links-pagamento/:linkId/editar" element={<LinkPagamentoFormPage />} />
                         <Route path="seller/products" element={<CheckoutProductsPage />} />

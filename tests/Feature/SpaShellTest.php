@@ -190,14 +190,17 @@ class SpaShellTest extends TestCase
         $pixPosition = strpos($navigationSource, 'cobranca.pix');
         $cartaoCreditoPosition = strpos($navigationSource, 'cobranca.cartao-credito');
         $boletoPosition = strpos($navigationSource, 'cobranca.boleto');
+        $linksPagamentoPosition = strpos($navigationSource, 'links-pagamento.index');
 
         $this->assertNotFalse($historicoPosition);
         $this->assertNotFalse($pixPosition);
         $this->assertNotFalse($cartaoCreditoPosition);
         $this->assertNotFalse($boletoPosition);
+        $this->assertNotFalse($linksPagamentoPosition);
         $this->assertLessThan($pixPosition, $historicoPosition);
         $this->assertLessThan($cartaoCreditoPosition, $pixPosition);
         $this->assertLessThan($boletoPosition, $cartaoCreditoPosition);
+        $this->assertLessThan($linksPagamentoPosition, $boletoPosition);
     }
 
     public function test_the_removed_cobranca_sidebar_items_are_not_present(): void
@@ -208,7 +211,20 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('links.cartao', $navigationSource);
         $this->assertStringNotContainsString('links.pix', $navigationSource);
         $this->assertStringNotContainsString('links.boleto', $navigationSource);
-        $this->assertStringNotContainsString("label: 'Links de Pagamento'", $navigationSource);
+    }
+
+    public function test_the_links_pagamento_sidebar_item_is_present_below_boleto(): void
+    {
+        $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+
+        $boletoPosition = strpos($navigationSource, 'cobranca.boleto');
+        $linksPagamentoPosition = strpos($navigationSource, 'links-pagamento.index');
+
+        $this->assertNotFalse($boletoPosition);
+        $this->assertNotFalse($linksPagamentoPosition);
+        $this->assertLessThan($linksPagamentoPosition, $boletoPosition);
+        $this->assertStringContainsString("label: 'Links de Pagamento'", $navigationSource);
+        $this->assertStringContainsString("path: '/links-pagamento'", $navigationSource);
     }
 
     public function test_the_plano_contratado_item_is_hidden_for_admins_and_kept_for_vendors(): void
@@ -235,6 +251,7 @@ class SpaShellTest extends TestCase
             '/app/cobranca/planos/123',
             '/app/cobranca/saldoextrato',
             '/app/cobranca/simular',
+            '/app/links-pagamento/1',
             '/app/links-pagamento-pix/1',
         ] as $path) {
             $response = $this->get($path);
@@ -277,19 +294,33 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
-        $this->assertStringContainsString('Viso rpida', $pageSource);
+        $this->assertStringContainsString('Visão rápida', $pageSource);
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('ltimos links', $pageSource);
+        $this->assertStringContainsString('Últimos links', $pageSource);
         $this->assertStringContainsString('Criar link PIX', $pageSource);
         $this->assertStringContainsString('Ver links', $pageSource);
         $this->assertStringNotContainsString('Atualizar painel', $pageSource);
+        $this->assertStringContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
+        $this->assertStringContainsString('refreshRecentLinks();', $pageSource);
+        $this->assertStringContainsString('data.recent_links ?? []', $pageSource);
+        $this->assertStringContainsString("filter((item) => item.raw_type === 'PIX' || item.type === 'PIX')", $pageSource);
+        $this->assertStringContainsString('async function refreshRecentLinks()', $pageSource);
+        $this->assertStringContainsString("fetch('/api/spa/links-pagamento'", $pageSource);
+        $this->assertStringContainsString('await refreshRecentLinks();', $pageSource);
         $this->assertStringContainsString('const pixSummary = useMemo(() => ({', $pageSource);
         $this->assertStringContainsString('total_transactions: pixTransactionRows.length', $pageSource);
         $this->assertStringContainsString(')).length + activePixLinksCount', $pageSource);
-        $this->assertStringContainsString("['Transaes', pixSummary.total_transactions]", $pageSource);
+        $this->assertStringContainsString("['Transações', pixSummary.total_transactions]", $pageSource);
         $this->assertStringContainsString("['Pagas', pixSummary.paid_transactions]", $pageSource);
         $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
+        $this->assertStringContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
+        $this->assertStringNotContainsString('recentLinks.slice(0, 5).map((item) => (', $pageSource);
+        $this->assertStringContainsString('recent_links', $pageSource);
+        $this->assertStringNotContainsString('overview.recent_links', $pageSource);
+        $this->assertStringContainsString('role="button"', $pageSource);
+        $this->assertStringContainsString('tabIndex={0}', $pageSource);
+        $this->assertStringNotContainsString('Abrir', $pageSource);
     }
 
     public function test_the_pix_page_shows_status_below_the_transaction_date(): void
@@ -383,6 +414,24 @@ class SpaShellTest extends TestCase
         );
     }
 
+    public function test_the_cartao_credito_page_keeps_recent_links_at_two_items_and_refreshes_only_after_creation(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
+
+        $this->assertStringContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
+        $this->assertStringContainsString('setRecentLinksState((current) => (current.length === 0 ? (data.recent_card_links ?? []).slice(0, 2) : current));', $pageSource);
+        $this->assertStringContainsString('async function refreshRecentLinks()', $pageSource);
+        $this->assertStringContainsString('fetch(`/api/spa/cobranca', $pageSource);
+        $this->assertStringContainsString('await refreshRecentLinks();', $pageSource);
+        $this->assertStringContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
+        $this->assertStringNotContainsString('recentLinks.slice(0, 5).map((item) => (', $pageSource);
+        $this->assertStringNotContainsString('overview.recent_links', $pageSource);
+        $this->assertStringContainsString('recent_card_links', $pageSource);
+        $this->assertStringContainsString('role="button"', $pageSource);
+        $this->assertStringContainsString('tabIndex={0}', $pageSource);
+        $this->assertStringNotContainsString('Abrir', $pageSource);
+    }
+
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
@@ -399,6 +448,34 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('HomeOutlined', $pageSource);
         $this->assertStringNotContainsString("onClick={() => navigate('/links-pagamento')}", $pageSource);
         $this->assertStringNotContainsString('Pre-preenchido:', $pageSource);
+    }
+
+    public function test_the_links_pagamento_detail_page_contains_the_action_sections(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoDetailPage.jsx'));
+
+        $this->assertStringContainsString('Detalhes do link de pagamento', $pageSource);
+        $this->assertStringContainsString('Copiar link', $pageSource);
+        $this->assertStringContainsString('Testar link', $pageSource);
+        $this->assertStringContainsString('Editar', $pageSource);
+        $this->assertStringContainsString('Desativar', $pageSource);
+        $this->assertStringContainsString('Ativar', $pageSource);
+        $this->assertStringContainsString('Excluir', $pageSource);
+        $this->assertStringContainsString('Dados do cliente', $pageSource);
+        $this->assertStringContainsString('Instruções do boleto', $pageSource);
+        $this->assertStringContainsString('navigate(`/links-pagamento/${linkId}`)', $pageSource);
+        $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}/status`', $pageSource);
+        $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}`', $pageSource);
+    }
+
+    public function test_the_links_pagamento_list_page_opens_the_detail_page_on_click(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinksPagamentoPage.jsx'));
+
+        $this->assertStringContainsString('navigate(buildDetailHref(record))', $pageSource);
+        $this->assertStringContainsString('navigate(buildDetailHref(item))', $pageSource);
+        $this->assertStringContainsString('Ações e atalhos', $pageSource);
+        $this->assertStringContainsString('Abrir detalhes', $pageSource);
     }
 
     public function test_the_cobranca_route_is_available(): void
@@ -515,7 +592,7 @@ class SpaShellTest extends TestCase
 
         $this->get('/links-pagamento')->assertRedirect('/app/links-pagamento');
         $this->get('/links-pagamento/create')->assertRedirect('/app/links-pagamento/novo?tipo=CARTAO');
-        $this->get('/links-pagamento/'.$link->id)->assertRedirect('/app/links-pagamento/'.$link->id.'/editar');
+        $this->get('/links-pagamento/'.$link->id)->assertRedirect('/app/links-pagamento/'.$link->id);
         $this->get('/links-pagamento/'.$link->id.'/edit')->assertRedirect('/app/links-pagamento/'.$link->id.'/editar');
 
         $this->get('/links-pagamento-pix')->assertRedirect('/app/links-pagamento');
@@ -523,6 +600,7 @@ class SpaShellTest extends TestCase
         $this->get('/links-pagamento-pix/'.$link->id)->assertRedirect('/app/links-pagamento-pix/'.$link->id);
         $this->get('/links-pagamento-boleto')->assertRedirect('/app/links-pagamento');
         $this->get('/links-pagamento-boleto/create')->assertRedirect('/app/links-pagamento/novo?tipo=BOLETO');
+        $this->get('/links-pagamento-boleto/'.$link->id)->assertRedirect('/app/links-pagamento/'.$link->id);
     }
 
     public function test_legacy_establishment_routes_redirect_to_the_spa(): void

@@ -141,6 +141,7 @@ export default function CobrancaPixPage() {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
+    const [recentLinksState, setRecentLinksState] = useState([]);
     const [overview, setOverview] = useState(defaultOverview);
 
     useEffect(() => {
@@ -187,6 +188,7 @@ export default function CobrancaPixPage() {
         }
 
         loadOverview();
+        refreshRecentLinks();
 
         return () => controller.abort();
     }, [selectedPeriod]);
@@ -245,7 +247,9 @@ export default function CobrancaPixPage() {
         active_links: activePixLinksCount,
     }), [activePixLinksCount, pixTransactionRows]);
 
-    const recentLinks = overview.recent_links ?? [];
+    const recentLinks = useMemo(() => {
+        return recentLinksState;
+    }, [recentLinksState]);
     const linkCustomerEnabled = Form.useWatch('dados_cliente_preenchidos_habilitado', linkForm);
 
     function getStatusColor(status) {
@@ -522,15 +526,40 @@ export default function CobrancaPixPage() {
             return;
         }
 
-                const data = await response.json();
-                setOverview((current) => ({
-                    ...current,
-                    ...data,
-                    rows: data.rows ?? [],
-                    link_rows: data.link_rows ?? [],
-                    periods: data.periods ?? current.periods,
-                    selected_period: data.selected_period ?? current.selected_period,
-                }));
+        const data = await response.json();
+        setOverview((current) => ({
+            ...current,
+            ...data,
+            rows: data.rows ?? [],
+            link_rows: data.link_rows ?? [],
+            periods: data.periods ?? current.periods,
+            selected_period: data.selected_period ?? current.selected_period,
+        }));
+    }
+
+    async function refreshRecentLinks() {
+        try {
+            const response = await fetch('/api/spa/links-pagamento', {
+                headers: {
+                    Accept: 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+
+            setRecentLinksState(
+                (data.recent_links ?? [])
+                    .filter((item) => item.raw_type === 'PIX' || item.type === 'PIX')
+                    .slice(0, 2),
+            );
+        } catch {
+            // Mantém o snapshot atual se a recarga falhar.
+        }
     }
 
     async function copyPixCode() {
@@ -634,6 +663,7 @@ export default function CobrancaPixPage() {
 
             message.success(result.message ?? 'Link de pagamento PIX criado com sucesso.');
             closeLinkModal();
+            await refreshRecentLinks();
             await refreshOverview();
         } catch (submitError) {
             message.error(submitError.message || 'Falha ao salvar o link.');
@@ -899,8 +929,20 @@ export default function CobrancaPixPage() {
                                     <Empty description="Nenhum link recente encontrado." />
                                 ) : (
                                     <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                        {recentLinks.slice(0, 5).map((item) => (
-                                            <div key={item.id} className="spa-pix-side-link-item">
+                                        {recentLinks.slice(0, 2).map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="spa-pix-side-link-item"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => navigate(`/links-pagamento-pix/${item.id}`)}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                        event.preventDefault();
+                                                        navigate(`/links-pagamento-pix/${item.id}`);
+                                                    }
+                                                }}
+                                            >
                                                 <Space direction="vertical" size={2} style={{ width: '100%' }}>
                                                     <Typography.Text strong>{item.title}</Typography.Text>
                                                     <Typography.Text type="secondary">{item.code}</Typography.Text>
@@ -910,9 +952,6 @@ export default function CobrancaPixPage() {
                                                     <Tag color={getStatusColor(item.status)}>{item.status}</Tag>
                                                 </Space>
                                                 <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
-                                                <Button size="small" onClick={() => navigate(`/links-pagamento-pix/${item.id}`)}>
-                                                    Abrir
-                                                </Button>
                                             </div>
                                         ))}
                                     </Space>

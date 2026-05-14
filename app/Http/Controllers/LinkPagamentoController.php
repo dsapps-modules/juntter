@@ -190,7 +190,7 @@ class LinkPagamentoController extends Controller
      */
     public function show(LinkPagamento $linkPagamento)
     {
-        return redirect('/app/links-pagamento/'.$linkPagamento->id.'/editar');
+        return redirect('/app/links-pagamento/'.$linkPagamento->id);
     }
 
     /**

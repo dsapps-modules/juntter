@@ -7,15 +7,18 @@ Revisar: geração de links, boletos
 Erro nos cálculos de taxas de cartão
 
 **Formas de Pagamento**
-[ ] cobrança cartão de crédito criada paga
-[ ] cobrança cartão de crédito taxa cliente
-[ ] cobrança cartão de crédito taxa vendedor
-[ ] link pagamento cartão
+[x] cobrança cartão de crédito criada paga
+[x] cobrança cartão de crédito taxa cliente
+[x] cobrança cartão de crédito taxa vendedor
+[ ] link pagamento cartão sem dados
+[ ] link pagamento cartão com dados
 [ ] checkout externo com cartão
 [ ] cobrança por boleto
 [ ] link pagamento boleto
 [ ] checkout com boleto
 [ ] fluxo forms checkout
+[ ] histórico: somatório
+[ ] botão de refresh: eliminar?
 
 
 - MSD

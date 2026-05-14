@@ -27,6 +27,7 @@ export const navigationByRole = {
                 { key: 'cobranca.pix', path: '/cobranca/pix', label: 'Pix', icon: 'pix' },
                 { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
+                { key: 'links-pagamento.index', path: '/links-pagamento', label: 'Links de Pagamento', icon: 'links' },
             ],
         },
     ],
@@ -62,6 +63,7 @@ export const navigationByRole = {
                 { key: 'cobranca.pix', path: '/cobranca/pix', label: 'Pix', icon: 'pix' },
                 { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
+                { key: 'links-pagamento.index', path: '/links-pagamento', label: 'Links de Pagamento', icon: 'links' },
             ],
         },
         {
