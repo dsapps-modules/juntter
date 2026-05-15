@@ -1329,6 +1329,63 @@ class RedirectedCheckoutTest extends TestCase
             ->assertJsonPath('message', 'O documento do pagador é inválido.');
     }
 
+    public function test_boleto_payment_surfaces_gateway_validation_error_when_transaction_id_is_missing(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Reginaldo do Prado',
+            'customer_email' => 'reginaldo@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11989013858',
+            'zipcode' => '07096000',
+            'street' => 'Avenida Suplicy',
+            'number' => '519',
+            'complement' => 'Sala 01',
+            'neighborhood' => 'Jardim Santa Mena',
+            'city' => 'Guarulhos',
+            'state' => 'SP',
+            'recipient_name' => 'Reginaldo do Prado',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createBoletoPayment')
+            ->willReturn([
+                'gateway_status' => 'FAILED',
+                'internal_status' => 'failed',
+                'api_boleto' => [
+                    'message' => 'Data limite de desconto deve ser menor que a data de vencimento',
+                    'status' => 403,
+                    'code' => 'BNK000143',
+                    'boleto_url' => null,
+                    'boleto_barcode' => null,
+                    'boleto_digitable_line' => null,
+                ],
+            ]);
+
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Data limite de desconto deve ser menor que a data de vencimento')
+            ->assertJsonPath('paytime_response.api_boleto.code', 'BNK000143');
+
+        $this->assertDatabaseCount('payment_transactions', 0);
+    }
+
     public function test_checkout_status_refreshes_incomplete_boleto_details(): void
     {
         $seller = $this->makeVendorUser();

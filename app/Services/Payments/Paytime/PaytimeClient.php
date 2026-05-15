@@ -282,8 +282,7 @@ class PaytimeClient
      *         booklet: bool,
      *         description: string,
      *         late_fee: array{mode: string, amount: float},
-     *         interest: array{mode: string, amount: float},
-     *         discount: array{mode: string, amount: float, limit_date: string}
+     *         interest: array{mode: string, amount: float}
      *     },
      *     extra_headers: array{establishment_id: string|int}
      * }
@@ -297,7 +296,6 @@ class PaytimeClient
         $checkoutLink = $order->checkoutLink;
         $expirationDate = now()->addDays(7)->startOfDay();
         $paymentLimitDate = now()->addDays(8)->startOfDay();
-        $discountLimitDate = now()->addDays(5)->startOfDay();
 
         if ($checkoutLink instanceof CheckoutLink && $checkoutLink->expires_at !== null) {
             $expirationDate = $checkoutLink->expires_at->copy()->startOfDay();
@@ -342,11 +340,6 @@ class PaytimeClient
                 'interest' => [
                     'mode' => 'MONTHLY_PERCENTAGE',
                     'amount' => 1.0,
-                ],
-                'discount' => [
-                    'mode' => 'PERCENTAGE',
-                    'amount' => 5.0,
-                    'limit_date' => $discountLimitDate->format('Y-m-d'),
                 ],
             ],
             'extra_headers' => [

@@ -162,7 +162,10 @@ class PaytimeClientTest extends TestCase
                 $this->callback(function (array $payload): bool {
                     return $payload['amount'] === 15000
                         && $payload['expiration'] === '2026-05-12'
-                        && $payload['payment_limit_date'] === '2026-05-13';
+                        && $payload['payment_limit_date'] === '2026-05-13'
+                        && isset($payload['instruction']['late_fee'])
+                        && isset($payload['instruction']['interest'])
+                        && ! isset($payload['instruction']['discount']);
                 }),
             )
             ->willReturn([

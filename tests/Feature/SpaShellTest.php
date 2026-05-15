@@ -476,6 +476,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('navigate(buildDetailHref(item))', $pageSource);
         $this->assertStringContainsString('Ações e atalhos', $pageSource);
         $this->assertStringContainsString('Abrir detalhes', $pageSource);
+        $this->assertStringNotContainsString('Atualizar', $pageSource);
+        $this->assertStringNotContainsString('ThunderboltOutlined', $pageSource);
     }
 
     public function test_the_cobranca_route_is_available(): void

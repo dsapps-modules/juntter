@@ -2,7 +2,6 @@ import {
     CreditCardOutlined,
     EllipsisOutlined,
     EyeOutlined,
-    ThunderboltOutlined,
 } from '@ant-design/icons';
 import {
     Alert,
@@ -185,13 +184,6 @@ export default function LinksPagamentoPage() {
                                         value={searchTerm}
                                         onChange={(event) => setSearchTerm(event.target.value)}
                                     />
-                                    <Button
-                                        icon={<ThunderboltOutlined />}
-                                        className="spa-secondary-button"
-                                        onClick={() => setReloadToken((current) => current + 1)}
-                                    >
-                                        Atualizar
-                                    </Button>
                                 </Space>
                             </Space>
                         </Card>

@@ -12,6 +12,7 @@ use App\Models\PaymentTransaction;
 use App\Services\Checkout\CheckoutPricingService;
 use App\Services\Payments\Paytime\PaytimePaymentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class PublicCheckoutPaymentController extends Controller
 {
@@ -90,7 +91,14 @@ class PublicCheckoutPaymentController extends Controller
 
         $gatewayTransactionId = $this->resolveGatewayTransactionId($gatewayResponse);
 
-        abort_unless($gatewayTransactionId !== null, 502, 'A resposta do gateway não retornou o identificador da transação.');
+        if ($gatewayTransactionId === null) {
+            $gatewayErrorMessage = $this->resolveGatewayErrorMessage($gatewayResponse);
+
+            return response()->json([
+                'message' => $gatewayErrorMessage ?? 'A resposta do gateway não retornou o identificador da transação.',
+                'paytime_response' => $gatewayResponse,
+            ], $gatewayErrorMessage !== null ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_BAD_GATEWAY);
+        }
 
         $paymentTransaction = PaymentTransaction::query()->updateOrCreate([
             'order_id' => $order->id,
@@ -270,6 +278,23 @@ class PublicCheckoutPaymentController extends Controller
         }
 
         return (string) $transactionId;
+    }
+
+    private function resolveGatewayErrorMessage(array $gatewayResponse): ?string
+    {
+        $message = data_get($gatewayResponse, 'message')
+            ?? data_get($gatewayResponse, 'error')
+            ?? data_get($gatewayResponse, 'errors.0.message')
+            ?? data_get($gatewayResponse, 'api_boleto.message')
+            ?? data_get($gatewayResponse, 'api_transaction.message');
+
+        if (! is_scalar($message)) {
+            return null;
+        }
+
+        $normalizedMessage = trim((string) $message);
+
+        return $normalizedMessage !== '' ? $normalizedMessage : null;
     }
 
     private function sanitizePaymentRequestPayload(array $payload): array
