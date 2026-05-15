@@ -86,6 +86,7 @@ class DocumentRequestValidationTest extends TestCase
                         'first_name' => 'Maria',
                         'last_name' => 'Silva',
                         'document' => '123.456.789-09',
+                        'phone' => '(11) 99999-9999',
                         'email' => 'maria@example.com',
                         'address' => [
                             'street' => 'Rua A',
@@ -214,6 +215,7 @@ class DocumentRequestValidationTest extends TestCase
                         'first_name' => 'Maria',
                         'last_name' => 'Silva',
                         'document' => '111.111.111-11',
+                        'phone' => '(11) 99999-9999',
                         'email' => 'maria@example.com',
                         'address' => [
                             'street' => 'Rua A',

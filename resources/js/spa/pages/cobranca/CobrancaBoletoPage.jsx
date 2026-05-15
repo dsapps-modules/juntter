@@ -33,7 +33,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
-import { isValidDocument } from '../../documentValidation';
+import { formatDocument, isValidDocument } from '../../documentValidation';
 
 const stateOptions = [
     'AC',
@@ -126,13 +126,14 @@ const defaultOverview = {
 
 const boletoInitialValues = {
     amount: '0,00',
-    expiration: null,
-    payment_limit_date: null,
+    expiration: dayjs().add(1, 'day'),
+    payment_limit_date: dayjs().add(2, 'day'),
     recharge: false,
     client: {
         first_name: '',
         last_name: '',
         document: '',
+        phone: '',
         email: '',
         address: {
             street: '',
@@ -155,7 +156,7 @@ const boletoInitialValues = {
         },
         discount: {
             amount: '5,00',
-            limit_date: null,
+            limit_date: dayjs(),
         },
     },
 };
@@ -168,6 +169,28 @@ function documentValidator(_, value) {
     return isValidDocument(value)
         ? Promise.resolve()
         : Promise.reject(new Error('O documento informado é inválido.'));
+}
+
+function formatPhone(value) {
+    const digits = String(value ?? '').replace(/\D+/g, '').slice(0, 11);
+
+    if (!digits) {
+        return '';
+    }
+
+    if (digits.length <= 2) {
+        return `(${digits}`;
+    }
+
+    if (digits.length <= 6) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    }
+
+    if (digits.length <= 10) {
+        return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+    }
+
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
 function normalizeDigits(value) {
@@ -294,6 +317,34 @@ function getFirstValidationError(errors) {
     return Object.values(errors ?? {}).flat().find(Boolean) ?? '';
 }
 
+function syncBoletoDates(form, expiration) {
+    if (!expiration || !dayjs(expiration).isValid()) {
+        return;
+    }
+
+    const expirationDate = dayjs(expiration);
+    const paymentLimitDate = form.getFieldValue('payment_limit_date');
+    const discountLimitDate = form.getFieldValue(['instruction', 'discount', 'limit_date']);
+
+    if (
+        !paymentLimitDate ||
+        !dayjs(paymentLimitDate).isValid() ||
+        dayjs(paymentLimitDate).isSame(expirationDate) ||
+        dayjs(paymentLimitDate).isBefore(expirationDate)
+    ) {
+        form.setFieldValue('payment_limit_date', expirationDate.add(1, 'day'));
+    }
+
+    if (
+        !discountLimitDate ||
+        !dayjs(discountLimitDate).isValid() ||
+        dayjs(discountLimitDate).isSame(expirationDate) ||
+        dayjs(discountLimitDate).isAfter(expirationDate)
+    ) {
+        form.setFieldValue(['instruction', 'discount', 'limit_date'], expirationDate.subtract(1, 'day'));
+    }
+}
+
 async function copyText(text) {
     if (!text) {
         return;
@@ -367,6 +418,10 @@ export default function CobrancaBoletoPage() {
 
         return () => controller.abort();
     }, [reloadToken, selectedPeriod]);
+
+    useEffect(() => {
+        syncBoletoDates(form, form.getFieldValue('expiration'));
+    }, [form]);
 
     const periodOptions = useMemo(() => {
         const optionsByValue = new Map();
@@ -447,6 +502,10 @@ export default function CobrancaBoletoPage() {
         }
     }
 
+    function handleExpirationChange(value) {
+        syncBoletoDates(form, value);
+    }
+
     async function handleSubmit(values) {
         setSubmitting(true);
         setFeedback(null);
@@ -472,6 +531,7 @@ export default function CobrancaBoletoPage() {
                         first_name: values.client?.first_name ?? '',
                         last_name: values.client?.last_name ?? '',
                         document: values.client?.document ?? '',
+                        phone: values.client?.phone ?? '',
                         email: values.client?.email ?? '',
                         address: {
                             street: values.client?.address?.street ?? '',
@@ -723,11 +783,16 @@ export default function CobrancaBoletoPage() {
                                         </Col>
                                         <Col xs={24} md={8}>
                                             <Form.Item
-                                                label="Data de expiração"
+                                                label="Vencimento"
                                                 name="expiration"
-                                                rules={[{ required: true, message: 'Informe a data de expiração.' }]}
+                                                rules={[{ required: true, message: 'Informe o vencimento.' }]}
                                             >
-                                                <DatePicker size="large" style={{ width: '100%' }} format="DD/MM/YYYY" />
+                                                <DatePicker
+                                                    size="large"
+                                                    style={{ width: '100%' }}
+                                                    format="DD/MM/YYYY"
+                                                    onChange={handleExpirationChange}
+                                                />
                                             </Form.Item>
                                         </Col>
                                         <Col xs={24} md={8}>
@@ -767,7 +832,7 @@ export default function CobrancaBoletoPage() {
                                         </Row>
 
                                         <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={8}>
+                                            <Col xs={24} md={12}>
                                                 <Form.Item
                                                     label="CPF/CNPJ"
                                                     name={['client', 'document']}
@@ -776,10 +841,33 @@ export default function CobrancaBoletoPage() {
                                                         { validator: documentValidator },
                                                     ]}
                                                 >
-                                                    <Input size="large" placeholder="000.000.000-00" />
+                                                    <Input
+                                                        size="large"
+                                                        placeholder="000.000.000-00"
+                                                        normalize={formatDocument}
+                                                        maxLength={18}
+                                                    />
                                                 </Form.Item>
                                             </Col>
-                                            <Col xs={24} md={16}>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item
+                                                    label="Telefone"
+                                                    name={['client', 'phone']}
+                                                    rules={[{ required: true, message: 'Informe o telefone.' }]}
+                                                >
+                                                    <Input
+                                                        size="large"
+                                                        placeholder="(11) 99999-9999"
+                                                        normalize={formatPhone}
+                                                        maxLength={15}
+                                                        inputMode="numeric"
+                                                    />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+
+                                        <Row gutter={[16, 16]}>
+                                            <Col xs={24}>
                                                 <Form.Item
                                                     label="Email"
                                                     name={['client', 'email']}

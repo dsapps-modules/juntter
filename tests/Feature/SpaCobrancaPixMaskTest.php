@@ -44,10 +44,11 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('async function lookupAddressByZipcode(zipcode)', $pageSource);
         $this->assertStringContainsString('https://viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $pageSource);
         $this->assertStringContainsString('async function handleZipcodeBlur()', $pageSource);
+        $this->assertStringContainsString('const stateValue = resolveStateValue(address);', $pageSource);
+        $this->assertStringContainsString('form.setFieldValue([\'client\', \'address\', \'state\'], stateValue);', $pageSource);
         $this->assertStringContainsString('street: address.logradouro || \'\'', $pageSource);
         $this->assertStringContainsString('neighborhood: address.bairro || \'\'', $pageSource);
         $this->assertStringContainsString('city: address.localidade || \'\'', $pageSource);
-        $this->assertStringContainsString('state: address.uf || undefined', $pageSource);
         $this->assertStringContainsString('onBlur={handleZipcodeBlur}', $pageSource);
     }
 
@@ -61,11 +62,34 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('async function lookupAddressByZipcode(zipcode)', $pageSource);
         $this->assertStringContainsString('https://viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $pageSource);
         $this->assertStringContainsString('async function handleZipcodeBlur()', $pageSource);
+        $this->assertStringContainsString('const stateValue = resolveStateValue(address);', $pageSource);
+        $this->assertStringContainsString('form.setFieldValue([\'client\', \'address\', \'state\'], stateValue);', $pageSource);
         $this->assertStringContainsString('street: address.logradouro || \'\'', $pageSource);
         $this->assertStringContainsString('neighborhood: address.bairro || \'\'', $pageSource);
         $this->assertStringContainsString('city: address.localidade || \'\'', $pageSource);
-        $this->assertStringContainsString('state: address.uf || undefined', $pageSource);
         $this->assertStringContainsString('onBlur={handleZipcodeBlur}', $pageSource);
+    }
+
+    public function test_cobranca_boleto_page_syncs_payment_dates_from_expiration_like_the_legacy_form(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
+
+        $this->assertStringContainsString("import { formatDocument, isValidDocument } from '../../documentValidation';", $pageSource);
+        $this->assertStringContainsString('label="Vencimento"', $pageSource);
+        $this->assertStringContainsString('expiration: dayjs().add(1, \'day\')', $pageSource);
+        $this->assertStringContainsString("payment_limit_date: dayjs().add(2, 'day')", $pageSource);
+        $this->assertStringContainsString('limit_date: dayjs(),', $pageSource);
+        $this->assertStringContainsString('function syncBoletoDates(form, expiration)', $pageSource);
+        $this->assertStringContainsString("form.setFieldValue('payment_limit_date', expirationDate.add(1, 'day'));", $pageSource);
+        $this->assertStringContainsString("form.setFieldValue(['instruction', 'discount', 'limit_date'], expirationDate.subtract(1, 'day'));", $pageSource);
+        $this->assertStringContainsString('syncBoletoDates(form, form.getFieldValue(\'expiration\'));', $pageSource);
+        $this->assertStringContainsString('normalize={formatDocument}', $pageSource);
+        $this->assertStringContainsString('maxLength={18}', $pageSource);
+        $this->assertStringContainsString('label="Telefone"', $pageSource);
+        $this->assertStringContainsString('normalize={formatPhone}', $pageSource);
+        $this->assertStringContainsString('maxLength={15}', $pageSource);
+        $this->assertStringContainsString('<Col xs={24}>', $pageSource);
+        $this->assertStringContainsString('onChange={handleExpirationChange}', $pageSource);
     }
 
     public function test_cobranca_pix_page_uses_phone_mask_in_both_phone_fields(): void

@@ -40,6 +40,7 @@ class BoletoRequest extends FormRequest
                     }
                 },
             ],
+            'client.phone' => 'required|string|max:18',
             'client.email' => 'required|email',
             'client.address.street' => 'required|string|max:128',
             'client.address.number' => 'required|string|max:10',
