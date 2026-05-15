@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Card, Col, Empty, Row, Space, Statistic, Table, Tag, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -52,10 +53,6 @@ export default function CheckoutLinkSalesPage() {
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
                 <Card title="Vendas do Checkout">
-                    <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
-                        Acompanhe os pedidos gerados a partir dos links de checkout.
-                    </Typography.Paragraph>
-
                     <Space style={{ marginBottom: 24 }} size={20} wrap>
                         <Statistic title="Total vendido" value={`R$ ${Number(summary.total_sales).toFixed(2).replace('.', ',')}`} />
                         <Statistic title="Pedidos" value={sales.length} />
@@ -81,6 +78,11 @@ export default function CheckoutLinkSalesPage() {
                                 {
                                     title: 'Cliente',
                                     dataIndex: 'customer_name',
+                                },
+                                {
+                                    title: 'Data',
+                                    dataIndex: 'created_at',
+                                    render: (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '-'),
                                 },
                                 {
                                     title: 'Status',

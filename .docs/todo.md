@@ -12,7 +12,7 @@ Erro nos cálculos de taxas de cartão
 [x] cobrança cartão de crédito taxa vendedor
 [x] link pagamento cartão sem dados
 [x] link pagamento cartão com dados
-[ ] checkout externo com cartão
+[x] checkout externo com cartão 
 [ ] cobrança por boleto
 [ ] link pagamento boleto
 [ ] checkout com boleto

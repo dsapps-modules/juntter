@@ -41,11 +41,18 @@ class SpaCheckoutLinksPageTest extends TestCase
     public function test_the_checkout_link_sales_page_opens_sale_details_from_table_rows(): void
     {
         $salesPageSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkSalesPage.jsx'));
+        $salesBladeSource = file_get_contents(base_path('resources/views/seller/checkout-links/sales.blade.php'));
         $detailPageSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkSaleDetailPage.jsx'));
 
         $this->assertIsString($salesPageSource);
+        $this->assertIsString($salesBladeSource);
         $this->assertStringContainsString('onRow={(record) => ({', $salesPageSource);
         $this->assertStringContainsString('navigate(`/seller/checkout-links/${params.checkoutLinkId}/vendas/${record.id}`)', $salesPageSource);
+        $this->assertStringNotContainsString('Acompanhe os pedidos gerados a partir dos links de checkout.', $salesPageSource);
+        $this->assertStringContainsString("title: 'Data'", $salesPageSource);
+        $this->assertStringContainsString("render: (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '-')", $salesPageSource);
+        $this->assertStringContainsString('<th>Data</th>', $salesBladeSource);
+        $this->assertStringContainsString('created_at?->format(\'d/m/Y\') ?? \'-\'', $salesBladeSource);
         $this->assertStringContainsString("fetch('/api/spa/perfil'", $detailPageSource);
         $this->assertStringContainsString("const isAdminUser = ['admin', 'super_admin'].includes(accessLevel);", $detailPageSource);
         $this->assertStringContainsString('{isAdminUser ? (', $detailPageSource);
