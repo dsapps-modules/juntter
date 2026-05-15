@@ -351,6 +351,11 @@ async function copyText(text) {
 export default function CobrancaBoletoPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
+    const tablePagination = {
+        pageSize: 10,
+        showSizeChanger: false,
+        hideOnSinglePage: true,
+    };
     const currentPeriod = getCurrentPeriod();
 
     const [loading, setLoading] = useState(true);
@@ -1046,7 +1051,7 @@ export default function CobrancaBoletoPage() {
                                     rowKey="code"
                                     columns={columns}
                                     dataSource={boletoRows}
-                                    pagination={false}
+                                    pagination={tablePagination}
                                     className="spa-table spa-pix-transactions-table"
                                     rowClassName={() => 'spa-pix-table-row'}
                                 />

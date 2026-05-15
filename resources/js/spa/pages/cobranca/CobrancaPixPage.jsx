@@ -129,6 +129,11 @@ export default function CobrancaPixPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [linkForm] = Form.useForm();
+    const tablePagination = {
+        pageSize: 10,
+        showSizeChanger: false,
+        hideOnSinglePage: true,
+    };
     const currentPeriod = getCurrentPeriod();
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -869,7 +874,7 @@ export default function CobrancaPixPage() {
                                     rowKey="id"
                                     columns={columns}
                                     dataSource={pixRows}
-                                    pagination={false}
+                                    pagination={tablePagination}
                                     className="spa-table spa-pix-transactions-table"
                                     rowClassName={() => 'spa-pix-table-row'}
                                 />

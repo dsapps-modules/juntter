@@ -19,13 +19,19 @@ class MoneyInputFieldUsageTest extends TestCase
             base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx') => [
                 'MoneyInputField size="large" placeholder="0,00"',
                 'MoneyInputField size="large" placeholder="R$ 5,55"',
+                'pageSize: 10',
+                'hideOnSinglePage: true',
             ],
             base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx') => [
                 'MoneyInputField size="large" placeholder="0,00"',
                 'MoneyInputField size="large" placeholder="R$ 25,00"',
+                'pageSize: 10',
+                'hideOnSinglePage: true',
             ],
             base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx') => [
                 'MoneyInputField size="large" placeholder="0,00"',
+                'pageSize: 10',
+                'hideOnSinglePage: true',
             ],
             base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx') => [
                 'MoneyInputField className="w-full"',

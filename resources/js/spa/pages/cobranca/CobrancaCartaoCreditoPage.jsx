@@ -376,6 +376,11 @@ export default function CobrancaCartaoCreditoPage() {
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [linkForm] = Form.useForm();
+    const tablePagination = {
+        pageSize: 10,
+        showSizeChanger: false,
+        hideOnSinglePage: true,
+    };
     const currentPeriod = getCurrentPeriod();
     const linkCustomerEnabled = Form.useWatch('dados_cliente_preenchidos_habilitado', linkForm);
 
@@ -1136,7 +1141,7 @@ export default function CobrancaCartaoCreditoPage() {
                                     rowKey="id"
                                     columns={columns}
                                     dataSource={creditRows}
-                                    pagination={false}
+                                    pagination={tablePagination}
                                     className="spa-table spa-pix-transactions-table"
                                     rowClassName={() => 'spa-pix-table-row'}
                                 />
