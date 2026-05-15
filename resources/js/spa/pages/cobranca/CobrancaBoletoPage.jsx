@@ -324,8 +324,6 @@ function syncBoletoDates(form, expiration) {
 
     const expirationDate = dayjs(expiration);
     const paymentLimitDate = form.getFieldValue('payment_limit_date');
-    const discountLimitDate = form.getFieldValue(['instruction', 'discount', 'limit_date']);
-
     if (
         !paymentLimitDate ||
         !dayjs(paymentLimitDate).isValid() ||
@@ -335,14 +333,7 @@ function syncBoletoDates(form, expiration) {
         form.setFieldValue('payment_limit_date', expirationDate.add(1, 'day'));
     }
 
-    if (
-        !discountLimitDate ||
-        !dayjs(discountLimitDate).isValid() ||
-        dayjs(discountLimitDate).isSame(expirationDate) ||
-        dayjs(discountLimitDate).isAfter(expirationDate)
-    ) {
-        form.setFieldValue(['instruction', 'discount', 'limit_date'], expirationDate.subtract(1, 'day'));
-    }
+    form.setFieldValue(['instruction', 'discount', 'limit_date'], expirationDate.subtract(1, 'day'));
 }
 
 async function copyText(text) {
