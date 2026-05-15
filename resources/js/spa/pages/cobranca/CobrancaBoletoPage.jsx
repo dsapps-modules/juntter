@@ -399,6 +399,7 @@ export default function CobrancaBoletoPage() {
                         type: 'error',
                         message: fetchError.message || 'Falha ao carregar os boletos.',
                     });
+                    scrollToTop();
                 }
             } finally {
                 setLoading(false);
@@ -563,7 +564,6 @@ export default function CobrancaBoletoPage() {
                 );
             }
 
-            setBoletoResult(result.boleto_data ?? null);
             setFeedback({
                 type: 'success',
                 message: result.message ?? 'Boleto criado com sucesso.',
@@ -578,6 +578,7 @@ export default function CobrancaBoletoPage() {
                 type: 'error',
                 message: error.message || 'Falha ao criar o boleto.',
             });
+            scrollToTop();
         } finally {
             setSubmitting(false);
         }
@@ -614,6 +615,7 @@ export default function CobrancaBoletoPage() {
                 type: 'error',
                 message: error.message || 'Falha ao cancelar o boleto.',
             });
+            scrollToTop();
         }
     }
 

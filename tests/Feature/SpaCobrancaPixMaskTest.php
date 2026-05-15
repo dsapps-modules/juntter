@@ -93,6 +93,8 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertTrue(strpos($pageSource, 'label="Estado"') < strpos($pageSource, 'label="Rua"'));
         $this->assertTrue(strpos($pageSource, 'label="Complemento"') < strpos($pageSource, 'label="Bairro"'));
         $this->assertTrue(strpos($pageSource, 'label="Bairro"') < strpos($pageSource, 'label="Cidade"'));
+        $this->assertStringNotContainsString('setBoletoResult(', $pageSource);
+        $this->assertSame(4, substr_count($pageSource, 'scrollToTop();'));
         $this->assertStringContainsString('onChange={handleExpirationChange}', $pageSource);
     }
 
