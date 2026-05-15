@@ -6,7 +6,6 @@ import {
     EyeOutlined,
     ExclamationCircleOutlined,
     FileTextOutlined,
-    ReloadOutlined,
     SendOutlined,
     StopOutlined,
 } from '@ant-design/icons';
@@ -361,6 +360,7 @@ export default function CobrancaBoletoPage() {
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
     const [reloadToken, setReloadToken] = useState(0);
     const [overview, setOverview] = useState(defaultOverview);
+    const [cancelingBoletoCode, setCancelingBoletoCode] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -444,7 +444,7 @@ export default function CobrancaBoletoPage() {
     }, [overview.rows]);
 
     const boletoSummary = overview.summary ?? defaultOverview.summary;
-    const recentBoletos = (overview.recent_boletos ?? boletoRows.slice(0, 5)).slice(0, 5);
+    const recentBoletos = (overview.recent_boletos ?? boletoRows.slice(0, 3)).slice(0, 3);
     const tableTitle = selectedPeriod === 'all'
         ? 'Boletos de todos os meses'
         : `Boletos do mês ${formatPeriodLabel(selectedPeriod)}`;
@@ -586,6 +586,8 @@ export default function CobrancaBoletoPage() {
 
     async function cancelBoleto(record) {
         try {
+            setCancelingBoletoCode(record.code);
+
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             const response = await fetch(`/api/spa/cobranca/boleto/${record.code}`, {
@@ -616,6 +618,8 @@ export default function CobrancaBoletoPage() {
                 message: error.message || 'Falha ao cancelar o boleto.',
             });
             scrollToTop();
+        } finally {
+            setCancelingBoletoCode(null);
         }
     }
 
@@ -625,34 +629,10 @@ export default function CobrancaBoletoPage() {
 
     const columns = [
         {
-            title: 'ID',
-            dataIndex: 'code',
+            title: 'Cliente',
+            dataIndex: 'title',
             width: 240,
-            render: (value, record) => (
-                <Space align="start" size={10} className="spa-pix-title-cell">
-                    <span
-                        aria-hidden="true"
-                        style={{
-                            display: 'inline-block',
-                            width: 8,
-                            height: 8,
-                            marginTop: 8,
-                            borderRadius: 999,
-                            flex: '0 0 auto',
-                backgroundColor: record.raw_status === 'PAID' || record.raw_status === 'APPROVED' ? '#22c55e' : '#f59e0b',
-                        }}
-                    />
-                    <Space direction="vertical" size={2}>
-                        <Typography.Text strong className="spa-pix-row-title">
-                            {record.title}
-                        </Typography.Text>
-                        <Typography.Text type="secondary" className="spa-pix-row-subtitle">
-                            {value}
-                            {record.raw_status ? ` • ${record.raw_status}` : ''}
-                        </Typography.Text>
-                    </Space>
-                </Space>
-            ),
+            render: (value) => <Typography.Text strong className="spa-pix-row-title">{value}</Typography.Text>,
         },
         {
             title: 'Valor',
@@ -707,6 +687,7 @@ export default function CobrancaBoletoPage() {
                             size="middle"
                             icon={<StopOutlined />}
                             className="spa-pix-action-button spa-pix-action-button-cancel"
+                            loading={cancelingBoletoCode === record.code}
                             onClick={() => cancelBoleto(record)}
                             title="Cancelar"
                             aria-label="Cancelar"
@@ -744,14 +725,6 @@ export default function CobrancaBoletoPage() {
                                 <span>Gerar Boleto</span>
                             </Button>
 
-                            <Button
-                                htmlType="button"
-                                onClick={() => refreshOverview()}
-                                className="spa-pix-collapse-label-badge spa-pix-page-link-button"
-                            >
-                                <ReloadOutlined />
-                                Atualizar painel
-                            </Button>
                         </div>
 
                         {formVisible ? (
@@ -1124,9 +1097,6 @@ export default function CobrancaBoletoPage() {
                                     <Button block onClick={() => navigate('/cobranca')}>
                                         Ver histórico
                                     </Button>
-                                    <Button block onClick={() => refreshOverview()}>
-                                        Atualizar painel
-                                    </Button>
                                 </Space>
                             </Card>
 
@@ -1136,19 +1106,27 @@ export default function CobrancaBoletoPage() {
                                 ) : (
                                     <Space direction="vertical" size={12} style={{ width: '100%' }}>
                                         {recentBoletos.map((item) => (
-                                            <div key={item.code} className="spa-pix-side-link-item">
+                                            <div
+                                                key={item.code}
+                                                className="spa-pix-side-link-item"
+                                                role="button"
+                                                tabIndex={0}
+                                                onClick={() => openBoletoDetails(item)}
+                                                onKeyDown={(event) => {
+                                                    if (event.key === 'Enter' || event.key === ' ') {
+                                                        event.preventDefault();
+                                                        openBoletoDetails(item);
+                                                    }
+                                                }}
+                                            >
                                                 <Space direction="vertical" size={2} style={{ width: '100%' }}>
                                                     <Typography.Text strong>{item.title}</Typography.Text>
-                                                    <Typography.Text type="secondary">{item.code}</Typography.Text>
                                                 </Space>
                                                 <Space wrap>
                                                     <Tag color="gold">{item.amount}</Tag>
                                                     <Tag color={item.status === 'Pago' ? 'green' : 'gold'}>{item.status}</Tag>
                                                 </Space>
                                                 <Typography.Text type="secondary">{item.created_at}</Typography.Text>
-                                                <Button size="small" onClick={() => openBoletoDetails(item)}>
-                                                    Abrir
-                                                </Button>
                                             </div>
                                         ))}
                                     </Space>

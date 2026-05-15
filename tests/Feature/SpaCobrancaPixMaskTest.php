@@ -89,11 +89,22 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('normalize={formatPhone}', $pageSource);
         $this->assertStringContainsString('maxLength={15}', $pageSource);
         $this->assertStringContainsString('<Col xs={24}>', $pageSource);
+        $this->assertStringContainsString('slice(0, 3)', $pageSource);
+        $this->assertStringContainsString('onClick={() => openBoletoDetails(item)}', $pageSource);
+        $this->assertStringNotContainsString('Abrir', $pageSource);
+        $this->assertStringContainsString("title: 'Cliente'", $pageSource);
+        $this->assertStringContainsString("dataIndex: 'title'", $pageSource);
+        $this->assertStringContainsString('render: (value) => <Typography.Text strong className="spa-pix-row-title">{value}</Typography.Text>', $pageSource);
+        $this->assertStringNotContainsString("title: 'ID'", $pageSource);
+        $this->assertStringNotContainsString('record.raw_status ? ` • ${record.raw_status}`', $pageSource);
         $this->assertTrue(strpos($pageSource, 'label="CEP"') < strpos($pageSource, 'label="Rua"'));
         $this->assertTrue(strpos($pageSource, 'label="Estado"') < strpos($pageSource, 'label="Rua"'));
         $this->assertTrue(strpos($pageSource, 'label="Complemento"') < strpos($pageSource, 'label="Bairro"'));
         $this->assertTrue(strpos($pageSource, 'label="Bairro"') < strpos($pageSource, 'label="Cidade"'));
         $this->assertStringNotContainsString('setBoletoResult(', $pageSource);
+        $this->assertStringNotContainsString('Atualizar painel', $pageSource);
+        $this->assertStringContainsString('const [cancelingBoletoCode, setCancelingBoletoCode] = useState(null);', $pageSource);
+        $this->assertStringContainsString('loading={cancelingBoletoCode === record.code}', $pageSource);
         $this->assertSame(4, substr_count($pageSource, 'scrollToTop();'));
         $this->assertStringContainsString('onChange={handleExpirationChange}', $pageSource);
     }
