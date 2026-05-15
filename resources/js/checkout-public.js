@@ -1281,8 +1281,7 @@ function openBoletoDocument(url) {
         return true;
     }
 
-    window.location.assign(url);
-    return true;
+    return false;
 }
 
 function copyText(value) {

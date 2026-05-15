@@ -251,6 +251,7 @@ class RedirectedCheckoutTest extends TestCase
         $this->assertStringContainsString("const shouldValidateResponsibleDocument = personFormType === 'pj';", $componentSource);
         $this->assertStringContainsString('!validateIdentificationForm(identificationForm)', $componentSource);
         $this->assertStringContainsString('shouldValidateResponsibleDocument && !validateResponsibleCpf(identificationForm, { focusOnError: true })', $componentSource);
+        $this->assertStringNotContainsString('window.location.assign(url);', $componentSource);
     }
 
     public function test_active_public_checkout_refreshes_session_price_when_link_changes_before_payment(): void
