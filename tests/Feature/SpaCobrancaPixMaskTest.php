@@ -89,6 +89,10 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('normalize={formatPhone}', $pageSource);
         $this->assertStringContainsString('maxLength={15}', $pageSource);
         $this->assertStringContainsString('<Col xs={24}>', $pageSource);
+        $this->assertTrue(strpos($pageSource, 'label="CEP"') < strpos($pageSource, 'label="Rua"'));
+        $this->assertTrue(strpos($pageSource, 'label="Estado"') < strpos($pageSource, 'label="Rua"'));
+        $this->assertTrue(strpos($pageSource, 'label="Complemento"') < strpos($pageSource, 'label="Bairro"'));
+        $this->assertTrue(strpos($pageSource, 'label="Bairro"') < strpos($pageSource, 'label="Cidade"'));
         $this->assertStringContainsString('onChange={handleExpirationChange}', $pageSource);
     }
 

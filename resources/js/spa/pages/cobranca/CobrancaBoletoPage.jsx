@@ -836,6 +836,7 @@ export default function CobrancaBoletoPage() {
                                                 <Form.Item
                                                     label="CPF/CNPJ"
                                                     name={['client', 'document']}
+                                                    normalize={formatDocument}
                                                     rules={[
                                                         { required: true, message: 'Informe o documento.' },
                                                         { validator: documentValidator },
@@ -844,7 +845,6 @@ export default function CobrancaBoletoPage() {
                                                     <Input
                                                         size="large"
                                                         placeholder="000.000.000-00"
-                                                        normalize={formatDocument}
                                                         maxLength={18}
                                                     />
                                                 </Form.Item>
@@ -879,6 +879,28 @@ export default function CobrancaBoletoPage() {
                                         </Row>
 
                                         <Row gutter={[16, 16]}>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item
+                                                    label="CEP"
+                                                    name={['client', 'address', 'zip_code']}
+                                                    rules={[{ required: true, message: 'Informe o CEP.' }]}
+                                                    normalize={formatZipcode}
+                                                >
+                                                    <Input size="large" placeholder="00000-000" onBlur={handleZipcodeBlur} inputMode="numeric" maxLength={9} />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item
+                                                    label="Estado"
+                                                    name={['client', 'address', 'state']}
+                                                    rules={[{ required: true, message: 'Selecione o estado.' }]}
+                                                >
+                                                    <Select size="large" options={stateOptions} placeholder="UF" />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+
+                                        <Row gutter={[16, 16]}>
                                             <Col xs={24} md={18}>
                                                 <Form.Item
                                                     label="Rua"
@@ -900,7 +922,12 @@ export default function CobrancaBoletoPage() {
                                         </Row>
 
                                         <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={10}>
+                                            <Col xs={24} md={8}>
+                                                <Form.Item label="Complemento" name={['client', 'address', 'complement']}>
+                                                    <Input size="large" placeholder="Apto 101" />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24} md={8}>
                                                 <Form.Item
                                                     label="Bairro"
                                                     name={['client', 'address', 'neighborhood']}
@@ -909,7 +936,7 @@ export default function CobrancaBoletoPage() {
                                                     <Input size="large" placeholder="Centro" />
                                                 </Form.Item>
                                             </Col>
-                                            <Col xs={24} md={10}>
+                                            <Col xs={24} md={8}>
                                                 <Form.Item
                                                     label="Cidade"
                                                     name={['client', 'address', 'city']}
@@ -918,34 +945,8 @@ export default function CobrancaBoletoPage() {
                                                     <Input size="large" placeholder="Nome da cidade" />
                                                 </Form.Item>
                                             </Col>
-                                            <Col xs={24} md={4}>
-                                                <Form.Item
-                                                    label="Estado"
-                                                    name={['client', 'address', 'state']}
-                                                    rules={[{ required: true, message: 'Selecione o estado.' }]}
-                                                >
-                                                    <Select size="large" options={stateOptions} placeholder="UF" />
-                                                </Form.Item>
-                                            </Col>
                                         </Row>
 
-                                        <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={8}>
-                                                <Form.Item
-                                                    label="CEP"
-                                                    name={['client', 'address', 'zip_code']}
-                                                    rules={[{ required: true, message: 'Informe o CEP.' }]}
-                                                    normalize={formatZipcode}
-                                                >
-                                                    <Input size="large" placeholder="00000-000" onBlur={handleZipcodeBlur} inputMode="numeric" maxLength={9} />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col xs={24} md={16}>
-                                                <Form.Item label="Complemento" name={['client', 'address', 'complement']}>
-                                                    <Input size="large" placeholder="Apto 101" />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
                                     </Card>
 
                                     <Card className="spa-pix-subcard" bordered={false}>
