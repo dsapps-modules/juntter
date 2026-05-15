@@ -436,7 +436,7 @@ class CobrancaController extends Controller
             ) {
                 return $this->respondBoletoError(
                     $request,
-                    'Erro ao criar boleto: '.($boleto['message'] ?? $boleto['error'] ?? 'Resposta inesperada'),
+                    'Erro ao criar boleto: '.$this->resolvePaytimeMessage($boleto['message'] ?? $boleto['error'] ?? null),
                     $boleto
                 );
             }
@@ -496,6 +496,28 @@ class CobrancaController extends Controller
         }
 
         return $response;
+    }
+
+    private function resolvePaytimeMessage(mixed $message, string $defaultMessage = 'Resposta inesperada'): string
+    {
+        if (is_string($message)) {
+            $trimmedMessage = trim($message);
+
+            return $trimmedMessage !== '' ? $trimmedMessage : $defaultMessage;
+        }
+
+        if (! is_array($message)) {
+            return $defaultMessage;
+        }
+
+        $flattenedMessages = [];
+        array_walk_recursive($message, function (mixed $value) use (&$flattenedMessages): void {
+            if (is_scalar($value) && trim((string) $value) !== '') {
+                $flattenedMessages[] = trim((string) $value);
+            }
+        });
+
+        return $flattenedMessages[0] ?? $defaultMessage;
     }
 
     /**

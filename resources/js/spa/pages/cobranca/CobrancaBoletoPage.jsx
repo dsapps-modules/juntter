@@ -844,12 +844,12 @@ export default function CobrancaBoletoPage() {
                                                 <Form.Item
                                                     label="Telefone"
                                                     name={['client', 'phone']}
+                                                    normalize={formatPhone}
                                                     rules={[{ required: true, message: 'Informe o telefone.' }]}
                                                 >
                                                     <Input
                                                         size="large"
                                                         placeholder="(11) 99999-9999"
-                                                        normalize={formatPhone}
                                                         maxLength={15}
                                                         inputMode="numeric"
                                                     />

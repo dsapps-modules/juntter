@@ -385,6 +385,100 @@ class CobrancaBoletoControllerTest extends TestCase
         ], $response->getData(true));
     }
 
+    public function test_criar_boleto_retorna_mensagem_legivel_quando_api_envia_message_como_array(): void
+    {
+        $dadosValidados = [
+            'amount' => '1,23',
+            'expiration' => '2026-05-20',
+            'payment_limit_date' => '2026-05-21',
+            'recharge' => '0',
+            'client' => [
+                'first_name' => 'Jhonny',
+                'last_name' => 'Quest',
+                'document' => '582.463.740-79',
+                'phone' => '(11) 99999-9999',
+                'email' => 'projetojuntter@gmail.com',
+                'address' => [
+                    'street' => 'Rua Teste',
+                    'number' => '123',
+                    'complement' => 'Sala 1',
+                    'neighborhood' => 'Centro',
+                    'city' => 'Botucatu',
+                    'state' => 'SP',
+                    'zip_code' => '18600-000',
+                ],
+            ],
+            'instruction' => [
+                'booklet' => '0',
+                'description' => 'Boleto de teste 03',
+                'late_fee' => [
+                    'amount' => '3,00',
+                ],
+                'interest' => [
+                    'amount' => '4,00',
+                ],
+                'discount' => [
+                    'amount' => '6,00',
+                    'limit_date' => '2026-05-19',
+                ],
+            ],
+        ];
+
+        $user = User::factory()->make([
+            'nivel_acesso' => 'vendedor',
+        ]);
+
+        $user->setRelation('vendedor', new Vendedor([
+            'user_id' => $user->id,
+            'estabelecimento_id' => '127700',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]));
+
+        $boletoService = $this->createMock(BoletoService::class);
+        $boletoService->expects($this->once())
+            ->method('organiza')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('gerarBoletoComConsulta')
+            ->willReturn([
+                'message' => ['O valor mínimo permitido para o boleto é de dez reais.'],
+                'code' => 'API000001',
+                'status' => 422,
+            ]);
+
+        $request = $this->makeRequest(true, $dadosValidados);
+
+        $this->be($user);
+        $this->app['session']->start();
+
+        $controller = new CobrancaController(
+            $this->createMock(TransacaoService::class),
+            $this->createMock(CreditoService::class),
+            $this->createMock(PixService::class),
+            $boletoService,
+            $this->createMock(EstabelecimentoService::class),
+        );
+
+        $response = $controller->criarBoleto($request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame([
+            'success' => false,
+            'message' => 'Erro ao criar boleto: O valor mínimo permitido para o boleto é de dez reais.',
+            'paytime_error' => [
+                'message' => ['O valor mínimo permitido para o boleto é de dez reais.'],
+                'code' => 'API000001',
+                'status' => 422,
+            ],
+        ], $response->getData(true));
+    }
+
     private function makeRequest(bool $expectsJson, array $dadosValidados): BoletoRequest
     {
         return new class($expectsJson, $dadosValidados) extends BoletoRequest
