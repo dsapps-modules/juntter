@@ -67,7 +67,7 @@ const filterMatcher = {
     Todos: () => true,
     Ativos: (item) => item.status === 'Ativo',
     Inativos: (item) => item.status === 'Inativo',
-    'Senha obrigatÃ³ria': (item) => item.must_change_password,
+    'Senha obrigatória': (item) => item.must_change_password,
 };
 
 function formatError(response, fallbackMessage) {
@@ -121,7 +121,7 @@ export default function VendedoresAcessoPage() {
                 });
 
                 if (!response.ok) {
-                    throw new Error('NÃ£o foi possÃ­vel carregar o acesso dos vendedores.');
+                    throw new Error('Não foi possível carregar o acesso dos vendedores.');
                 }
 
                 const data = await response.json();
@@ -173,7 +173,7 @@ export default function VendedoresAcessoPage() {
                 );
 
                 if (!response.ok) {
-                    throw new Error('NÃ£o foi possÃ­vel buscar os estabelecimentos.');
+                    throw new Error('Não foi possível buscar os estabelecimentos.');
                 }
 
                 const data = await response.json();
@@ -269,7 +269,7 @@ export default function VendedoresAcessoPage() {
         });
 
         if (!response.ok) {
-            throw new Error('NÃ£o foi possÃ­vel atualizar a lista.');
+            throw new Error('Não foi possível atualizar a lista.');
         }
 
         const data = await response.json();
@@ -303,7 +303,7 @@ export default function VendedoresAcessoPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(formatError(result, 'NÃ£o foi possÃ­vel criar o acesso.'));
+                throw new Error(formatError(result, 'Não foi possível criar o acesso.'));
             }
 
             setSuccess(result.message ?? 'Acesso criado com sucesso.');
@@ -335,7 +335,7 @@ export default function VendedoresAcessoPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(formatError(result, 'NÃ£o foi possÃ­vel atualizar o acesso.'));
+                throw new Error(formatError(result, 'Não foi possível atualizar o acesso.'));
             }
 
             setSuccess(result.message ?? 'Dados do vendedor atualizados com sucesso.');
@@ -365,7 +365,7 @@ export default function VendedoresAcessoPage() {
             const result = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                throw new Error(formatError(result, 'NÃ£o foi possÃ­vel atualizar a senha.'));
+                throw new Error(formatError(result, 'Não foi possível atualizar a senha.'));
             }
 
             setSuccess(result.message ?? 'Senha atualizada com sucesso.');
@@ -401,7 +401,7 @@ export default function VendedoresAcessoPage() {
                     const result = await response.json().catch(() => ({}));
 
                     if (!response.ok) {
-                        throw new Error(formatError(result, 'NÃ£o foi possÃ­vel remover o acesso.'));
+                        throw new Error(formatError(result, 'Não foi possível remover o acesso.'));
                     }
 
                     setSuccess(result.message ?? 'Acesso removido com sucesso.');

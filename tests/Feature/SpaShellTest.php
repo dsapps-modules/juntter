@@ -116,6 +116,8 @@ class SpaShellTest extends TestCase
         $dashboardTemplateSource = file_get_contents(base_path('resources/views/templates/dashboard-template.blade.php'));
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
         $stylesSource = file_get_contents(base_path('resources/css/app.css'));
+        $establishmentsPageSource = file_get_contents(base_path('resources/js/spa/pages/EstablishmentsPage.jsx'));
+        $vendedoresAcessoPageSource = file_get_contents(base_path('resources/js/spa/pages/VendedoresAcessoPage.jsx'));
 
         $this->assertStringContainsString('action="/logout"', $shellSource);
         $this->assertStringContainsString('Sair', $shellSource);
@@ -127,12 +129,33 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('inlineCollapsed={sidebarCollapsed}', $shellSource);
         $this->assertStringContainsString('Recolher menu lateral', $shellSource);
         $this->assertStringContainsString('Expandir menu lateral', $shellSource);
+        $this->assertStringContainsString('HomeOutlined', $shellSource);
+        $this->assertStringContainsString('LineChartOutlined', $shellSource);
+        $this->assertStringContainsString('SafetyOutlined', $shellSource);
+        $this->assertStringContainsString('HistoryOutlined', $shellSource);
+        $this->assertStringContainsString('QrcodeOutlined', $shellSource);
+        $this->assertStringContainsString('LinkOutlined', $shellSource);
+        $this->assertStringContainsString('FileDoneOutlined', $shellSource);
+        $this->assertStringContainsString('WalletOutlined', $shellSource);
+        $this->assertStringContainsString('ShoppingOutlined', $shellSource);
+        $this->assertStringContainsString('ShopOutlined', $shellSource);
         $this->assertStringContainsString('UserSwitchOutlined', $shellSource);
         $this->assertStringContainsString('UserOutlined', $shellSource);
         $this->assertStringNotContainsString('SettingOutlined', $shellSource);
+        $this->assertStringContainsString('Em análise', $establishmentsPageSource);
+        $this->assertStringContainsString('Senha obrigatória', $vendedoresAcessoPageSource);
+        $this->assertStringContainsString('Não foi possível carregar o acesso dos vendedores.', $vendedoresAcessoPageSource);
         $this->assertStringContainsString('.spa-sider-collapsed', $stylesSource);
         $this->assertStringContainsString('.spa-sider-toggle', $stylesSource);
         $this->assertStringContainsString('.spa-sider-topbar', $stylesSource);
+        $this->assertStringContainsString("icon: 'admin-estabelecimentos'", $navigationSource);
+        $this->assertStringContainsString("icon: 'vendedores-estabelecimentos'", $navigationSource);
+        $this->assertStringContainsString("icon: 'historico'", $navigationSource);
+        $this->assertStringContainsString("icon: 'checkout-produtos'", $navigationSource);
+        $this->assertStringContainsString("icon: 'checkout-links'", $navigationSource);
+        $this->assertStringNotContainsString("icon: 'estabelecimentos'", $navigationSource);
+        $this->assertStringNotContainsString("icon: 'unica'", $navigationSource);
+        $this->assertStringNotContainsString("icon: 'checkout'", $navigationSource);
         $this->assertStringContainsString('style="height: 32.4px;"', $dashboardTemplateSource);
         $this->assertStringContainsString('/app/cobranca/cartao-credito', $dashboardTemplateSource);
         $this->assertStringContainsString('Hist', $navigationSource);
@@ -412,13 +435,13 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
 
-        $this->assertStringContainsString('Viso rpida', $pageSource);
+        $this->assertStringContainsString('Visão rápida', $pageSource);
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('ltimos boletos', $pageSource);
+        $this->assertStringContainsString('Últimos boletos', $pageSource);
         $this->assertStringContainsString('Criar boleto', $pageSource);
-        $this->assertStringContainsString('Ver histrico', $pageSource);
-        $this->assertStringContainsString('Atualizar painel', $pageSource);
+        $this->assertStringContainsString('Ver histórico', $pageSource);
+        $this->assertStringContainsString('openBoletoDetails(item)', $pageSource);
     }
 
     public function test_the_cartao_credito_page_contains_the_new_card_cobranca_structure(): void
@@ -730,3 +753,4 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 }
+

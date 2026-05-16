@@ -32,7 +32,7 @@ const defaultFilters = ['Todos', 'Ativos', 'Inativos'];
 const statusColors = {
     Ativo: 'gold',
     Bloqueado: 'volcano',
-    'Em anÃƒÂ¡lise': 'default',
+    'Em análise': 'default',
     Inativo: 'red',
 };
 

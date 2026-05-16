@@ -746,7 +746,7 @@ export default function CobrancaCartaoCreditoPage() {
 
     const columns = [
         {
-            title: 'Transacao',
+            title: 'Transação',
             dataIndex: 'title',
             render: (_, record) => (
                 <Space align="start" size={10} className="spa-pix-title-cell">

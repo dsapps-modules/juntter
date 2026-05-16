@@ -9,13 +9,13 @@ export const navigationByRole = {
         {
             label: 'Administração',
             children: [
-                { key: 'admin.estabelecimentos', path: '/estabelecimentos', label: 'Estabelecimentos', icon: 'estabelecimentos' },
+                { key: 'admin.estabelecimentos', path: '/estabelecimentos', label: 'Estabelecimentos', icon: 'admin-estabelecimentos' },
             ],
         },
         {
             label: 'Vendedores',
             children: [
-                { key: 'vendedores.estabelecimentos', path: '/vendedores', label: 'Estabelecimentos', icon: 'estabelecimentos' },
+                { key: 'vendedores.estabelecimentos', path: '/vendedores', label: 'Estabelecimentos', icon: 'vendedores-estabelecimentos' },
                 { key: 'vendedores.faturamento', path: '/vendedores/faturamento', label: 'Faturamento', icon: 'faturamento' },
                 { key: 'vendedores.acesso', path: '/vendedores/acesso', label: 'Acesso', icon: 'acesso' },
             ],
@@ -23,7 +23,7 @@ export const navigationByRole = {
         {
             label: 'Cobrança',
             children: [
-                { key: 'cobranca.unica', path: '/cobranca', label: 'Histórico', icon: 'unica' },
+                { key: 'cobranca.unica', path: '/cobranca', label: 'Histórico', icon: 'historico' },
                 { key: 'cobranca.pix', path: '/cobranca/pix', label: 'Pix', icon: 'pix' },
                 { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
@@ -41,7 +41,7 @@ export const navigationByRole = {
         {
             label: 'Vendedores',
             children: [
-                { key: 'vendedores.estabelecimentos', path: '/vendedores', label: 'Estabelecimentos', icon: 'estabelecimentos' },
+                { key: 'vendedores.estabelecimentos', path: '/vendedores', label: 'Estabelecimentos', icon: 'vendedores-estabelecimentos' },
                 { key: 'vendedores.faturamento', path: '/vendedores/faturamento', label: 'Faturamento', icon: 'faturamento' },
                 { key: 'vendedores.acesso', path: '/vendedores/acesso', label: 'Acesso', icon: 'acesso' },
             ],
@@ -59,7 +59,7 @@ export const navigationByRole = {
         {
             label: 'Cobrança',
             children: [
-                { key: 'cobranca.unica', path: '/cobranca', label: 'Histórico', icon: 'unica' },
+                { key: 'cobranca.unica', path: '/cobranca', label: 'Histórico', icon: 'historico' },
                 { key: 'cobranca.pix', path: '/cobranca/pix', label: 'Pix', icon: 'pix' },
                 { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
@@ -69,8 +69,8 @@ export const navigationByRole = {
         {
             label: 'Checkout',
             children: [
-                { key: 'checkout.produtos', path: '/seller/products', label: 'Produtos', icon: 'checkout' },
-                { key: 'checkout.links', path: '/seller/checkout-links', label: 'Links de Checkout', icon: 'checkout' },
+                { key: 'checkout.produtos', path: '/seller/products', label: 'Produtos', icon: 'checkout-produtos' },
+                { key: 'checkout.links', path: '/seller/checkout-links', label: 'Links de Checkout', icon: 'checkout-links' },
             ],
         },
     ],
@@ -141,4 +141,3 @@ export function buildKeyPathMap(sections) {
 
     return map;
 }
-
