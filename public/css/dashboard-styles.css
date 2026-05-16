@@ -1760,6 +1760,7 @@ textarea.form-control {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-decoration: none;
 }
 
 .fab:hover {
@@ -1773,6 +1774,7 @@ textarea.form-control {
 }
 
 .fab i {
+    font-size: 1.8em;
     transition: transform 0.3s ease;
 }
 

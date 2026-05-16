@@ -1,6 +1,7 @@
 import {
     AppstoreOutlined,
     BankOutlined,
+    CalculatorOutlined,
     CreditCardOutlined,
     DeploymentUnitOutlined,
     MenuOutlined,
@@ -266,6 +267,17 @@ export default function AppShell() {
                 <Content className="spa-content">
                     <Outlet />
                 </Content>
+
+                <Tooltip title="Simular transação" placement="left">
+                    <Button
+                        type="primary"
+                        shape="circle"
+                        icon={<CalculatorOutlined />}
+                        className="spa-fab"
+                        onClick={() => navigate('/cobranca/simular')}
+                        aria-label="Simular transação"
+                    />
+                </Tooltip>
             </Layout>
         </Layout>
     );

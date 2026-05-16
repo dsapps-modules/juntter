@@ -13,14 +13,18 @@ Erro nos cálculos de taxas de cartão
 [x] link pagamento cartão sem dados
 [x] link pagamento cartão com dados
 [x] checkout externo com cartão 
-[ ] cobrança por boleto
-[ ] link pagamento boleto
-[ ] checkout com boleto
-[ ] fluxo forms checkout
+[x] cobrança por boleto
+[x] link pagamento boleto
+[x] checkout com boleto
+[x] botão de refresh: eliminar?
+[x] FAB para acessar a página de simulação
+[ ] Fazer a recuperação de senha
+[ ] Saldo da conta corrente
+[ ] Conferir o percentual de pagamentos efetivados
+[ ] Modo de selecionar as taxas do vendedor
+[ ] Tornar o menu lateral retrátil
 [ ] histórico: somatório
-[ ] botão de refresh: eliminar?
-[ ] pagamento crédito: link: levar para página de obrigado
-[ ] pagamento crédito: link: com dados, incluir endereço
+[ ] fluxo forms checkout
 
 
 

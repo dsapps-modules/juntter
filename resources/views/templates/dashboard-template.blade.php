@@ -211,9 +211,9 @@
     <script src="{{ asset('js/dashboard.js') }}"></script>
 
     <!-- FAB (Floating Action Button) -->
-    <button class="fab" data-toggle="modal" data-target="#fabSimulacaoModal" title="Simular Transação">
+    <a class="fab" href="{{ url('/app/cobranca/simular') }}" title="Simular Transação" aria-label="Simular Transação">
         <i class="fas fa-calculator"></i>
-    </button>
+    </a>
 
     <!-- Modal de Simulação -->
     <div class="modal fade fab-modal" id="fabSimulacaoModal" tabindex="-1" role="dialog"

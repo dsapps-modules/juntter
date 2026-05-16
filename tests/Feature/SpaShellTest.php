@@ -129,6 +129,41 @@ class SpaShellTest extends TestCase
 
     }
 
+    public function test_the_dashboard_fab_links_directly_to_the_spa_simulation_page(): void
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->vendedor()->create([
+            'estabelecimento_id' => '5001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get('/cobranca');
+
+        $response->assertOk();
+        $response->assertSee('/app/cobranca/simular', false);
+    }
+
+    public function test_the_spa_shell_contains_the_simulation_fab_button(): void
+    {
+        $shellSource = file_get_contents(base_path('resources/js/spa/layouts/AppShell.jsx'));
+        $homePageSource = file_get_contents(base_path('resources/js/spa/pages/HomePage.jsx'));
+
+        $this->assertStringContainsString('CalculatorOutlined', $shellSource);
+        $this->assertStringContainsString("navigate('/cobranca/simular')", $shellSource);
+        $this->assertStringContainsString('spa-fab', $shellSource);
+        $this->assertStringContainsString('Tooltip title="Simular transação"', $shellSource);
+        $this->assertStringContainsString('width: 1.8em;', file_get_contents(base_path('resources/css/app.css')));
+        $this->assertStringContainsString('title="Atualizar painel"', $homePageSource);
+        $this->assertStringNotContainsString('className="spa-fab"', $homePageSource);
+    }
+
     public function test_the_home_page_exposes_the_establishments_excel_export_link_for_admins(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/HomePage.jsx'));

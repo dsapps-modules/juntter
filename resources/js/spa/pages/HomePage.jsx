@@ -334,11 +334,11 @@ export default function HomePage() {
             </SectionCard>
 
             <Button
-                type="primary"
-                shape="circle"
+                type="text"
                 icon={<ReloadOutlined />}
-                className="spa-fab"
                 onClick={() => setRefreshNonce((current) => current + 1)}
+                title="Atualizar painel"
+                aria-label="Atualizar painel"
             />
         </Space>
     );
