@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\PaytimeEstablishment;
 use App\Models\PaytimeTransaction;
 use App\Models\User;
+use App\Services\BalanceService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,7 +17,7 @@ class SpaDashboardOverviewTest extends TestCase
     public function test_dashboard_overview_returns_summary_data(): void
     {
         $user = User::factory()->create([
-            'nivel_acesso' => 'admin',
+            'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
         ]);
         $periodDate = Carbon::create(2026, 4, 15, 12, 0, 0);
@@ -30,6 +31,13 @@ class SpaDashboardOverviewTest extends TestCase
             'revenue' => 1520.50,
             'address_json' => ['city' => 'São Paulo'],
             'responsible_json' => ['name' => 'Ana Souza'],
+        ]);
+
+        $user->vendedor()->create([
+            'estabelecimento_id' => '1001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
         ]);
 
         PaytimeTransaction::create([
@@ -56,6 +64,18 @@ class SpaDashboardOverviewTest extends TestCase
             'updated_at' => $periodDate,
         ]);
 
+        $balanceService = $this->createMock(BalanceService::class);
+        $balanceService->expects($this->once())
+            ->method('saldoAtual')
+            ->with($this->callback(function (array $filters): bool {
+                return ($filters['extra_headers']['establishment_id'] ?? null) === '1001';
+            }))
+            ->willReturn([
+                'balance' => 12500,
+            ]);
+
+        $this->app->instance(BalanceService::class, $balanceService);
+
         $response = $this->actingAs($user)->getJson('/api/spa/dashboard?mes=4&ano=2026');
 
         $response
@@ -64,7 +84,8 @@ class SpaDashboardOverviewTest extends TestCase
             ->assertJsonPath('period.year', 2026)
             ->assertJsonPath('period.label', 'Abril 2026')
             ->assertJsonPath('overview_cards.0.label', 'Faturamento Líquido')
-            ->assertJsonPath('overview_cards.5.value', 'Consultar Extrato')
+            ->assertJsonPath('overview_cards.5.value', 'R$ 125,00')
+            ->assertJsonPath('overview_cards.5.href', '/cobranca/saldoextrato')
             ->assertJsonPath('distribution_sections.0.label', 'Cartão de Crédito')
             ->assertJsonPath('distribution_sections.0.cards.0.kind', 'amount')
             ->assertJsonPath('status_sections.0.key', 'status_counts')

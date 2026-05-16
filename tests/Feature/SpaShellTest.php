@@ -161,6 +161,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Tooltip title="Simular transação"', $shellSource);
         $this->assertStringContainsString('width: 1.8em;', file_get_contents(base_path('resources/css/app.css')));
         $this->assertStringContainsString('title="Atualizar painel"', $homePageSource);
+        $this->assertStringContainsString('Link to={card.href}', $homePageSource);
         $this->assertStringNotContainsString('className="spa-fab"', $homePageSource);
     }
 
@@ -296,21 +297,24 @@ class SpaShellTest extends TestCase
         }
     }
 
-    public function test_the_saldo_extrato_page_contains_the_placeholder_layout(): void
+    public function test_the_saldo_extrato_page_contains_the_new_balance_layout(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaSaldoExtratoPage.jsx'));
 
-        $this->assertStringContainsString('Extrato do perodo', $pageSource);
+        $this->assertStringContainsString('Saldo e extrato', $pageSource);
+        $this->assertStringContainsString('Saldo disponível', $pageSource);
+        $this->assertStringContainsString('Saldo bloqueado', $pageSource);
+        $this->assertStringContainsString('Saldo total', $pageSource);
+        $this->assertStringContainsString('Movimentações', $pageSource);
+        $this->assertStringContainsString('Extrato do estabelecimento', $pageSource);
         $this->assertStringContainsString('Resumo financeiro', $pageSource);
-        $this->assertStringContainsString('Saldo atual', $pageSource);
-        $this->assertStringContainsString('Lanamentos futuros', $pageSource);
-        $this->assertStringContainsString('Sem lanamentos para o perodo selecionado.', $pageSource);
-        $this->assertStringContainsString('Selecionar ms', $pageSource);
-        $this->assertStringContainsString('Selecionar ano', $pageSource);
+        $this->assertStringContainsString('Nenhuma movimentação encontrada no extrato.', $pageSource);
+        $this->assertStringNotContainsString("'Modalidade'", $pageSource);
+        $this->assertStringContainsString('Voltar', $pageSource);
         $this->assertStringContainsString('spa-saldoextrato-sidebar-card', $pageSource);
         $this->assertStringContainsString('spa-saldoextrato-table-card', $pageSource);
-        $this->assertStringNotContainsString('Conta corrente', $pageSource);
-        $this->assertStringNotContainsString('Espao reservado para saldos', $pageSource);
+        $this->assertStringNotContainsString('placeholder', $pageSource);
+        $this->assertStringNotContainsString('Espaço reservado para saldos', $pageSource);
     }
 
     public function test_the_pix_page_uses_the_new_link_payment_modal_labels(): void

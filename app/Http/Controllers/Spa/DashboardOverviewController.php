@@ -5,13 +5,19 @@ namespace App\Http\Controllers\Spa;
 use App\Http\Controllers\Controller;
 use App\Models\PaytimeEstablishment;
 use App\Models\PaytimeTransaction;
+use App\Services\BalanceService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Throwable;
 
 class DashboardOverviewController extends Controller
 {
+    public function __construct(
+        private readonly BalanceService $balanceService,
+    ) {}
+
     public function __invoke(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -75,6 +81,26 @@ class DashboardOverviewController extends Controller
             'today_transactions' => (clone $settledTransactionsQuery)->whereDate('created_at', Carbon::today())->count(),
             'total_revenue' => $this->formatMoney($netAmount),
         ];
+
+        $balanceValue = 'Consultar Extrato';
+
+        if ($user->isVendedor() && $user->getEstabelecimentoId()) {
+            try {
+                $balanceResponse = $this->balanceService->saldoAtual([
+                    'extra_headers' => [
+                        'establishment_id' => (string) $user->getEstabelecimentoId(),
+                    ],
+                ]);
+
+                $balanceAmount = data_get($balanceResponse, 'balance');
+
+                if (is_numeric($balanceAmount)) {
+                    $balanceValue = $this->formatMoney((int) $balanceAmount);
+                }
+            } catch (Throwable) {
+                $balanceValue = 'Consultar Extrato';
+            }
+        }
 
         $transactionStats = (clone $settledTransactionsQuery)
             ->selectRaw('establishment_id, COUNT(*) as total_transactions, SUM(amount) as total_amount, MAX(created_at) as last_activity')
@@ -175,10 +201,11 @@ class DashboardOverviewController extends Controller
             ],
             [
                 'key' => 'balance',
-                'value' => 'Consultar Extrato',
+                'value' => $balanceValue,
                 'label' => 'Saldo em Conta',
                 'tone' => 'dark',
                 'icon' => 'layers',
+                'href' => '/cobranca/saldoextrato',
             ],
         ];
 

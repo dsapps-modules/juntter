@@ -18,7 +18,7 @@ Erro nos cálculos de taxas de cartão
 [x] checkout com boleto
 [x] botão de refresh: eliminar?
 [x] FAB para acessar a página de simulação
-[ ] Fazer a recuperação de senha
+[x] Fazer a recuperação de senha
 [ ] Saldo da conta corrente
 [ ] Conferir o percentual de pagamentos efetivados
 [ ] Modo de selecionar as taxas do vendedor

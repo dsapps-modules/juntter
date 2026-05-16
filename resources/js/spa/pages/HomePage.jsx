@@ -262,12 +262,23 @@ export default function HomePage() {
                     <Row gutter={[16, 16]}>
                         {payload.overview_cards.map((card) => (
                             <Col xs={24} md={12} xl={8} key={card.key}>
-                                <MetricTile
-                                    value={card.value}
-                                    label={card.label}
-                                    tone={card.tone}
-                                    icon={iconByTone[card.tone] ?? iconByTone.blue}
-                                />
+                                {card.href ? (
+                                    <Link to={card.href} style={{ display: 'block', textDecoration: 'none' }}>
+                                        <MetricTile
+                                            value={card.value}
+                                            label={card.label}
+                                            tone={card.tone}
+                                            icon={iconByTone[card.tone] ?? iconByTone.blue}
+                                        />
+                                    </Link>
+                                ) : (
+                                    <MetricTile
+                                        value={card.value}
+                                        label={card.label}
+                                        tone={card.tone}
+                                        icon={iconByTone[card.tone] ?? iconByTone.blue}
+                                    />
+                                )}
                             </Col>
                         ))}
                     </Row>
