@@ -240,7 +240,7 @@ class DashboardOverviewController extends Controller
             ],
         ];
 
-        $statusSections = $this->statusSections($transactionsByStatus, $transactionsByStatus->sum('total'));
+        $statusSections = $this->statusSections($transactionsByStatus);
 
         return response()->json([
             'user' => [
@@ -313,13 +313,16 @@ class DashboardOverviewController extends Controller
     /**
      * @return array<int, array{key: string, cards: array<int, array{kind: string, value: string, label: string, tone: string}>}>
      */
-    private function statusSections(Collection $transactionsByStatus, int $baseTotal): array
+    private function statusSections(Collection $transactionsByStatus): array
     {
         $definitions = [
             ['key' => 'PAID', 'label' => 'Pagamento Efetivado', 'tone' => 'success'],
             ['key' => 'FAILED', 'label' => 'Pagamento Cancelado', 'tone' => 'danger'],
             ['key' => 'REFUNDED', 'label' => 'Pagamento Devolvido', 'tone' => 'warning'],
         ];
+
+        $baseTotal = collect($definitions)
+            ->sum(fn (array $definition): int => (int) ($transactionsByStatus->get($definition['key'])?->total ?? 0));
 
         $countRow = [];
         $percentRow = [];

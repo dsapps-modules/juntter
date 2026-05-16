@@ -52,11 +52,25 @@ a {
     box-shadow: 20px 0 60px rgba(32, 25, 10, 0.04);
 }
 
+.spa-sider-collapsed {
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.spa-sider-topbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 18px;
+}
+
 .spa-brand {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 8px 10px 24px;
+    min-width: 0;
+    padding: 8px 10px 0;
 }
 
 .spa-brand-mark {
@@ -72,6 +86,36 @@ a {
     min-width: 0;
     flex: 1 1 auto;
     flex-direction: column;
+}
+
+.spa-sider-collapsed .spa-brand {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.spa-sider-collapsed .spa-brand-copy,
+.spa-sider-collapsed .spa-sider-footer,
+.spa-sider-collapsed .spa-sider-menu .ant-menu-item-group-title,
+.spa-sider-collapsed .spa-sider-menu .ant-menu-submenu-arrow {
+    display: none;
+}
+
+.spa-sider-collapsed .spa-sider-menu .ant-menu-item {
+    padding-inline: 0 !important;
+    text-align: center;
+}
+
+.spa-sider-collapsed .spa-sider-menu .ant-menu-item .ant-menu-title-content {
+    display: none;
+}
+
+.spa-sider-toggle {
+    flex: 0 0 auto;
+    margin-top: 4px;
+    border: 1px solid var(--spa-border);
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 10px 24px rgba(32, 25, 10, 0.05);
 }
 
 .spa-brand-kicker,
@@ -152,6 +196,11 @@ a {
 .spa-sider-footer {
     margin-top: auto;
     padding: 18px 10px 0;
+}
+
+.spa-sider-collapsed .spa-sider-footer {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .spa-sider-logout-form {

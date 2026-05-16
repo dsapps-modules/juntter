@@ -19,11 +19,10 @@ Erro nos cálculos de taxas de cartão
 [x] botão de refresh: eliminar?
 [x] FAB para acessar a página de simulação
 [x] Fazer a recuperação de senha
-[ ] Saldo da conta corrente
-[ ] Conferir o percentual de pagamentos efetivados
+[x] Saldo da conta corrente
+[x] Tornar o menu lateral retrátil
+[x] Conferir o percentual de pagamentos efetivados
 [ ] Modo de selecionar as taxas do vendedor
-[ ] Tornar o menu lateral retrátil
-[ ] histórico: somatório
 [ ] fluxo forms checkout
 
 

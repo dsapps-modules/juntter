@@ -64,6 +64,42 @@ class SpaDashboardOverviewTest extends TestCase
             'updated_at' => $periodDate,
         ]);
 
+        PaytimeTransaction::create([
+            'external_id' => 'trx-3',
+            'establishment_id' => '1001',
+            'type' => 'PIX',
+            'status' => 'FAILED',
+            'amount' => 8000,
+            'original_amount' => 8000,
+            'fees' => 0,
+            'created_at' => $periodDate,
+            'updated_at' => $periodDate,
+        ]);
+
+        PaytimeTransaction::create([
+            'external_id' => 'trx-4',
+            'establishment_id' => '1001',
+            'type' => 'PIX',
+            'status' => 'REFUNDED',
+            'amount' => 7000,
+            'original_amount' => 7000,
+            'fees' => 0,
+            'created_at' => $periodDate,
+            'updated_at' => $periodDate,
+        ]);
+
+        PaytimeTransaction::create([
+            'external_id' => 'trx-5',
+            'establishment_id' => '1001',
+            'type' => 'PIX',
+            'status' => 'APPROVED',
+            'amount' => 6000,
+            'original_amount' => 6000,
+            'fees' => 0,
+            'created_at' => $periodDate,
+            'updated_at' => $periodDate,
+        ]);
+
         $balanceService = $this->createMock(BalanceService::class);
         $balanceService->expects($this->once())
             ->method('saldoAtual')
@@ -92,10 +128,11 @@ class SpaDashboardOverviewTest extends TestCase
             ->assertJsonPath('status_sections.0.cards.0.label', 'Pagamento Efetivado')
             ->assertJsonPath('status_sections.1.key', 'status_percentages')
             ->assertJsonPath('status_sections.1.cards.0.kind', 'percent')
+            ->assertJsonPath('status_sections.1.cards.0.value', '33,33%')
             ->assertJsonPath('summary.total_establishments', 1)
             ->assertJsonPath('summary.active_establishments', 1)
             ->assertJsonPath('summary.total_transactions', 1)
-            ->assertJsonPath('summary.pending_transactions', 1)
+            ->assertJsonPath('summary.pending_transactions', 2)
             ->assertJsonPath('rows.0.name', 'Acme Corp');
     }
 

@@ -4,7 +4,9 @@ import {
     CalculatorOutlined,
     CreditCardOutlined,
     DeploymentUnitOutlined,
+    LeftOutlined,
     MenuOutlined,
+    RightOutlined,
     LogoutOutlined,
     UserOutlined,
     UserSwitchOutlined,
@@ -90,6 +92,7 @@ export default function AppShell() {
     const navigate = useNavigate();
     const location = useLocation();
     const screens = Grid.useBreakpoint();
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [accessLevel, setAccessLevel] = useState('');
     const [accessLabel, setAccessLabel] = useState('');
@@ -180,8 +183,14 @@ export default function AppShell() {
     const logoutForm = (
         <form method="POST" action="/logout" className="spa-sider-logout-form">
             <input type="hidden" name="_token" value={csrfToken ?? ''} />
-            <Button danger htmlType="submit" block icon={<LogoutOutlined />} className="spa-secondary-button">
-                Sair
+            <Button
+                danger
+                htmlType="submit"
+                block={!sidebarCollapsed}
+                icon={<LogoutOutlined />}
+                className="spa-secondary-button"
+            >
+                {sidebarCollapsed ? null : 'Sair'}
             </Button>
         </form>
     );
@@ -189,6 +198,7 @@ export default function AppShell() {
     const menu = (
         <Menu
             mode="inline"
+            inlineCollapsed={sidebarCollapsed}
             selectedKeys={[selectedKey]}
             items={menuItems}
             onClick={({ key }) => {
@@ -203,21 +213,39 @@ export default function AppShell() {
     return (
         <Layout className="spa-layout">
             {screens.lg ? (
-                <Sider className="spa-sider" width={276}>
-                    <div className="spa-brand">
-                        <Avatar size={44} className="spa-brand-mark" src={avatarUrl || undefined}>
-                            {getUserInitials(userName)}
-                        </Avatar>
-                        <div className="spa-brand-copy">
-                            <Tooltip title={userName || ''} placement="right">
-                                <Typography.Text className="spa-brand-name" title={userName || ''}>
-                                    {userName || <Spin size="small" />}
+                <Sider
+                    className={`spa-sider${sidebarCollapsed ? ' spa-sider-collapsed' : ''}`}
+                    width={276}
+                    collapsed={sidebarCollapsed}
+                    collapsedWidth={88}
+                    trigger={null}
+                >
+                    <div className="spa-sider-topbar">
+                        <div className="spa-brand">
+                            <Avatar size={44} className="spa-brand-mark" src={avatarUrl || undefined}>
+                                {getUserInitials(userName)}
+                            </Avatar>
+                            <div className="spa-brand-copy">
+                                <Tooltip title={userName || ''} placement="right">
+                                    <Typography.Text className="spa-brand-name" title={userName || ''}>
+                                        {userName || <Spin size="small" />}
+                                    </Typography.Text>
+                                </Tooltip>
+                                <Typography.Text className="spa-brand-kicker">
+                                    {accessLabel || <Spin size="small" />}
                                 </Typography.Text>
-                            </Tooltip>
-                            <Typography.Text className="spa-brand-kicker">
-                                {accessLabel || <Spin size="small" />}
-                            </Typography.Text>
+                            </div>
                         </div>
+
+                        <Tooltip title={sidebarCollapsed ? 'Expandir menu' : 'Recolher menu'} placement="right">
+                            <Button
+                                type="text"
+                                icon={sidebarCollapsed ? <RightOutlined /> : <LeftOutlined />}
+                                onClick={() => setSidebarCollapsed((current) => !current)}
+                                className="spa-sider-toggle"
+                                aria-label={sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+                            />
+                        </Tooltip>
                     </div>
                     <div className="spa-sider-body">
                         {menu}
@@ -248,6 +276,7 @@ export default function AppShell() {
                                 icon={<MenuOutlined />}
                                 onClick={() => setMobileMenuOpen(true)}
                                 className="spa-icon-button"
+                                aria-label="Abrir menu lateral"
                             />
                         ) : null}
                         <div>

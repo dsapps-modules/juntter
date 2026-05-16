@@ -115,14 +115,24 @@ class SpaShellTest extends TestCase
         $shellSource = file_get_contents(base_path('resources/js/spa/layouts/AppShell.jsx'));
         $dashboardTemplateSource = file_get_contents(base_path('resources/views/templates/dashboard-template.blade.php'));
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+        $stylesSource = file_get_contents(base_path('resources/css/app.css'));
 
         $this->assertStringContainsString('action="/logout"', $shellSource);
         $this->assertStringContainsString('Sair', $shellSource);
         $this->assertStringContainsString('spa-sider-footer', $shellSource);
         $this->assertStringContainsString('height: 39.6', $shellSource);
+        $this->assertStringContainsString('const [sidebarCollapsed, setSidebarCollapsed] = useState(false);', $shellSource);
+        $this->assertStringContainsString('collapsed={sidebarCollapsed}', $shellSource);
+        $this->assertStringContainsString('collapsedWidth={88}', $shellSource);
+        $this->assertStringContainsString('inlineCollapsed={sidebarCollapsed}', $shellSource);
+        $this->assertStringContainsString('Recolher menu lateral', $shellSource);
+        $this->assertStringContainsString('Expandir menu lateral', $shellSource);
         $this->assertStringContainsString('UserSwitchOutlined', $shellSource);
         $this->assertStringContainsString('UserOutlined', $shellSource);
         $this->assertStringNotContainsString('SettingOutlined', $shellSource);
+        $this->assertStringContainsString('.spa-sider-collapsed', $stylesSource);
+        $this->assertStringContainsString('.spa-sider-toggle', $stylesSource);
+        $this->assertStringContainsString('.spa-sider-topbar', $stylesSource);
         $this->assertStringContainsString('style="height: 32.4px;"', $dashboardTemplateSource);
         $this->assertStringContainsString('/app/cobranca/cartao-credito', $dashboardTemplateSource);
         $this->assertStringContainsString('Hist', $navigationSource);
