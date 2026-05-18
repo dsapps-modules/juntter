@@ -284,9 +284,7 @@ export default function ProfilePage() {
                                                 <Typography.Text strong>Nome</Typography.Text>
                                                 <Input
                                                     value={profileForm.name}
-                                                    onChange={(event) =>
-                                                        setProfileForm((current) => ({ ...current, name: event.target.value }))
-                                                    }
+                                                    readOnly
                                                     prefix={<UserOutlined />}
                                                     placeholder="Seu nome"
                                                     size="large"

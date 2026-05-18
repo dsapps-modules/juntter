@@ -35,4 +35,14 @@ class SpaProfileOverviewTest extends TestCase
             ->assertJsonPath('profile.avatar_url', '/company-logo?path=company-logos%2Flogo.png')
             ->assertJsonPath('profile.company_logo_url', '/company-logo?path=company-logos%2Flogo.png');
     }
+
+    public function test_profile_page_name_field_is_read_only(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/ProfilePage.jsx'));
+
+        $this->assertStringContainsString('<Typography.Text strong>Nome</Typography.Text>', $pageSource);
+        $this->assertStringContainsString('value={profileForm.name}', $pageSource);
+        $this->assertStringContainsString('readOnly', $pageSource);
+        $this->assertStringNotContainsString('setProfileForm((current) => ({ ...current, name: event.target.value }))', $pageSource);
+    }
 }
