@@ -166,7 +166,7 @@
                             <label class="form-label">CPF/CNPJ <span class="text-danger">*</span></label>
                             <div class="form-group">
                                 <input type="text" name="client[document]" class="form-control"
-                                    placeholder="000.000.000-00"
+                                    placeholder="CPF/CNPJ"
                                     value="{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}" required
                                     inputmode="numeric" maxlength="18">
                             </div>

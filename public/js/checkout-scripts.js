@@ -54,6 +54,70 @@ function showSuccess(message) {
     }, 3000);
 }
 
+function normalizeDigits(value) {
+    return String(value ?? '').replace(/\D/g, '');
+}
+
+function formatCpf(value) {
+    const digits = normalizeDigits(value).slice(0, 11);
+
+    if (digits.length <= 3) {
+        return digits;
+    }
+
+    if (digits.length <= 6) {
+        return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    }
+
+    if (digits.length <= 9) {
+        return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    }
+
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+function formatCnpj(value) {
+    const digits = normalizeDigits(value).slice(0, 14);
+
+    if (digits.length <= 2) {
+        return digits;
+    }
+
+    if (digits.length <= 5) {
+        return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+    }
+
+    if (digits.length <= 8) {
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+    }
+
+    if (digits.length <= 12) {
+        return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+    }
+
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+function formatDocument(value) {
+    const digits = normalizeDigits(value);
+
+    if (digits.length > 11) {
+        return formatCnpj(digits);
+    }
+
+    return formatCpf(digits);
+}
+
+function applyDocumentMask(field) {
+    const $field = $(field);
+
+    if (!$field.length) {
+        return;
+    }
+
+    $field.val(formatDocument($field.val()));
+}
+
 function redirectToPaymentSuccess() {
     const successUrl = window.JuntterRoutes?.pagamento_sucesso;
 
@@ -800,10 +864,21 @@ function buscarCEP(cep) {
 $(document).ready(function () {
     // Máscaras para cartão
     $('input[name="card[card_number]"]').mask('0000 0000 0000 0000');
+    $('input[name="card[holder_document]"]').on('input blur', function () {
+        applyDocumentMask(this);
+    });
+    $('input[name="card[holder_document]"]').each(function () {
+        applyDocumentMask(this);
+    });
 
     // Máscaras para cliente (todos os tipos)
     $('input[name="client[phone]"]').mask('(00) 00000-0000');
-    $('input[name="client[document]"]').mask('000.000.000-00');
+    $('input[name="client[document]"]').on('input blur', function () {
+        applyDocumentMask(this);
+    });
+    $('input[name="client[document]"]').each(function () {
+        applyDocumentMask(this);
+    });
     $('input[name="client[address][zip_code]"]').mask('00000-000');
 
     // Busca CEP automaticamente
