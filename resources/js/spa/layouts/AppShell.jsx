@@ -79,6 +79,7 @@ function mapNavigationItem(item) {
         key: item.key,
         label: item.label,
         icon: iconByName[item.icon] ?? null,
+        disabled: Boolean(item.disabled),
     };
 }
 

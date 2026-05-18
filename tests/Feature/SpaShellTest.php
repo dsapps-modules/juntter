@@ -300,11 +300,14 @@ class SpaShellTest extends TestCase
     public function test_the_plano_contratado_item_is_hidden_for_admins_and_kept_for_vendors(): void
     {
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
+        $shellSource = file_get_contents(base_path('resources/js/spa/layouts/AppShell.jsx'));
 
         $this->assertStringContainsString('getSharedNavigationItems(role)', $navigationSource);
         $this->assertStringContainsString("role !== 'admin' && role !== 'super_admin'", $navigationSource);
         $this->assertStringContainsString("label: 'Plano Contratado'", $navigationSource);
+        $this->assertStringContainsString('disabled: true', $navigationSource);
         $this->assertStringContainsString("label: 'Perfil'", $navigationSource);
+        $this->assertStringContainsString('disabled: Boolean(item.disabled)', $shellSource);
     }
 
     public function test_the_new_cobranca_pages_are_available(): void

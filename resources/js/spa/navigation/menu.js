@@ -82,7 +82,13 @@ export function getSharedNavigationItems(role) {
     ];
 
     if (role !== 'admin' && role !== 'super_admin') {
-        items.unshift({ key: 'cobranca.planos', path: '/cobranca/planos', label: 'Plano Contratado', icon: 'planos' });
+        items.unshift({
+            key: 'cobranca.planos',
+            path: '/cobranca/planos',
+            label: 'Plano Contratado',
+            icon: 'planos',
+            disabled: true,
+        });
     }
 
     return items;
