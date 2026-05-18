@@ -228,7 +228,7 @@ class RedirectedCheckoutTest extends TestCase
         $this->assertMatchesRegularExpression('/<div[^>]*data-installments-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
         $this->assertMatchesRegularExpression('/<div[^>]*data-card-fields-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
         $response->assertSee('placeholder="(11) 99999-9999"', false);
-        $response->assertSee('placeholder="000.000.000-00"', false);
+        $response->assertSee('placeholder="CPF/CNPJ"', false);
         $response->assertSee('placeholder="00.000.000/0000-00"', false);
         $response->assertSee('placeholder="00000-000"', false);
         $response->assertSee('inputmode="numeric"', false);

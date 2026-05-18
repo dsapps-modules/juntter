@@ -1039,7 +1039,7 @@
 
                             <div class="field field--full">
                                 <label for="card_holder_document">Documento do titular</label>
-                                <input id="card_holder_document" name="card[holder_document]" value="" inputmode="numeric" maxlength="18" placeholder="000.000.000-00" autocomplete="off" required>
+                                <input id="card_holder_document" name="card[holder_document]" value="" inputmode="numeric" maxlength="18" placeholder="CPF/CNPJ" autocomplete="off" required>
                                 <p class="field-error" data-error-for="card.holder_document"></p>
                             </div>
 

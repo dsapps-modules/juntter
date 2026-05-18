@@ -350,6 +350,11 @@ function fillInput(selector, value) {
         return;
     }
 
+    if (fieldName === 'card[holder_document]') {
+        element.value = formatDocument(value);
+        return;
+    }
+
     if (fieldName === 'zipcode') {
         element.value = formatZipcode(value);
         return;
@@ -382,6 +387,11 @@ function fillFormField(form, selector, value) {
 
     if (fieldName === 'customer_document') {
         element.value = formatIdentificationDocument(value, documentType);
+        return;
+    }
+
+    if (fieldName === 'card[holder_document]') {
+        element.value = formatDocument(value);
         return;
     }
 
@@ -656,6 +666,16 @@ function applyIdentificationMask(form, target) {
 
     if (target.name === 'customer_responsible_document') {
         target.value = formatCpf(target.value);
+    }
+}
+
+function applyPaymentMask(target) {
+    if (!(target instanceof HTMLInputElement)) {
+        return;
+    }
+
+    if (target.name === 'card[holder_document]') {
+        target.value = formatDocument(target.value);
     }
 }
 
@@ -1533,6 +1553,14 @@ function bindForms(state) {
         const initialPaymentMethod = paymentForm.querySelector('[name="payment_method"]')?.value || '';
         updateInstallmentsVisibility(paymentForm, initialPaymentMethod);
         updateCreditCardFieldsVisibility(paymentForm, initialPaymentMethod);
+
+        paymentForm.addEventListener('input', (event) => {
+            applyPaymentMask(event.target);
+
+            if (event.target instanceof HTMLInputElement && event.target.name === 'card[holder_document]') {
+                setFieldErrors({ 'card.holder_document': [] });
+            }
+        });
 
         paymentForm.addEventListener('change', (event) => {
             if (!(event.target instanceof HTMLSelectElement) || event.target.name !== 'payment_method') {
