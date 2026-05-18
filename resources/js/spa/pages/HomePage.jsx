@@ -205,7 +205,7 @@ export default function HomePage() {
                 </div>
 
                 {showBankAccountLink ? (
-                    <Link to="/perfil" className="spa-dashboard-toolbar-center">
+                    <Link to="/cobranca/saldoextrato" className="spa-dashboard-toolbar-center">
                         Acessar Conta Bancária
                     </Link>
                 ) : (

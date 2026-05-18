@@ -22,6 +22,14 @@ Erro nos cálculos de taxas de cartão
 [x] Saldo da conta corrente
 [x] Tornar o menu lateral retrátil
 [x] Conferir o percentual de pagamentos efetivados
+[ ] CNPJ no cadastro de link
+[x] Link 'Acessar conta bancária' está levando para o perfil
+[ ] Plano contratado; exibir juntter sub
+[ ] Página de obrigado após pagamento por link
+[ ] Não exibir popup de pagamento realizado com sucesso: ir para página de obrigado
+[ ] Badges que o Juan inventou: remover
+[ ] Ramo de atuação... não faz sentido!
+[ ] Não deixar o cliente editar o perfil???
 [ ] Modo de selecionar as taxas do vendedor
 [ ] fluxo forms checkout
 

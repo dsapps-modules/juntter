@@ -195,6 +195,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('width: 1.8em;', file_get_contents(base_path('resources/css/app.css')));
         $this->assertStringContainsString('title="Atualizar painel"', $homePageSource);
         $this->assertStringContainsString('Link to={card.href}', $homePageSource);
+        $this->assertStringContainsString('/cobranca/saldoextrato', $homePageSource);
         $this->assertStringNotContainsString('className="spa-fab"', $homePageSource);
     }
 
@@ -753,4 +754,3 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 }
-
