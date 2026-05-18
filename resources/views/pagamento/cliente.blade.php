@@ -25,8 +25,8 @@
     <!-- Checkout Header -->
     <header class="checkout-header">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-4">
+            <div class="row align-items-center justify-content-between gap-3">
+                <div class="col-auto">
                     <img
                         src="{{ $sellerLogoUrl }}"
                         alt="{{ $link->estabelecimento_id ? 'Logotipo da empresa' : 'Juntter' }}"
@@ -34,28 +34,12 @@
                         onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
                     >
                 </div>
-            </div>
-            <div class="checkout-steps">
-                <div class="step active">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Checkout</span>
-                </div>
-                <div class="step pending">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Pagamento</span>
-                </div>
-                <div class="step pending">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Confirmação</span>
-                </div>
-                <div class="security-badges">
-                    <div class="security-badge">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>SSL Seguro</span>
-                    </div>
-                    <div class="security-badge">
-                        <i class="fas fa-lock"></i>
-                        <span>Dados Protegidos</span>
+                <div class="col-auto">
+                    <div class="checkout-steps">
+                        <div class="step active">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Checkout</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -322,12 +306,9 @@
                 </div>
             </div>
 
-            <!-- Order Summary -->
-            <x-form.pagina-pagamento-resumo :link="$link" />
-        </div>
-
-        <!-- Modal Sucesso -->
-        <x-form.pagina-pagamento-modal-sucesso />
+        <!-- Order Summary -->
+        <x-form.pagina-pagamento-resumo :link="$link" />
+    </div>
 
         <!-- Loading -->
         <x-util.data-loading-tip />
@@ -336,6 +317,11 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <!-- PagSeguro 3DS SDK -->
         <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
+        <script>
+            window.JuntterRoutes = {
+                pagamento_sucesso: "{{ route('pagamento.sucesso') }}",
+            };
+        </script>
         <!-- Checkout Scripts -->
         <script src="{{ asset('js/checkout-scripts.js') }}"></script>
 </body>

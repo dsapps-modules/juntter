@@ -135,15 +135,9 @@ export default function CobrancaPlanoContratadoPage() {
 
                         <Row gutter={[16, 16]} align="middle" justify="space-between">
                             <Col xs={24} md={16}>
-                                <Typography.Text className="spa-brand-kicker">Plano contratado</Typography.Text>
                                 <Typography.Title level={2} style={{ margin: '6px 0 0' }}>
                                     {plan ? plan.name : 'Nenhum plano localizado'}
                                 </Typography.Title>
-                                <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                                    {plan
-                                        ? 'Resumo do plano comercial ativo da empresa na interface SPA.'
-                                        : 'A página exibe o estado atual do plano comercial contratado pela sua empresa.'}
-                                </Typography.Paragraph>
                             </Col>
 
                             <Col xs={24} md={8}>

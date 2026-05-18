@@ -14,6 +14,13 @@ class SpaCobrancaPlanosTest extends TestCase
 
     public function test_the_spa_plan_page_is_available(): void
     {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+
         $response = $this->get('/app/cobranca/planos');
 
         $response->assertOk();
@@ -22,6 +29,13 @@ class SpaCobrancaPlanosTest extends TestCase
 
     public function test_the_spa_plan_detail_route_is_available(): void
     {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $this->actingAs($user);
+
         $response = $this->get('/app/cobranca/planos/123');
 
         $response->assertOk();
@@ -32,9 +46,9 @@ class SpaCobrancaPlanosTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPlanoContratadoPage.jsx'));
 
-        $this->assertStringContainsString('Plano contratado', $pageSource);
         $this->assertStringContainsString('Resumo do plano', $pageSource);
         $this->assertStringContainsString('Informações do plano', $pageSource);
+        $this->assertStringNotContainsString('Resumo do plano comercial ativo da empresa na interface SPA.', $pageSource);
         $this->assertStringContainsString("navigate('/home')", $pageSource);
         $this->assertStringContainsString('HomeOutlined', $pageSource);
         $this->assertStringNotContainsString('Ver detalhes', $pageSource);

@@ -36,6 +36,25 @@ class PagamentoClienteControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
+        $response->assertSee('Checkout', false);
+        $response->assertDontSee('<span>Pagamento</span>', false);
+        $response->assertDontSee('<span>Confirmação</span>', false);
+        $response->assertDontSee('security-badges', false);
+        $response->assertDontSee('SSL Seguro', false);
+        $response->assertDontSee('Dados Protegidos', false);
+        $response->assertSee('window.JuntterRoutes', false);
+        $response->assertSee(route('pagamento.sucesso'), false);
+    }
+
+    public function test_payment_success_page_is_a_full_confirmation_screen(): void
+    {
+        $response = $this->get(route('pagamento.sucesso'));
+
+        $response->assertOk();
+        $response->assertSee('Pagamento confirmado', false);
+        $response->assertSee('Obrigado pela compra', false);
+        $response->assertSee('Voltar para o início', false);
+        $response->assertSee('payment-success-card', false);
     }
 
     private function makeVendorUser(string $establishmentId, ?string $companyLogoPath = null): User

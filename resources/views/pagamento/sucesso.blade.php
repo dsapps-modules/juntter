@@ -4,74 +4,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout Seguro - Juntter</title>
+    <title>Pagamento confirmado - Juntter</title>
 
-    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
-    <!-- Checkout Styles -->
     <link href="{{ asset('css/checkout-styles.css') }}" rel="stylesheet">
-    <!-- jQuery Mask Plugin -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
 </head>
 
-<body>
-    <!-- Checkout Header -->
+<body class="payment-success-page">
     <header class="checkout-header">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-4">
-                    <img src="{{ asset('img/logo/juntter_webp_640_174.webp') }}" alt="Juntter" class="checkout-logo">
-                </div>
-            </div>
-            <div class="checkout-steps">
-                <div class="step active">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span>Checkout</span>
-                </div>
-                <div class="step pending">
-                    <i class="fas fa-credit-card"></i>
-                    <span>Pagamento</span>
-                </div>
-                <div class="step pending">
-                    <i class="fas fa-check-circle"></i>
-                    <span>Confirmação</span>
-                </div>
-                <div class="security-badges">
-                    <div class="security-badge">
-                        <i class="fas fa-shield-alt"></i>
-                        <span>SSL Seguro</span>
-                    </div>
-                    <div class="security-badge">
-                        <i class="fas fa-lock"></i>
-                        <span>Dados Protegidos</span>
-                    </div>
+                    <img src="{{ $sellerLogoUrl }}" alt="Juntter" class="checkout-logo"
+                        onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';">
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Checkout Container -->
-    <div class="checkout-container">
-        <div class="row">
-            <!-- Payment Form -->
-            <div class="col">
-                <div class="payment-card">
-                    <div class="card-header">
-
+    <main class="checkout-container">
+        <div class="payment-success-shell">
+            <section class="payment-success-card">
+                <div class="payment-success-banner">
+                    <div class="payment-success-icon" aria-hidden="true">
+                        <i class="fas fa-circle-check"></i>
                     </div>
-                    <div class="card-body">
-                        <p class="text-center text-muted">Pagamento realizado com sucesso!</p>
+
+                    <div>
+                        <div class="payment-success-badge">
+                            <i class="fas fa-lock"></i>
+                            Pagamento confirmado
+                        </div>
+                        <h1 class="payment-success-title">Obrigado pela compra</h1>
+                        <p class="payment-success-lead">
+                            Recebemos a confirmação do seu pagamento com sucesso. Esta página substitui o alerta
+                            temporário e serve como a confirmação final da operação.
+                        </p>
                     </div>
                 </div>
-            </div>
 
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <div class="payment-success-body">
+                    <div class="payment-success-grid">
+                        <article class="payment-success-item">
+                            <i class="fas fa-thumbs-up"></i>
+                            <strong>Confirmação recebida</strong>
+                            <p>O pagamento foi processado e a solicitação segue para o próximo passo do fluxo.</p>
+                        </article>
+
+                        <article class="payment-success-item">
+                            <i class="fas fa-clipboard-check"></i>
+                            <strong>Registro atualizado</strong>
+                            <p>Se houver acompanhamento automático, o status será sincronizado normalmente.</p>
+                        </article>
+
+                        <article class="payment-success-item">
+                            <i class="fas fa-face-smile"></i>
+                            <strong>Obrigado</strong>
+                            <p>Você já pode fechar esta aba ou voltar para a loja quando quiser.</p>
+                        </article>
+                    </div>
+
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <p class="payment-success-note mb-0">
+                            Se precisar de ajuda, mantenha esta confirmação como referência.
+                        </p>
+
+                        <div class="payment-success-actions">
+                            <a href="{{ $homeUrl }}" class="btn btn-dark">
+                                <i class="fas fa-house me-2"></i>
+                                Voltar para o início
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

@@ -67,6 +67,7 @@ class PagamentoClienteController extends Controller
     {
         return view('pagamento.sucesso', [
             'sellerLogoUrl' => '/img/logo/juntter_webp_640_174.webp',
+            'homeUrl' => route('checkout'),
         ]);
     }
 

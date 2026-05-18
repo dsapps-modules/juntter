@@ -54,6 +54,17 @@ function showSuccess(message) {
     }, 3000);
 }
 
+function redirectToPaymentSuccess() {
+    const successUrl = window.JuntterRoutes?.pagamento_sucesso;
+
+    if (!successUrl) {
+        showError('A página de confirmação não está disponível.');
+        return;
+    }
+
+    location.href = successUrl;
+}
+
 // Processar pagamento com cartão
 function processarCartao(form) {
     const submitBtn = form.find('button[type="submit"]');
@@ -77,8 +88,7 @@ function processarCartao(form) {
                 } else {
                     // Sucesso sem 3DS
                     updateCheckoutSteps(2);
-                    $('#successModal').modal('show');
-                    location.href = window.JuntterRoutes.pagamento_sucesso;
+                    redirectToPaymentSuccess();
                 }
             } else {
                 showError(response.error || 'Erro ao processar pagamento');
@@ -250,10 +260,8 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
 
             if (response.status == 'PENDING') {
                 updateCheckoutSteps(2);
-                $('#successModal').modal('show');
-                showSuccess('Pagamento processado com sucesso!');
                 console.log('9. Recebe a confirmação da API');
-                location.reload();
+                redirectToPaymentSuccess();
             } else {
                 showError('Erro: ' + response.message || 'Erro ao processar autenticação');
                 submitBtn.html(originalText);
