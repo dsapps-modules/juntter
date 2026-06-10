@@ -129,6 +129,21 @@ function redirectToPaymentSuccess() {
     location.href = successUrl;
 }
 
+function redirectToPaymentError(message) {
+    const errorUrl = window.JuntterRoutes?.pagamento_erro;
+
+    if (!errorUrl) {
+        showError(message || 'Não foi possível concluir o pagamento.');
+        return;
+    }
+
+    const url = new URL(errorUrl, window.location.origin);
+    url.searchParams.set('message', message || 'Não foi possível concluir o pagamento.');
+    url.searchParams.set('return_url', window.location.href);
+
+    location.href = url.toString();
+}
+
 // Processar pagamento com cartão
 function processarCartao(form) {
     const submitBtn = form.find('button[type="submit"]');
@@ -155,7 +170,7 @@ function processarCartao(form) {
                     redirectToPaymentSuccess();
                 }
             } else {
-                showError(response.error || 'Erro ao processar pagamento');
+                redirectToPaymentError(response.error || 'Erro ao processar pagamento');
                 if (response.paytime_response) {
                     showPaytimeError(response.paytime_response);
                 }
@@ -170,7 +185,7 @@ function processarCartao(form) {
                 if (xhr.responseJSON.error) error = xhr.responseJSON.error;
                 if (xhr.responseJSON.paytime_response) paytimeResponse = xhr.responseJSON.paytime_response;
             }
-            showError(error);
+            redirectToPaymentError(error);
             if (paytimeResponse) {
                 showPaytimeError(paytimeResponse);
             }
@@ -285,9 +300,9 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
                 console.error('Erro no SDK 3DS:', err);
 
                 if (err instanceof PagSeguro.PagSeguroError) {
-                    showError('Erro na autenticação 3DS: ' + err.message);
+                    redirectToPaymentError('Erro na autenticação 3DS: ' + err.message);
                 } else {
-                    showError('Erro na autenticação 3DS. Tente novamente.');
+                    redirectToPaymentError('Erro na autenticação 3DS. Tente novamente.');
                 }
 
                 submitBtn.html(originalText);
@@ -296,7 +311,7 @@ function processar3DS(sessionId, transactionId, form, submitBtn, originalText) {
 
     } catch (error) {
         console.error('Erro ao configurar 3DS:', error);
-        showError('Erro ao configurar autenticação 3DS');
+        redirectToPaymentError('Erro ao configurar autenticação 3DS');
         submitBtn.html(originalText);
         submitBtn.prop('disabled', false);
     }
@@ -322,22 +337,22 @@ function enviarResultado3DS(transactionId, result, submitBtn, originalText) {
         .done(function (response) {
             console.log(response)
 
-            if (response.status == 'PENDING') {
-                updateCheckoutSteps(2);
-                console.log('9. Recebe a confirmação da API');
-                redirectToPaymentSuccess();
-            } else {
-                showError('Erro: ' + response.message || 'Erro ao processar autenticação');
+                if (response.status == 'PENDING') {
+                    updateCheckoutSteps(2);
+                    console.log('9. Recebe a confirmação da API');
+                    redirectToPaymentSuccess();
+                } else {
+                    redirectToPaymentError(response.message || 'Erro ao processar autenticação');
+                    submitBtn.html(originalText);
+                    submitBtn.prop('disabled', false);
+                }
+            })
+            .fail(function (xhr) {
+                console.error('Erro:', xhr);
+                redirectToPaymentError('Erro ao processar autenticação. Tente novamente.');
                 submitBtn.html(originalText);
                 submitBtn.prop('disabled', false);
-            }
-        })
-        .fail(function (xhr) {
-            console.error('Erro:', xhr);
-            showError('Erro ao processar autenticação. Tente novamente.');
-            submitBtn.html(originalText);
-            submitBtn.prop('disabled', false);
-        });
+            });
 }
 
 // Função auxiliar para obter valor em centavos

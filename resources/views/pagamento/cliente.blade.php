@@ -320,6 +320,7 @@
         <script>
             window.JuntterRoutes = {
                 pagamento_sucesso: "{{ route('pagamento.sucesso') }}",
+                pagamento_erro: "{{ route('pagamento.erro') }}",
             };
         </script>
         <!-- Checkout Scripts -->

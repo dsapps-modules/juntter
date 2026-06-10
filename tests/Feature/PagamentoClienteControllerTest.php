@@ -44,6 +44,7 @@ class PagamentoClienteControllerTest extends TestCase
         $response->assertDontSee('Dados Protegidos', false);
         $response->assertSee('window.JuntterRoutes', false);
         $response->assertSee(route('pagamento.sucesso'), false);
+        $response->assertSee(route('pagamento.erro'), false);
     }
 
     public function test_payment_success_page_is_a_full_confirmation_screen(): void
@@ -55,6 +56,19 @@ class PagamentoClienteControllerTest extends TestCase
         $response->assertSee('Obrigado pela compra', false);
         $response->assertSee('Voltar para o início', false);
         $response->assertSee('payment-success-card', false);
+    }
+
+    public function test_payment_error_page_is_a_failure_screen(): void
+    {
+        $response = $this->get(route('pagamento.erro', [
+            'message' => 'Erro ao processar pagamento.',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Pagamento não concluído', false);
+        $response->assertSee('Não foi possível concluir o pagamento', false);
+        $response->assertSee('Erro ao processar pagamento.', false);
+        $response->assertSee('Tentar novamente', false);
     }
 
     private function makeVendorUser(string $establishmentId, ?string $companyLogoPath = null): User

@@ -11,15 +11,66 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <link href="{{ asset('css/checkout-styles.css') }}" rel="stylesheet">
+    <style>
+        .payment-success-page {
+            background:
+                radial-gradient(circle at top left, rgba(32, 162, 82, 0.14), transparent 28%),
+                radial-gradient(circle at top right, rgba(245, 196, 0, 0.16), transparent 24%),
+                linear-gradient(180deg, #fbfaf6 0%, #f4efe6 100%);
+        }
+
+        .payment-success-page .checkout-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(14px);
+        }
+
+        .payment-success-page .payment-success-icon {
+            background: linear-gradient(135deg, #1f9d55, #15803d);
+            color: #fff;
+        }
+
+        .payment-success-page .payment-success-badge {
+            background: rgba(31, 157, 85, 0.12);
+            color: #166534;
+        }
+
+        .payment-success-page .payment-success-card {
+            border-color: rgba(31, 157, 85, 0.16);
+        }
+
+        .payment-success-page .payment-success-item i {
+            color: #1f9d55;
+        }
+
+        .payment-success-page .btn-success-primary {
+            background: linear-gradient(135deg, #1f9d55, #15803d);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .payment-success-page .btn-success-primary:hover {
+            color: #fff;
+            opacity: 0.96;
+        }
+    </style>
 </head>
 
 <body class="payment-success-page">
     <header class="checkout-header">
         <div class="container">
-            <div class="row align-items-center">
-                <div class="col-4">
+            <div class="row align-items-center justify-content-between gap-3">
+                <div class="col-auto">
                     <img src="{{ $sellerLogoUrl }}" alt="Juntter" class="checkout-logo"
                         onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';">
+                </div>
+
+                <div class="col-auto">
+                    <div class="checkout-steps">
+                        <div class="step completed">
+                            <i class="fas fa-check"></i>
+                            <span>Pagamento</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,7 +124,7 @@
                         </p>
 
                         <div class="payment-success-actions">
-                            <a href="{{ $homeUrl }}" class="btn btn-dark">
+                            <a href="{{ $homeUrl }}" class="btn btn-success-primary">
                                 <i class="fas fa-house me-2"></i>
                                 Voltar para o início
                             </a>

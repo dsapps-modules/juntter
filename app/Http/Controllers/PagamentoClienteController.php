@@ -71,6 +71,16 @@ class PagamentoClienteController extends Controller
         ]);
     }
 
+    public function pagamentoErro(Request $request)
+    {
+        return view('pagamento.erro', [
+            'sellerLogoUrl' => '/img/logo/juntter_webp_640_174.webp',
+            'homeUrl' => route('checkout'),
+            'retryUrl' => $this->resolveReturnUrl($request->query('return_url')),
+            'message' => $request->query('message', 'Não foi possível concluir o pagamento.'),
+        ]);
+    }
+
     /**
      * Processar pagamento com cartão de crédito.
      *
@@ -580,5 +590,41 @@ class PagamentoClienteController extends Controller
         }
 
         return '/img/logo/juntter_webp_640_174.webp';
+    }
+
+    private function resolveReturnUrl(?string $returnUrl): string
+    {
+        $fallbackUrl = url()->previous() ?: route('checkout');
+
+        if (! is_string($returnUrl)) {
+            return $fallbackUrl;
+        }
+
+        $normalizedReturnUrl = trim($returnUrl);
+
+        if ($normalizedReturnUrl === '') {
+            return $fallbackUrl;
+        }
+
+        if (str_starts_with($normalizedReturnUrl, '/')) {
+            return url($normalizedReturnUrl);
+        }
+
+        $parsedUrl = parse_url($normalizedReturnUrl);
+        $applicationUrl = parse_url(url('/'));
+
+        if (! is_array($parsedUrl) || ! is_array($applicationUrl)) {
+            return $fallbackUrl;
+        }
+
+        $sameScheme = ($parsedUrl['scheme'] ?? null) === ($applicationUrl['scheme'] ?? null);
+        $sameHost = ($parsedUrl['host'] ?? null) === ($applicationUrl['host'] ?? null);
+        $samePort = ($parsedUrl['port'] ?? null) === ($applicationUrl['port'] ?? null);
+
+        if ($sameScheme && $sameHost && $samePort) {
+            return $normalizedReturnUrl;
+        }
+
+        return $fallbackUrl;
     }
 }
