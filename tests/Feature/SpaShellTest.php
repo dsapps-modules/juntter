@@ -114,6 +114,14 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_forgot_password_page_links_to_the_public_home_page(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/ForgotPasswordPage.jsx'));
+
+        $this->assertStringContainsString('<a href="/">Ir para a home</a>', $pageSource);
+        $this->assertStringNotContainsString('<Link to="/">Ir para a home</Link>', $pageSource);
+    }
+
     public function test_the_password_reset_route_is_available(): void
     {
         $response = $this->get('/app/reset-password/example-token');

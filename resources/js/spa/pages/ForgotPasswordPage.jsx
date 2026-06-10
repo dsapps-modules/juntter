@@ -126,7 +126,7 @@ export default function ForgotPasswordPage() {
 
                         <div className="spa-auth-links">
                             <Link to="/login">Voltar ao login</Link>
-                            <Link to="/">Ir para a home</Link>
+                            <a href="/">Ir para a home</a>
                         </div>
                     </Card>
                 </Col>
