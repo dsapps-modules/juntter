@@ -7,7 +7,6 @@ use App\Models\CheckoutSession;
 use App\Models\Order;
 use App\Services\ApiClientService;
 use App\Services\BoletoService;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class PaytimeClient
@@ -25,21 +24,7 @@ class PaytimeClient
         $transaction = $this->apiClient->post('marketplace/transactions', $payload);
         $transactionId = $this->resolveTransactionId($transaction);
 
-        Log::info('Paytime Pix transaction response received', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'transaction_id' => $transactionId,
-            'transaction_keys' => array_keys($transaction),
-            'transaction_payload' => $transaction,
-        ]);
-
         if ($transactionId === null) {
-            Log::warning('Paytime Pix transaction response did not include a transaction id', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'transaction_payload' => $transaction,
-            ]);
-
             return $transaction;
         }
 
@@ -50,14 +35,6 @@ class PaytimeClient
         } catch (\Throwable $throwable) {
             $qrCode = [];
         }
-
-        Log::info('Paytime Pix qrcode response received', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'transaction_id' => $transactionId,
-            'qrcode_keys' => array_keys($qrCode),
-            'qrcode_payload' => $qrCode,
-        ]);
 
         $pixCode = $qrCode['emv'] ?? $transaction['emv'] ?? null;
 
@@ -81,22 +58,6 @@ class PaytimeClient
         $payload = $this->buildBoletoPayload($order);
         $boleto = $this->boletoService->gerarBoletoComConsulta($payload);
         $transactionId = $this->resolveTransactionId($boleto);
-
-        Log::info('Paytime Boleto response received', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'transaction_id' => $transactionId,
-            'boleto_keys' => array_keys($boleto),
-            'boleto_payload' => $boleto,
-        ]);
-
-        if ($transactionId === null) {
-            Log::warning('Paytime boleto response did not include a transaction id', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'boleto_payload' => $boleto,
-            ]);
-        }
 
         return [
             'gateway_transaction_id' => $transactionId,
@@ -147,22 +108,6 @@ class PaytimeClient
         $transactionId = $this->resolveTransactionId($transaction);
         $requires3ds = $this->requiresCreditCard3ds($transaction);
 
-        Log::info('Paytime credit card transaction response received', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'transaction_id' => $transactionId,
-            'transaction_keys' => array_keys($transaction),
-            'transaction_payload' => $transaction,
-        ]);
-
-        if ($transactionId === null) {
-            Log::warning('Paytime credit card transaction response did not include a transaction id', [
-                'order_id' => $order->id,
-                'order_number' => $order->order_number,
-                'transaction_payload' => $transaction,
-            ]);
-        }
-
         return [
             'gateway_transaction_id' => $transactionId,
             'gateway_status' => $this->normalizeGatewayStatus($transaction['status'] ?? null),
@@ -185,12 +130,6 @@ class PaytimeClient
     public function confirmCreditCard3ds(string $gatewayTransactionId, array $authData): array
     {
         $transaction = $this->apiClient->post("marketplace/transactions/{$gatewayTransactionId}/antifraud-auth", $authData);
-
-        Log::info('Paytime credit card 3DS confirmation response received', [
-            'transaction_id' => $gatewayTransactionId,
-            'transaction_keys' => array_keys($transaction),
-            'transaction_payload' => $transaction,
-        ]);
 
         return [
             'gateway_transaction_id' => $this->resolveTransactionId($transaction) ?? $gatewayTransactionId,

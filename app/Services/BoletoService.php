@@ -46,16 +46,28 @@ class BoletoService
         $boleto['boleto_url'] = data_get($boleto, 'boleto_url')
             ?? data_get($boleto, 'url')
             ?? data_get($boleto, 'boleto.url')
+            ?? data_get($boleto, 'api_boleto.boleto_url')
+            ?? data_get($boleto, 'api_boleto.url')
+            ?? data_get($boleto, 'api_boleto.boleto.url')
+            ?? data_get($boleto, 'api_boleto.data.url')
             ?? data_get($boleto, 'data.url')
             ?? null;
         $boleto['boleto_barcode'] = data_get($boleto, 'boleto_barcode')
             ?? data_get($boleto, 'barcode')
             ?? data_get($boleto, 'boleto.barcode')
+            ?? data_get($boleto, 'api_boleto.boleto_barcode')
+            ?? data_get($boleto, 'api_boleto.barcode')
+            ?? data_get($boleto, 'api_boleto.boleto.barcode')
+            ?? data_get($boleto, 'api_boleto.data.barcode')
             ?? data_get($boleto, 'data.barcode')
             ?? null;
         $boleto['boleto_digitable_line'] = data_get($boleto, 'boleto_digitable_line')
             ?? data_get($boleto, 'digitable_line')
             ?? data_get($boleto, 'boleto.digitable_line')
+            ?? data_get($boleto, 'api_boleto.boleto_digitable_line')
+            ?? data_get($boleto, 'api_boleto.digitable_line')
+            ?? data_get($boleto, 'api_boleto.boleto.digitable_line')
+            ?? data_get($boleto, 'api_boleto.data.digitable_line')
             ?? data_get($boleto, 'data.digitable_line')
             ?? null;
 

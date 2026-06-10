@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ConfirmCheckoutAntifraudAuthRequest;
+use App\Http\Requests\SelectCheckoutPaymentMethodRequest;
 use App\Http\Requests\StartCheckoutPaymentRequest;
 use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
@@ -14,6 +15,8 @@ use App\Services\Payments\Paytime\PaytimePaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class PublicCheckoutPaymentController extends Controller
 {
@@ -22,7 +25,7 @@ class PublicCheckoutPaymentController extends Controller
         private readonly PaytimePaymentService $paymentService,
     ) {}
 
-    public function choosePaymentMethod(StartCheckoutPaymentRequest $request, string $sessionToken): JsonResponse|RedirectResponse
+    public function choosePaymentMethod(SelectCheckoutPaymentMethodRequest $request, string $sessionToken): JsonResponse|RedirectResponse
     {
         $checkoutSession = $this->findSession($sessionToken);
         $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
@@ -145,6 +148,14 @@ class PublicCheckoutPaymentController extends Controller
                 default => $this->paymentService->createCreditCardPayment($order, $request->validated()),
             };
         } catch (\Throwable $throwable) {
+            Log::error('Public checkout payment gateway call failed', [
+                'session_token' => $checkoutSession->session_token,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_method' => $paymentMethod,
+                'message' => $throwable->getMessage(),
+            ]);
+
             return $this->respondToPaymentFailure(
                 request: $request,
                 checkoutSession: $checkoutSession,
@@ -155,11 +166,28 @@ class PublicCheckoutPaymentController extends Controller
             );
         }
 
+        Log::info('Public checkout gateway response received', [
+            'session_token' => $checkoutSession->session_token,
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'payment_method' => $paymentMethod,
+            'gateway_response' => $this->sanitizeGatewayResponseForLog($gatewayResponse),
+        ]);
+
         $gatewayTransactionId = $this->resolveGatewayTransactionId($gatewayResponse);
 
         if ($gatewayTransactionId === null) {
             $gatewayErrorMessage = $this->resolveGatewayErrorMessage($gatewayResponse);
             $message = $gatewayErrorMessage ?? 'A resposta do gateway não retornou o identificador da transação.';
+
+            Log::warning('Public checkout gateway error response received', [
+                'session_token' => $checkoutSession->session_token,
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_method' => $paymentMethod,
+                'message' => $message,
+                'gateway_response' => $this->sanitizeGatewayResponseForLog($gatewayResponse),
+            ]);
 
             return $this->respondToPaymentFailure(
                 request: $request,
@@ -193,6 +221,27 @@ class PublicCheckoutPaymentController extends Controller
             'request_payload' => $this->sanitizePaymentRequestPayload($validatedRequest),
             'response_payload' => $gatewayResponse,
         ]);
+
+        if (
+            $paymentMethod === 'boleto'
+            && blank($paymentTransaction->boleto_url)
+            && filled($paymentTransaction->gateway_transaction_id)
+        ) {
+            $refreshedBoleto = $this->paymentService->refreshBoletoPayment((string) $paymentTransaction->gateway_transaction_id);
+
+            $gatewayResponse = array_replace($gatewayResponse, $refreshedBoleto);
+
+            $paymentTransaction->fill([
+                'gateway_status' => $refreshedBoleto['gateway_status'] ?? $paymentTransaction->gateway_status,
+                'internal_status' => $refreshedBoleto['internal_status'] ?? $paymentTransaction->internal_status,
+                'boleto_url' => $refreshedBoleto['boleto_url'] ?? $paymentTransaction->boleto_url,
+                'boleto_barcode' => $refreshedBoleto['boleto_barcode'] ?? $paymentTransaction->boleto_barcode,
+                'boleto_digitable_line' => $refreshedBoleto['boleto_digitable_line'] ?? $paymentTransaction->boleto_digitable_line,
+                'response_payload' => $refreshedBoleto,
+            ])->save();
+
+            $paymentTransaction = $paymentTransaction->fresh();
+        }
 
         $nextCheckoutStatus = in_array(strtolower((string) ($gatewayResponse['internal_status'] ?? 'pending')), ['authorized', 'paid'], true)
             ? 'paid'
@@ -299,8 +348,7 @@ class PublicCheckoutPaymentController extends Controller
     public function status(string $sessionToken): JsonResponse
     {
         $checkoutSession = $this->findSession($sessionToken);
-        $order = Order::query()->where('checkout_session_id', $checkoutSession->id)->latest()->first();
-        $transaction = $order ? PaymentTransaction::query()->where('order_id', $order->id)->latest()->first() : null;
+        [$order, $transaction] = $this->resolvePaymentContext($checkoutSession);
 
         if (
             $order !== null
@@ -393,6 +441,31 @@ class PublicCheckoutPaymentController extends Controller
         return CheckoutSession::query()->where('session_token', $sessionToken)->firstOrFail();
     }
 
+    /**
+     * @return array{0: ?Order, 1: ?PaymentTransaction}
+     */
+    private function resolvePaymentContext(CheckoutSession $checkoutSession): array
+    {
+        $selectedPaymentMethod = $checkoutSession->payment_method;
+
+        $ordersQuery = Order::query()
+            ->with(['paymentTransaction'])
+            ->where('checkout_session_id', $checkoutSession->id);
+
+        if (filled($selectedPaymentMethod)) {
+            $selectedOrder = $ordersQuery
+                ->where('payment_method', $selectedPaymentMethod)
+                ->latest()
+                ->first();
+
+            return [$selectedOrder, $selectedOrder?->paymentTransaction];
+        }
+
+        $latestOrder = $ordersQuery->latest()->first();
+
+        return [$latestOrder, $latestOrder?->paymentTransaction];
+    }
+
     private function paymentMethodIsAllowed(CheckoutLink $checkoutLink, string $paymentMethod): bool
     {
         return match ($paymentMethod) {
@@ -406,9 +479,17 @@ class PublicCheckoutPaymentController extends Controller
     private function generateOrderNumber(): string
     {
         $year = now()->year;
-        $next = Order::query()->count() + 1;
 
-        return 'JNT-'.$year.'-'.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
+        do {
+            $orderNumber = sprintf(
+                'JNT-%s-%s-%s',
+                $year,
+                now()->format('YmdHisv'),
+                Str::upper(Str::random(4))
+            );
+        } while (Order::query()->where('order_number', $orderNumber)->exists());
+
+        return $orderNumber;
     }
 
     private function resolveGatewayTransactionId(array $gatewayResponse): ?string
@@ -455,6 +536,27 @@ class PublicCheckoutPaymentController extends Controller
         unset($payload['card']['card_number'], $payload['card']['security_code'], $payload['card']['holder_document']);
 
         return $payload;
+    }
+
+    private function sanitizeGatewayResponseForLog(array $gatewayResponse): array
+    {
+        if (isset($gatewayResponse['api_transaction']) && is_array($gatewayResponse['api_transaction'])) {
+            unset(
+                $gatewayResponse['api_transaction']['card_number'],
+                $gatewayResponse['api_transaction']['security_code'],
+                $gatewayResponse['api_transaction']['holder_document']
+            );
+        }
+
+        if (isset($gatewayResponse['api_boleto']) && is_array($gatewayResponse['api_boleto'])) {
+            unset(
+                $gatewayResponse['api_boleto']['card_number'],
+                $gatewayResponse['api_boleto']['security_code'],
+                $gatewayResponse['api_boleto']['holder_document']
+            );
+        }
+
+        return $gatewayResponse;
     }
 
     private function isValidCheckoutDocument(string $document, string $documentType): bool

@@ -185,6 +185,12 @@ function formatIdentificationDocument(value, documentType) {
     return documentType === 'cnpj' ? formatCnpj(value) : formatCpf(value);
 }
 
+function formatDocument(value) {
+    const digits = normalizeDigits(value);
+
+    return digits.length > 11 ? formatCnpj(digits) : formatCpf(digits);
+}
+
 function formatZipcode(value) {
     const digits = normalizeDigits(value).slice(0, 8);
 
@@ -981,6 +987,10 @@ function updatePaymentDetails(state, transaction) {
     const pixQrCodeImage = transaction?.response_payload?.pix_qr_code_image
         || transaction?.response_payload?.api_qrcode?.qrcode
         || null;
+    const showBoletoLoading = method === 'boleto'
+        && Boolean(state.boletoLoading)
+        && !hasCompleteBoletoDetails(transaction)
+        && !hasFailedBoletoDetails(transaction);
 
     const badge = document.querySelector('[data-payment-method-badge]');
     const statusText = document.querySelector('[data-payment-status-text]');
@@ -996,11 +1006,13 @@ function updatePaymentDetails(state, transaction) {
 
     if (message) {
         if (method === 'pix') {
-            message.textContent = 'Escaneie o código ou copie e cole o Pix. A página será atualizada automaticamente quando o pagamento for aprovado.';
+            message.textContent = 'Escaneie o c??digo ou copie e cole o Pix. A p??gina ser?? atualizada automaticamente quando o pagamento for aprovado.';
         } else if (method === 'credit_card' && (transaction?.requires_3ds || transaction?.response_payload?.requires_3ds || statusLabel === 'waiting_auth')) {
-            message.textContent = 'A transação foi criada e aguarda a autenticação 3DS do cartão.';
+            message.textContent = 'A transa????o foi criada e aguarda a autentica????o 3DS do cart??o.';
+        } else if (showBoletoLoading) {
+            message.textContent = 'Estamos gerando o boleto. Aguarde alguns segundos para ver os dados e abrir o documento.';
         } else {
-            message.textContent = 'O pagamento foi enviado para processamento. A página acompanha a confirmação automaticamente.';
+            message.textContent = 'O pagamento foi enviado para processamento. A p??gina acompanha a confirma????o automaticamente.';
         }
     }
 
@@ -1012,6 +1024,17 @@ function updatePaymentDetails(state, transaction) {
     const boletoBlock = document.querySelector('[data-boleto-block]');
     if (boletoBlock) {
         boletoBlock.hidden = method !== 'boleto';
+    }
+
+    const boletoLoadingBlock = document.querySelector('[data-boleto-loading]');
+    const boletoGrid = document.querySelector('[data-boleto-grid]');
+
+    if (boletoLoadingBlock) {
+        boletoLoadingBlock.hidden = !showBoletoLoading;
+    }
+
+    if (boletoGrid) {
+        boletoGrid.hidden = showBoletoLoading;
     }
 
     const pixCodeElement = document.querySelector('[data-pix-code]');
@@ -1067,14 +1090,17 @@ function updatePaymentDetails(state, transaction) {
 
     const paymentButton = document.querySelector('[data-open-payment]');
     if (paymentButton) {
-        if (method === 'pix') {
-            paymentButton.textContent = 'COPIAR CÓDIGO PIX';
+        if (showBoletoLoading) {
+            paymentButton.textContent = 'AGUARDANDO BOLETO...';
+            paymentButton.disabled = true;
+        } else if (method === 'pix') {
+            paymentButton.textContent = 'COPIAR C??DIGO PIX';
             paymentButton.disabled = !Boolean(transaction?.pix_copy_paste || transaction?.pix_qr_code);
         } else if (method === 'boleto') {
-            paymentButton.textContent = transaction?.internal_status === 'failed' ? 'BOLETO INDISPONÍVEL' : 'ABRIR BOLETO';
+            paymentButton.textContent = transaction?.internal_status === 'failed' ? 'BOLETO INDISPON??VEL' : 'ABRIR BOLETO';
             paymentButton.disabled = !Boolean(transaction?.boleto_url);
         } else {
-            paymentButton.textContent = 'COPIAR REFERÊNCIA';
+            paymentButton.textContent = 'COPIAR REFER??NCIA';
             paymentButton.disabled = false;
         }
     }
@@ -1215,6 +1241,64 @@ function updatePixExpiration(transaction) {
 
 function showWaitingPanel(state, transaction) {
     updatePaymentDetails(state, transaction);
+}
+
+function setBoletoLoadingState(state, isLoading) {
+    state.boletoLoading = isLoading;
+    updatePaymentDetails(state, state.paymentTransaction);
+}
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+        window.setTimeout(resolve, ms);
+    });
+}
+
+async function refreshBoletoUntilReady(state) {
+    const maxAttempts = 8;
+    const intervalMs = 1500;
+
+    setBoletoLoadingState(state, true);
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        await refreshExistingPayment(state);
+
+        if (hasCompleteBoletoDetails(state.paymentTransaction) || hasFailedBoletoDetails(state.paymentTransaction)) {
+            setBoletoLoadingState(state, false);
+            return;
+        }
+
+        if (attempt < maxAttempts - 1) {
+            setBoletoLoadingState(state, true);
+            await sleep(intervalMs);
+        }
+    }
+
+    setBoletoLoadingState(state, false);
+}
+
+function autoSubmitPaymentDetails(state, paymentForm) {
+    if (!(paymentForm instanceof HTMLFormElement)) {
+        return;
+    }
+
+    const method = String(state.session?.payment_method || '').toLowerCase();
+
+    if (!['pix', 'boleto'].includes(method)) {
+        return;
+    }
+
+    if (state.paymentTransaction) {
+        return;
+    }
+
+    window.setTimeout(() => {
+        if (!paymentForm.isConnected) {
+            return;
+        }
+
+        paymentForm.requestSubmit();
+    }, 0);
 }
 
 function redirectToThankYou(state) {
@@ -1463,9 +1547,39 @@ function bindForms(state) {
             setBusy(deliveryForm, true, 'Salvando...');
 
             try {
+                const deliveryPayload = new FormData(deliveryForm);
+                const identificationForm = document.querySelector('[data-checkout-form="identification"]:not([hidden])');
+
+                if (identificationForm instanceof HTMLFormElement) {
+                    const personFormType = String(identificationForm.dataset.personForm || 'pf');
+                    const shouldValidateResponsibleDocument = personFormType === 'pj';
+
+                    if (
+                        !validateIdentificationForm(identificationForm)
+                        || (shouldValidateResponsibleDocument && !validateResponsibleCpf(identificationForm, { focusOnError: true }))
+                    ) {
+                        return;
+                    }
+
+                    const identificationPayload = await requestJson(state.config.urls.identification, {
+                        method: 'POST',
+                        body: new FormData(identificationForm),
+                    });
+
+                    state.session = identificationPayload.checkout_session || state.session;
+                    state.identificationDraft = {
+                        ...state.identificationDraft,
+                        ...collectFormValues(identificationForm),
+                        customer_document_type: identificationDocumentType(identificationForm),
+                    };
+                    hydrateSession(state.session, state.config);
+                    syncRecipientDefault(state);
+                    updateSummary(state.config, state);
+                }
+
                 const payload = await requestJson(state.config.urls.delivery, {
                     method: 'POST',
-                    body: new FormData(deliveryForm),
+                    body: deliveryPayload,
                 });
 
                 state.session = payload.checkout_session || state.session;
@@ -1544,6 +1658,9 @@ function bindForms(state) {
                 if (state.paymentTransaction?.payment_method === 'pix') {
                     showWaitingPanel(state, state.paymentTransaction);
                 } else if (state.paymentTransaction?.payment_method === 'boleto') {
+                    if (!hasCompleteBoletoDetails(state.paymentTransaction)) {
+                        await refreshExistingPayment(state);
+                    }
                 } else if (state.paymentTransaction?.payment_method === 'credit_card') {
                     const requires3ds = Boolean(
                         state.paymentTransaction?.requires_3ds
@@ -1684,9 +1801,30 @@ function resumeExistingPayment(state) {
     } else if (method === 'boleto' && hasFailedBoletoDetails(state.paymentTransaction)) {
         updatePaymentDetails(state, state.paymentTransaction);
     } else if (method === 'boleto' && !hasCompleteBoletoDetails(state.paymentTransaction)) {
+        setBoletoLoadingState(state, true);
         updatePaymentDetails(state, state.paymentTransaction);
     } else {
         updatePaymentDetails(state, state.paymentTransaction);
+    }
+}
+
+async function refreshExistingPayment(state) {
+    try {
+        const payload = await requestJson(state.config.urls.status, {
+            method: 'GET',
+        });
+
+        state.session = payload.checkout_session || state.session;
+        state.order = payload.order || state.order;
+        state.paymentTransaction = payload.payment_transaction || state.paymentTransaction;
+        state.thankYouUrl = payload.thank_you_url || state.thankYouUrl;
+
+        hydrateSession(state.session, state.config);
+        syncRecipientDefault(state);
+        updateSummary(state.config, state);
+        updatePaymentDetails(state, state.paymentTransaction);
+    } catch (error) {
+        setFeedback(error.payload?.message || error.message || 'Não foi possível atualizar o pagamento.', 'error');
     }
 }
 
@@ -1708,6 +1846,7 @@ function initCheckoutPublic() {
         session: config.session || {},
         order: config.order || null,
         paymentTransaction: config.paymentTransaction || null,
+        boletoLoading: false,
         threeDsEnv: root.dataset.threeDsEnv || 'PROD',
         currentStep: config.currentStep || 'identification',
         thankYouUrl: config.thankYouUrl,
@@ -1730,6 +1869,7 @@ function initCheckoutPublic() {
     bindForms(state);
     bindPaymentAction(state);
     updatePersonTypeUi(state);
+    autoSubmitPaymentDetails(state, document.getElementById('checkout-payment-form'));
 
     if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
         redirectToThankYou(state);
@@ -1737,11 +1877,16 @@ function initCheckoutPublic() {
     }
 
     if (state.paymentTransaction) {
+        if (
+            String(state.paymentTransaction.payment_method || '').toLowerCase() === 'boleto'
+            && !hasCompleteBoletoDetails(state.paymentTransaction)
+        ) {
+            setBoletoLoadingState(state, true);
+            void refreshBoletoUntilReady(state);
+        }
         resumeExistingPayment(state);
         return;
     }
 }
 
 initCheckoutPublic();
-
-

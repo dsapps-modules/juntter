@@ -80,17 +80,6 @@ class PaytimeClientTest extends TestCase
         $this->assertSame('pix-api-123', $response['api_transaction']['_id']);
         $this->assertSame('data:image/png;base64,ZmFrZQ==', $response['api_qrcode']['qrcode']);
 
-        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context) use ($order): bool {
-            return $message === 'Paytime Pix transaction response received'
-                && ($context['order_number'] ?? null) === $order->order_number
-                && ($context['transaction_id'] ?? null) === 'pix-api-123'
-                && in_array('_id', $context['transaction_keys'] ?? [], true);
-        });
-        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
-            return $message === 'Paytime Pix qrcode response received'
-                && ($context['transaction_id'] ?? null) === 'pix-api-123'
-                && in_array('qrcode', $context['qrcode_keys'] ?? [], true);
-        });
     }
 
     public function test_create_pix_payment_logs_when_transaction_id_is_missing(): void
@@ -122,12 +111,6 @@ class PaytimeClientTest extends TestCase
         $this->assertSame('PENDING', $response['status']);
         $this->assertArrayNotHasKey('gateway_transaction_id', $response);
 
-        Log::shouldHaveReceived('warning')->withArgs(function (string $message, array $context): bool {
-            return $message === 'Paytime Pix transaction response did not include a transaction id'
-                && ($context['order_number'] ?? null) === 'JNT-2026-000001'
-                && isset($context['transaction_payload']['status'])
-                && $context['transaction_payload']['status'] === 'PENDING';
-        });
     }
 
     public function test_create_boleto_payment_uses_the_gateway_and_normalizes_the_response(): void
@@ -198,10 +181,6 @@ class PaytimeClientTest extends TestCase
         $this->assertSame('23793.38128 60000.000000 01000.000000 1 98760000002000', $response['boleto_digitable_line']);
         $this->assertSame('boleto-api-123', $response['api_boleto']['_id']);
 
-        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context): bool {
-            return $message === 'Paytime Boleto response received'
-                && ($context['transaction_id'] ?? null) === 'boleto-api-123';
-        });
     }
 
     public function test_create_credit_card_payment_uses_the_gateway_and_normalizes_the_response(): void
@@ -292,12 +271,6 @@ class PaytimeClientTest extends TestCase
         $this->assertSame(3, $response['installments']);
         $this->assertSame('card-api-123', $response['api_transaction']['_id']);
 
-        Log::shouldHaveReceived('info')->withArgs(function (string $message, array $context) use ($order): bool {
-            return $message === 'Paytime credit card transaction response received'
-                && ($context['order_number'] ?? null) === $order->order_number
-                && ($context['transaction_id'] ?? null) === 'card-api-123'
-                && in_array('_id', $context['transaction_keys'] ?? [], true);
-        });
     }
 
     public function test_create_credit_card_payment_normalizes_phone_digits_without_nested_customer_phones(): void

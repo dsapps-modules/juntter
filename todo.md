@@ -9,7 +9,7 @@
 [x] visual da página de checkout: mudar
 [x] confirmação de sucesso do pagamento: abrir em outra página
 
-[] saldo e extrato: deve ter como acessar conta bancária para fazer saque
+[] saldo e extrato: fazer saque via pix
 
-[] existe a suposição de que as transações dos clientes estejam desatualizadas
+[x] existe a suposição de que as transações dos clientes estejam desatualizadas
 [x] plano contratado está desabilitado: porque não temos como acessar os planos da Juntter.

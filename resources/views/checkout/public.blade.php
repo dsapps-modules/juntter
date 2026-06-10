@@ -450,6 +450,40 @@
             margin-bottom: 14px;
         }
 
+        .boleto-card__loading {
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr);
+            gap: 14px;
+            align-items: center;
+            border-radius: 18px;
+            border: 1px solid rgba(31, 26, 23, 0.08);
+            background: rgba(255, 255, 255, 0.82);
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        .boleto-card__spinner {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: 3px solid rgba(31, 26, 23, 0.16);
+            border-top-color: {{ data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17') }};
+            animation: boleto-spin 0.9s linear infinite;
+        }
+
+        .boleto-card__loading strong {
+            display: block;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .boleto-card__loading p {
+            margin: 0;
+            color: var(--checkout-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
         .boleto-card__row {
             display: grid;
             gap: 4px;
@@ -544,6 +578,16 @@
 
         .pix-copy-row .btn {
             flex: 1 1 180px;
+        }
+
+        @keyframes boleto-spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .feedback {
@@ -682,11 +726,15 @@
     $paymentInternalStatus = strtolower((string) data_get($paymentTransaction, 'internal_status', $checkoutSession->status ?? ''));
     $paymentIsFinalized = in_array($paymentInternalStatus, ['paid', 'authorized'], true)
         || in_array(strtolower((string) ($order?->status ?? '')), ['paid', 'authorized'], true);
+    $paymentPixCopyPaste = data_get($paymentTransaction, 'pix_copy_paste') ?: data_get($paymentTransaction, 'pix_qr_code');
+    $paymentPixQrImage = data_get($paymentTransaction, 'response_payload.pix_qr_code_image')
+        ?: data_get($paymentTransaction, 'response_payload.api_qrcode.qrcode');
     $showPaymentSelector = $checkoutPageMode === 'payment-selector';
     $showPaymentDetails = $checkoutPageMode === 'payment-details';
     $showPixStatus = $showPaymentDetails && $paymentMethod === 'pix' && ! $paymentIsFinalized;
     $showBoletoStatus = $showPaymentDetails && $paymentMethod === 'boleto' && ! $paymentIsFinalized;
     $showCardStatus = $showPaymentDetails && $paymentMethod === 'credit_card' && ! $paymentIsFinalized;
+    $showBoletoLoading = $showBoletoStatus && blank(data_get($paymentTransaction, 'boleto_url'));
 @endphp
 
 <script type="application/json" id="checkout-public-data">@json($checkoutPublicConfig)</script>
@@ -967,9 +1015,17 @@
                             @endif
                         @endif
 
+                        @if(!($showPaymentDetails && in_array($paymentMethod, ['pix', 'boleto'], true)))
                         <div class="actions">
-                            <button class="btn btn-primary" type="submit">Pagar</button>
+                            <button class="btn btn-primary" type="submit">
+                                @if($showPaymentDetails && $paymentMethod === 'boleto')
+                                    Gerar boleto
+                                @else
+                                    Pagar
+                                @endif
+                            </button>
                         </div>
+                        @endif
                     </form>
                 </section>
                 @endif
@@ -1021,10 +1077,14 @@
                     <div class="summary-block" data-pix-block>
                         <h3 style="margin-bottom: 10px;" data-payment-code-title>Pix copia e cola</h3>
                         <div class="pix-qr-frame" data-pix-qr-frame>
-                            <div class="pix-qr-placeholder" data-pix-qr-placeholder>O QR Code do Pix será exibido aqui.</div>
-                            <div data-pix-qr></div>
+                            <div class="pix-qr-placeholder" data-pix-qr-placeholder @if(filled($paymentPixQrImage) || filled($paymentPixCopyPaste)) hidden @endif>O QR Code do Pix será exibido aqui.</div>
+                            <div data-pix-qr>
+                                @if(filled($paymentPixQrImage))
+                                    <img src="{{ $paymentPixQrImage }}" alt="QR Code Pix" style="width: 240px; height: 240px; object-fit: contain;">
+                                @endif
+                            </div>
                         </div>
-                        <div class="pix-code" data-pix-code>O código aparecerá aqui assim que o pagamento for criado.</div>
+                        <div class="pix-code" data-pix-code>{{ $paymentPixCopyPaste ?: 'O código aparecerá aqui assim que o pagamento for criado.' }}</div>
                         <div class="pix-copy-row">
                             <button class="btn btn-primary" type="button" data-copy-pix>COPIAR CÓDIGO PIX</button>
                             <a class="btn btn-secondary" href="{{ route('checkout.public.thank-you', $checkoutSession->session_token) }}" data-thank-you-link>Ver página de confirmação</a>
@@ -1041,7 +1101,15 @@
                         </div>
                     </div>
 
-                    <div class="boleto-card__grid">
+                    <div class="boleto-card__loading" data-boleto-loading @unless($showBoletoLoading) hidden @endunless aria-live="polite">
+                        <div class="boleto-card__spinner" aria-hidden="true"></div>
+                        <div>
+                            <strong>Gerando boleto...</strong>
+                            <p>Os dados do boleto aparecerão automaticamente assim que estiverem disponíveis.</p>
+                        </div>
+                    </div>
+
+                    <div class="boleto-card__grid" data-boleto-grid @if($showBoletoLoading) hidden @endif>
                         <div class="boleto-card__row boleto-card__copy-row">
                             <span>Linha digitável</span>
                             <div class="boleto-card__copy-group">
@@ -1066,7 +1134,13 @@
                     </div>
 
                     <div class="pix-copy-row">
-                        <button class="btn btn-primary" type="button" data-open-payment>ABRIR BOLETO</button>
+                        <button class="btn btn-primary" type="button" data-open-payment @if($showBoletoLoading) disabled @endif>
+                            @if($showBoletoLoading)
+                                AGUARDANDO BOLETO...
+                            @else
+                                ABRIR BOLETO
+                            @endif
+                        </button>
                     </div>
                 </section>
                 @endif

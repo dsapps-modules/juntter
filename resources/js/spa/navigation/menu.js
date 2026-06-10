@@ -77,21 +77,9 @@ export const navigationByRole = {
 };
 
 export function getSharedNavigationItems(role) {
-    const items = [
+    return [
         { key: 'perfil.configuracoes', path: '/perfil', label: 'Perfil', icon: 'perfil' },
     ];
-
-    if (role !== 'admin' && role !== 'super_admin') {
-        items.unshift({
-            key: 'cobranca.planos',
-            path: '/cobranca/planos',
-            label: 'Plano Contratado',
-            icon: 'planos',
-            disabled: true,
-        });
-    }
-
-    return items;
 }
 
 export function buildNavigationSections(role) {
