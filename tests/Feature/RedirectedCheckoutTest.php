@@ -366,8 +366,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('Selecione o método de pagamento', false);
         $response->assertDontSee('Escolha o método disponível para este link e conclua o pedido.', false);
         $response->assertDontSee('<label for="payment_method">', false);
-        $response->assertSee('Continuar para pagamento', false);
-        $response->assertDontSee('Pagar', false);
+        $response->assertSee('Pagar', false);
         $response->assertSee('Pix', false);
         $response->assertSee('Boleto', false);
         $response->assertDontSee('Cartão de crédito', false);
@@ -476,6 +475,82 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('Alterar método', false);
         $response->assertSee('Pagamento', false);
         $response->assertDontSee('Selecione o método de pagamento', false);
+    }
+
+    public function test_public_checkout_payment_details_page_ignores_previous_transaction_when_payment_method_changes(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'payment_pending',
+            'current_step' => 'payment',
+            'payment_method' => 'pix',
+        ]);
+
+        $order = Order::query()->create([
+            'seller_id' => $link->seller_id,
+            'checkout_link_id' => $link->id,
+            'checkout_session_id' => $session->id,
+            'product_id' => $link->product_id,
+            'order_number' => 'JNT-2026-010010',
+            'status' => 'pending',
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'subtotal' => 100.00,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => 100.00,
+            'payment_method' => 'pix',
+        ]);
+
+        PaymentTransaction::query()->create([
+            'order_id' => $order->id,
+            'seller_id' => $user->id,
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'pix-stale-123',
+            'gateway_status' => 'PENDING',
+            'internal_status' => 'pending',
+            'payment_method' => 'pix',
+            'amount' => 100.00,
+            'pix_copy_paste' => '00020126580014br.gov.bcb.pix.pix-stale',
+            'response_payload' => [
+                'gateway_transaction_id' => 'pix-stale-123',
+                'gateway_status' => 'PENDING',
+                'internal_status' => 'pending',
+                'pix_copy_paste' => '00020126580014br.gov.bcb.pix.pix-stale',
+            ],
+        ]);
+
+        $this->post(route('checkout.public.payment.choose', $session->session_token), [
+            'payment_method' => 'boleto',
+        ])->assertRedirect(route('checkout.public.payment.details', $session->session_token));
+
+        $response = $this->get(route('checkout.public.payment.details', $session->session_token));
+
+        $response->assertOk();
+        $response->assertDontSee('Aguardando confirmação', false);
+        $response->assertDontSee('Pix copia e cola', false);
+        $response->assertDontSee('00020126580014br.gov.bcb.pix.pix-stale', false);
     }
 
     public function test_public_checkout_payment_form_redirects_back_to_payment_details_page_on_success(): void

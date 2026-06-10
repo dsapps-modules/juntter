@@ -11,16 +11,19 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules;
-use Illuminate\View\View;
 
 class NewPasswordController extends Controller
 {
     /**
      * Display the password reset view.
      */
-    public function create(Request $request): View
+    public function create(Request $request): RedirectResponse
     {
-        return view('auth.reset-password', ['request' => $request]);
+        $queryString = $request->filled('email')
+            ? '?email='.urlencode($request->string('email')->toString())
+            : '';
+
+        return redirect('/app/reset-password/'.$request->route('token').$queryString);
     }
 
     /**
@@ -66,7 +69,7 @@ class NewPasswordController extends Controller
         }
 
         return $status === Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('status', __($status))
+            ? redirect('/app/login')->with('status', __($status))
             : back()->withInput($request->only('email'))
                 ->withErrors(['email' => __($status)]);
     }

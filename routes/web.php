@@ -27,25 +27,30 @@ Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
 Route::get('/', function () {
     return view('checkout');
 })->name('checkout');
-Route::middleware('guest')->get('/login', function () {
-    return view('auth.login');
-})->name('login');
 Route::redirect('/home', '/app/home')->name('home');
 
 Route::view('/app/login', 'spa')
     ->middleware('guest')
-    ->name('spa.login');
+    ->name('login');
+
+Route::view('/app/register', 'spa')
+    ->middleware('guest')
+    ->name('register');
 
 Route::view('/app/forgot-password', 'spa')
     ->middleware('guest')
-    ->name('spa.forgot-password');
+    ->name('password.request');
 
 Route::view('/app/reset-password/{token}', 'spa')
     ->middleware('guest')
-    ->name('spa.reset-password');
+    ->name('password.reset');
 
-Route::view('/app/verify-email', 'spa')
-    ->name('spa.verify-email');
+Route::get('/app/verify-email', \App\Http\Controllers\Auth\EmailVerificationPromptController::class)
+    ->middleware('auth')
+    ->name('verification.notice');
+
+Route::view('/app/unauthorized', 'spa')
+    ->name('unauthorized');
 
 Route::view('/app/{any?}', 'spa')
     ->middleware('auth')
@@ -81,11 +86,6 @@ Route::get('/pagamento/{codigoUnico}', [PagamentoClienteController::class, 'most
 Route::post('/pagamento/{codigoUnico}/cartao', [PagamentoClienteController::class, 'processarCartao'])->name('pagamento.cartao');
 Route::post('/pagamento/confirmar3ds/{transid}/{itemid?}', [PagamentoClienteController::class, 'confirmar3ds'])->name('pagamento.confirmar3ds');
 Route::get('/pagamento/{codigoUnico}/status', [PagamentoClienteController::class, 'verificarStatus'])->name('pagamento.status');
-
-// Página de acesso não autorizado
-Route::get('/unauthorized', function () {
-    return view('auth.unauthorized');
-})->name('unauthorized');
 
 // Rotas protegidas por nível de acesso
 Route::middleware(['auth', 'verified'])->group(function () {

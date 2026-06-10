@@ -32,15 +32,11 @@ class PublicCheckoutController extends Controller
             ], 410);
         }
 
-        $order = Order::query()
-            ->with(['paymentTransaction'])
-            ->where('checkout_session_id', $checkoutSession->id)
-            ->latest()
-            ->first();
+        [$order, $paymentTransaction] = $this->resolvePaymentContext($checkoutSession);
 
         if (
             in_array($order?->status, ['paid', 'authorized'], true)
-            || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+            || in_array(strtolower((string) ($paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
         ) {
             return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
         }
@@ -53,7 +49,7 @@ class PublicCheckoutController extends Controller
             checkoutLink: $checkoutLink,
             checkoutSession: $checkoutSession,
             order: $order,
-            paymentTransaction: $order?->paymentTransaction,
+            paymentTransaction: $paymentTransaction,
             sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
             checkoutPageMode: 'payment-selector',
         ));
@@ -74,15 +70,11 @@ class PublicCheckoutController extends Controller
             ], 410);
         }
 
-        $order = Order::query()
-            ->with(['paymentTransaction'])
-            ->where('checkout_session_id', $checkoutSession->id)
-            ->latest()
-            ->first();
+        [$order, $paymentTransaction] = $this->resolvePaymentContext($checkoutSession);
 
         if (
             in_array($order?->status, ['paid', 'authorized'], true)
-            || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+            || in_array(strtolower((string) ($paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
         ) {
             return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
         }
@@ -95,7 +87,7 @@ class PublicCheckoutController extends Controller
             checkoutLink: $checkoutLink,
             checkoutSession: $checkoutSession,
             order: $order,
-            paymentTransaction: $order?->paymentTransaction,
+            paymentTransaction: $paymentTransaction,
             sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
             checkoutPageMode: 'payment-details',
         ));
@@ -245,5 +237,30 @@ class PublicCheckoutController extends Controller
             'sellerLogoUrl' => $sellerLogoUrl,
             'checkoutPageMode' => $checkoutPageMode,
         ];
+    }
+
+    /**
+     * @return array{0: ?Order, 1: ?\App\Models\PaymentTransaction}
+     */
+    private function resolvePaymentContext(CheckoutSession $checkoutSession): array
+    {
+        $selectedPaymentMethod = $checkoutSession->payment_method;
+
+        $ordersQuery = Order::query()
+            ->with(['paymentTransaction'])
+            ->where('checkout_session_id', $checkoutSession->id);
+
+        if (filled($selectedPaymentMethod)) {
+            $selectedOrder = $ordersQuery
+                ->where('payment_method', $selectedPaymentMethod)
+                ->latest()
+                ->first();
+
+            return [$selectedOrder, $selectedOrder?->paymentTransaction];
+        }
+
+        $latestOrder = $ordersQuery->latest()->first();
+
+        return [$latestOrder, $latestOrder?->paymentTransaction];
     }
 }

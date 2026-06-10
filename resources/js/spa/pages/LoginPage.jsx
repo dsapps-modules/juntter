@@ -7,9 +7,10 @@ import {
 } from '@ant-design/icons';
 import { Alert, Button, Card, Checkbox, Col, Divider, Input, Row, Space, Tag, Typography } from 'antd';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export default function LoginPage() {
+    const [searchParams] = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(true);
@@ -54,6 +55,8 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
+
+    const registeredMessage = searchParams.get('registered') === '1' ? 'Conta criada com sucesso! Faça login para continuar.' : '';
 
     return (
         <div className="spa-auth-page">
@@ -103,6 +106,9 @@ export default function LoginPage() {
                         </Typography.Paragraph>
 
                         {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
+                        {registeredMessage ? (
+                            <Alert type="success" showIcon message={registeredMessage} className="spa-auth-alert" />
+                        ) : null}
 
                         <form onSubmit={handleSubmit}>
                             <Space direction="vertical" size={16} style={{ width: '100%' }}>
@@ -168,6 +174,7 @@ export default function LoginPage() {
 
                         <div className="spa-auth-links">
                             <Link to="/forgot-password">Recuperar senha</Link>
+                            <Link to="/register">Criar conta</Link>
                             <Link to="/">Ir para a home</Link>
                         </div>
                     </Card>

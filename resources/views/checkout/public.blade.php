@@ -968,7 +968,7 @@
                         @endif
 
                         <div class="actions">
-                            <button class="btn btn-primary" type="submit">{{ $showPaymentDetails ? 'Pagar' : 'Continuar para pagamento' }}</button>
+                            <button class="btn btn-primary" type="submit">Pagar</button>
                         </div>
                     </form>
                 </section>

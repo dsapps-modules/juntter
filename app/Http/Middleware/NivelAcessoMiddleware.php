@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use App\Models\User;
 
 class NivelAcessoMiddleware
 {
@@ -16,13 +16,13 @@ class NivelAcessoMiddleware
      */
     public function handle(Request $request, Closure $next, string ...$niveis): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
         /** @var User $user */
         $user = auth()->user();
-        
+
         // Se nenhum nível foi especificado, permite acesso
         if (empty($niveis)) {
             return $next($request);
@@ -50,6 +50,6 @@ class NivelAcessoMiddleware
         }
 
         // Se chegou aqui, não tem permissão
-        return redirect()->route('unauthorized')->with('error', 'Acesso negado. Nível de acesso insuficiente.');
+        return redirect('/unauthorized')->with('error', 'Acesso negado. Nível de acesso insuficiente.');
     }
-} 
+}

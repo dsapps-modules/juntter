@@ -28,8 +28,10 @@ import VendedoresPage from './pages/VendedoresPage';
 import VendedoresAcessoPage from './pages/VendedoresAcessoPage';
 import VendedoresFaturamentoPage from './pages/VendedoresFaturamentoPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProfilePage from './pages/ProfilePage';
 
@@ -70,9 +72,11 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<Navigate replace to="/home" />} />
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
                     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
                     <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/unauthorized" element={<UnauthorizedPage />} />
                     <Route element={<AppShell />}>
                         <Route path="home" element={<HomePage />} />
                         <Route path="painel" element={<HomePage />} />

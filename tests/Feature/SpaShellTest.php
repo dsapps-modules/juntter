@@ -28,7 +28,7 @@ class SpaShellTest extends TestCase
     {
         $response = $this->get('/app/cobranca/pix');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/app/login');
     }
 
     public function test_the_spa_shell_is_available_at_the_app_route(): void
@@ -76,6 +76,37 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_legacy_auth_paths_are_not_available_anymore(): void
+    {
+        foreach ([
+            '/login',
+            '/register',
+            '/forgot-password',
+        ] as $path) {
+            $response = $this->get($path);
+
+            $response->assertStatus(405);
+        }
+
+        foreach ([
+            '/reset-password/example-token',
+            '/verify-email',
+            '/unauthorized',
+        ] as $path) {
+            $response = $this->get($path);
+
+            $response->assertNotFound();
+        }
+    }
+
+    public function test_the_register_route_is_available(): void
+    {
+        $response = $this->get('/app/register');
+
+        $response->assertOk();
+        $response->assertSee('id="app"', false);
+    }
+
     public function test_the_password_recovery_route_is_available(): void
     {
         $response = $this->get('/app/forgot-password');
@@ -92,9 +123,31 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_reset_password_page_redirects_after_success(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/ResetPasswordPage.jsx'));
+
+        $this->assertStringContainsString('window.location.assign(payload.redirect ?? \'/app/login\');', $pageSource);
+    }
+
     public function test_the_email_verification_route_is_available(): void
     {
+        $user = User::factory()->create([
+            'email_verified_at' => null,
+            'nivel_acesso' => 'vendedor',
+        ]);
+
+        $this->actingAs($user);
+
         $response = $this->get('/app/verify-email');
+
+        $response->assertOk();
+        $response->assertSee('id="app"', false);
+    }
+
+    public function test_the_unauthorized_route_is_available(): void
+    {
+        $response = $this->get('/app/unauthorized');
 
         $response->assertOk();
         $response->assertSee('id="app"', false);

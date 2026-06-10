@@ -1,33 +1,30 @@
-import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Col, Input, Row, Space, Tag, Typography } from 'antd';
 import { useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
-export default function ResetPasswordPage() {
-    const { token } = useParams();
-    const [searchParams] = useSearchParams();
-    const [email, setEmail] = useState(searchParams.get('email') ?? '');
+export default function RegisterPage() {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState('');
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setLoading(true);
         setError('');
-        setSuccess('');
 
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const formData = new FormData();
-            formData.append('token', token ?? '');
+            formData.append('name', name);
             formData.append('email', email);
             formData.append('password', password);
             formData.append('password_confirmation', passwordConfirmation);
 
-            const response = await fetch('/reset-password', {
+            const response = await fetch('/register', {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -42,14 +39,12 @@ export default function ResetPasswordPage() {
 
             if (!response.ok) {
                 const firstError = Object.values(payload.errors ?? {}).flat().shift();
-                throw new Error(firstError ?? payload.message ?? 'Falha ao redefinir a senha.');
+                throw new Error(firstError ?? payload.message ?? 'Falha ao criar a conta.');
             }
 
-            setSuccess('Senha redefinida com sucesso. Você já pode entrar novamente.');
-            window.location.assign(payload.redirect ?? '/app/login');
+            window.location.assign(payload.redirect ?? '/app/login?registered=1');
         } catch (submitError) {
-            setError(submitError.message || 'Falha ao redefinir a senha.');
-        } finally {
+            setError(submitError.message || 'Falha ao criar a conta.');
             setLoading(false);
         }
     };
@@ -63,33 +58,61 @@ export default function ResetPasswordPage() {
                 <Col xs={24} lg={12}>
                     <div className="spa-auth-hero">
                         <Tag color="gold" className="spa-auth-tag">
-                            Nova senha
+                            Cadastro
                         </Tag>
                         <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
-                            Redefina sua senha com a mesma linha visual da plataforma.
+                            Crie sua conta e entre direto na nova experiência.
                         </Typography.Title>
                         <Typography.Paragraph className="spa-auth-description">
-                            O link é validado pelo backend, enquanto a interface mantém o padrão amarelo, limpo e direto da migração.
+                            O fluxo de cadastro foi movido para a mesma interface da plataforma, reduzindo rotas soltas e
+                            concentrando a experiência de autenticação em um único conjunto visual.
                         </Typography.Paragraph>
+
+                        <Space wrap className="spa-auth-points">
+                            <Card className="spa-auth-point-card" bordered={false}>
+                                <UserOutlined />
+                                <span>Nome e acesso</span>
+                            </Card>
+                            <Card className="spa-auth-point-card" bordered={false}>
+                                <MailOutlined />
+                                <span>E-mail válido</span>
+                            </Card>
+                            <Card className="spa-auth-point-card" bordered={false}>
+                                <ArrowRightOutlined />
+                                <span>Redirecionamento simples</span>
+                            </Card>
+                        </Space>
                     </div>
                 </Col>
 
                 <Col xs={24} lg={10} xl={8}>
                     <Card className="spa-auth-card">
-                        <Typography.Text className="spa-brand-kicker">Redefinir senha</Typography.Text>
+                        <Typography.Text className="spa-brand-kicker">Criar conta</Typography.Text>
                         <Typography.Title level={3} className="spa-auth-card-title">
-                            Criar nova senha
+                            Cadastro da plataforma
                         </Typography.Title>
                         <Typography.Paragraph type="secondary">
-                            Digite o e-mail da conta e escolha uma nova senha.
+                            Preencha seus dados para começar a usar o painel.
                         </Typography.Paragraph>
 
                         {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
-                        {success ? <Alert type="success" showIcon message={success} className="spa-auth-alert" /> : null}
 
                         <form onSubmit={handleSubmit}>
                             <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                <div>
+                                    <Typography.Text strong>Nome</Typography.Text>
+                                    <Input
+                                        prefix={<UserOutlined />}
+                                        size="large"
+                                        placeholder="Nome completo"
+                                        value={name}
+                                        onChange={(event) => setName(event.target.value)}
+                                        autoComplete="name"
+                                        className="spa-auth-input"
+                                    />
+                                </div>
+
                                 <div>
                                     <Typography.Text strong>E-mail</Typography.Text>
                                     <Input
@@ -104,11 +127,11 @@ export default function ResetPasswordPage() {
                                 </div>
 
                                 <div>
-                                    <Typography.Text strong>Nova senha</Typography.Text>
+                                    <Typography.Text strong>Senha</Typography.Text>
                                     <Input.Password
                                         prefix={<LockOutlined />}
                                         size="large"
-                                        placeholder="Nova senha"
+                                        placeholder="Crie sua senha"
                                         value={password}
                                         onChange={(event) => setPassword(event.target.value)}
                                         autoComplete="new-password"
@@ -121,7 +144,7 @@ export default function ResetPasswordPage() {
                                     <Input.Password
                                         prefix={<LockOutlined />}
                                         size="large"
-                                        placeholder="Confirmar senha"
+                                        placeholder="Confirme a senha"
                                         value={passwordConfirmation}
                                         onChange={(event) => setPasswordConfirmation(event.target.value)}
                                         autoComplete="new-password"
@@ -138,14 +161,14 @@ export default function ResetPasswordPage() {
                                     className="spa-primary-button"
                                     icon={<ArrowRightOutlined />}
                                 >
-                                    Redefinir senha
+                                    Criar conta
                                 </Button>
                             </Space>
                         </form>
 
                         <div className="spa-auth-links">
-                            <Link to="/login">Voltar ao login</Link>
-                            <Link to="/">Ir para a home</Link>
+                            <Link to="/login">Já tenho conta</Link>
+                            <Link to="/forgot-password">Esqueci a senha</Link>
                         </div>
                     </Card>
                 </Col>
