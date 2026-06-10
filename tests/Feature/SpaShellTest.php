@@ -85,7 +85,7 @@ class SpaShellTest extends TestCase
         ] as $path) {
             $response = $this->get($path);
 
-            $response->assertStatus(405);
+            $response->assertStatus($path === '/register' ? 404 : 405);
         }
 
         foreach ([
@@ -99,12 +99,11 @@ class SpaShellTest extends TestCase
         }
     }
 
-    public function test_the_register_route_is_available(): void
+    public function test_the_register_route_is_not_available_anymore(): void
     {
         $response = $this->get('/app/register');
 
-        $response->assertOk();
-        $response->assertSee('id="app"', false);
+        $response->assertNotFound();
     }
 
     public function test_the_password_recovery_route_is_available(): void

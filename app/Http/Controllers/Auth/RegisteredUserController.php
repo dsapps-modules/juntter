@@ -18,7 +18,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): RedirectResponse
     {
-        return redirect('/app/register');
+        return redirect('/app/login');
     }
 
     /**

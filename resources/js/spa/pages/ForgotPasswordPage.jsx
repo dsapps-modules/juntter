@@ -48,6 +48,9 @@ export default function ForgotPasswordPage() {
 
     return (
         <div className="spa-auth-page">
+            <div className="spa-auth-logo">
+                <img src="/img/logo/juntter_webp_640_174.webp" alt="Juntter" className="spa-auth-logo-image" />
+            </div>
             <div className="spa-auth-backdrop spa-auth-backdrop-left" />
             <div className="spa-auth-backdrop spa-auth-backdrop-right" />
 
@@ -59,12 +62,8 @@ export default function ForgotPasswordPage() {
                         </Tag>
                         <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
-                            Refaça o acesso sem sair da nova experiência visual.
+                            Recupere o acesso de forma rápida e simples.
                         </Typography.Title>
-                        <Typography.Paragraph className="spa-auth-description">
-                            O fluxo de recuperação já aponta para o backend real, mas a tela segue a identidade da migração:
-                            foco em leitura rápida, confirmação clara e uma única ação principal.
-                        </Typography.Paragraph>
 
                         <Space wrap className="spa-auth-points">
                             <Card className="spa-auth-point-card" bordered={false}>

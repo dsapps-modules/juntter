@@ -5,12 +5,11 @@ import {
     SafetyCertificateOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Checkbox, Col, Divider, Input, Row, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Checkbox, Col, Input, Row, Space, Tag, Typography } from 'antd';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function LoginPage() {
-    const [searchParams] = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [remember, setRemember] = useState(true);
@@ -56,10 +55,11 @@ export default function LoginPage() {
         }
     };
 
-    const registeredMessage = searchParams.get('registered') === '1' ? 'Conta criada com sucesso! Faça login para continuar.' : '';
-
     return (
         <div className="spa-auth-page">
+            <div className="spa-auth-logo">
+                <img src="/img/logo/juntter_webp_640_174.webp" alt="Juntter" className="spa-auth-logo-image" />
+            </div>
             <div className="spa-auth-backdrop spa-auth-backdrop-left" />
             <div className="spa-auth-backdrop spa-auth-backdrop-right" />
 
@@ -71,17 +71,16 @@ export default function LoginPage() {
                         </Tag>
                         <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
-                            Entre no centro de operações.
+                            Pagamentos de forma segura e facilitada
                         </Typography.Title>
                         <Typography.Paragraph className="spa-auth-description">
-                            A tela de login já usa a nova linguagem visual: fundo suave, destaque amarelo, leitura limpa e
-                            hierarquia visual mais forte para o acesso.
+                            A Juntter oferece maquininhas com taxas competitivas com suporte em todo o Brasil
                         </Typography.Paragraph>
 
                         <Space wrap className="spa-auth-points">
                             <Card className="spa-auth-point-card" bordered={false}>
                                 <SafetyCertificateOutlined />
-                                <span>Segurança de sessão</span>
+                                <span>Segurança</span>
                             </Card>
                             <Card className="spa-auth-point-card" bordered={false}>
                                 <ThunderboltOutlined />
@@ -99,16 +98,13 @@ export default function LoginPage() {
                     <Card className="spa-auth-card">
                         <Typography.Text className="spa-brand-kicker">Entrar</Typography.Text>
                         <Typography.Title level={3} className="spa-auth-card-title">
-                            Login da plataforma
+                            Login
                         </Typography.Title>
                         <Typography.Paragraph type="secondary">
                             Use suas credenciais para acessar os módulos migrados para React.
                         </Typography.Paragraph>
 
                         {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
-                        {registeredMessage ? (
-                            <Alert type="success" showIcon message={registeredMessage} className="spa-auth-alert" />
-                        ) : null}
 
                         <form onSubmit={handleSubmit}>
                             <Space direction="vertical" size={16} style={{ width: '100%' }}>
@@ -163,20 +159,6 @@ export default function LoginPage() {
                             </Space>
                         </form>
 
-                        <Divider />
-
-                        <Space direction="vertical" size={10} className="spa-auth-footer">
-                            <Typography.Text className="spa-placeholder-kicker">Login visual</Typography.Text>
-                            <Typography.Text type="secondary">
-                                Esta tela já está pronta para a próxima etapa da validação visual.
-                            </Typography.Text>
-                        </Space>
-
-                        <div className="spa-auth-links">
-                            <Link to="/forgot-password">Recuperar senha</Link>
-                            <Link to="/register">Criar conta</Link>
-                            <Link to="/">Ir para a home</Link>
-                        </div>
                     </Card>
                 </Col>
             </Row>

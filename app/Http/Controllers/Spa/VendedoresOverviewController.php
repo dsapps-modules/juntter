@@ -100,7 +100,7 @@ class VendedoresOverviewController extends Controller
                 'last_page' => $paginatedVendors->lastPage(),
             ],
             'actions' => [
-                ['title' => 'Novo acesso', 'description' => 'Criar conta de vendedor.', 'href' => '/vendedores/acesso'],
+                ['title' => 'Novo acesso', 'description' => 'Cadastrar vendedor.', 'href' => '/vendedores/acesso'],
                 ['title' => 'Faturamento', 'description' => 'Ver desempenho por loja.', 'href' => '/vendedores/faturamento'],
             ],
             'rows' => $rows->values(),

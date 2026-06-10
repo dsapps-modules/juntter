@@ -10,14 +10,14 @@ class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_register_screen_redirects_to_the_spa(): void
+    public function test_register_screen_is_not_available_anymore(): void
     {
-        $response = $this->get(route('register'));
+        $response = $this->get('/register');
 
-        $response->assertStatus(200);
+        $response->assertNotFound();
     }
 
-    public function test_users_can_register_from_the_spa(): void
+    public function test_users_cannot_register_from_the_public_route_anymore(): void
     {
         $response = $this->postJson('/register', [
             'name' => 'Nova Conta',
@@ -27,22 +27,14 @@ class RegistrationTest extends TestCase
         ]);
 
         $response
-            ->assertOk()
-            ->assertJson([
-                'redirect' => '/app/login?registered=1',
-            ])
-            ->assertJsonStructure(['message', 'redirect']);
+            ->assertNotFound();
 
-        $this->assertDatabaseHas('users', [
-            'name' => 'Nova Conta',
+        $this->assertDatabaseMissing('users', [
             'email' => 'nova.conta@example.com',
-            'nivel_acesso' => 'vendedor',
         ]);
-
-        $this->assertGuest();
     }
 
-    public function test_registration_requires_unique_email(): void
+    public function test_registration_requires_unique_email_is_no_longer_exposed_publicly(): void
     {
         User::factory()->create([
             'email' => 'nova.conta@example.com',
@@ -55,8 +47,6 @@ class RegistrationTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $response
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['email']);
+        $response->assertNotFound();
     }
 }

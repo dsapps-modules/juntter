@@ -1287,6 +1287,20 @@ a {
     padding: 32px;
 }
 
+.spa-auth-logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 2;
+}
+
+.spa-auth-logo-image {
+    display: block;
+    width: 168px;
+    max-width: min(168px, calc(100vw - 40px));
+    height: auto;
+}
+
 .spa-auth-grid {
     position: relative;
     z-index: 1;
@@ -1416,10 +1430,6 @@ a {
     color: #5f4900;
 }
 
-.spa-auth-footer {
-    width: 100%;
-}
-
 @media (max-width: 991px) {
     .spa-header,
     .spa-content {
@@ -1443,6 +1453,16 @@ a {
 
     .spa-auth-page {
         padding: 16px;
+    }
+
+    .spa-auth-logo {
+        top: 14px;
+        left: 16px;
+    }
+
+    .spa-auth-logo-image {
+        width: 144px;
+        max-width: min(144px, calc(100vw - 32px));
     }
 
     .spa-auth-grid {

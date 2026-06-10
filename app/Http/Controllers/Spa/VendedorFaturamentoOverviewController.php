@@ -96,7 +96,7 @@ class VendedorFaturamentoOverviewController extends Controller
             'summary' => $summary,
             'rows' => $rows->values(),
             'actions' => [
-                ['title' => 'Novo acesso', 'description' => 'Criar conta de vendedor.', 'href' => '/vendedores/acesso'],
+                ['title' => 'Novo acesso', 'description' => 'Cadastrar vendedor.', 'href' => '/vendedores/acesso'],
                 ['title' => 'Visão geral', 'description' => 'Voltar para a página principal.', 'href' => '/vendedores'],
             ],
         ]);

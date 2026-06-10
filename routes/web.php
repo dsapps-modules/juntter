@@ -33,9 +33,7 @@ Route::view('/app/login', 'spa')
     ->middleware('guest')
     ->name('login');
 
-Route::view('/app/register', 'spa')
-    ->middleware('guest')
-    ->name('register');
+Route::get('/app/register', fn () => abort(404));
 
 Route::view('/app/forgot-password', 'spa')
     ->middleware('guest')
