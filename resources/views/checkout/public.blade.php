@@ -130,6 +130,24 @@
             align-items: start;
         }
 
+        .grid--payment {
+            align-items: stretch;
+        }
+
+        .grid--payment > .panel,
+        .grid--payment > .summary-card {
+            height: 100%;
+        }
+
+        .grid--payment > .panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .grid--payment .panel-stack {
+            flex: 1;
+        }
+
         .panel,
         .summary-card {
             border-radius: 24px;
@@ -139,48 +157,6 @@
         .panel-stack {
             display: grid;
             gap: 18px;
-        }
-
-        .stepper {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .stepper-item {
-            border: 1px solid rgba(31, 26, 23, 0.12);
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.72);
-            padding: 14px;
-            text-align: left;
-            color: var(--checkout-muted);
-        }
-
-        .stepper-item strong {
-            display: block;
-            font-size: 14px;
-            color: var(--checkout-ink);
-            margin-bottom: 4px;
-        }
-
-        .stepper-item span {
-            display: block;
-            font-size: 12px;
-        }
-
-        .stepper-item.is-active {
-            border-color: {{ data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17') }};
-            box-shadow: 0 12px 24px rgba(31, 26, 23, 0.08);
-        }
-
-        .stepper-item.is-complete {
-            background: rgba(19, 126, 67, 0.08);
-            border-color: rgba(19, 126, 67, 0.28);
-        }
-
-        .stepper-item.is-complete strong {
-            color: #0f7a43;
         }
 
         .form-section {
@@ -213,26 +189,8 @@
             gap: 14px;
         }
 
-        .person-switch-card {
-            display: flex;
+        .section-head--with-switch {
             align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            border-radius: 18px;
-            border: 1px solid rgba(31, 26, 23, 0.08);
-            background: rgba(255, 255, 255, 0.7);
-            padding: 16px;
-            margin-bottom: 18px;
-        }
-
-        .person-switch-copy h3 {
-            margin-bottom: 4px;
-            font-size: 18px;
-        }
-
-        .person-switch-copy p {
-            margin-bottom: 0;
-            color: var(--checkout-muted);
         }
 
         .person-switch {
@@ -240,7 +198,7 @@
             display: inline-flex;
             align-items: center;
             gap: 12px;
-            min-width: 240px;
+            min-width: 0;
             justify-content: flex-end;
         }
 
@@ -291,11 +249,16 @@
         .person-form {
             display: grid;
             gap: 18px;
+            margin-top: 20px;
         }
 
         .field {
             display: grid;
             gap: 8px;
+        }
+
+        .payment-method-field {
+            margin-top: 18px;
         }
 
         .field--full {
@@ -340,19 +303,6 @@
             font-size: 12px;
         }
 
-        .inline-toggle {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 14px;
-            color: var(--checkout-muted);
-        }
-
-        .inline-toggle input {
-            width: 18px;
-            height: 18px;
-        }
-
         .actions {
             display: flex;
             gap: 12px;
@@ -381,13 +331,6 @@
             background: rgba(255, 255, 255, 0.78);
             border: 1px solid rgba(31, 26, 23, 0.12);
             color: var(--checkout-ink);
-        }
-
-        .btn-link {
-            background: transparent;
-            color: var(--checkout-muted);
-            padding-inline: 0;
-            text-decoration: underline;
         }
 
         .help-card,
@@ -458,40 +401,6 @@
             color: var(--checkout-ink);
             padding-top: 12px;
             border-top: 1px solid rgba(31, 26, 23, 0.08);
-        }
-
-        .summary-status {
-            margin-top: 16px;
-            border-radius: 16px;
-            padding: 14px;
-            background: rgba(31, 26, 23, 0.04);
-            border: 1px solid rgba(31, 26, 23, 0.08);
-        }
-
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            border-radius: 999px;
-            padding: 6px 10px;
-            font-size: 12px;
-            font-weight: 800;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-        }
-
-        .status-pill.is-success {
-            color: #0f7a43;
-            background: rgba(19, 126, 67, 0.1);
-        }
-
-        .status-pill.is-warn {
-            color: #8a4b00;
-            background: rgba(255, 153, 0, 0.14);
-        }
-
-        .status-pill.is-neutral {
-            color: #3d3d3d;
-            background: rgba(31, 26, 23, 0.08);
         }
 
         .payment-badge {
@@ -679,19 +588,16 @@
                 padding: 18px;
             }
 
-            .stepper,
             .field-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .stepper-item {
-                min-height: 84px;
             }
         }
     </style>
 </head>
 <body>
 @php
+    $checkoutPageMode = $checkoutPageMode ?? 'details';
+
     $checkoutPublicConfig = [
         'sessionToken' => $checkoutSession->session_token,
         'publicToken' => $checkoutLink->public_token,
@@ -771,6 +677,18 @@
     ];
 @endphp
 
+@php
+    $paymentMethod = strtolower((string) data_get($paymentTransaction, 'payment_method', $checkoutSession->payment_method ?? ''));
+    $paymentInternalStatus = strtolower((string) data_get($paymentTransaction, 'internal_status', $checkoutSession->status ?? ''));
+    $paymentIsFinalized = in_array($paymentInternalStatus, ['paid', 'authorized'], true)
+        || in_array(strtolower((string) ($order?->status ?? '')), ['paid', 'authorized'], true);
+    $showPaymentSelector = $checkoutPageMode === 'payment-selector';
+    $showPaymentDetails = $checkoutPageMode === 'payment-details';
+    $showPixStatus = $showPaymentDetails && $paymentMethod === 'pix' && ! $paymentIsFinalized;
+    $showBoletoStatus = $showPaymentDetails && $paymentMethod === 'boleto' && ! $paymentIsFinalized;
+    $showCardStatus = $showPaymentDetails && $paymentMethod === 'credit_card' && ! $paymentIsFinalized;
+@endphp
+
 <script type="application/json" id="checkout-public-data">@json($checkoutPublicConfig)</script>
 
 <div class="checkout-shell" id="checkout-public-app" data-3ds-env="{{ app()->environment('local') ? 'SANDBOX' : 'PROD' }}">
@@ -794,38 +712,19 @@
 
     </header>
 
-    <div class="grid">
+    <div class="grid @if(in_array($checkoutPageMode, ['payment-selector', 'payment-details'], true)) grid--payment @endif">
         <section class="panel">
-            <div class="stepper" aria-label="Etapas do checkout">
-                <button type="button" class="stepper-item" data-step-button="identification">
-                    <strong>1. Identificação</strong>
-                    <span>Dados do comprador</span>
-                </button>
-                <button type="button" class="stepper-item" data-step-button="delivery">
-                    <strong>2. Entrega</strong>
-                    <span>Endereço de recebimento</span>
-                </button>
-                <button type="button" class="stepper-item" data-step-button="payment">
-                    <strong>3. Pagamento</strong>
-                    <span>Pix, boleto ou cartão</span>
-                </button>
+            <div class="feedback @if(session('error')) is-visible is-error @endif @if(session('success')) is-visible is-success @endif" data-feedback>
+                {{ session('error') ?? session('success') }}
             </div>
 
-            <div class="feedback" data-feedback></div>
-
             <div class="panel-stack">
-                <section class="form-section" data-step-panel="identification">
-                    <div class="section-head">
+                @if($checkoutPageMode === 'details')
+                <section class="form-section">
+                    <div class="section-head section-head--with-switch">
                         <div>
-                            <h2>Identificação</h2>
+                            <h2 data-person-type-title>Dados pessoais</h2>
                         </div>
-                    </div>
-
-                    <div class="person-switch-card">
-                        <div class="person-switch-copy">
-                            <h3 data-person-switch-title>Pessoa Física</h3>
-                        </div>
-
                         <div class="person-switch">
                             <span class="person-switch-label">PF</span>
                             <div class="person-switch-track" data-person-switch-track>
@@ -870,9 +769,6 @@
                             </div>
                         </div>
 
-                        <div class="actions">
-                            <button class="btn btn-primary" type="submit">Salvar pessoa física</button>
-                        </div>
                     </form>
 
                     <form id="checkout-identification-pj-form" class="person-form" data-checkout-form="identification" data-person-form="pj" hidden>
@@ -922,17 +818,13 @@
                             </div>
                         </div>
 
-                        <div class="actions">
-                            <button class="btn btn-primary" type="submit">Salvar pessoa jurídica</button>
-                        </div>
                     </form>
                 </section>
 
-                <section class="form-section" data-step-panel="delivery" hidden>
+                <section class="form-section">
                     <div class="section-head">
                         <div>
-                            <h2>Entrega</h2>
-                            <p>Informe o endereço de envio para calcular e confirmar a entrega.</p>
+                            <h2>Endereço</h2>
                         </div>
                     </div>
 
@@ -980,35 +872,34 @@
                                 <input id="city" name="city" value="{{ $checkoutSession->city }}" required>
                                 <p class="field-error" data-error-for="city"></p>
                             </div>
-
-                            <div class="field field--full">
-                                <label for="recipient_name">Destinatário</label>
-                                <input id="recipient_name" name="recipient_name" value="{{ $checkoutSession->recipient_name }}" required>
-                                <p class="field-error" data-error-for="recipient_name"></p>
-                            </div>
+                            <input type="hidden" name="recipient_name" value="{{ $checkoutSession->recipient_name ?: $checkoutSession->customer_name }}">
                         </div>
 
                         <div class="actions">
-                            <button class="btn btn-secondary" type="button" data-back-to="identification">Voltar</button>
-                            <button class="btn btn-primary" type="submit">Salvar entrega</button>
+                            <button class="btn btn-primary" type="submit">Continuar para pagamento</button>
                         </div>
                     </form>
                 </section>
+                @endif
 
-                <section class="form-section" data-step-panel="payment" hidden>
+@if($showPaymentSelector || $showPaymentDetails)
+                <section class="form-section">
                     <div class="section-head">
                         <div>
-                            <h2>Pagamento</h2>
-                            <p>Escolha o método disponível para este link e conclua o pedido.</p>
+                            <h2>{{ $showPaymentDetails ? 'Pagamento' : 'Selecione o método de pagamento' }}</h2>
                         </div>
+                        @if($showPaymentDetails)
+                        <a href="{{ route('checkout.public.payment.page', $checkoutSession->session_token) }}">Alterar método</a>
+                        @endif
                     </div>
 
-                    <form id="checkout-payment-form" data-checkout-form="payment">
+                    <form id="{{ $showPaymentDetails ? 'checkout-payment-form' : 'checkout-payment-method-form' }}" @if($showPaymentDetails) data-checkout-form="payment" @endif method="post" action="{{ $showPaymentDetails ? route('checkout.public.payment', $checkoutSession->session_token) : route('checkout.public.payment.choose', $checkoutSession->session_token) }}" novalidate>
                         @csrf
+
+                        @if($showPaymentSelector)
                         <div class="field-grid">
-                            <div class="field">
-                                <label for="payment_method">Método de pagamento</label>
-                                <select id="payment_method" name="payment_method" required>
+                            <div class="field payment-method-field">
+                                <select id="payment_method" name="payment_method" aria-label="Método de pagamento" required>
                                     @if($checkoutLink->allow_pix)
                                         <option value="pix" @selected(($checkoutSession->payment_method ?? '') === 'pix')>Pix</option>
                                     @endif
@@ -1021,62 +912,93 @@
                                 </select>
                                 <p class="field-error" data-error-for="payment_method"></p>
                             </div>
-
-                            <div class="field" data-installments-wrapper @unless(($checkoutSession->payment_method ?? '') === 'credit_card') hidden @endunless>
-                                <label for="installments">Parcelas</label>
-                                <input id="installments" name="installments" type="number" min="1" max="18" value="1" required>
-                                <p class="field-error" data-error-for="installments"></p>
-                            </div>
-                        </div>
-
-                        @if($checkoutLink->allow_credit_card)
-                        <div class="field-grid" data-card-fields-wrapper @unless(($checkoutSession->payment_method ?? '') === 'credit_card') hidden @endunless>
-                            <div class="field field--full">
-                                <label for="card_holder_name">Nome no cartão</label>
-                                <input id="card_holder_name" name="card[holder_name]" value="" autocomplete="cc-name" required>
-                                <p class="field-error" data-error-for="card.holder_name"></p>
-                            </div>
-
-                            <div class="field field--full">
-                                <label for="card_holder_document">Documento do titular</label>
-                                <input id="card_holder_document" name="card[holder_document]" value="" inputmode="numeric" maxlength="18" placeholder="CPF/CNPJ" autocomplete="off" required>
-                                <p class="field-error" data-error-for="card.holder_document"></p>
-                            </div>
-
-                            <div class="field field--full">
-                                <label for="card_number">Número do cartão</label>
-                                <input id="card_number" name="card[card_number]" value="" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="cc-number" required>
-                                <p class="field-error" data-error-for="card.card_number"></p>
-                            </div>
-
-                            <div class="field">
-                                <label for="card_expiration_month">Validade - mês</label>
-                                <input id="card_expiration_month" name="card[expiration_month]" type="number" min="1" max="12" value="" inputmode="numeric" placeholder="MM" autocomplete="cc-exp-month" required>
-                                <p class="field-error" data-error-for="card.expiration_month"></p>
-                            </div>
-
-                            <div class="field">
-                                <label for="card_expiration_year">Validade - ano</label>
-                                <input id="card_expiration_year" name="card[expiration_year]" type="number" min="{{ now()->year }}" max="2099" value="" inputmode="numeric" placeholder="AAAA" autocomplete="cc-exp-year" required>
-                                <p class="field-error" data-error-for="card.expiration_year"></p>
-                            </div>
-
-                            <div class="field">
-                                <label for="card_security_code">CVV</label>
-                                <input id="card_security_code" name="card[security_code]" value="" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="cc-csc" required>
-                                <p class="field-error" data-error-for="card.security_code"></p>
-                            </div>
                         </div>
                         @endif
 
+                        @if($showPaymentDetails)
+                            <input type="hidden" name="payment_method" value="{{ $checkoutSession->payment_method }}">
+
+                            <div class="field-grid">
+                                <div class="field" data-installments-wrapper @unless(($checkoutSession->payment_method ?? '') === 'credit_card') hidden @endunless>
+                                    <label for="installments">Parcelas</label>
+                                    <input id="installments" name="installments" type="number" min="1" max="18" value="1" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="installments"></p>
+                                </div>
+                            </div>
+
+                            @if($checkoutLink->allow_credit_card)
+                            <div class="field-grid" data-card-fields-wrapper @unless(($checkoutSession->payment_method ?? '') === 'credit_card') hidden @endunless>
+                                <div class="field field--full">
+                                    <label for="card_holder_name">Nome no cartão</label>
+                                    <input id="card_holder_name" name="card[holder_name]" value="" autocomplete="cc-name" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="card.holder_name"></p>
+                                </div>
+
+                                <div class="field field--full">
+                                    <label for="card_holder_document">Documento do titular</label>
+                                    <input id="card_holder_document" name="card[holder_document]" value="" inputmode="numeric" maxlength="18" placeholder="CPF/CNPJ" autocomplete="off" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="card.holder_document"></p>
+                                </div>
+
+                                <div class="field field--full">
+                                    <label for="card_number">Número do cartão</label>
+                                    <input id="card_number" name="card[card_number]" value="" inputmode="numeric" maxlength="19" placeholder="0000 0000 0000 0000" autocomplete="cc-number" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="card.card_number"></p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="card_expiration_month">Validade - mês</label>
+                                    <input id="card_expiration_month" name="card[expiration_month]" type="number" min="1" max="12" value="" inputmode="numeric" placeholder="MM" autocomplete="cc-exp-month" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="card.expiration_month"></p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="card_expiration_year">Validade - ano</label>
+                                    <input id="card_expiration_year" name="card[expiration_year]" type="number" min="{{ now()->year }}" max="2099" value="" inputmode="numeric" placeholder="AAAA" autocomplete="cc-exp-year" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="card.expiration_year"></p>
+                                </div>
+
+                                <div class="field">
+                                    <label for="card_security_code">CVV</label>
+                                    <input id="card_security_code" name="card[security_code]" value="" inputmode="numeric" maxlength="4" placeholder="123" autocomplete="cc-csc" @unless(($checkoutSession->payment_method ?? '') === 'credit_card') disabled @endunless required>
+                                    <p class="field-error" data-error-for="card.security_code"></p>
+                                </div>
+                            </div>
+                            @endif
+                        @endif
+
                         <div class="actions">
-                            <button class="btn btn-secondary" type="button" data-back-to="delivery">Voltar</button>
-                            <button class="btn btn-primary" type="submit">Pagar</button>
+                            <button class="btn btn-primary" type="submit">{{ $showPaymentDetails ? 'Pagar' : 'Continuar para pagamento' }}</button>
                         </div>
                     </form>
                 </section>
+                @endif
 
-                <section class="pix-card" data-step-panel="waiting" hidden>
+                @if($showCardStatus)
+                <section class="pix-card" data-step-panel="card-status">
+                    <div class="section-head" style="margin-bottom: 10px;">
+                        <div>
+                            <h2 style="margin-bottom: 6px;">Pagamento em processamento</h2>
+                            <p data-payment-message>Seu pagamento foi enviado para análise. Aguarde a autenticação 3DS, se for solicitada.</p>
+                        </div>
+                        <span class="payment-badge" data-payment-method-badge>Cartão</span>
+                    </div>
+
+                    <div class="summary-block" style="margin-bottom: 14px;">
+                        <div class="summary-row">
+                            <span>Status</span>
+                            <strong data-payment-status-text>{{ $paymentInternalStatus ?: 'pending' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="summary-note" style="margin-top: 12px;">
+                        A confirmação final depende do retorno do gateway.
+                    </div>
+                </section>
+                @endif
+
+                @if($showPixStatus)
+                <section class="pix-card" data-step-panel="waiting">
                     <div class="section-head" style="margin-bottom: 10px;">
                         <div>
                             <h2 style="margin-bottom: 6px;">Aguardando confirmação</h2>
@@ -1108,13 +1030,11 @@
                             <a class="btn btn-secondary" href="{{ route('checkout.public.thank-you', $checkoutSession->session_token) }}" data-thank-you-link>Ver página de confirmação</a>
                         </div>
                     </div>
-
-                    <div class="summary-note" style="margin-top: 12px;">
-                        A confirmação chega via webhook do gateway. Se você voltar para esta aba, o checkout revalida o status automaticamente.
-                    </div>
                 </section>
+                @endif
 
-                <section class="summary-block boleto-card" data-boleto-block hidden>
+                @if($showBoletoStatus)
+                <section class="summary-block boleto-card" data-boleto-block>
                     <div class="boleto-card__header">
                         <div>
                             <h3>Seu boleto</h3>
@@ -1149,6 +1069,7 @@
                         <button class="btn btn-primary" type="button" data-open-payment>ABRIR BOLETO</button>
                     </div>
                 </section>
+                @endif
 
             </div>
         </section>
@@ -1187,19 +1108,48 @@
                 </div>
             </div>
 
-            <div class="summary-status">
-                <div class="summary-row" style="margin-top: 0;">
-                    <span>Etapa atual</span>
-                    <strong data-summary-step>{{ ucfirst(str_replace('_', ' ', $checkoutSession->current_step)) }}</strong>
-                </div>
-                <div class="summary-row">
-                    <span>Pagamento</span>
-                    <strong data-summary-payment-method>{{ $checkoutSession->payment_method ? strtoupper($checkoutSession->payment_method) : 'Ainda não iniciado' }}</strong>
-                </div>
-            </div>
         </aside>
     </div>
 </div>
+<script>
+(function () {
+    const personTypeSwitch = document.querySelector('[data-person-type-switch]');
+    const personTypeSwitchTrack = document.querySelector('[data-person-switch-track]');
+    const personTypeTitle = document.querySelector('[data-person-type-title]');
+    const pfForm = document.querySelector('[data-person-form="pf"]');
+    const pjForm = document.querySelector('[data-person-form="pj"]');
+
+    if (!personTypeSwitch || !personTypeSwitchTrack || !personTypeTitle || !pfForm || !pjForm) {
+        return;
+    }
+
+    const syncPersonTypeUi = () => {
+        const isPj = personTypeSwitch.checked;
+
+        personTypeSwitchTrack.classList.toggle('is-pj', isPj);
+        personTypeTitle.textContent = isPj ? 'Dados da empresa' : 'Dados pessoais';
+        pfForm.hidden = isPj;
+        pjForm.hidden = !isPj;
+    };
+
+    let lastKnownPersonType = personTypeSwitch.checked ? 'pj' : 'pf';
+
+    const reconcilePersonTypeUi = () => {
+        const nextPersonType = personTypeSwitch.checked ? 'pj' : 'pf';
+
+        if (nextPersonType === lastKnownPersonType) {
+            return;
+        }
+
+        lastKnownPersonType = nextPersonType;
+        syncPersonTypeUi();
+    };
+
+    personTypeSwitch.addEventListener('change', syncPersonTypeUi);
+    personTypeSwitch.addEventListener('click', () => window.setTimeout(reconcilePersonTypeUi, 0));
+    personTypeSwitchTrack.addEventListener('click', () => window.setTimeout(reconcilePersonTypeUi, 0));
+    syncPersonTypeUi();
+})();
+</script>
 </body>
 </html>
-

@@ -181,8 +181,9 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('checkout-logo-image', false);
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertSee('id="checkout-public-app"', false);
-        $response->assertSee('data-step-panel="identification"', false);
-        $response->assertSee('data-step-panel="waiting"', false);
+        $response->assertSee('Resumo do pedido', false);
+        $response->assertDontSee('data-step-panel="identification"', false);
+        $response->assertDontSee('data-step-panel="waiting"', false);
         $response->assertSee('checkout-public-data', false);
         $response->assertDontSee('Valores e informações da sessão atual.');
         $response->assertDontSee('Started');
@@ -190,8 +191,8 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('data-person-type-switch', false);
         $response->assertSee('data-person-form="pf"', false);
         $response->assertSee('data-person-form="pj"', false);
-        $response->assertSee('Salvar pessoa física', false);
-        $response->assertSee('Salvar pessoa jurídica', false);
+        $response->assertDontSee('Salvar pessoa física', false);
+        $response->assertDontSee('Salvar pessoa jurídica', false);
         $this->assertMatchesRegularExpression('/<input id="customer_birth_date_pf" name="customer_birth_date" type="date"[^>]*required[^>]*>/', $response->getContent());
         $response->assertSee('Nome da empresa', false);
         $response->assertSee('Nome do responsável', false);
@@ -225,11 +226,9 @@ class RedirectedCheckoutTest extends TestCase
             $this->assertGreaterThan($lastPosition, $position);
             $lastPosition = $position;
         }
-        $this->assertMatchesRegularExpression('/<div[^>]*data-installments-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
-        $this->assertMatchesRegularExpression('/<div[^>]*data-card-fields-wrapper[^>]*hidden[^>]*>/s', $response->getContent());
+        $response->assertDontSee('data-installments-wrapper', false);
+        $response->assertDontSee('data-card-fields-wrapper', false);
         $response->assertSee('placeholder="(11) 99999-9999"', false);
-        $response->assertSee('placeholder="CPF/CNPJ"', false);
-        $response->assertSee('placeholder="00.000.000/0000-00"', false);
         $response->assertSee('placeholder="00000-000"', false);
         $response->assertSee('inputmode="numeric"', false);
         $response->assertDontSee('Fluxo guiado');
@@ -239,10 +238,10 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('Cadastro com razão social, CNPJ e dados do responsável.');
         $response->assertDontSee('Escolha o tipo de pessoa e preencha o formulário correspondente.');
         $response->assertDontSee('Isento de inscrição estadual');
-        $response->assertSee('A confirmação chega via webhook do gateway.', false);
+        $response->assertDontSee('A confirmação chega via webhook do gateway.', false);
         $response->assertDontSee('O sistema consulta o status do pagamento periodicamente');
-        $response->assertSee('data-boleto-block', false);
-        $response->assertSee('data-open-payment', false);
+        $response->assertDontSee('data-boleto-block', false);
+        $response->assertDontSee('data-open-payment', false);
 
         $componentSource = file_get_contents(base_path('resources/js/checkout-public.js'));
 
@@ -320,6 +319,342 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertOk();
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertDontSee('/company-logo?path=company-logos%2Fmissing-logo.png', false);
+    }
+
+    public function test_public_checkout_details_page_shows_personal_data_and_address_before_payment(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+
+        $response = $this->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('Dados pessoais', false);
+        $response->assertSee('Endereço', false);
+        $response->assertDontSee('Etapa atual');
+        $response->assertDontSee('Método de pagamento');
+    }
+
+    public function test_public_checkout_payment_page_shows_only_allowed_payment_methods(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $response = $this->get(route('checkout.public.payment.page', $session->session_token));
+
+        $response->assertOk();
+        $response->assertSee('Selecione o método de pagamento', false);
+        $response->assertDontSee('Escolha o método disponível para este link e conclua o pedido.', false);
+        $response->assertDontSee('<label for="payment_method">', false);
+        $response->assertSee('Continuar para pagamento', false);
+        $response->assertDontSee('Pagar', false);
+        $response->assertSee('Pix', false);
+        $response->assertSee('Boleto', false);
+        $response->assertDontSee('Cartão de crédito', false);
+    }
+
+    public function test_public_checkout_payment_method_selection_redirects_to_payment_details_page(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $response = $this->post(route('checkout.public.payment.choose', $session->session_token), [
+            'payment_method' => 'pix',
+        ]);
+
+        $response->assertRedirect(route('checkout.public.payment.details', $session->session_token));
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'payment_method' => 'pix',
+            'status' => 'payment_started',
+            'current_step' => 'payment',
+        ]);
+    }
+
+    public function test_public_checkout_payment_details_page_shows_pix_status_when_transaction_exists(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'payment_pending',
+            'current_step' => 'payment',
+            'payment_method' => 'pix',
+        ]);
+
+        $order = Order::query()->create([
+            'seller_id' => $link->seller_id,
+            'checkout_link_id' => $link->id,
+            'checkout_session_id' => $session->id,
+            'product_id' => $link->product_id,
+            'order_number' => 'JNT-2026-009999',
+            'status' => 'pending',
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'subtotal' => 100.00,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => 100.00,
+            'payment_method' => 'pix',
+        ]);
+
+        PaymentTransaction::query()->create([
+            'order_id' => $order->id,
+            'seller_id' => $user->id,
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'pix-checkout-123',
+            'gateway_status' => 'PENDING',
+            'internal_status' => 'pending',
+            'payment_method' => 'pix',
+            'amount' => 100.00,
+            'pix_copy_paste' => '00020126580014br.gov.bcb.pix...',
+            'response_payload' => [
+                'gateway_transaction_id' => 'pix-checkout-123',
+                'gateway_status' => 'PENDING',
+                'internal_status' => 'pending',
+                'pix_copy_paste' => '00020126580014br.gov.bcb.pix...',
+            ],
+        ]);
+
+        $response = $this->get(route('checkout.public.payment.details', $session->session_token));
+
+        $response->assertOk();
+        $response->assertSee('Aguardando confirmação', false);
+        $response->assertSee('data-step-panel="waiting"', false);
+        $response->assertSee('Pix copia e cola', false);
+        $response->assertSee('Alterar método', false);
+        $response->assertSee('Pagamento', false);
+        $response->assertDontSee('Selecione o método de pagamento', false);
+    }
+
+    public function test_public_checkout_payment_form_redirects_back_to_payment_details_page_on_success(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $this->mockPixPaymentService();
+
+        $response = $this->post(route('checkout.public.payment', $session->session_token), [
+            'payment_method' => 'pix',
+            'installments' => 1,
+        ]);
+
+        $response->assertRedirect(route('checkout.public.payment.details', $session->session_token));
+
+        $this->assertDatabaseHas('orders', [
+            'checkout_session_id' => $session->id,
+            'payment_method' => 'pix',
+            'status' => 'pending',
+        ]);
+
+        $this->assertDatabaseHas('payment_transactions', [
+            'payment_method' => 'pix',
+            'gateway' => 'paytime',
+            'internal_status' => 'pending',
+            'gateway_transaction_id' => 'pix-checkout-123',
+        ]);
+    }
+
+    public function test_public_checkout_payment_form_redirects_to_thank_you_when_card_is_approved(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createCreditCardPayment')
+            ->willReturn([
+                'gateway_transaction_id' => 'card-checkout-approved-123',
+                'gateway_status' => 'APPROVED',
+                'internal_status' => 'authorized',
+                'card_last_four' => '4242',
+                'card_brand' => 'visa',
+            ]);
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->post(route('checkout.public.payment', $session->session_token), [
+            'payment_method' => 'credit_card',
+            'installments' => 1,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response->assertRedirect(route('checkout.public.thank-you', $session->session_token));
+
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'status' => 'paid',
+            'current_step' => 'payment',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'checkout_session_id' => $session->id,
+            'payment_method' => 'credit_card',
+            'status' => 'paid',
+        ]);
+
+        $this->assertDatabaseHas('payment_transactions', [
+            'payment_method' => 'credit_card',
+            'gateway_transaction_id' => 'card-checkout-approved-123',
+            'internal_status' => 'authorized',
+        ]);
+    }
+
+    public function test_public_checkout_payment_form_redirects_back_with_flash_error_when_gateway_fails(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createBoletoPayment')
+            ->willReturn([
+                'gateway_status' => 'FAILED',
+                'internal_status' => 'failed',
+                'api_boleto' => [
+                    'message' => 'Data limite de desconto deve ser menor que a data de vencimento',
+                    'status' => 403,
+                    'code' => 'BNK000143',
+                    'boleto_url' => null,
+                    'boleto_barcode' => null,
+                    'boleto_digitable_line' => null,
+                ],
+            ]);
+
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->followingRedirects()
+            ->from(route('checkout.public.payment.details', $session->session_token))
+            ->post(route('checkout.public.payment', $session->session_token), [
+                'payment_method' => 'boleto',
+                'installments' => 1,
+            ]);
+
+        $response->assertSee('Data limite de desconto deve ser menor que a data de vencimento', false);
+
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'status' => 'failed',
+        ]);
+
+        $this->assertDatabaseHas('orders', [
+            'checkout_session_id' => $session->id,
+            'payment_method' => 'boleto',
+            'status' => 'failed',
+        ]);
     }
 
     public function test_paid_public_checkout_redirects_to_thank_you_page(): void
@@ -570,7 +905,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
         $this->mockPixPaymentService();
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'pix',
             'total' => 1.00,
             'unit_price' => 1.00,
@@ -614,7 +949,7 @@ class RedirectedCheckoutTest extends TestCase
             ->method('createCreditCardPayment');
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'credit_card',
             'card' => [
                 'holder_name' => 'Maria Silva',
@@ -656,7 +991,7 @@ class RedirectedCheckoutTest extends TestCase
             'current_step' => 'payment',
         ]);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'credit_card',
             'installments' => 3,
             'card' => [
@@ -728,7 +1063,7 @@ class RedirectedCheckoutTest extends TestCase
             ]);
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'credit_card',
             'installments' => 3,
             'card' => [
@@ -813,7 +1148,7 @@ class RedirectedCheckoutTest extends TestCase
             ]);
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'credit_card',
             'installments' => 3,
             'card' => [
@@ -908,7 +1243,7 @@ class RedirectedCheckoutTest extends TestCase
             ]);
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'credit_card',
             'installments' => 3,
             'card' => [
@@ -1127,10 +1462,41 @@ class RedirectedCheckoutTest extends TestCase
         ]);
 
         $response->assertOk();
+        $response->assertJsonPath('payment_url', route('checkout.public.payment.page', $session->session_token));
         $this->assertDatabaseHas('checkout_sessions', [
             'id' => $session->id,
             'zipcode' => '01001000',
             'street' => 'Rua A',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+    }
+
+    public function test_delivery_is_saved_without_complement_or_recipient_name(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'recipient_name' => null,
+        ]);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/delivery', [
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+        ]);
+
+        $response->assertOk();
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'complement' => null,
+            'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
             'current_step' => 'payment',
         ]);
@@ -1158,7 +1524,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
         $this->mockPixPaymentService();
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'pix',
             'total' => 1.00,
             'unit_price' => 1.00,
@@ -1219,7 +1585,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'pix',
             'installments' => 1,
         ]);
@@ -1259,7 +1625,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
         $this->mockBoletoPaymentService();
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'boleto',
             'installments' => 1,
         ]);
@@ -1275,7 +1641,7 @@ class RedirectedCheckoutTest extends TestCase
             'internal_status' => 'pending',
         ]);
 
-        $pageResponse = $this->get(route('checkout.public.show', $link->public_token));
+        $pageResponse = $this->get(route('checkout.public.payment.details', $session->session_token));
 
         $pageResponse->assertOk();
         $pageResponse->assertSee('Seu boleto');
@@ -1288,6 +1654,41 @@ class RedirectedCheckoutTest extends TestCase
         $pageResponse->assertSee('data-boleto-barcode', false);
         $pageResponse->assertSee('data-boleto-digitable-line', false);
         $pageResponse->assertSee('data-boleto-pix-copy-paste', false);
+    }
+
+    public function test_public_checkout_link_remains_accessible_after_payment_selection(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+            'payment_method' => 'pix',
+        ]);
+
+        $response = $this->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('Dados pessoais', false);
+        $response->assertSee('Endereço', false);
+        $response->assertDontSee('Aguardando confirmação', false);
+        $response->assertDontSee('Seu boleto', false);
     }
 
     public function test_boleto_payment_rejects_invalid_document_before_gateway_call(): void
@@ -1320,7 +1721,7 @@ class RedirectedCheckoutTest extends TestCase
             ->method('createBoletoPayment');
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'boleto',
             'installments' => 1,
         ]);
@@ -1328,6 +1729,49 @@ class RedirectedCheckoutTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJsonPath('message', 'O documento do pagador é inválido.');
+    }
+
+    public function test_boleto_payment_redirects_back_with_flash_error_when_document_is_invalid(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Professor Prado',
+            'customer_email' => 'profpradoif@gmail.com',
+            'customer_document' => '11111111111',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11911112222',
+            'zipcode' => '07174000',
+            'street' => 'Avenida Papa João Paulo I',
+            'number' => '1000',
+            'neighborhood' => 'Jardim Presidente Dutra',
+            'city' => 'Guarulhos',
+            'state' => 'SP',
+            'recipient_name' => 'Professor Prado',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $this->post(route('checkout.public.payment.choose', $session->session_token), [
+            'payment_method' => 'boleto',
+        ])->assertRedirect(route('checkout.public.payment.details', $session->session_token));
+
+        $response = $this->followingRedirects()
+            ->from(route('checkout.public.payment.details', $session->session_token))
+            ->post(route('checkout.public.payment', $session->session_token), [
+                'payment_method' => 'boleto',
+                'installments' => 1,
+            ]);
+
+        $response->assertSee('O documento do pagador é inválido.', false);
+        $this->assertDatabaseMissing('payment_transactions', [
+            'payment_method' => 'boleto',
+            'checkout_session_id' => $session->id,
+        ]);
     }
 
     public function test_boleto_payment_surfaces_gateway_validation_error_when_transaction_id_is_missing(): void
@@ -1374,7 +1818,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'boleto',
             'installments' => 1,
         ]);
@@ -1445,7 +1889,7 @@ class RedirectedCheckoutTest extends TestCase
             ]);
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'boleto',
             'installments' => 1,
         ])->assertOk();
@@ -1483,7 +1927,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
         $this->mockPixPaymentService();
 
-        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'pix',
             'installments' => 1,
         ]);
@@ -1544,7 +1988,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
         $this->mockPixPaymentService();
 
-        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment', [
+        $paymentResponse = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
             'payment_method' => 'pix',
             'installments' => 1,
         ]);

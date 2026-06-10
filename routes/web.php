@@ -64,7 +64,12 @@ Route::get('/checkout/cnpj/{cnpj}', [PublicCheckoutSessionController::class, 'lo
     ->name('checkout.public.cnpj.lookup');
 Route::post('/checkout/session/{sessionToken}/identification', [PublicCheckoutSessionController::class, 'saveIdentification'])->name('checkout.public.identification');
 Route::post('/checkout/session/{sessionToken}/delivery', [PublicCheckoutSessionController::class, 'saveDelivery'])->name('checkout.public.delivery');
-Route::post('/checkout/session/{sessionToken}/payment', [PublicCheckoutPaymentController::class, 'startPayment'])->name('checkout.public.payment');
+Route::get('/checkout/session/{sessionToken}/payment', [PublicCheckoutController::class, 'paymentPage'])
+    ->name('checkout.public.payment.page');
+Route::post('/checkout/session/{sessionToken}/payment', [PublicCheckoutPaymentController::class, 'choosePaymentMethod'])->name('checkout.public.payment.choose');
+Route::get('/checkout/session/{sessionToken}/payment/checkout', [PublicCheckoutController::class, 'paymentDetailsPage'])
+    ->name('checkout.public.payment.details');
+Route::post('/checkout/session/{sessionToken}/payment/checkout', [PublicCheckoutPaymentController::class, 'startPayment'])->name('checkout.public.payment');
 Route::post('/checkout/session/{sessionToken}/payment/{transactionId}/antifraud-auth', [PublicCheckoutPaymentController::class, 'confirmAntifraudAuth'])->name('checkout.public.payment.antifraud-auth');
 Route::get('/checkout/session/{sessionToken}/status', [PublicCheckoutPaymentController::class, 'status'])->name('checkout.public.status');
 Route::get('/checkout/session/{sessionToken}/thank-you', [PublicCheckoutController::class, 'thankYou'])->name('checkout.public.thank-you');

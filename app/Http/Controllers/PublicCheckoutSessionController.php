@@ -188,6 +188,11 @@ class PublicCheckoutSessionController extends Controller
     public function saveDelivery(StoreCheckoutDeliveryRequest $request, string $sessionToken): JsonResponse
     {
         $checkoutSession = $this->findSession($sessionToken);
+        $recipientName = $request->input('recipient_name');
+
+        if (blank($recipientName)) {
+            $recipientName = $checkoutSession->recipient_name ?: $checkoutSession->customer_name;
+        }
 
         $checkoutSession->update([
             'zipcode' => $request->input('zipcode'),
@@ -197,7 +202,7 @@ class PublicCheckoutSessionController extends Controller
             'neighborhood' => $request->input('neighborhood'),
             'city' => $request->input('city'),
             'state' => $request->input('state'),
-            'recipient_name' => $request->input('recipient_name'),
+            'recipient_name' => $recipientName,
             'status' => 'delivery_completed',
             'current_step' => 'payment',
             'last_activity_at' => now(),
@@ -215,6 +220,7 @@ class PublicCheckoutSessionController extends Controller
         return response()->json([
             'message' => 'Entrega salva com sucesso.',
             'checkout_session' => $checkoutSession->fresh(),
+            'payment_url' => route('checkout.public.payment.page', $checkoutSession->session_token),
         ]);
     }
 

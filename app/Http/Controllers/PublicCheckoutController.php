@@ -14,6 +14,95 @@ class PublicCheckoutController extends Controller
 {
     public function show(Request $request, string $publicToken): View|\Illuminate\Http\Response|RedirectResponse
     {
+        return $this->renderCheckoutPage($request, $publicToken, 'details');
+    }
+
+    public function paymentPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
+    {
+        $checkoutSession = CheckoutSession::query()
+            ->with(['checkoutLink.product', 'checkoutLink.seller', 'orders.paymentTransaction'])
+            ->where('session_token', $sessionToken)
+            ->firstOrFail();
+
+        $checkoutLink = $checkoutSession->checkoutLink;
+
+        if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
+            return response()->view('checkout.unavailable', [
+                'message' => 'Este checkout não está disponível no momento.',
+            ], 410);
+        }
+
+        $order = Order::query()
+            ->with(['paymentTransaction'])
+            ->where('checkout_session_id', $checkoutSession->id)
+            ->latest()
+            ->first();
+
+        if (
+            in_array($order?->status, ['paid', 'authorized'], true)
+            || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        if ($checkoutSession->current_step !== 'payment' && blank($checkoutSession->payment_method)) {
+            return redirect()->route('checkout.public.show', $checkoutLink->public_token);
+        }
+
+        return view('checkout.public', $this->buildCheckoutViewData(
+            checkoutLink: $checkoutLink,
+            checkoutSession: $checkoutSession,
+            order: $order,
+            paymentTransaction: $order?->paymentTransaction,
+            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            checkoutPageMode: 'payment-selector',
+        ));
+    }
+
+    public function paymentDetailsPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
+    {
+        $checkoutSession = CheckoutSession::query()
+            ->with(['checkoutLink.product', 'checkoutLink.seller', 'orders.paymentTransaction'])
+            ->where('session_token', $sessionToken)
+            ->firstOrFail();
+
+        $checkoutLink = $checkoutSession->checkoutLink;
+
+        if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
+            return response()->view('checkout.unavailable', [
+                'message' => 'Este checkout não está disponível no momento.',
+            ], 410);
+        }
+
+        $order = Order::query()
+            ->with(['paymentTransaction'])
+            ->where('checkout_session_id', $checkoutSession->id)
+            ->latest()
+            ->first();
+
+        if (
+            in_array($order?->status, ['paid', 'authorized'], true)
+            || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        if (blank($checkoutSession->payment_method)) {
+            return redirect()->route('checkout.public.payment.page', $checkoutSession->session_token);
+        }
+
+        return view('checkout.public', $this->buildCheckoutViewData(
+            checkoutLink: $checkoutLink,
+            checkoutSession: $checkoutSession,
+            order: $order,
+            paymentTransaction: $order?->paymentTransaction,
+            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            checkoutPageMode: 'payment-details',
+        ));
+    }
+
+    private function renderCheckoutPage(Request $request, string $publicToken, string $checkoutPageMode): View|\Illuminate\Http\Response|RedirectResponse
+    {
         $checkoutLink = CheckoutLink::query()
             ->with(['product', 'seller'])
             ->where('public_token', $publicToken)
@@ -39,13 +128,14 @@ class PublicCheckoutController extends Controller
             return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
         }
 
-        return view('checkout.public', [
-            'checkoutLink' => $checkoutLink,
-            'checkoutSession' => $checkoutSession,
-            'order' => $order,
-            'paymentTransaction' => $order?->paymentTransaction,
-            'sellerLogoUrl' => $this->resolveSellerLogoUrl($checkoutLink),
-        ]);
+        return view('checkout.public', $this->buildCheckoutViewData(
+            checkoutLink: $checkoutLink,
+            checkoutSession: $checkoutSession,
+            order: $order,
+            paymentTransaction: $order?->paymentTransaction,
+            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            checkoutPageMode: $checkoutPageMode,
+        ));
     }
 
     public function thankYou(string $sessionToken): View|\Illuminate\Http\Response
@@ -134,5 +224,26 @@ class PublicCheckoutController extends Controller
         }
 
         return '/img/logo/juntter_webp_640_174.webp';
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildCheckoutViewData(
+        CheckoutLink $checkoutLink,
+        CheckoutSession $checkoutSession,
+        ?Order $order,
+        ?\App\Models\PaymentTransaction $paymentTransaction,
+        string $sellerLogoUrl,
+        string $checkoutPageMode,
+    ): array {
+        return [
+            'checkoutLink' => $checkoutLink,
+            'checkoutSession' => $checkoutSession,
+            'order' => $order,
+            'paymentTransaction' => $paymentTransaction,
+            'sellerLogoUrl' => $sellerLogoUrl,
+            'checkoutPageMode' => $checkoutPageMode,
+        ];
     }
 }

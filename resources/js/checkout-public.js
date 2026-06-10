@@ -2,16 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QRCodeSVG } from '@rc-component/qrcode';
 
-const stepOrder = ['identification', 'delivery', 'payment', 'waiting'];
 const cnpjCompanyLookupCache = new Map();
-
-const stepLabels = {
-    identification: 'Identificação',
-    delivery: 'Entrega',
-    payment: 'Pagamento',
-    waiting: 'Pagamento em andamento',
-    confirmation: 'Confirmação',
-};
 
 function readConfig() {
     const configElement = document.getElementById('checkout-public-data');
@@ -829,22 +820,74 @@ function applyCompanyLookupToForm(state, form, payload) {
 
 function validatePaymentForm(paymentForm) {
     const paymentMethod = String(paymentForm?.querySelector('[name="payment_method"]')?.value || '');
+    const paymentMethodField = paymentForm?.querySelector('[name="payment_method"]');
+
+    if (!paymentMethod) {
+        setFieldErrors({
+            payment_method: ['Selecione um método de pagamento.'],
+        });
+        setFeedback('Selecione um método de pagamento antes de continuar.', 'error');
+
+        if (paymentMethodField instanceof HTMLSelectElement) {
+            paymentMethodField.focus();
+        }
+
+        return false;
+    }
 
     if (paymentMethod !== 'credit_card') {
         return true;
     }
 
-    const holderDocumentField = paymentForm?.querySelector('[name="card[holder_document]"]');
-    const holderDocument = holderDocumentField?.value || '';
+    const cardFields = [
+        { errorKey: 'card.holder_name', name: 'card[holder_name]', message: 'Preencha o nome no cartão.' },
+        { errorKey: 'card.holder_document', name: 'card[holder_document]', message: 'Preencha o documento do titular.' },
+        { errorKey: 'card.card_number', name: 'card[card_number]', message: 'Preencha o número do cartão.' },
+        { errorKey: 'card.expiration_month', name: 'card[expiration_month]', message: 'Preencha o mês de validade.' },
+        { errorKey: 'card.expiration_year', name: 'card[expiration_year]', message: 'Preencha o ano de validade.' },
+        { errorKey: 'card.security_code', name: 'card[security_code]', message: 'Preencha o CVV.' },
+        { errorKey: 'installments', name: 'installments', message: 'Informe o número de parcelas.' },
+    ];
 
-    if (!isValidDocument(holderDocument)) {
-        setFieldErrors({
-            'card.holder_document': ['Informe um CPF/CNPJ válido.'],
-        });
-        setFeedback('Informe um CPF/CNPJ válido para o titular do cartão.', 'error');
+    const fieldErrors = {};
+    let firstInvalidField = null;
 
-        if (holderDocumentField instanceof HTMLInputElement) {
-            holderDocumentField.focus();
+    cardFields.forEach(({ errorKey, name, message }) => {
+        const field = paymentForm?.querySelector(`[name="${name}"]`);
+
+        if (!(field instanceof HTMLInputElement)) {
+            return;
+        }
+
+        const value = String(field.value || '').trim();
+
+        if (value) {
+            if (name === 'card[holder_document]') {
+                const isValid = isValidDocument(value);
+                if (!isValid) {
+                    fieldErrors[errorKey] = ['Informe um CPF/CNPJ válido.'];
+                    firstInvalidField ||= field;
+                }
+            }
+
+            if (name === 'installments' && Number(value) < 1) {
+                fieldErrors[errorKey] = ['Informe ao menos 1 parcela.'];
+                firstInvalidField ||= field;
+            }
+
+            return;
+        }
+
+        fieldErrors[errorKey] = [message];
+        firstInvalidField ||= field;
+    });
+
+    if (Object.keys(fieldErrors).length > 0) {
+        setFieldErrors(fieldErrors);
+        setFeedback('Revise os campos destacados antes de continuar.', 'error');
+
+        if (firstInvalidField instanceof HTMLInputElement) {
+            firstInvalidField.focus();
         }
 
         return false;
@@ -864,8 +907,7 @@ function updatePersonTypeUi(state) {
     const { pf, pj } = getIdentificationForms();
     const switchTrack = document.querySelector('[data-person-switch-track]');
     const switchInput = document.querySelector('[data-person-type-switch]');
-    const title = document.querySelector('[data-person-switch-title]');
-
+    const title = document.querySelector('[data-person-type-title]');
     if (switchInput) {
         switchInput.checked = state.personType === 'pj';
     }
@@ -875,7 +917,7 @@ function updatePersonTypeUi(state) {
     }
 
     if (title) {
-        title.textContent = state.personType === 'pj' ? 'Pessoa Jurídica' : 'Pessoa Física';
+        title.textContent = state.personType === 'pj' ? 'Dados da empresa' : 'Dados pessoais';
     }
 
     if (pf) {
@@ -890,10 +932,29 @@ function updatePersonTypeUi(state) {
     applyIdentificationDraftToForm(pj, state.identificationDraft, 'pj');
 }
 
+function syncPersonTypeFromSwitch(state, switchInput) {
+    if (!(switchInput instanceof HTMLInputElement)) {
+        return;
+    }
+
+    const nextPersonType = switchInput.checked ? 'pj' : 'pf';
+
+    if (state.personType === nextPersonType) {
+        return;
+    }
+
+    state.personType = nextPersonType;
+    updatePersonTypeUi(state);
+}
+
+function schedulePersonTypeSync(state, switchInput) {
+    window.setTimeout(() => {
+        syncPersonTypeFromSwitch(state, switchInput);
+    }, 0);
+}
+
 function updateSummary(config, state) {
     const session = state.session || config.session || {};
-    const order = state.order || config.order || null;
-    const paymentTransaction = state.paymentTransaction || config.paymentTransaction || null;
 
     const summaryMap = {
         '[data-summary-subtotal]': formatCurrency(session.subtotal),
@@ -902,10 +963,6 @@ function updateSummary(config, state) {
         '[data-summary-total]': formatCurrency(session.total),
         '[data-summary-product]': config.product?.name || config.checkoutLink?.name || 'Produto',
         '[data-summary-quantity]': session.quantity || config.checkoutLink?.quantity || 1,
-        '[data-summary-step]': stepLabels[state.visualStep] || stepLabels[session.status] || session.status || 'Identificação',
-        '[data-summary-payment-method]': (order?.payment_method || session.payment_method)
-            ? String(order?.payment_method || session.payment_method).toUpperCase()
-            : 'Ainda não iniciado',
     };
 
     Object.entries(summaryMap).forEach(([selector, value]) => {
@@ -915,25 +972,8 @@ function updateSummary(config, state) {
             element.textContent = value;
         }
     });
-
 }
 
-function setVisiblePanel(panelName) {
-    document.querySelectorAll('[data-step-panel]').forEach((panel) => {
-        panel.hidden = panel.dataset.stepPanel !== panelName;
-    });
-}
-
-function updateStepper(state) {
-    document.querySelectorAll('[data-step-button]').forEach((button) => {
-        const step = button.dataset.stepButton;
-        const isCurrent = step === state.currentStep;
-        const isComplete = stepOrder.indexOf(step) < stepOrder.indexOf(state.currentStep);
-
-        button.classList.toggle('is-active', isCurrent);
-        button.classList.toggle('is-complete', isComplete);
-    });
-}
 
 function updatePaymentDetails(state, transaction) {
     const method = transaction?.payment_method || state.session.payment_method || 'pix';
@@ -1071,24 +1111,6 @@ function hasFailedBoletoDetails(transaction) {
     return Boolean(transaction?.response_payload?.polling_error || transaction?.response_payload?.message);
 }
 
-function stopPaymentRefreshTimer(state) {
-    if (state.paymentRefreshTimeout) {
-        window.clearTimeout(state.paymentRefreshTimeout);
-        state.paymentRefreshTimeout = null;
-    }
-}
-
-function schedulePaymentRefresh(state, delay = 2000) {
-    if (state.paymentRefreshTimeout) {
-        return;
-    }
-
-    state.paymentRefreshTimeout = window.setTimeout(() => {
-        state.paymentRefreshTimeout = null;
-        void refreshPaymentState(state);
-    }, delay);
-}
-
 function renderPixQrCode(payload, method) {
     const container = document.querySelector('[data-pix-qr]');
     const placeholder = document.querySelector('[data-pix-qr-placeholder]');
@@ -1192,19 +1214,7 @@ function updatePixExpiration(transaction) {
 }
 
 function showWaitingPanel(state, transaction) {
-    setVisiblePanel('waiting');
-    state.visualStep = 'waiting';
-    updateStepper(state);
     updatePaymentDetails(state, transaction);
-}
-
-function showStep(state, stepName) {
-    state.currentStep = stepName;
-    state.visualStep = stepName;
-
-    setVisiblePanel(stepName);
-    updateStepper(state);
-    updateSummary(state.config, state);
 }
 
 function redirectToThankYou(state) {
@@ -1224,69 +1234,6 @@ function isPaidOrder(order, paymentTransaction, session) {
         )
         || String(paymentTransaction?.internal_status || '').toLowerCase() === 'paid'
         || String(session?.status || '').toLowerCase() === 'paid';
-}
-
-async function refreshStatus(state) {
-    if (!state.config.urls.status) {
-        return;
-    }
-
-    try {
-        const payload = await requestJson(state.config.urls.status, {
-            method: 'GET',
-        });
-
-        state.session = payload.checkout_session || state.session;
-        state.order = payload.order || state.order;
-        state.paymentTransaction = payload.payment_transaction || state.paymentTransaction;
-
-        hydrateSession(state.session, state.config);
-        syncRecipientDefault(state);
-        updateSummary(state.config, state);
-
-        if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
-            stopPaymentRefreshTimer(state);
-            redirectToThankYou(state);
-            return;
-        }
-
-        if (state.currentStep === 'payment' && state.paymentTransaction?.payment_method === 'pix') {
-            showWaitingPanel(state, state.paymentTransaction);
-        } else if (state.currentStep === 'payment' && state.paymentTransaction?.payment_method === 'boleto') {
-            updatePaymentDetails(state, state.paymentTransaction);
-
-            if (hasFailedBoletoDetails(state.paymentTransaction)) {
-                stopPaymentRefreshTimer(state);
-                setFeedback(
-                    state.paymentTransaction?.response_payload?.polling_error
-                        || state.paymentTransaction?.response_payload?.message
-                        || 'Não foi possível gerar o boleto.',
-                    'error',
-                );
-                return;
-            }
-
-            if (hasCompleteBoletoDetails(state.paymentTransaction)) {
-                stopPaymentRefreshTimer(state);
-            } else {
-                schedulePaymentRefresh(state);
-            }
-        }
-    } catch (error) {
-        setFeedback(error.payload?.message || error.message || 'Falha ao atualizar o pagamento.', 'error');
-    }
-}
-
-function refreshPaymentState(state) {
-    if (state.paymentRefreshInFlight) {
-        return state.paymentRefreshInFlight;
-    }
-
-    state.paymentRefreshInFlight = refreshStatus(state).finally(() => {
-        state.paymentRefreshInFlight = null;
-    });
-
-    return state.paymentRefreshInFlight;
 }
 
 function openBoletoDocument(url) {
@@ -1334,24 +1281,6 @@ function copyText(value) {
             document.body.removeChild(textarea);
             reject(error);
         }
-    });
-}
-
-function bindNavigation(state) {
-    document.querySelectorAll('[data-back-to]').forEach((button) => {
-        button.addEventListener('click', () => {
-            showStep(state, button.dataset.backTo || 'identification');
-        });
-    });
-
-    document.querySelectorAll('[data-step-button]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const step = button.dataset.stepButton || 'identification';
-
-            if (stepOrder.indexOf(step) <= stepOrder.indexOf(state.currentStep)) {
-                showStep(state, step);
-            }
-        });
     });
 }
 
@@ -1424,7 +1353,6 @@ function bindForms(state) {
                 hydrateSession(state.session, state.config);
                 syncRecipientDefault(state);
                 updateSummary(state.config, state);
-                showStep(state, 'delivery');
                 setFeedback('Identificação salva com sucesso.', 'success');
             } catch (error) {
                 if (error.status === 422 && error.payload?.errors) {
@@ -1509,11 +1437,21 @@ function bindForms(state) {
     }
 
     const personTypeSwitch = document.querySelector('[data-person-type-switch]');
+    const personTypeSwitchTrack = document.querySelector('[data-person-switch-track]');
 
     if (personTypeSwitch) {
         personTypeSwitch.addEventListener('change', () => {
-            state.personType = personTypeSwitch.checked ? 'pj' : 'pf';
-            updatePersonTypeUi(state);
+            schedulePersonTypeSync(state, personTypeSwitch);
+        });
+
+        personTypeSwitch.addEventListener('click', () => {
+            schedulePersonTypeSync(state, personTypeSwitch);
+        });
+    }
+
+    if (personTypeSwitchTrack) {
+        personTypeSwitchTrack.addEventListener('click', () => {
+            schedulePersonTypeSync(state, personTypeSwitch);
         });
     }
 
@@ -1534,7 +1472,11 @@ function bindForms(state) {
                 hydrateSession(state.session, state.config);
                 syncRecipientDefault(state);
                 updateSummary(state.config, state);
-                showStep(state, 'payment');
+                if (payload.payment_url) {
+                    window.location.assign(payload.payment_url);
+                    return;
+                }
+
                 setFeedback('Entrega salva com sucesso.', 'success');
             } catch (error) {
                 if (error.status === 422 && error.payload?.errors) {
@@ -1602,11 +1544,6 @@ function bindForms(state) {
                 if (state.paymentTransaction?.payment_method === 'pix') {
                     showWaitingPanel(state, state.paymentTransaction);
                 } else if (state.paymentTransaction?.payment_method === 'boleto') {
-                    if (hasCompleteBoletoDetails(state.paymentTransaction)) {
-                        stopPaymentRefreshTimer(state);
-                    } else {
-                        schedulePaymentRefresh(state);
-                    }
                 } else if (state.paymentTransaction?.payment_method === 'credit_card') {
                     const requires3ds = Boolean(
                         state.paymentTransaction?.requires_3ds
@@ -1634,25 +1571,19 @@ function bindForms(state) {
                         const confirmedStatus = String(state.paymentTransaction?.internal_status || '').toLowerCase();
 
                         if (['authorized', 'paid'].includes(confirmedStatus) || isPaidOrder(state.order, state.paymentTransaction, state.session)) {
-                            stopPaymentRefreshTimer(state);
                             redirectToThankYou(state);
                             return;
                         }
                     } else if (['authorized', 'paid'].includes(transactionStatus)) {
                         redirectToThankYou(state);
                         return;
-                    } else {
-                        showStep(state, 'payment');
                     }
-                } else {
-                    showStep(state, 'payment');
                 }
 
                 if (shouldShowStartedMessage) {
                     setFeedback('Pagamento iniciado com sucesso. A confirmação será atualizada via webhook.', 'success');
                 }
 
-                void refreshPaymentState(state);
             } catch (error) {
                 if (error.status === 422 && error.payload?.errors) {
                     setFieldErrors(error.payload.errors);
@@ -1744,7 +1675,6 @@ function resumeExistingPayment(state) {
     const method = state.paymentTransaction.payment_method || state.session.payment_method;
 
     if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
-        stopPaymentRefreshTimer(state);
         redirectToThankYou(state);
         return;
     }
@@ -1752,40 +1682,12 @@ function resumeExistingPayment(state) {
     if (method === 'pix' && state.paymentTransaction.internal_status) {
         showWaitingPanel(state, state.paymentTransaction);
     } else if (method === 'boleto' && hasFailedBoletoDetails(state.paymentTransaction)) {
-        showStep(state, 'payment');
         updatePaymentDetails(state, state.paymentTransaction);
     } else if (method === 'boleto' && !hasCompleteBoletoDetails(state.paymentTransaction)) {
-        showStep(state, 'payment');
         updatePaymentDetails(state, state.paymentTransaction);
-        schedulePaymentRefresh(state);
     } else {
-        showStep(state, 'payment');
         updatePaymentDetails(state, state.paymentTransaction);
     }
-
-    if (method) {
-        fillInput('[name="payment_method"]', method);
-    }
-
-    void refreshPaymentState(state);
-}
-
-function bindPaymentStateRefresh(state) {
-    const refreshOnFocus = () => {
-        if (document.hidden) {
-            return;
-        }
-
-        if (!state.paymentTransaction && state.currentStep !== 'payment') {
-            return;
-        }
-
-        void refreshPaymentState(state);
-    };
-
-    window.addEventListener('focus', refreshOnFocus);
-    window.addEventListener('pageshow', refreshOnFocus);
-    document.addEventListener('visibilitychange', refreshOnFocus);
 }
 
 function initCheckoutPublic() {
@@ -1806,10 +1708,8 @@ function initCheckoutPublic() {
         session: config.session || {},
         order: config.order || null,
         paymentTransaction: config.paymentTransaction || null,
-        paymentRefreshTimeout: null,
         threeDsEnv: root.dataset.threeDsEnv || 'PROD',
         currentStep: config.currentStep || 'identification',
-        visualStep: config.currentStep || 'identification',
         thankYouUrl: config.thankYouUrl,
         personType: String(config.session?.customer_document_type || 'cpf').toLowerCase() === 'cnpj' ? 'pj' : 'pf',
         identificationDraft: {
@@ -1827,10 +1727,8 @@ function initCheckoutPublic() {
     hydrateSession(state.session, state.config);
     syncRecipientDefault(state);
     updateSummary(config, state);
-    bindNavigation(state);
     bindForms(state);
     bindPaymentAction(state);
-    bindPaymentStateRefresh(state);
     updatePersonTypeUi(state);
 
     if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
@@ -1842,18 +1740,8 @@ function initCheckoutPublic() {
         resumeExistingPayment(state);
         return;
     }
-
-    showStep(state, state.currentStep);
-
-    if (state.currentStep === 'delivery') {
-        setVisiblePanel('delivery');
-    }
-
-    if (state.currentStep === 'payment') {
-        setVisiblePanel('payment');
-    }
 }
 
-document.addEventListener('DOMContentLoaded', initCheckoutPublic);
+initCheckoutPublic();
 
 

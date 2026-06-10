@@ -21,7 +21,7 @@ class StoreCheckoutDeliveryRequest extends FormRequest
             'neighborhood' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'size:2'],
-            'recipient_name' => ['required', 'string', 'max:255'],
+            'recipient_name' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

@@ -12,6 +12,7 @@ use App\Models\PaymentTransaction;
 use App\Services\Checkout\CheckoutPricingService;
 use App\Services\Payments\Paytime\PaytimePaymentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 
 class PublicCheckoutPaymentController extends Controller
@@ -21,22 +22,76 @@ class PublicCheckoutPaymentController extends Controller
         private readonly PaytimePaymentService $paymentService,
     ) {}
 
-    public function startPayment(StartCheckoutPaymentRequest $request, string $sessionToken): JsonResponse
+    public function choosePaymentMethod(StartCheckoutPaymentRequest $request, string $sessionToken): JsonResponse|RedirectResponse
     {
         $checkoutSession = $this->findSession($sessionToken);
         $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
         $paymentMethod = $request->input('payment_method');
 
-        abort_unless(
-            $paymentMethod !== 'boleto' || $this->isValidCheckoutDocument(
+        if (! $this->paymentMethodIsAllowed($checkoutLink, $paymentMethod)) {
+            return $this->respondToPaymentError(
+                request: $request,
+                message: 'Método de pagamento indisponível para este checkout.',
+                statusCode: Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
+        $checkoutSession->update([
+            'payment_method' => $paymentMethod,
+            'status' => 'payment_started',
+            'current_step' => 'payment',
+            'last_activity_at' => now(),
+        ]);
+
+        CheckoutEvent::query()->create([
+            'checkout_session_id' => $checkoutSession->id,
+            'checkout_link_id' => $checkoutLink->id,
+            'seller_id' => $checkoutLink->seller_id,
+            'event_type' => 'payment_method_selected',
+            'step' => 'payment',
+            'metadata' => ['payment_method' => $paymentMethod],
+        ]);
+
+        $detailsUrl = route('checkout.public.payment.details', $checkoutSession->session_token);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Método de pagamento selecionado com sucesso.',
+                'checkout_session' => $checkoutSession->fresh(),
+                'payment_details_url' => $detailsUrl,
+            ]);
+        }
+
+        return redirect()->route('checkout.public.payment.details', $checkoutSession->session_token);
+    }
+
+    public function startPayment(StartCheckoutPaymentRequest $request, string $sessionToken): JsonResponse|RedirectResponse
+    {
+        $checkoutSession = $this->findSession($sessionToken);
+        $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
+        $paymentMethod = $checkoutSession->payment_method ?: $request->input('payment_method');
+
+        if (
+            $paymentMethod === 'boleto'
+            && ! $this->isValidCheckoutDocument(
                 (string) $checkoutSession->customer_document,
                 (string) $checkoutSession->customer_document_type
-            ),
-            422,
-            'O documento do pagador é inválido.'
-        );
+            )
+        ) {
+            return $this->respondToPaymentError(
+                request: $request,
+                message: 'O documento do pagador é inválido.',
+                statusCode: Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
 
-        abort_unless($this->paymentMethodIsAllowed($checkoutLink, $paymentMethod), 422, 'Método de pagamento indisponível para este checkout.');
+        if (! $this->paymentMethodIsAllowed($checkoutLink, $paymentMethod)) {
+            return $this->respondToPaymentError(
+                request: $request,
+                message: 'Método de pagamento indisponível para este checkout.',
+                statusCode: Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
 
         $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod);
         $validatedRequest = $request->validated();
@@ -61,7 +116,7 @@ class PublicCheckoutPaymentController extends Controller
             'metadata' => ['payment_method' => $paymentMethod],
         ]);
 
-        $order = Order::query()->firstOrCreate([
+        $order = Order::query()->updateOrCreate([
             'checkout_session_id' => $checkoutSession->id,
             'payment_method' => $paymentMethod,
         ], [
@@ -83,21 +138,37 @@ class PublicCheckoutPaymentController extends Controller
             'success_url_used' => $checkoutLink->success_url,
         ]);
 
-        $gatewayResponse = match ($paymentMethod) {
-            'pix' => $this->paymentService->createPixPayment($order),
-            'boleto' => $this->paymentService->createBoletoPayment($order),
-            default => $this->paymentService->createCreditCardPayment($order, $request->validated()),
-        };
+        try {
+            $gatewayResponse = match ($paymentMethod) {
+                'pix' => $this->paymentService->createPixPayment($order),
+                'boleto' => $this->paymentService->createBoletoPayment($order),
+                default => $this->paymentService->createCreditCardPayment($order, $request->validated()),
+            };
+        } catch (\Throwable $throwable) {
+            return $this->respondToPaymentFailure(
+                request: $request,
+                checkoutSession: $checkoutSession,
+                order: $order,
+                message: $throwable->getMessage() !== '' ? $throwable->getMessage() : 'Não foi possível iniciar o pagamento.',
+                gatewayResponse: [],
+                statusCode: Response::HTTP_BAD_GATEWAY
+            );
+        }
 
         $gatewayTransactionId = $this->resolveGatewayTransactionId($gatewayResponse);
 
         if ($gatewayTransactionId === null) {
             $gatewayErrorMessage = $this->resolveGatewayErrorMessage($gatewayResponse);
+            $message = $gatewayErrorMessage ?? 'A resposta do gateway não retornou o identificador da transação.';
 
-            return response()->json([
-                'message' => $gatewayErrorMessage ?? 'A resposta do gateway não retornou o identificador da transação.',
-                'paytime_response' => $gatewayResponse,
-            ], $gatewayErrorMessage !== null ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_BAD_GATEWAY);
+            return $this->respondToPaymentFailure(
+                request: $request,
+                checkoutSession: $checkoutSession,
+                order: $order,
+                message: $message,
+                gatewayResponse: $gatewayResponse,
+                statusCode: $gatewayErrorMessage !== null ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_BAD_GATEWAY
+            );
         }
 
         $paymentTransaction = PaymentTransaction::query()->updateOrCreate([
@@ -123,8 +194,16 @@ class PublicCheckoutPaymentController extends Controller
             'response_payload' => $gatewayResponse,
         ]);
 
+        $nextCheckoutStatus = in_array(strtolower((string) ($gatewayResponse['internal_status'] ?? 'pending')), ['authorized', 'paid'], true)
+            ? 'paid'
+            : 'payment_pending';
+
         $checkoutSession->update([
-            'status' => $paymentMethod === 'credit_card' ? 'payment_pending' : 'payment_pending',
+            'status' => $nextCheckoutStatus,
+        ]);
+
+        $order->update([
+            'status' => $nextCheckoutStatus === 'paid' ? 'paid' : 'pending',
         ]);
 
         CheckoutEvent::query()->create([
@@ -141,16 +220,27 @@ class PublicCheckoutPaymentController extends Controller
             ],
         ]);
 
-        return response()->json([
-            'message' => 'Pagamento iniciado com sucesso.',
-            'order' => $order->fresh(),
-            'payment_transaction' => $paymentTransaction->fresh(),
-            'pricing' => $pricing,
-            'requires_3ds' => (bool) ($gatewayResponse['requires_3ds'] ?? false),
-            'session_id' => $gatewayResponse['session_id'] ?? null,
-            'transaction_id' => $gatewayResponse['transaction_id'] ?? $gatewayTransactionId,
-            'thank_you_url' => route('checkout.public.thank-you', $checkoutSession->session_token),
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Pagamento iniciado com sucesso.',
+                'order' => $order->fresh(),
+                'payment_transaction' => $paymentTransaction->fresh(),
+                'pricing' => $pricing,
+                'requires_3ds' => (bool) ($gatewayResponse['requires_3ds'] ?? false),
+                'session_id' => $gatewayResponse['session_id'] ?? null,
+                'transaction_id' => $gatewayResponse['transaction_id'] ?? $gatewayTransactionId,
+                'thank_you_url' => route('checkout.public.thank-you', $checkoutSession->session_token),
+            ]);
+        }
+
+        if (
+            $nextCheckoutStatus === 'paid'
+            || in_array(strtolower((string) ($paymentTransaction->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        return redirect()->route('checkout.public.payment.details', $checkoutSession->session_token);
     }
 
     public function confirmAntifraudAuth(
@@ -181,6 +271,9 @@ class PublicCheckoutPaymentController extends Controller
 
         if (strtolower((string) ($gatewayResponse['internal_status'] ?? '')) === 'paid') {
             $order->update([
+                'status' => 'paid',
+            ]);
+            $checkoutSession->update([
                 'status' => 'paid',
             ]);
         }
@@ -239,6 +332,62 @@ class PublicCheckoutPaymentController extends Controller
         ]);
     }
 
+    private function respondToPaymentFailure(
+        StartCheckoutPaymentRequest $request,
+        CheckoutSession $checkoutSession,
+        Order $order,
+        string $message,
+        array $gatewayResponse,
+        int $statusCode
+    ): JsonResponse|RedirectResponse {
+        $checkoutSession->update([
+            'status' => 'failed',
+        ]);
+
+        $order->update([
+            'status' => 'failed',
+        ]);
+
+        CheckoutEvent::query()->create([
+            'checkout_session_id' => $checkoutSession->id,
+            'checkout_link_id' => $checkoutSession->checkout_link_id,
+            'seller_id' => $checkoutSession->seller_id,
+            'event_type' => 'payment_failed',
+            'step' => 'payment',
+            'metadata' => [
+                'payment_method' => $request->input('payment_method'),
+                'message' => $message,
+            ],
+        ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'paytime_response' => $gatewayResponse,
+            ], $statusCode);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', $message);
+    }
+
+    private function respondToPaymentError(
+        StartCheckoutPaymentRequest $request,
+        string $message,
+        int $statusCode
+    ): JsonResponse|RedirectResponse {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+            ], $statusCode);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', $message);
+    }
+
     private function findSession(string $sessionToken): CheckoutSession
     {
         return CheckoutSession::query()->where('session_token', $sessionToken)->firstOrFail();
@@ -257,7 +406,7 @@ class PublicCheckoutPaymentController extends Controller
     private function generateOrderNumber(): string
     {
         $year = now()->year;
-        $next = (Order::query()->count() + 1);
+        $next = Order::query()->count() + 1;
 
         return 'JNT-'.$year.'-'.str_pad((string) $next, 6, '0', STR_PAD_LEFT);
     }
