@@ -227,8 +227,8 @@ export default function HomePage() {
                             type="text"
                             href="/seller/clients/export"
                             icon={<FileExcelFilled style={{ fontSize: '23.4px' }} />}
-                            title="Exportar clientes"
-                            aria-label="Exportar clientes"
+                            title="Exportar Transações"
+                            aria-label="Exportar Transações"
                             className="spa-dashboard-toolbar-excel-button"
                         />
                     ) : null}

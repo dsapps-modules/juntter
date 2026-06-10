@@ -30,6 +30,7 @@ class CobrancaSaldoExtratoController extends Controller
 
         $sellerName = trim((string) $user->name) !== '' ? (string) $user->name : 'Vendedor';
         $establishmentId = $user->getEstabelecimentoId();
+        $selectedPeriod = $this->resolveSelectedPeriod($request->string('period')->toString());
 
         if ($establishmentId === null || (string) $establishmentId === '') {
             return response()->json([
@@ -40,14 +41,11 @@ class CobrancaSaldoExtratoController extends Controller
                 'rows' => [],
                 'message' => 'Nenhum estabelecimento foi vinculado ao usuário autenticado.',
                 'actions' => $this->buildActions(),
+                'selected_period' => $selectedPeriod,
             ]);
         }
 
-        $filters = [
-            'extra_headers' => [
-                'establishment_id' => (string) $establishmentId,
-            ],
-        ];
+        $filters = $this->buildFilters((string) $establishmentId, $selectedPeriod);
 
         $balanceResponse = [];
         $extractResponse = [];
@@ -80,7 +78,46 @@ class CobrancaSaldoExtratoController extends Controller
             'rows' => $rows->values(),
             'message' => $warnings !== [] ? implode(' ', $warnings) : null,
             'actions' => $this->buildActions(),
+            'selected_period' => $selectedPeriod,
         ]);
+    }
+
+    /**
+     * @return array{extra_headers: array{establishment_id: string}, filters?: string}
+     */
+    private function buildFilters(string $establishmentId, string $selectedPeriod): array
+    {
+        $filters = [
+            'extra_headers' => [
+                'establishment_id' => $establishmentId,
+            ],
+        ];
+
+        try {
+            $period = Carbon::createFromFormat('Y-m', $selectedPeriod);
+        } catch (Throwable) {
+            return $filters;
+        }
+
+        $filters['filters'] = json_encode([
+            'created_at' => [
+                'min' => $period->copy()->startOfMonth()->format('Y-m-d'),
+                'max' => $period->copy()->endOfMonth()->format('Y-m-d'),
+            ],
+        ]);
+
+        return $filters;
+    }
+
+    private function resolveSelectedPeriod(string $selectedPeriod): string
+    {
+        try {
+            Carbon::createFromFormat('Y-m', $selectedPeriod);
+        } catch (Throwable) {
+            return Carbon::now()->format('Y-m');
+        }
+
+        return $selectedPeriod;
     }
 
     /**

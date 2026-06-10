@@ -296,6 +296,7 @@ export default function ProfilePage() {
                                                 <Typography.Text strong>E-mail</Typography.Text>
                                                 <Input
                                                     value={profileForm.email}
+                                                    readOnly
                                                     onChange={(event) =>
                                                         setProfileForm((current) => ({ ...current, email: event.target.value }))
                                                     }

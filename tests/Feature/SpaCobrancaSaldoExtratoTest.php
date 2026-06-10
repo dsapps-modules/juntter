@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\BalanceService;
 use App\Services\TransacaoService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,8 +13,17 @@ class SpaCobrancaSaldoExtratoTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     public function test_saldo_extrato_overview_returns_balance_and_extract_rows(): void
     {
+        Carbon::setTestNow(Carbon::create(2026, 5, 15, 12, 0, 0));
+
         $user = User::factory()->create([
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
@@ -30,7 +40,11 @@ class SpaCobrancaSaldoExtratoTest extends TestCase
         $balanceService->expects($this->once())
             ->method('saldoAtual')
             ->with($this->callback(function (array $filters): bool {
-                return ($filters['extra_headers']['establishment_id'] ?? null) === '5001';
+                $periodFilters = json_decode((string) ($filters['filters'] ?? ''), true);
+
+                return ($filters['extra_headers']['establishment_id'] ?? null) === '5001'
+                    && ($periodFilters['created_at']['min'] ?? null) === '2026-05-01'
+                    && ($periodFilters['created_at']['max'] ?? null) === '2026-05-31';
             }))
             ->willReturn([
                 'balance' => 125000,
@@ -42,7 +56,11 @@ class SpaCobrancaSaldoExtratoTest extends TestCase
         $transacaoService->expects($this->once())
             ->method('consultarExtratoEstabelecimento')
             ->with($this->callback(function (array $filters): bool {
-                return ($filters['extra_headers']['establishment_id'] ?? null) === '5001';
+                $periodFilters = json_decode((string) ($filters['filters'] ?? ''), true);
+
+                return ($filters['extra_headers']['establishment_id'] ?? null) === '5001'
+                    && ($periodFilters['created_at']['min'] ?? null) === '2026-05-01'
+                    && ($periodFilters['created_at']['max'] ?? null) === '2026-05-31';
             }))
             ->willReturn([
                 'data' => [
@@ -90,6 +108,7 @@ class SpaCobrancaSaldoExtratoTest extends TestCase
             ->assertJsonPath('summary.movements', 2)
             ->assertJsonPath('summary.incoming_total_label', 'R$ 80,00')
             ->assertJsonPath('summary.outgoing_total_label', 'R$ 5,00')
+            ->assertJsonPath('selected_period', '2026-05')
             ->assertJsonPath('rows.0.id', 'mov-1')
             ->assertJsonPath('rows.0.type_label', 'PIX')
             ->assertJsonPath('rows.0.modality_label', 'Entrada')
@@ -102,6 +121,8 @@ class SpaCobrancaSaldoExtratoTest extends TestCase
 
     public function test_saldo_extrato_overview_returns_empty_state_when_the_user_has_no_establishment(): void
     {
+        Carbon::setTestNow(Carbon::create(2026, 5, 15, 12, 0, 0));
+
         $user = User::factory()->create([
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
@@ -114,6 +135,7 @@ class SpaCobrancaSaldoExtratoTest extends TestCase
             ->assertJsonPath('establishment', null)
             ->assertJsonPath('balance.available_label', 'R$ 0,00')
             ->assertJsonPath('summary.movements', 0)
+            ->assertJsonPath('selected_period', '2026-05')
             ->assertJsonPath('rows', []);
     }
 }

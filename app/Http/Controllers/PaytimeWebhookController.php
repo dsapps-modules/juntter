@@ -86,7 +86,7 @@ class PaytimeWebhookController extends Controller
     private function handleUpdatedEstablishmentData(array $payload): void
     {
         Log::info('Paytime webhook received for updated-establishment-data', ['event' => 'updated-establishment-data']);
-        Queue::push(new ProcessUpdatePaytimeEstablishmentData($this->payloadWithEvent($payload, 'update-establishment-data')));
+        Queue::push(new ProcessUpdatePaytimeEstablishmentData($this->payloadWithEvent($payload, 'updated-establishment-data')));
     }
 
     private function handleNewSubTransaction(array $payload): void

@@ -4,12 +4,16 @@ namespace Tests\Feature;
 
 use App\Jobs\ProcessPaytimeBilletStatusChange;
 use App\Jobs\ProcessPaytimeTransactionWebhook;
+use App\Models\PaytimeEstablishment;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class PaytimeWebhookControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -182,5 +186,82 @@ class PaytimeWebhookControllerTest extends TestCase
 
         $response->assertUnauthorized();
         Queue::assertNothingPushed();
+    }
+
+    public function test_it_persists_updated_establishment_data_from_the_webhook_route(): void
+    {
+        config()->set('queue.default', 'sync');
+
+        PaytimeEstablishment::query()->create([
+            'id' => 155463,
+            'first_name' => 'Empresa Antiga',
+            'last_name' => 'LTDA',
+            'fantasy_name' => 'Empresa Antiga LTDA',
+            'document' => '11111111000111',
+            'email' => 'antiga@example.com',
+            'phone_number' => '11999990000',
+            'active' => false,
+            'status' => 'REVIEW',
+            'risk' => 'MEDIUM',
+            'category' => 'Antiga',
+            'code' => 'OLD123',
+            'revenue' => 1000,
+            'address_json' => [
+                'street' => 'Rua Antiga',
+                'number' => '1',
+            ],
+            'responsible_json' => [
+                'name' => 'Responsável Antigo',
+            ],
+        ]);
+
+        $response = $this
+            ->withBasicAuth('webhook-user', 'webhook-pass')
+            ->postJson('/api/webhook/paytime', [
+                'event' => 'updated-establishment-data',
+                'data' => [
+                    'id' => 155463,
+                    'type' => 'COMPANY',
+                    'first_name' => 'Empresa Nova',
+                    'last_name' => 'LTDA',
+                    'fantasy_name' => 'Empresa Nova LTDA',
+                    'document' => '22222222000122',
+                    'email' => 'nova@example.com',
+                    'phone_number' => '11988887777',
+                    'active' => true,
+                    'status' => 'ACTIVE',
+                    'risk' => 'LOW',
+                    'category' => 'Nova',
+                    'code' => 'NEW456',
+                    'revenue' => 2500,
+                    'address' => [
+                        'street' => 'Rua Nova',
+                        'number' => '99',
+                        'neighborhood' => 'Centro',
+                        'city' => 'Sao Paulo',
+                        'state' => 'SP',
+                        'zip_code' => '01001000',
+                    ],
+                    'responsible' => [
+                        'name' => 'Responsavel Novo',
+                    ],
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Paytime webhook received',
+        ]);
+
+        $establishment = PaytimeEstablishment::query()->findOrFail(155463);
+
+        $this->assertSame('Empresa Nova', $establishment->first_name);
+        $this->assertSame('Empresa Nova LTDA', $establishment->fantasy_name);
+        $this->assertSame('nova@example.com', $establishment->email);
+        $this->assertTrue($establishment->active);
+        $this->assertSame('ACTIVE', $establishment->status);
+        $this->assertSame('LOW', $establishment->risk);
+        $this->assertSame('Rua Nova', $establishment->address_json['street']);
+        $this->assertSame('Responsavel Novo', $establishment->responsible_json['name']);
     }
 }

@@ -2,16 +2,18 @@
 
 namespace App\Jobs;
 
+use App\Models\PaytimeEstablishment;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ProcessUpdatePaytimeEstablishmentData implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     public $payload;
 
     public function __construct(array $payload)
@@ -25,33 +27,58 @@ class ProcessUpdatePaytimeEstablishmentData implements ShouldQueue
     public function handle(): void
     {
         $event = $this->payload['event'] ?? null;
-        $data  = $this->payload['data'] ?? [];
+        $data = $this->payload['data'] ?? [];
 
-        if ($event !== 'update-establishment-data') {
-            Log::warning("Webhook ignorado: evento não reconhecido", ['event' => $event]);
+        if (! in_array($event, ['updated-establishment-data', 'update-establishment-data'], true)) {
+            Log::warning('Webhook ignorado: evento não reconhecido', ['event' => $event]);
+
             return;
         }
 
-        Log::info("🔔 Atualização de status do estabelecimento recebida via webhook Paytime", [
-            'transaction_id' => $data['_id'] ?? null,
-            'status' => $data['status'] ?? null,
-            'valor' => $data['amount'] ?? null,
-            'nome_cliente' => $data['customer']['first_name'] ?? null,
-            'sobrenome_cliente' => $data['customer']['last_name'] ?? null,
-            'email' => $data['customer']['email'] ?? null,
-        ]);
+        $establishmentId = $data['id'] ?? $data['_id'] ?? null;
 
-        // Aqui você pode adicionar lógica para:
-        // - Registrar a transação em uma tabela
-        // - Atualizar o status de uma venda
-        // - Relacionar o pagamento ao cliente
-        // - Salvar o log antifraude
-        // - Disparar notificações
+        if (! is_numeric($establishmentId)) {
+            Log::warning('Webhook ignorado: estabelecimento sem identificador válido', [
+                'event' => $event,
+                'payload_keys' => array_keys($data),
+            ]);
+
+            return;
+        }
+
+        $attributes = [
+            'type' => $data['type'] ?? null,
+            'first_name' => $data['first_name'] ?? null,
+            'last_name' => $data['last_name'] ?? null,
+            'fantasy_name' => $data['fantasy_name'] ?? null,
+            'document' => $data['document'] ?? null,
+            'email' => $data['email'] ?? null,
+            'phone_number' => $data['phone_number'] ?? null,
+            'active' => $data['active'] ?? true,
+            'status' => $data['status'] ?? null,
+            'risk' => $data['risk'] ?? null,
+            'category' => $data['category'] ?? null,
+            'code' => $data['code'] ?? null,
+            'revenue' => $data['revenue'] ?? null,
+            'address_json' => $data['address'] ?? null,
+            'responsible_json' => $data['responsible'] ?? ($data['representative'] ?? null),
+        ];
+
+        PaytimeEstablishment::query()->updateOrCreate([
+            'id' => (int) $establishmentId,
+        ], $attributes);
+
+        Log::info('Estabelecimento atualizado via webhook Paytime', [
+            'event' => $event,
+            'establishment_id' => (int) $establishmentId,
+            'document' => $data['document'] ?? null,
+            'status' => $data['status'] ?? null,
+        ]);
     }
 }
 
 /*
-    Payload Example 
+    Payload Example
 
     {
         "event":"new-sub-transaction",

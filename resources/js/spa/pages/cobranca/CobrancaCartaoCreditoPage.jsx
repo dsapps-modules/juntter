@@ -848,7 +848,7 @@ export default function CobrancaCartaoCreditoPage() {
                                 className="spa-pix-collapse-label-badge spa-pix-page-link-button"
                                 onClick={openLinkModal}
                             >
-                                Link de Pagamento
+                                <span className="spa-pix-page-link-button-label">Link de Pagamento</span>
                             </Button>
                         </div>
 

@@ -1,12 +1,12 @@
 import {
     ArrowLeftOutlined,
     BankOutlined,
-    CalendarOutlined,
     LineChartOutlined,
     SwapOutlined,
     WalletOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Empty, Row, Skeleton, Space, Statistic, Table, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, DatePicker, Empty, Row, Skeleton, Space, Statistic, Table, Tag, Typography } from 'antd';
+import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -65,11 +65,19 @@ function SummaryTile({ label, value, description, icon, tone }) {
     );
 }
 
+function getCurrentPeriod() {
+    const now = new Date();
+
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
 export default function CobrancaSaldoExtratoPage() {
     const navigate = useNavigate();
+    const currentPeriod = getCurrentPeriod();
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [payload, setPayload] = useState(defaultPayload);
+    const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -79,7 +87,10 @@ export default function CobrancaSaldoExtratoPage() {
             setError('');
 
             try {
-                const response = await fetch('/api/spa/cobranca/saldoextrato', {
+                const params = new URLSearchParams();
+                params.set('period', selectedPeriod);
+
+                const response = await fetch(`/api/spa/cobranca/saldoextrato${params.toString() !== '' ? `?${params.toString()}` : ''}`, {
                     signal: controller.signal,
                     headers: {
                         Accept: 'application/json',
@@ -113,7 +124,7 @@ export default function CobrancaSaldoExtratoPage() {
         loadSaldoExtrato();
 
         return () => controller.abort();
-    }, []);
+    }, [selectedPeriod]);
 
     const columns = useMemo(() => [
         {
@@ -171,6 +182,15 @@ export default function CobrancaSaldoExtratoPage() {
     const periodLabel = payload.establishment
         ? `Estabelecimento ${payload.establishment.id}`
         : 'Estabelecimento não vinculado';
+    const selectedPeriodValue = dayjs(`${selectedPeriod}-01`);
+
+    function handlePeriodChange(value) {
+        if (!value) {
+            return;
+        }
+
+        setSelectedPeriod(value.format('YYYY-MM'));
+    }
 
     return (
         <Row gutter={[20, 20]} className="spa-board">
@@ -190,6 +210,15 @@ export default function CobrancaSaldoExtratoPage() {
 
                             <Col xs={24} md={8}>
                                 <Space wrap style={{ width: '100%', justifyContent: 'flex-end' }}>
+                                    <DatePicker
+                                        picker="month"
+                                        size="middle"
+                                        allowClear={false}
+                                        value={selectedPeriodValue}
+                                        format="MM/YYYY"
+                                        onChange={handlePeriodChange}
+                                        style={{ minWidth: 176, width: 'auto' }}
+                                    />
                                     <Button
                                         type="primary"
                                         icon={<ArrowLeftOutlined />}
@@ -263,7 +292,6 @@ export default function CobrancaSaldoExtratoPage() {
                                 <Card
                                     className="spa-table-card spa-saldoextrato-table-card"
                                     title="Extrato do estabelecimento"
-                                    extra={<CalendarOutlined />}
                                 >
                                     <Table
                                         rowKey={(record) => record.id || `${record.date}-${record.description}`}

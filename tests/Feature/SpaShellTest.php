@@ -110,6 +110,17 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_profile_page_keeps_name_and_email_read_only(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/ProfilePage.jsx'));
+
+        $this->assertStringContainsString('value={profileForm.name}', $pageSource);
+        $this->assertStringContainsString('value={profileForm.email}', $pageSource);
+        $this->assertStringContainsString('readOnly', $pageSource);
+        $this->assertStringContainsString('prefix={<UserOutlined />}', $pageSource);
+        $this->assertStringContainsString('prefix={<MailOutlined />}', $pageSource);
+    }
+
     public function test_the_sidebar_contains_a_logout_button(): void
     {
         $shellSource = file_get_contents(base_path('resources/js/spa/layouts/AppShell.jsx'));
@@ -220,11 +231,13 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/HomePage.jsx'));
 
+        $this->assertStringContainsString('Link to="/cobranca/saldoextrato"', $pageSource);
+        $this->assertStringContainsString('Acessar Conta Bancária', $pageSource);
         $this->assertStringContainsString('/seller/clients/export', $pageSource);
-        $this->assertStringContainsString('title="Exportar clientes"', $pageSource);
+        $this->assertStringContainsString('title="Exportar Transações"', $pageSource);
         $this->assertStringContainsString("payload.user?.nivel_acesso === 'vendedor'", $pageSource);
         $this->assertStringContainsString('FileExcelFilled style={{ fontSize: \'23.4px\' }}', $pageSource);
-        $this->assertStringNotContainsString('Exportar clientes</Button>', $pageSource);
+        $this->assertStringNotContainsString('Exportar Transações</Button>', $pageSource);
     }
 
     public function test_the_top_sidebar_items_are_back_in_home_before_cobranca(): void
@@ -354,6 +367,16 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Espaço reservado para saldos', $pageSource);
     }
 
+    public function test_the_saldo_extrato_page_uses_a_month_picker_for_the_selected_period(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaSaldoExtratoPage.jsx'));
+
+        $this->assertStringContainsString('DatePicker', $pageSource);
+        $this->assertStringContainsString('picker="month"', $pageSource);
+        $this->assertStringContainsString('const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);', $pageSource);
+        $this->assertStringContainsString("params.set('period', selectedPeriod);", $pageSource);
+    }
+
     public function test_the_pix_page_uses_the_new_link_payment_modal_labels(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
@@ -423,10 +446,10 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Valor do boleto', $pageSource);
         $this->assertStringContainsString('Data limite para pagamento', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
-        $this->assertStringContainsString('Instrues do boleto', $pageSource);
+        $this->assertStringContainsString('Instruções do boleto', $pageSource);
         $this->assertStringContainsString('Fechar', $pageSource);
         $this->assertStringContainsString('Criar boleto', $pageSource);
-        $this->assertStringContainsString('Boletos do ms', $pageSource);
+        $this->assertStringContainsString('Boletos do mês', $pageSource);
         $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
         $this->assertStringContainsString('spa-pix-transactions-table', $pageSource);
         $this->assertStringNotContainsString('Abra para emitir um novo boleto com os dados do cliente', $pageSource);
@@ -451,6 +474,7 @@ class SpaShellTest extends TestCase
     public function test_the_cartao_credito_page_contains_the_new_card_cobranca_structure(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
+        $stylesSource = file_get_contents(base_path('resources/css/app.css'));
 
         $this->assertStringContainsString('Gerar Cobrança', $pageSource);
         $this->assertStringContainsString('Valor da cobrança', $pageSource);
@@ -460,6 +484,7 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Painel lateral', $pageSource);
         $this->assertStringContainsString('Atualizar painel', $pageSource);
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-link-button-label', $pageSource);
         $this->assertStringContainsString("style={{ minWidth: 176, width: 'auto' }}", $pageSource);
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
         $this->assertStringContainsString('const yearOptions = Array.from({ length: 10 }, (_, index) => {', $pageSource);
@@ -471,6 +496,10 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("['Aprovadas', creditSummary.approved_transactions]", $pageSource);
         $this->assertStringContainsString("['Pendentes', creditSummary.pending_transactions]", $pageSource);
         $this->assertStringNotContainsString("['Aprovadas', summary.paid_transactions ?? 0]", $pageSource);
+        $this->assertStringContainsString('className="spa-pix-collapse-label-badge spa-pix-page-link-button"', $pageSource);
+        $this->assertStringContainsString('.spa-pix-page-link-button.ant-btn:hover', $stylesSource);
+        $this->assertStringContainsString('.spa-pix-page-link-button:hover .anticon', $stylesSource);
+        $this->assertStringContainsString('color: #ffffff', $stylesSource);
         $this->assertLessThan(
             strpos($pageSource, 'label="Rua"'),
             strpos($pageSource, 'label="CEP"')
@@ -539,7 +568,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Excluir', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Instruções do boleto', $pageSource);
-        $this->assertStringContainsString('navigate(`/links-pagamento/${linkId}`)', $pageSource);
+        $this->assertStringContainsString('navigate(`/links-pagamento/${linkId}/editar`)', $pageSource);
+        $this->assertStringContainsString("navigate('/links-pagamento')", $pageSource);
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}/status`', $pageSource);
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}`', $pageSource);
     }

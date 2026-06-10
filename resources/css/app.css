@@ -216,6 +216,11 @@ a {
     box-shadow: 0 14px 30px rgba(244, 196, 0, 0.3);
 }
 
+.spa-pix-page-link-button:hover,
+.spa-pix-page-link-button:focus {
+    color: #ffffff;
+}
+
 .spa-secondary-button {
     border: 1px solid var(--spa-border);
     background: rgba(255, 255, 255, 0.86);
@@ -530,7 +535,21 @@ a {
 
 .spa-pix-page-link-button.ant-btn:hover,
 .spa-pix-page-link-button.ant-btn:focus {
-    color: #2f2400;
+    color: #ffffff;
+}
+
+.spa-pix-page-link-button-label {
+    color: inherit;
+}
+
+.spa-pix-page-link-button:hover .spa-pix-page-link-button-label,
+.spa-pix-page-link-button:focus .spa-pix-page-link-button-label {
+    color: #ffffff !important;
+}
+
+.spa-pix-page-link-button:hover .anticon,
+.spa-pix-page-link-button:focus .anticon {
+    color: #ffffff !important;
 }
 
 .spa-pix-collapse-label-badge .anticon {
