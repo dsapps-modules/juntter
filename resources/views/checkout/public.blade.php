@@ -724,6 +724,7 @@
 @php
     $paymentMethod = strtolower((string) data_get($paymentTransaction, 'payment_method', $checkoutSession->payment_method ?? ''));
     $paymentInternalStatus = strtolower((string) data_get($paymentTransaction, 'internal_status', $checkoutSession->status ?? ''));
+    $paymentInternalStatusLabel = $paymentInternalStatus === 'pending' ? 'Pendente' : $paymentInternalStatus;
     $paymentIsFinalized = in_array($paymentInternalStatus, ['paid', 'authorized'], true)
         || in_array(strtolower((string) ($order?->status ?? '')), ['paid', 'authorized'], true);
     $paymentPixCopyPaste = data_get($paymentTransaction, 'pix_copy_paste') ?: data_get($paymentTransaction, 'pix_qr_code');
@@ -1043,7 +1044,7 @@
                     <div class="summary-block" style="margin-bottom: 14px;">
                         <div class="summary-row">
                             <span>Status</span>
-                            <strong data-payment-status-text>{{ $paymentInternalStatus ?: 'pending' }}</strong>
+                            <strong data-payment-status-text>{{ $paymentInternalStatusLabel ?: 'Pendente' }}</strong>
                         </div>
                     </div>
 
@@ -1058,7 +1059,6 @@
                     <div class="section-head" style="margin-bottom: 10px;">
                         <div>
                             <h2 style="margin-bottom: 6px;">Aguardando confirmação</h2>
-                            <p data-payment-message>Assim que o Pix for pago, a confirmação será atualizada automaticamente.</p>
                         </div>
                         <span class="payment-badge" data-payment-method-badge>Pix</span>
                     </div>
@@ -1066,7 +1066,7 @@
                     <div class="summary-block" style="margin-bottom: 14px;">
                         <div class="summary-row">
                             <span>Status</span>
-                            <strong data-payment-status-text>pendente</strong>
+                            <strong data-payment-status-text>Pendente</strong>
                         </div>
                         <div class="summary-row">
                             <span>Expira em</span>
@@ -1075,7 +1075,7 @@
                     </div>
 
                     <div class="summary-block" data-pix-block>
-                        <h3 style="margin-bottom: 10px;" data-payment-code-title>Pix copia e cola</h3>
+                        <h3 style="margin-bottom: 10px;" data-payment-code-title>Escaneie o QR Code ou copie o código Pix</h3>
                         <div class="pix-qr-frame" data-pix-qr-frame>
                             <div class="pix-qr-placeholder" data-pix-qr-placeholder @if(filled($paymentPixQrImage) || filled($paymentPixCopyPaste)) hidden @endif>O QR Code do Pix será exibido aqui.</div>
                             <div data-pix-qr>
@@ -1087,7 +1087,6 @@
                         <div class="pix-code" data-pix-code>{{ $paymentPixCopyPaste ?: 'O código aparecerá aqui assim que o pagamento for criado.' }}</div>
                         <div class="pix-copy-row">
                             <button class="btn btn-primary" type="button" data-copy-pix>COPIAR CÓDIGO PIX</button>
-                            <a class="btn btn-secondary" href="{{ route('checkout.public.thank-you', $checkoutSession->session_token) }}" data-thank-you-link>Ver página de confirmação</a>
                         </div>
                     </div>
                 </section>

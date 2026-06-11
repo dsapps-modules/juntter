@@ -17,11 +17,9 @@
 [x] página de confirmação de links: ajustar visual
 [x] traduzir nomes dos meses no seletor de mês/ano
 [x] botão gerar cobrança cartão crédito
+[x] erro de codificação no checkout: ver no pix
+[x] checkout: traduzir pending na página do pix
+[x] eliminar botão 'Ver página de confirmação'
 
 [] saldo e extrato: fazer saque via pix
 [] corrigir visual do checkout
-
-[] erro de codificação no checkout: ver no pix
-[] checkout: traduzir pending na página do pix
-[] eliminar botão 'Ver página de confirmação'
-

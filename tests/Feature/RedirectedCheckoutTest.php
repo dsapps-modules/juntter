@@ -443,6 +443,10 @@ class RedirectedCheckoutTest extends TestCase
 
     public function test_public_checkout_payment_details_page_shows_pix_status_when_transaction_exists(): void
     {
+        $pageSource = file_get_contents(base_path('resources/js/checkout-public.js'));
+
+        $this->assertStringNotContainsString('A página será atualizada automaticamente quando o pagamento for aprovado.', $pageSource);
+
         $user = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
         $session = $this->makeCheckoutSession($link, [
@@ -506,14 +510,18 @@ class RedirectedCheckoutTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Aguardando confirmação', false);
+        $response->assertSee('Pendente', false);
         $response->assertSee('data-step-panel="waiting"', false);
-        $response->assertSee('Pix copia e cola', false);
+        $response->assertSee('Escaneie o código ou copie o código Pix', false);
+        $response->assertDontSee('Assim que o Pix for pago, a confirmação será atualizada automaticamente.', false);
         $response->assertSee('00020126580014br.gov.bcb.pix...', false);
         $response->assertSee('QR Code Pix', false);
         $response->assertSee('Alterar método', false);
         $response->assertSee('Pagamento', false);
         $response->assertDontSee('Pagar', false);
         $response->assertDontSee('Selecione o método de pagamento', false);
+        $response->assertDontSee('Ver página de confirmação', false);
+        $response->assertDontSee('data-thank-you-link', false);
     }
 
     public function test_public_checkout_payment_details_page_ignores_previous_transaction_when_payment_method_changes(): void

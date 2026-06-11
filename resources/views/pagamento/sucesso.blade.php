@@ -91,8 +91,7 @@
                         </div>
                         <h1 class="payment-success-title">Obrigado pela compra</h1>
                         <p class="payment-success-lead">
-                            Recebemos a confirmação do seu pagamento com sucesso. Esta página substitui o alerta
-                            temporário e serve como a confirmação final da operação.
+                            Recebemos a confirmação do seu pagamento com sucesso.
                         </p>
                     </div>
                 </div>
@@ -108,7 +107,7 @@
                         <article class="payment-success-item">
                             <i class="fas fa-clipboard-check"></i>
                             <strong>Registro atualizado</strong>
-                            <p>Se houver acompanhamento automático, o status será sincronizado normalmente.</p>
+                            <p>O sistema sincronizou seus dados e todas as informações referentes ao seu pedido.</p>
                         </article>
 
                         <article class="payment-success-item">
@@ -119,10 +118,6 @@
                     </div>
 
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                        <p class="payment-success-note mb-0">
-                            Se precisar de ajuda, mantenha esta confirmação como referência.
-                        </p>
-
                         <div class="payment-success-actions">
                             <a href="{{ $homeUrl }}" class="btn btn-success-primary">
                                 <i class="fas fa-house me-2"></i>

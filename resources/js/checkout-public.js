@@ -983,7 +983,8 @@ function updateSummary(config, state) {
 
 function updatePaymentDetails(state, transaction) {
     const method = transaction?.payment_method || state.session.payment_method || 'pix';
-    const statusLabel = transaction?.internal_status || state.session.status || 'pending';
+    const rawStatus = transaction?.internal_status || state.session.status || 'pending';
+    const statusLabel = String(rawStatus || '').toLowerCase() === 'pending' ? 'Pendente' : rawStatus;
     const pixQrCodeImage = transaction?.response_payload?.pix_qr_code_image
         || transaction?.response_payload?.api_qrcode?.qrcode
         || null;
@@ -1006,13 +1007,13 @@ function updatePaymentDetails(state, transaction) {
 
     if (message) {
         if (method === 'pix') {
-            message.textContent = 'Escaneie o c??digo ou copie e cole o Pix. A p??gina ser?? atualizada automaticamente quando o pagamento for aprovado.';
-        } else if (method === 'credit_card' && (transaction?.requires_3ds || transaction?.response_payload?.requires_3ds || statusLabel === 'waiting_auth')) {
-            message.textContent = 'A transa????o foi criada e aguarda a autentica????o 3DS do cart??o.';
+            message.textContent = 'Escaneie o código ou copie e cole o Pix.';
+        } else if (method === 'credit_card' && (transaction?.requires_3ds || transaction?.response_payload?.requires_3ds || rawStatus === 'waiting_auth')) {
+            message.textContent = 'A transação foi criada e aguarda a autenticação 3DS do cartão.';
         } else if (showBoletoLoading) {
             message.textContent = 'Estamos gerando o boleto. Aguarde alguns segundos para ver os dados e abrir o documento.';
         } else {
-            message.textContent = 'O pagamento foi enviado para processamento. A p??gina acompanha a confirma????o automaticamente.';
+            message.textContent = 'O pagamento foi enviado para processamento. A página acompanha a confirmação automaticamente.';
         }
     }
 
@@ -1094,20 +1095,15 @@ function updatePaymentDetails(state, transaction) {
             paymentButton.textContent = 'AGUARDANDO BOLETO...';
             paymentButton.disabled = true;
         } else if (method === 'pix') {
-            paymentButton.textContent = 'COPIAR C??DIGO PIX';
+            paymentButton.textContent = 'Copiar código PIX';
             paymentButton.disabled = !Boolean(transaction?.pix_copy_paste || transaction?.pix_qr_code);
         } else if (method === 'boleto') {
-            paymentButton.textContent = transaction?.internal_status === 'failed' ? 'BOLETO INDISPON??VEL' : 'ABRIR BOLETO';
+            paymentButton.textContent = transaction?.internal_status === 'failed' ? 'BOLETO INDISPONÍVEL' : 'ABRIR BOLETO';
             paymentButton.disabled = !Boolean(transaction?.boleto_url);
         } else {
-            paymentButton.textContent = 'COPIAR REFER??NCIA';
+            paymentButton.textContent = 'COPIAR REFERÊNCIA';
             paymentButton.disabled = false;
         }
-    }
-
-    const thankYouLink = document.querySelector('[data-thank-you-link]');
-    if (thankYouLink) {
-        thankYouLink.href = state.thankYouUrl;
     }
 
     renderPixQrCode({
