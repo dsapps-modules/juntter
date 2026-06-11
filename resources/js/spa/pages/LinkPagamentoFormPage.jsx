@@ -322,9 +322,9 @@ export default function LinkPagamentoFormPage() {
     }
 
     return (
-        <Row gutter={[20, 20]} className="spa-profile-grid">
+        <Row gutter={[20, 20]} className="spa-profile-grid" align="top">
             <Col xs={24} xl={16}>
-                <Card className="spa-hero-card">
+                <Card className="spa-hero-card spa-link-pagamento-hero-card">
                     <Space direction="vertical" size={18} className="spa-hero-stack">
                         <div>
                             <Typography.Text className="spa-brand-kicker">Links de pagamento</Typography.Text>

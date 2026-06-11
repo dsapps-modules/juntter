@@ -845,6 +845,7 @@ export default function CobrancaCartaoCreditoPage() {
                             </Button>
                             <Button
                                 icon={<LinkOutlined />}
+                                type="primary"
                                 className="spa-pix-collapse-label-badge spa-pix-page-link-button"
                                 onClick={openLinkModal}
                             >

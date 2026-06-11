@@ -1,4 +1,7 @@
 import { ConfigProvider, theme } from 'antd';
+import ptBR from 'antd/locale/pt_BR';
+import dayjs from 'dayjs';
+import 'dayjs/locale/pt-br';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppShell from './layouts/AppShell';
 import EstablishmentsPage from './pages/EstablishmentsPage';
@@ -64,9 +67,11 @@ const appTheme = {
     },
 };
 
+dayjs.locale('pt-br');
+
 export default function App() {
     return (
-        <ConfigProvider theme={appTheme}>
+        <ConfigProvider locale={ptBR} theme={appTheme}>
             <BrowserRouter basename="/app">
                 <Routes>
                     <Route path="/" element={<Navigate replace to="/home" />} />

@@ -8,8 +8,20 @@
 [x] switch pf/pj não funciona
 [x] visual da página de checkout: mudar
 [x] confirmação de sucesso do pagamento: abrir em outra página
-
-[] saldo e extrato: fazer saque via pix
-
 [x] existe a suposição de que as transações dos clientes estejam desatualizadas
 [x] plano contratado está desabilitado: porque não temos como acessar os planos da Juntter.
+
+
+[x] página de confirmação de links: link para a home está correto, pois quem paga o link não é o usuário do sistema
+[x] plano contratado foi retirado: não temos como ler essa informação direto da Paytime
+[x] página de confirmação de links: ajustar visual
+[x] traduzir nomes dos meses no seletor de mês/ano
+[x] botão gerar cobrança cartão crédito
+
+[] saldo e extrato: fazer saque via pix
+[] corrigir visual do checkout
+
+[] erro de codificação no checkout: ver no pix
+[] checkout: traduzir pending na página do pix
+[] eliminar botão 'Ver página de confirmação'
+

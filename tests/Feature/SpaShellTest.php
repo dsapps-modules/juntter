@@ -534,6 +534,7 @@ class SpaShellTest extends TestCase
         $stylesSource = file_get_contents(base_path('resources/css/app.css'));
 
         $this->assertStringContainsString('Gerar Cobrança', $pageSource);
+        $this->assertStringContainsString('type="primary"', $pageSource);
         $this->assertStringContainsString('Valor da cobrança', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Dados do cartão', $pageSource);
@@ -554,6 +555,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("['Pendentes', creditSummary.pending_transactions]", $pageSource);
         $this->assertStringNotContainsString("['Aprovadas', summary.paid_transactions ?? 0]", $pageSource);
         $this->assertStringContainsString('className="spa-pix-collapse-label-badge spa-pix-page-link-button"', $pageSource);
+        $this->assertStringContainsString('.spa-pix-page-header > .spa-pix-page-toggle-button.ant-btn-primary,', $stylesSource);
+        $this->assertStringContainsString('.spa-pix-page-header > .spa-pix-page-link-button.ant-btn-primary {', $stylesSource);
         $this->assertStringContainsString('.spa-pix-page-link-button.ant-btn:hover', $stylesSource);
         $this->assertStringContainsString('.spa-pix-page-link-button:hover .anticon', $stylesSource);
         $this->assertStringContainsString('color: #ffffff', $stylesSource);
@@ -822,6 +825,19 @@ class SpaShellTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('id="app"', false);
+    }
+
+    public function test_the_link_form_page_uses_a_non_stretching_hero_card_layout(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoFormPage.jsx'));
+        $appSource = file_get_contents(base_path('resources/js/spa/App.jsx'));
+
+        $this->assertStringContainsString('align="top"', $pageSource);
+        $this->assertStringContainsString('spa-link-pagamento-hero-card', $pageSource);
+        $this->assertStringContainsString("import ptBR from 'antd/locale/pt_BR';", $appSource);
+        $this->assertStringContainsString("import 'dayjs/locale/pt-br';", $appSource);
+        $this->assertStringContainsString("dayjs.locale('pt-br');", $appSource);
+        $this->assertStringContainsString('locale={ptBR}', $appSource);
     }
 
     public function test_the_link_edit_route_is_available(): void

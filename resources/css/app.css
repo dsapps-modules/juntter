@@ -552,6 +552,14 @@ a {
     color: #ffffff !important;
 }
 
+.spa-pix-page-header > .spa-pix-page-toggle-button.ant-btn-primary,
+.spa-pix-page-header > .spa-pix-page-link-button.ant-btn-primary {
+    background: linear-gradient(180deg, #ffdf5d 0%, #f4c400 100%);
+    border: none;
+    color: #201700;
+    box-shadow: 0 14px 30px rgba(244, 196, 0, 0.3);
+}
+
 .spa-pix-collapse-label-badge .anticon {
     font-size: 1.1rem;
 }
@@ -1227,6 +1235,11 @@ a {
     box-shadow: var(--spa-shadow);
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 249, 221, 0.96) 100%);
+}
+
+.spa-link-pagamento-hero-card {
+    min-height: auto;
+    align-self: flex-start;
 }
 
 .spa-hero-stack {
