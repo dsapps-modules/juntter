@@ -166,7 +166,16 @@ export default function CheckoutLinkFormPage() {
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
-                <Card title={isEditing ? 'Editar link de checkout' : 'Novo link de checkout'}>
+                <Card
+                    title={isEditing ? 'Editar link de checkout' : 'Novo link de checkout'}
+                    extra={
+                        isEditing ? (
+                            <Button onClick={() => navigate('/seller/checkout-links')}>
+                                Voltar
+                            </Button>
+                        ) : null
+                    }
+                >
                     <Typography.Paragraph type="secondary">
                         Configure o produto, preço congelado, regras de pagamento e a personalização visual.
                     </Typography.Paragraph>

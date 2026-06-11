@@ -666,6 +666,19 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_checkout_link_form_page_contains_a_top_back_link_to_the_list(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
+        $salesPageSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkSalesPage.jsx'));
+
+        $this->assertStringContainsString("navigate('/seller/checkout-links')", $pageSource);
+        $this->assertStringContainsString('extra={', $pageSource);
+        $this->assertStringContainsString('Voltar', $pageSource);
+        $this->assertStringNotContainsString('Voltar para a listagem', $pageSource);
+        $this->assertStringNotContainsString('ArrowLeftOutlined', $pageSource);
+        $this->assertStringNotContainsString('Voltar para a listagem</Button>', $salesPageSource);
+    }
+
     public function test_the_vendedores_route_is_available(): void
     {
         $this->authenticateVendor();
