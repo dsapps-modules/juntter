@@ -80,6 +80,21 @@ class RedirectedCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_vendor_checkout_links_index_marks_expired_links_as_unavailable(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'expires_at' => now()->subDay(),
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/seller/checkout-links');
+
+        $response->assertOk();
+        $response->assertJsonPath('checkout_links.0.id', $link->id);
+        $response->assertJsonPath('checkout_links.0.status', 'active');
+        $response->assertJsonPath('checkout_links.0.availability_status', 'expired');
+    }
+
     public function test_vendor_can_update_a_product(): void
     {
         $user = $this->makeVendorUser();
@@ -991,6 +1006,19 @@ class RedirectedCheckoutTest extends TestCase
     {
         $user = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user), ['status' => 'inactive']);
+
+        $response = $this->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertStatus(410);
+        $response->assertSee('Este checkout não está disponível no momento.');
+    }
+
+    public function test_expired_public_checkout_returns_unavailable_page(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'expires_at' => now()->subDay(),
+        ]);
 
         $response = $this->get(route('checkout.public.show', $link->public_token));
 

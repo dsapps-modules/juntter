@@ -18,9 +18,12 @@ class SellerCheckoutLinkController extends Controller
     {
         $links = CheckoutLink::query()
             ->where('seller_id', $request->user()->id)
-            ->with(['product', 'orders'])
+            ->with(['product', 'seller', 'orders'])
             ->latest()
-            ->get();
+            ->get()
+            ->each(function (CheckoutLink $checkoutLink): void {
+                $checkoutLink->setAttribute('availability_status', $this->resolveAvailabilityStatus($checkoutLink));
+            });
 
         if ($request->expectsJson()) {
             return response()->json(['checkout_links' => $links]);
@@ -140,6 +143,27 @@ class SellerCheckoutLinkController extends Controller
 
         return redirect()->route('spa', ['any' => 'seller/checkout-links'])
             ->with('success', 'Link de checkout excluído com sucesso.');
+    }
+
+    private function resolveAvailabilityStatus(CheckoutLink $checkoutLink): string
+    {
+        if ($checkoutLink->status !== 'active') {
+            return $checkoutLink->status;
+        }
+
+        if ($checkoutLink->expires_at?->isPast()) {
+            return 'expired';
+        }
+
+        if (! $checkoutLink->product?->isActive()) {
+            return 'product_inactive';
+        }
+
+        if (! $checkoutLink->seller?->isVendedor()) {
+            return 'seller_inactive';
+        }
+
+        return 'active';
     }
 
     public function activate(Request $request, CheckoutLink $checkoutLink): JsonResponse

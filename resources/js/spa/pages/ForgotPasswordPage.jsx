@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, MailOutlined, SendOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Input, Row, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, Input, Row, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -57,13 +57,11 @@ export default function ForgotPasswordPage() {
             <Row className="spa-auth-grid" gutter={24} align="middle">
                 <Col xs={24} lg={12}>
                     <div className="spa-auth-hero">
-                        <Tag color="gold" className="spa-auth-tag">
-                            Recuperação
-                        </Tag>
-                        <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
                             Recupere o acesso de forma rápida e simples.
                         </Typography.Title>
+
+                        <div className="spa-auth-description-spacer" aria-hidden="true" />
 
                         <Space wrap className="spa-auth-points">
                             <Card className="spa-auth-point-card" bordered={false}>
@@ -88,9 +86,6 @@ export default function ForgotPasswordPage() {
                         <Typography.Title level={3} className="spa-auth-card-title">
                             Recuperar acesso
                         </Typography.Title>
-                        <Typography.Paragraph type="secondary">
-                            Informe o e-mail da conta para receber o link de redefinição.
-                        </Typography.Paragraph>
 
                         {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
                         {success ? <Alert type="success" showIcon message={success} className="spa-auth-alert" /> : null}

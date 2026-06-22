@@ -5,7 +5,7 @@ import {
     SafetyCertificateOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Checkbox, Col, Input, Row, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Checkbox, Col, Input, Row, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -66,16 +66,9 @@ export default function LoginPage() {
             <Row className="spa-auth-grid" gutter={24} align="middle">
                 <Col xs={24} lg={12}>
                     <div className="spa-auth-hero">
-                        <Tag color="gold" className="spa-auth-tag">
-                            Acesso controlado
-                        </Tag>
-                        <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
                             Pagamentos de forma segura e facilitada
                         </Typography.Title>
-                        <Typography.Paragraph className="spa-auth-description">
-                            A Juntter oferece maquininhas com taxas competitivas com suporte em todo o Brasil
-                        </Typography.Paragraph>
 
                         <Space wrap className="spa-auth-points">
                             <Card className="spa-auth-point-card" bordered={false}>
@@ -96,13 +89,9 @@ export default function LoginPage() {
 
                 <Col xs={24} lg={10} xl={8}>
                     <Card className="spa-auth-card">
-                        <Typography.Text className="spa-brand-kicker">Entrar</Typography.Text>
                         <Typography.Title level={3} className="spa-auth-card-title">
                             Login
                         </Typography.Title>
-                        <Typography.Paragraph type="secondary">
-                            Use suas credenciais para acessar os módulos migrados para React.
-                        </Typography.Paragraph>
 
                         {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
 
@@ -158,7 +147,6 @@ export default function LoginPage() {
                                 </Button>
                             </Space>
                         </form>
-
                     </Card>
                 </Col>
             </Row>
