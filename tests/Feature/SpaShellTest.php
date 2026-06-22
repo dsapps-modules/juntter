@@ -674,6 +674,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("navigate('/seller/checkout-links')", $pageSource);
         $this->assertStringContainsString('extra={', $pageSource);
         $this->assertStringContainsString('Voltar', $pageSource);
+        $this->assertStringContainsString('Solicitar endereço do cliente', $pageSource);
+        $this->assertStringContainsString('request_address', $pageSource);
         $this->assertStringNotContainsString('Voltar para a listagem', $pageSource);
         $this->assertStringNotContainsString('ArrowLeftOutlined', $pageSource);
         $this->assertStringNotContainsString('Voltar para a listagem</Button>', $salesPageSource);

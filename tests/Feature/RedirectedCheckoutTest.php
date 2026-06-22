@@ -64,6 +64,7 @@ class RedirectedCheckoutTest extends TestCase
             'boleto_discount_type' => 'fixed',
             'boleto_discount_value' => 20,
             'free_shipping' => true,
+            'request_address' => true,
         ]);
 
         $response->assertCreated();
@@ -77,6 +78,7 @@ class RedirectedCheckoutTest extends TestCase
             'status' => 'active',
             'quantity' => 2,
             'unit_price' => 149.90,
+            'request_address' => true,
         ]);
     }
 
@@ -194,6 +196,10 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('Produto:');
         $response->assertDontSee('Quantidade:');
         $response->assertDontSee('Token da sessão:');
+        $response->assertSee('checkout-auth-page', false);
+        $response->assertSee('checkout-auth-logo', false);
+        $response->assertSee('checkout-auth-backdrop-left', false);
+        $response->assertSee('checkout-auth-backdrop-right', false);
         $response->assertSee('checkout-logo-image', false);
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertSee('id="checkout-public-app"', false);
@@ -386,6 +392,21 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('Pix', false);
         $response->assertSee('Boleto', false);
         $response->assertDontSee('Cartão de crédito', false);
+    }
+
+    public function test_public_checkout_details_page_hides_address_when_not_requested(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'request_address' => false,
+        ]);
+
+        $response = $this->get(route('checkout.public.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('Dados pessoais', false);
+        $response->assertDontSee('checkout-delivery-form', false);
+        $response->assertSee('Continuar para pagamento', false);
     }
 
     public function test_public_checkout_payment_method_selection_redirects_to_payment_details_page(): void
@@ -1026,6 +1047,45 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('Este checkout não está disponível no momento.');
     }
 
+    public function test_the_checkout_public_views_use_the_login_background_pattern(): void
+    {
+        $publicView = file_get_contents(base_path('resources/views/checkout/public.blade.php'));
+        $thankYouView = file_get_contents(base_path('resources/views/checkout/thank-you.blade.php'));
+        $unavailableView = file_get_contents(base_path('resources/views/checkout/unavailable.blade.php'));
+
+        $this->assertStringContainsString('radial-gradient(circle at top left, rgba(244, 196, 0, 0.16), transparent 28%)', $publicView);
+        $this->assertStringContainsString('linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%)', $publicView);
+        $this->assertStringContainsString('checkout-auth-page', $publicView);
+        $this->assertStringContainsString('checkout-auth-logo', $publicView);
+        $this->assertStringContainsString('right: 20px;', $publicView);
+        $this->assertStringContainsString('checkout-auth-backdrop-left', $publicView);
+        $this->assertStringContainsString('checkout-auth-backdrop-right', $publicView);
+        $this->assertStringContainsString('src="{{ $sellerLogoUrl }}"', $publicView);
+        $this->assertStringContainsString('checkout-page-header', $publicView);
+        $this->assertStringContainsString('checkout-page-title', $publicView);
+        $this->assertStringNotContainsString('hero-top', $publicView);
+        $this->assertStringNotContainsString('hero-brand', $publicView);
+        $this->assertStringNotContainsString('hero-copy-wrap', $publicView);
+        $this->assertStringNotContainsString('hero-copy', $publicView);
+        $this->assertStringNotContainsString('eyebrow', $publicView);
+        $this->assertStringNotContainsString('checkout-logo-image--hero', $publicView);
+        $this->assertStringContainsString('font-size: clamp(28px, 3.4vw, 46px);', $publicView);
+        $this->assertStringContainsString('.panel,', $publicView);
+        $this->assertStringContainsString('.summary-card {', $publicView);
+        $this->assertStringContainsString('.pix-card,', $publicView);
+        $this->assertStringContainsString('.boleto-card', $publicView);
+        $this->assertStringContainsString('.feedback {', $publicView);
+        $this->assertStringNotContainsString('checkout-logo-card', $publicView);
+        $this->assertStringContainsString('sellerLogoUrl', $thankYouView);
+        $this->assertStringContainsString('sellerLogoUrl', $unavailableView);
+        $this->assertStringContainsString('checkout-card-shell', $thankYouView);
+        $this->assertStringContainsString('checkout-auth-page', $thankYouView);
+        $this->assertStringContainsString('right: 20px;', $thankYouView);
+        $this->assertStringContainsString('checkout-card-shell', $unavailableView);
+        $this->assertStringContainsString('checkout-auth-page', $unavailableView);
+        $this->assertStringContainsString('right: 20px;', $unavailableView);
+    }
+
     public function test_frontend_price_is_ignored_when_starting_pix_payment(): void
     {
         $user = $this->makeVendorUser();
@@ -1506,6 +1566,34 @@ class RedirectedCheckoutTest extends TestCase
             'customer_document_type' => 'cnpj',
             'status' => 'identification_completed',
             'current_step' => 'delivery',
+        ]);
+    }
+
+    public function test_identification_skips_delivery_when_request_address_is_disabled(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'request_address' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/identification', [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '123.456.789-09',
+            'customer_document_type' => 'cpf',
+            'customer_birth_date' => '1990-01-01',
+            'customer_phone' => '11999999999',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('next_url', route('checkout.public.payment.page', $session->session_token));
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'customer_name' => 'Maria Silva',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'identification_completed',
+            'current_step' => 'payment',
         ]);
     }
 
@@ -2679,6 +2767,7 @@ class RedirectedCheckoutTest extends TestCase
             'allow_pix' => true,
             'allow_boleto' => true,
             'allow_credit_card' => true,
+            'request_address' => true,
             'pix_discount_type' => 'none',
             'pix_discount_value' => 0,
             'boleto_discount_type' => 'none',

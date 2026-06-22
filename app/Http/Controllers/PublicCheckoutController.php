@@ -29,6 +29,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
+                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
             ], 410);
         }
 
@@ -67,6 +68,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
+                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
             ], 410);
         }
 
@@ -103,6 +105,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
+                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
             ], 410);
         }
 
@@ -142,6 +145,7 @@ class PublicCheckoutController extends Controller
         return view('checkout.thank-you', [
             'checkoutSession' => $checkoutSession,
             'order' => $order,
+            'sellerLogoUrl' => $this->resolveSellerLogoUrl($checkoutSession->checkoutLink),
         ]);
     }
 

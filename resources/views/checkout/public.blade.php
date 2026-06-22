@@ -28,10 +28,60 @@
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--checkout-ink);
             background:
-                radial-gradient(circle at top left, rgba(255, 213, 128, 0.35), transparent 28%),
-                radial-gradient(circle at top right, rgba(162, 126, 82, 0.12), transparent 22%),
-                linear-gradient(180deg, #f9f4ea 0%, var(--checkout-bg) 100%);
+                radial-gradient(circle at top left, rgba(244, 196, 0, 0.16), transparent 28%),
+                linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%);
             min-height: 100vh;
+        }
+
+        .checkout-auth-page {
+            position: relative;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 32px;
+        }
+
+        .checkout-auth-logo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 2;
+        }
+
+        .checkout-auth-logo-image {
+            display: block;
+            width: 168px;
+            max-width: min(168px, calc(100vw - 40px));
+            height: auto;
+        }
+
+        .checkout-auth-backdrop {
+            position: absolute;
+            border-radius: 999px;
+            filter: blur(80px);
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .checkout-auth-backdrop-left {
+            top: -120px;
+            left: -60px;
+            width: 360px;
+            height: 360px;
+            background: rgba(244, 196, 0, 0.28);
+        }
+
+        .checkout-auth-backdrop-right {
+            right: -80px;
+            bottom: -80px;
+            width: 420px;
+            height: 420px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .checkout-auth-grid {
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - 64px);
         }
 
         [hidden] {
@@ -41,44 +91,7 @@
         .checkout-shell {
             max-width: 1260px;
             margin: 0 auto;
-            padding: 28px 20px 56px;
-        }
-
-        .hero,
-        .panel,
-        .summary-card {
-            background: var(--checkout-surface);
-            border: 1px solid var(--checkout-border);
-            box-shadow: var(--checkout-shadow);
-            backdrop-filter: blur(10px);
-        }
-
-        .hero {
-            border-radius: 28px;
-            padding: 28px;
-            margin-bottom: 24px;
-        }
-
-        .hero-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            align-items: flex-start;
-            flex-wrap: wrap;
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 999px;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: #fff;
-            background: {{ data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17') }};
+            padding: 24px 20px 60px;
         }
 
         h1,
@@ -88,45 +101,22 @@
             margin-top: 0;
         }
 
-        .hero-title {
-            margin: 16px 0 10px;
-            font-size: clamp(30px, 4vw, 52px);
-            line-height: 1;
-            letter-spacing: -0.04em;
+        .checkout-page-header {
+            margin-bottom: 18px;
+            padding-top: 0;
         }
 
-        .hero-copy {
+        .checkout-page-title {
             margin: 0;
-            max-width: 760px;
-            color: var(--checkout-muted);
-            line-height: 1.65;
-            font-size: 16px;
-        }
-
-        .hero-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 18px;
-        }
-
-        .meta-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            border-radius: 999px;
-            padding: 10px 14px;
-            background: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(31, 26, 23, 0.08);
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--checkout-ink);
+            font-size: clamp(28px, 3.4vw, 46px);
+            line-height: 0.96;
+            letter-spacing: -0.05em;
         }
 
         .grid {
             display: grid;
             grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.9fr);
-            gap: 24px;
+            gap: 26px;
             align-items: start;
         }
 
@@ -150,17 +140,21 @@
 
         .panel,
         .summary-card {
-            border-radius: 24px;
-            padding: 22px;
+            border-radius: 28px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.82);
+            box-shadow: var(--checkout-shadow);
+            backdrop-filter: blur(10px);
         }
 
         .panel-stack {
             display: grid;
-            gap: 18px;
+            gap: 20px;
         }
 
         .form-section {
-            padding: 2px 0 0;
+            padding: 0;
         }
 
         .section-head {
@@ -168,19 +162,20 @@
             justify-content: space-between;
             gap: 12px;
             align-items: flex-start;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
 
         .section-head h2 {
-            margin-bottom: 4px;
-            font-size: 24px;
-            letter-spacing: -0.03em;
+            margin-bottom: 6px;
+            font-size: 26px;
+            letter-spacing: -0.04em;
         }
 
         .section-head p {
             margin-bottom: 0;
             color: var(--checkout-muted);
-            line-height: 1.55;
+            line-height: 1.65;
+            font-size: 15px;
         }
 
         .field-grid {
@@ -249,7 +244,7 @@
         .person-form {
             display: grid;
             gap: 18px;
-            margin-top: 20px;
+            margin-top: 18px;
         }
 
         .field {
@@ -266,21 +261,23 @@
         }
 
         label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--checkout-ink);
+            letter-spacing: 0.01em;
         }
 
         input,
         select,
         textarea {
             width: 100%;
-            border: 1px solid rgba(31, 26, 23, 0.14);
-            border-radius: 14px;
-            background: #fff;
+            border: 1px solid rgba(31, 26, 23, 0.12);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.92);
             color: var(--checkout-ink);
-            padding: 13px 14px;
+            padding: 14px 15px;
             font: inherit;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
         }
 
         textarea {
@@ -299,7 +296,7 @@
         .field-error {
             min-height: 18px;
             margin: 0;
-            color: #b42318;
+            color: #a72f22;
             font-size: 12px;
         }
 
@@ -307,14 +304,14 @@
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
-            margin-top: 18px;
+            margin-top: 22px;
         }
 
         .btn {
             appearance: none;
             border: 0;
-            border-radius: 14px;
-            padding: 14px 18px;
+            border-radius: 16px;
+            padding: 14px 20px;
             font-weight: 800;
             font-size: 15px;
             cursor: pointer;
@@ -324,29 +321,26 @@
         .btn-primary {
             color: #fff;
             background: {{ data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17') }};
-            box-shadow: 0 14px 24px rgba(31, 26, 23, 0.14);
+            box-shadow: 0 16px 28px rgba(31, 26, 23, 0.16);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.78);
+            background: rgba(255, 255, 255, 0.84);
             border: 1px solid rgba(31, 26, 23, 0.12);
             color: var(--checkout-ink);
         }
 
         .help-card,
         .pix-card,
-        .summary-block {
-            border-radius: 20px;
-            border: 1px solid rgba(31, 26, 23, 0.08);
-            background: rgba(255, 255, 255, 0.68);
-            padding: 16px;
-        }
-
-        .checkout-logo-card {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 120px;
+        .summary-block,
+        .boleto-card,
+        .boleto-card__loading {
+            border-radius: 22px;
+            border: 1px solid rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 18px;
+            box-shadow: var(--checkout-shadow);
+            backdrop-filter: blur(10px);
         }
 
         .checkout-logo-image {
@@ -366,14 +360,16 @@
 
         .summary-title h2 {
             margin-bottom: 6px;
-            font-size: 24px;
+            font-size: 26px;
+            letter-spacing: -0.04em;
         }
 
         .summary-title p,
         .summary-note {
             margin-bottom: 0;
             color: var(--checkout-muted);
-            line-height: 1.55;
+            line-height: 1.65;
+            font-size: 15px;
         }
 
         .summary-stack {
@@ -408,7 +404,7 @@
             align-items: center;
             gap: 8px;
             border-radius: 999px;
-            padding: 8px 12px;
+            padding: 9px 13px;
             background: rgba(31, 26, 23, 0.06);
             color: var(--checkout-ink);
             font-size: 13px;
@@ -421,8 +417,8 @@
 
         .boleto-card {
             margin-top: 18px;
-            background: linear-gradient(180deg, rgba(31, 26, 23, 0.02), rgba(31, 26, 23, 0.05));
-            border: 1px solid rgba(31, 26, 23, 0.10);
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.82);
         }
 
         .boleto-card__header {
@@ -435,7 +431,8 @@
 
         .boleto-card__header h3 {
             margin-bottom: 4px;
-            font-size: 18px;
+            font-size: 20px;
+            letter-spacing: -0.03em;
         }
 
         .boleto-card__header p {
@@ -455,10 +452,6 @@
             grid-template-columns: auto minmax(0, 1fr);
             gap: 14px;
             align-items: center;
-            border-radius: 18px;
-            border: 1px solid rgba(31, 26, 23, 0.08);
-            background: rgba(255, 255, 255, 0.82);
-            padding: 18px;
             margin-bottom: 14px;
         }
 
@@ -496,10 +489,10 @@
 
         .boleto-card__value {
             display: block;
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.82);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
             border: 1px solid rgba(31, 26, 23, 0.08);
-            padding: 12px 14px;
+            padding: 13px 15px;
             color: var(--checkout-ink);
             word-break: break-word;
         }
@@ -534,10 +527,10 @@
         }
 
         .pix-code {
-            border-radius: 16px;
-            background: #fff;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.94);
             border: 1px dashed rgba(31, 26, 23, 0.14);
-            padding: 14px;
+            padding: 16px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
             line-height: 1.65;
@@ -591,9 +584,9 @@
         }
 
         .feedback {
-            border-radius: 16px;
-            padding: 14px;
-            margin-bottom: 16px;
+            border-radius: 18px;
+            padding: 15px 16px;
+            margin-bottom: 18px;
             border: 1px solid transparent;
             display: none;
         }
@@ -621,6 +614,24 @@
         }
 
         @media (max-width: 820px) {
+            .checkout-auth-page {
+                padding: 16px;
+            }
+
+            .checkout-auth-logo {
+                top: 14px;
+                right: 16px;
+            }
+
+            .checkout-auth-logo-image {
+                width: 144px;
+                max-width: min(144px, calc(100vw - 32px));
+            }
+
+            .checkout-auth-grid {
+                min-height: calc(100vh - 32px);
+            }
+
             .checkout-shell {
                 padding-inline: 14px;
             }
@@ -639,6 +650,18 @@
     </style>
 </head>
 <body>
+    <div class="checkout-auth-page">
+        <div class="checkout-auth-logo">
+            <img
+                src="{{ $sellerLogoUrl }}"
+                alt="{{ $checkoutLink->seller?->name ?? $checkoutPublicConfig['checkoutLink']['storeName'] ?? 'Juntter' }}"
+                class="checkout-auth-logo-image"
+                onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
+            >
+        </div>
+    <div class="checkout-auth-backdrop checkout-auth-backdrop-left" aria-hidden="true"></div>
+    <div class="checkout-auth-backdrop checkout-auth-backdrop-right" aria-hidden="true"></div>
+
 @php
     $checkoutPageMode = $checkoutPageMode ?? 'details';
 
@@ -660,6 +683,7 @@
             'storeName' => data_get($checkoutLink->visual_config, 'store_name', $checkoutLink->seller->name ?? 'Checkout Juntter'),
             'primaryColor' => data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17'),
             'offerMessage' => data_get($checkoutLink->visual_config, 'offer_message', 'Oferta disponível para pagamento direto no checkout.'),
+            'requestAddress' => $checkoutLink->request_address ?? true,
             'quantity' => $checkoutLink->quantity,
             'unitPrice' => (float) $checkoutLink->unit_price,
             'totalPrice' => (float) $checkoutLink->total_price,
@@ -740,34 +764,19 @@
 
 <script type="application/json" id="checkout-public-data">@json($checkoutPublicConfig)</script>
 
-<div class="checkout-shell" id="checkout-public-app" data-3ds-env="{{ app()->environment('local') ? 'SANDBOX' : 'PROD' }}">
-    <header class="hero">
-        <div class="hero-top">
-            <div>
-                <span class="eyebrow">{{ $checkoutPublicConfig['checkoutLink']['storeName'] }}</span>
-                <h1 class="hero-title">{{ $checkoutLink->name }}</h1>
-                <p class="hero-copy">{{ $checkoutPublicConfig['checkoutLink']['offerMessage'] }}</p>
-            </div>
+<div class="checkout-auth-grid">
+    <div class="checkout-shell" id="checkout-public-app" data-3ds-env="{{ app()->environment('local') ? 'SANDBOX' : 'PROD' }}">
+        <header class="checkout-page-header">
+            <h1 class="checkout-page-title">{{ $checkoutLink->name }}</h1>
+        </header>
 
-            <div class="help-card checkout-logo-card" style="max-width: 320px;">
-                <img
-                    src="{{ $sellerLogoUrl }}"
-                    alt="{{ $checkoutLink->seller?->name ?? 'Juntter' }}"
-                    class="checkout-logo-image"
-                    onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
-                >
-            </div>
-        </div>
+        <div class="grid @if(in_array($checkoutPageMode, ['payment-selector', 'payment-details'], true)) grid--payment @endif">
+            <section class="panel">
+                <div class="feedback @if(session('error')) is-visible is-error @endif @if(session('success')) is-visible is-success @endif" data-feedback>
+                    {{ session('error') ?? session('success') }}
+                </div>
 
-    </header>
-
-    <div class="grid @if(in_array($checkoutPageMode, ['payment-selector', 'payment-details'], true)) grid--payment @endif">
-        <section class="panel">
-            <div class="feedback @if(session('error')) is-visible is-error @endif @if(session('success')) is-visible is-success @endif" data-feedback>
-                {{ session('error') ?? session('success') }}
-            </div>
-
-            <div class="panel-stack">
+                <div class="panel-stack">
                 @if($checkoutPageMode === 'details')
                 <section class="form-section">
                     <div class="section-head section-head--with-switch">
@@ -818,6 +827,12 @@
                             </div>
                         </div>
 
+                        @unless($checkoutLink->request_address ?? true)
+                        <div class="actions">
+                            <button class="btn btn-primary" type="submit">Continuar para pagamento</button>
+                        </div>
+                        @endunless
+
                     </form>
 
                     <form id="checkout-identification-pj-form" class="person-form" data-checkout-form="identification" data-person-form="pj" hidden>
@@ -867,9 +882,16 @@
                             </div>
                         </div>
 
+                        @unless($checkoutLink->request_address ?? true)
+                        <div class="actions">
+                            <button class="btn btn-primary" type="submit">Continuar para pagamento</button>
+                        </div>
+                        @endunless
+
                     </form>
                 </section>
 
+                @if($checkoutLink->request_address ?? true)
                 <section class="form-section">
                     <div class="section-head">
                         <div>
@@ -929,6 +951,7 @@
                         </div>
                     </form>
                 </section>
+                @endif
                 @endif
 
 @if($showPaymentSelector || $showPaymentDetails)
@@ -1224,5 +1247,7 @@
     syncPersonTypeUi();
 })();
 </script>
+</div>
+</div>
 </body>
 </html>

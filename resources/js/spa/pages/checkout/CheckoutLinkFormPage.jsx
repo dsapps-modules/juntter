@@ -71,6 +71,7 @@ export default function CheckoutLinkFormPage() {
                     const checkoutLink = linkData.checkout_link;
                     form.setFieldsValue({
                         ...checkoutLink,
+                        request_address: checkoutLink.request_address ?? true,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
                         visual_config: checkoutLink.visual_config ? JSON.stringify({ ...visualDefaults, ...checkoutLink.visual_config }, null, 2) : JSON.stringify(visualDefaults, null, 2),
                     });
@@ -81,6 +82,7 @@ export default function CheckoutLinkFormPage() {
                         allow_pix: true,
                         allow_boleto: true,
                         allow_credit_card: true,
+                        request_address: true,
                         pix_discount_type: 'none',
                         boleto_discount_type: 'none',
                         free_shipping: true,
@@ -186,6 +188,9 @@ export default function CheckoutLinkFormPage() {
                         <Form form={form} layout="vertical" onFinish={handleSubmit}>
                             <Form.Item label="Nome do link" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
                                 <Input />
+                            </Form.Item>
+                            <Form.Item label="Solicitar endereço do cliente" name="request_address" valuePropName="checked">
+                                <Switch />
                             </Form.Item>
                             <Form.Item label="Produto" name="product_id" rules={[{ required: true, message: 'Selecione um produto.' }]}>
                                 <Select

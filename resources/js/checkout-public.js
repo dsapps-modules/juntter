@@ -1433,6 +1433,12 @@ function bindForms(state) {
                 hydrateSession(state.session, state.config);
                 syncRecipientDefault(state);
                 updateSummary(state.config, state);
+
+                if (!state.config.checkoutLink?.requestAddress) {
+                    window.location.assign(payload.next_url || state.config.urls.payment);
+                    return;
+                }
+
                 setFeedback('Identificação salva com sucesso.', 'success');
             } catch (error) {
                 if (error.status === 422 && error.payload?.errors) {

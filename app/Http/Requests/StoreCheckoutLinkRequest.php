@@ -22,6 +22,7 @@ class StoreCheckoutLinkRequest extends FormRequest
             'allow_pix' => ['nullable', 'boolean'],
             'allow_boleto' => ['nullable', 'boolean'],
             'allow_credit_card' => ['nullable', 'boolean'],
+            'request_address' => ['nullable', 'boolean'],
             'pix_discount_type' => ['nullable', 'in:none,fixed,percentage'],
             'pix_discount_value' => ['nullable', 'numeric', 'min:0'],
             'boleto_discount_type' => ['nullable', 'in:none,fixed,percentage'],
