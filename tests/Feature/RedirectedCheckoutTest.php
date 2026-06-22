@@ -409,6 +409,41 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('Continuar para pagamento', false);
     }
 
+    public function test_public_checkout_quantity_update_recalculates_the_total(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'quantity' => 2,
+            'unit_price' => 149.90,
+            'total_price' => 299.80,
+        ]);
+
+        $this->withSession([])
+            ->get(route('checkout.public.show', $link->public_token))
+            ->assertOk();
+
+        $session = CheckoutSession::query()
+            ->where('checkout_link_id', $link->id)
+            ->latest('id')
+            ->firstOrFail();
+
+        $response = $this->postJson(route('checkout.public.quantity', $session->session_token), [
+            'quantity' => 4,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('checkout_session.quantity', 4);
+        $response->assertJsonPath('checkout_session.subtotal', '599.60');
+        $response->assertJsonPath('checkout_session.total', '599.60');
+
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $session->id,
+            'quantity' => 4,
+            'subtotal' => 599.6,
+            'total' => 599.6,
+        ]);
+    }
+
     public function test_public_checkout_payment_method_selection_redirects_to_payment_details_page(): void
     {
         $user = $this->makeVendorUser();
@@ -475,6 +510,38 @@ class RedirectedCheckoutTest extends TestCase
             'status' => 'payment_started',
             'current_step' => 'payment',
         ]);
+    }
+
+    public function test_public_checkout_payment_details_page_hides_card_status_before_payment_is_submitted(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'payment_started',
+            'current_step' => 'payment',
+            'payment_method' => 'credit_card',
+        ]);
+
+        $response = $this->get(route('checkout.public.payment.details', $session->session_token));
+
+        $response->assertOk();
+        $response->assertSee('Nome no cartão', false);
+        $response->assertDontSee('data-step-panel="card-status"', false);
+        $response->assertDontSee('Pagamento em processamento', false);
     }
 
     public function test_public_checkout_payment_details_page_shows_pix_status_when_transaction_exists(): void
@@ -548,7 +615,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertSee('Aguardando confirmação', false);
         $response->assertSee('Pendente', false);
         $response->assertSee('data-step-panel="waiting"', false);
-        $response->assertSee('Escaneie o código ou copie o código Pix', false);
+        $response->assertSee('Escaneie o QR Code ou copie o código Pix', false);
         $response->assertDontSee('Assim que o Pix for pago, a confirmação será atualizada automaticamente.', false);
         $response->assertSee('00020126580014br.gov.bcb.pix...', false);
         $response->assertSee('QR Code Pix', false);
@@ -558,6 +625,75 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('Selecione o método de pagamento', false);
         $response->assertDontSee('Ver página de confirmação', false);
         $response->assertDontSee('data-thank-you-link', false);
+    }
+
+    public function test_public_checkout_payment_details_page_shows_short_card_status_when_transaction_exists(): void
+    {
+        $user = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'payment_pending',
+            'current_step' => 'payment',
+            'payment_method' => 'credit_card',
+        ]);
+
+        $order = Order::query()->create([
+            'seller_id' => $link->seller_id,
+            'checkout_link_id' => $link->id,
+            'checkout_session_id' => $session->id,
+            'product_id' => $link->product_id,
+            'order_number' => 'JNT-2026-010011',
+            'status' => 'pending',
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'quantity' => 1,
+            'unit_price' => 100.00,
+            'subtotal' => 100.00,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => 100.00,
+            'payment_method' => 'credit_card',
+        ]);
+
+        PaymentTransaction::query()->create([
+            'order_id' => $order->id,
+            'seller_id' => $user->id,
+            'gateway' => 'paytime',
+            'gateway_transaction_id' => 'card-checkout-123',
+            'gateway_status' => 'PENDING',
+            'internal_status' => 'pending',
+            'payment_method' => 'credit_card',
+            'amount' => 100.00,
+            'response_payload' => [
+                'requires_3ds' => true,
+                'session_id' => 'session-123',
+            ],
+        ]);
+
+        $response = $this->get(route('checkout.public.payment.details', $session->session_token));
+
+        $response->assertOk();
+        $response->assertSee('data-step-panel="card-status"', false);
+        $response->assertSee('Pagamento em processamento', false);
+        $response->assertDontSee('Seu pagamento foi enviado para análise', false);
+        $response->assertDontSee('A confirmação final depende do retorno do gateway', false);
+        $response->assertDontSee('Status', false);
     }
 
     public function test_public_checkout_payment_details_page_ignores_previous_transaction_when_payment_method_changes(): void
@@ -2782,17 +2918,20 @@ class RedirectedCheckoutTest extends TestCase
 
     private function makeCheckoutSession(CheckoutLink $link, array $overrides = []): CheckoutSession
     {
+        $quantity = $overrides['quantity'] ?? $link->quantity;
+
         return CheckoutSession::query()->create(array_merge([
             'checkout_link_id' => $link->id,
             'seller_id' => $link->seller_id,
             'product_id' => $link->product_id,
+            'quantity' => $quantity,
             'session_token' => CheckoutSession::generateSessionToken(),
             'status' => 'started',
             'current_step' => 'identification',
-            'subtotal' => $link->total_price,
+            'subtotal' => round($quantity * (float) $link->unit_price, 2),
             'discount_total' => 0,
             'shipping_total' => 0,
-            'total' => $link->total_price,
+            'total' => round($quantity * (float) $link->unit_price, 2),
             'last_activity_at' => now(),
         ], $overrides));
     }

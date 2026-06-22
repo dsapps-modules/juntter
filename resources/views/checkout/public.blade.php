@@ -391,6 +391,46 @@
             text-align: right;
         }
 
+        .summary-quantity-input {
+            width: 76px;
+            padding: 9px 10px;
+            text-align: center;
+        }
+
+        .summary-quantity-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .summary-quantity-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(17, 17, 17, 0.12);
+            border-radius: 10px;
+            background: #fff;
+            color: #111111;
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .summary-quantity-button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            border-color: rgba(17, 17, 17, 0.2);
+            background: rgba(17, 17, 17, 0.03);
+        }
+
+        .summary-quantity-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.45;
+        }
+
         .summary-total {
             font-size: 20px;
             font-weight: 800;
@@ -672,6 +712,7 @@
         'thankYouUrl' => route('checkout.public.thank-you', $checkoutSession->session_token),
         'urls' => [
             'identification' => route('checkout.public.identification', $checkoutSession->session_token),
+            'quantity' => route('checkout.public.quantity', $checkoutSession->session_token),
             'delivery' => route('checkout.public.delivery', $checkoutSession->session_token),
             'payment' => route('checkout.public.payment', $checkoutSession->session_token),
             'cnpjLookupTemplate' => route('checkout.public.cnpj.lookup', ['cnpj' => '__CNPJ__']),
@@ -695,6 +736,7 @@
             'name' => $checkoutLink->product->name,
         ],
         'session' => [
+            'quantity' => $checkoutSession->quantity ?? $checkoutLink->quantity,
             'customer_name' => $checkoutSession->customer_name,
             'customer_email' => $checkoutSession->customer_email,
             'customer_document_type' => $checkoutSession->customer_document_type,
@@ -748,7 +790,6 @@
 @php
     $paymentMethod = strtolower((string) data_get($paymentTransaction, 'payment_method', $checkoutSession->payment_method ?? ''));
     $paymentInternalStatus = strtolower((string) data_get($paymentTransaction, 'internal_status', $checkoutSession->status ?? ''));
-    $paymentInternalStatusLabel = $paymentInternalStatus === 'pending' ? 'Pendente' : $paymentInternalStatus;
     $paymentIsFinalized = in_array($paymentInternalStatus, ['paid', 'authorized'], true)
         || in_array(strtolower((string) ($order?->status ?? '')), ['paid', 'authorized'], true);
     $paymentPixCopyPaste = data_get($paymentTransaction, 'pix_copy_paste') ?: data_get($paymentTransaction, 'pix_qr_code');
@@ -758,7 +799,11 @@
     $showPaymentDetails = $checkoutPageMode === 'payment-details';
     $showPixStatus = $showPaymentDetails && $paymentMethod === 'pix' && ! $paymentIsFinalized;
     $showBoletoStatus = $showPaymentDetails && $paymentMethod === 'boleto' && ! $paymentIsFinalized;
-    $showCardStatus = $showPaymentDetails && $paymentMethod === 'credit_card' && ! $paymentIsFinalized;
+    $showCardStatus = $showPaymentDetails
+        && $paymentMethod === 'credit_card'
+        && $paymentTransaction !== null
+        && in_array($paymentInternalStatus, ['pending', 'waiting_auth'], true)
+        && ! $paymentIsFinalized;
     $showBoletoLoading = $showBoletoStatus && blank(data_get($paymentTransaction, 'boleto_url'));
 @endphp
 
@@ -1058,21 +1103,10 @@
                 <section class="pix-card" data-step-panel="card-status">
                     <div class="section-head" style="margin-bottom: 10px;">
                         <div>
-                            <h2 style="margin-bottom: 6px;">Pagamento em processamento</h2>
-                            <p data-payment-message>Seu pagamento foi enviado para análise. Aguarde a autenticação 3DS, se for solicitada.</p>
+                            <h2 style="margin-bottom: 6px;">Pagamento</h2>
+                            <p data-payment-message>Pagamento em processamento</p>
                         </div>
                         <span class="payment-badge" data-payment-method-badge>Cartão</span>
-                    </div>
-
-                    <div class="summary-block" style="margin-bottom: 14px;">
-                        <div class="summary-row">
-                            <span>Status</span>
-                            <strong data-payment-status-text>{{ $paymentInternalStatusLabel ?: 'Pendente' }}</strong>
-                        </div>
-                    </div>
-
-                    <div class="summary-note" style="margin-top: 12px;">
-                        A confirmação final depende do retorno do gateway.
                     </div>
                 </section>
                 @endif
@@ -1184,7 +1218,34 @@
                 </div>
                 <div class="summary-row">
                     <span>Quantidade</span>
-                    <strong data-summary-quantity>{{ $checkoutLink->quantity }}</strong>
+                    <div class="summary-quantity-control" data-summary-quantity-control>
+                        <button
+                            type="button"
+                            class="summary-quantity-button"
+                            data-summary-quantity-decrement
+                            aria-label="Diminuir quantidade"
+                        >
+                            -
+                        </button>
+                        <input
+                            data-summary-quantity-input
+                            class="summary-quantity-input"
+                            type="number"
+                            name="quantity"
+                            min="1"
+                            step="1"
+                            inputmode="numeric"
+                            value="{{ $checkoutSession->quantity ?? $checkoutLink->quantity }}"
+                        >
+                        <button
+                            type="button"
+                            class="summary-quantity-button"
+                            data-summary-quantity-increment
+                            aria-label="Aumentar quantidade"
+                        >
+                            +
+                        </button>
+                    </div>
                 </div>
                 <div class="summary-row">
                     <span>Subtotal</span>

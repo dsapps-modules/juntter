@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCheckoutDeliveryRequest;
 use App\Http\Requests\StoreCheckoutIdentificationRequest;
+use App\Http\Requests\UpdateCheckoutQuantityRequest;
 use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
@@ -38,13 +39,14 @@ class PublicCheckoutSessionController extends Controller
                 'checkout_link_id' => $checkoutLink->id,
                 'seller_id' => $checkoutLink->seller_id,
                 'product_id' => $checkoutLink->product_id,
+                'quantity' => max(1, (int) $checkoutLink->quantity),
                 'session_token' => CheckoutSession::generateSessionToken(),
                 'status' => 'started',
                 'current_step' => 'identification',
-                'subtotal' => $checkoutLink->total_price,
+                'subtotal' => round(max(1, (int) $checkoutLink->quantity) * (float) $checkoutLink->unit_price, 2),
                 'discount_total' => 0,
                 'shipping_total' => 0,
-                'total' => $checkoutLink->total_price,
+                'total' => round(max(1, (int) $checkoutLink->quantity) * (float) $checkoutLink->unit_price, 2),
                 'last_activity_at' => now(),
             ]);
         } else {
@@ -76,11 +78,13 @@ class PublicCheckoutSessionController extends Controller
             return $checkoutSession;
         }
 
-        $expectedTotal = round((float) $checkoutLink->total_price, 2);
+        $quantity = max(1, (int) ($checkoutSession->quantity ?? $checkoutLink->quantity));
+        $expectedSubtotal = round($quantity * (float) $checkoutLink->unit_price, 2);
 
         if (
-            (float) $checkoutSession->subtotal === $expectedTotal
-            && (float) $checkoutSession->total === $expectedTotal
+            (int) $checkoutSession->quantity === $quantity
+            && (float) $checkoutSession->subtotal === $expectedSubtotal
+            && (float) $checkoutSession->total === $expectedSubtotal
             && (int) $checkoutSession->product_id === (int) $checkoutLink->product_id
         ) {
             return $checkoutSession;
@@ -88,13 +92,52 @@ class PublicCheckoutSessionController extends Controller
 
         $checkoutSession->forceFill([
             'product_id' => $checkoutLink->product_id,
-            'subtotal' => $expectedTotal,
+            'quantity' => $quantity,
+            'subtotal' => $expectedSubtotal,
             'discount_total' => 0,
             'shipping_total' => 0,
-            'total' => $expectedTotal,
+            'total' => $expectedSubtotal,
         ])->save();
 
         return $checkoutSession->fresh();
+    }
+
+    public function updateQuantity(UpdateCheckoutQuantityRequest $request, string $sessionToken): JsonResponse
+    {
+        $checkoutSession = $this->findSession($sessionToken);
+        $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
+
+        if (Order::query()->where('checkout_session_id', $checkoutSession->id)->exists()) {
+            return response()->json([
+                'message' => 'A quantidade não pode ser alterada após iniciar o pagamento.',
+            ], 409);
+        }
+
+        $quantity = max(1, $request->integer('quantity'));
+        $subtotal = round($quantity * (float) $checkoutLink->unit_price, 2);
+
+        $checkoutSession->forceFill([
+            'quantity' => $quantity,
+            'subtotal' => $subtotal,
+            'discount_total' => 0,
+            'shipping_total' => 0,
+            'total' => $subtotal,
+            'last_activity_at' => now(),
+        ])->save();
+
+        CheckoutEvent::query()->create([
+            'checkout_session_id' => $checkoutSession->id,
+            'checkout_link_id' => $checkoutLink->id,
+            'seller_id' => $checkoutLink->seller_id,
+            'event_type' => 'quantity_updated',
+            'step' => $checkoutSession->current_step,
+            'metadata' => ['quantity' => $quantity],
+        ]);
+
+        return response()->json([
+            'message' => 'Quantidade atualizada com sucesso.',
+            'checkout_session' => $checkoutSession->fresh(),
+        ]);
     }
 
     public function lookupCompanyByCnpj(string $cnpj): JsonResponse

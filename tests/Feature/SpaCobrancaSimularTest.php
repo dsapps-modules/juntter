@@ -2,13 +2,22 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
 class SpaCobrancaSimularTest extends TestCase
 {
+    use DatabaseMigrations;
+
     public function test_the_simular_route_returns_the_spa_shell(): void
     {
-        $response = $this->get('/app/cobranca/simular');
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->get('/app/cobranca/simular');
 
         $response->assertOk();
         $response->assertSee('id="app"', false);

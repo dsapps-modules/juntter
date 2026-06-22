@@ -96,7 +96,7 @@ class PublicCheckoutPaymentController extends Controller
             );
         }
 
-        $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod);
+        $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod, $checkoutSession->quantity);
         $validatedRequest = $request->validated();
 
         $checkoutSession->update([

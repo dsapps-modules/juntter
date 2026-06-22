@@ -6,9 +6,9 @@ use App\Models\CheckoutLink;
 
 class CheckoutPricingService
 {
-    public function calculate(CheckoutLink $checkoutLink, string $paymentMethod): array
+    public function calculate(CheckoutLink $checkoutLink, string $paymentMethod, ?int $quantity = null): array
     {
-        $quantity = max(1, (int) $checkoutLink->quantity);
+        $quantity = max(1, $quantity ?? (int) $checkoutLink->quantity);
         $unitPrice = (float) $checkoutLink->unit_price;
         $subtotal = round($quantity * $unitPrice, 2);
         $discount = $this->calculateDiscount($checkoutLink, $paymentMethod, $subtotal);

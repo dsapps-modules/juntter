@@ -169,13 +169,14 @@ class PublicCheckoutController extends Controller
             'checkout_link_id' => $checkoutLink->id,
             'seller_id' => $checkoutLink->seller_id,
             'product_id' => $checkoutLink->product_id,
+            'quantity' => max(1, (int) $checkoutLink->quantity),
             'session_token' => CheckoutSession::generateSessionToken(),
             'status' => 'started',
             'current_step' => 'identification',
-            'subtotal' => $checkoutLink->total_price,
+            'subtotal' => round(max(1, (int) $checkoutLink->quantity) * (float) $checkoutLink->unit_price, 2),
             'discount_total' => 0,
             'shipping_total' => 0,
-            'total' => $checkoutLink->total_price,
+            'total' => round(max(1, (int) $checkoutLink->quantity) * (float) $checkoutLink->unit_price, 2),
             'last_activity_at' => now(),
         ]);
 
@@ -190,10 +191,12 @@ class PublicCheckoutController extends Controller
             return $checkoutSession;
         }
 
-        $expectedTotal = round((float) $checkoutLink->total_price, 2);
+        $quantity = max(1, (int) ($checkoutSession->quantity ?? $checkoutLink->quantity));
+        $expectedTotal = round($quantity * (float) $checkoutLink->unit_price, 2);
 
         if (
-            (float) $checkoutSession->subtotal === $expectedTotal
+            (int) $checkoutSession->quantity === $quantity
+            && (float) $checkoutSession->subtotal === $expectedTotal
             && (float) $checkoutSession->total === $expectedTotal
             && (int) $checkoutSession->product_id === (int) $checkoutLink->product_id
         ) {
@@ -202,6 +205,7 @@ class PublicCheckoutController extends Controller
 
         $checkoutSession->forceFill([
             'product_id' => $checkoutLink->product_id,
+            'quantity' => $quantity,
             'subtotal' => $expectedTotal,
             'discount_total' => 0,
             'shipping_total' => 0,

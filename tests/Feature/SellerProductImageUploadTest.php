@@ -33,7 +33,7 @@ class SellerProductImageUploadTest extends TestCase
 
         $response = $this->actingAs($seller)->post('/seller/products', [
             'name' => 'Produto com imagem',
-            'description' => 'Descrição',
+            'description' => 'Descriï¿½ï¿½o',
             'short_description' => 'Resumo',
             'sku' => 'SKU-001',
             'image' => UploadedFile::fake()->image('produto.png'),
@@ -74,7 +74,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto Teste',
             'slug' => Str::slug('Produto Teste'),
-            'description' => 'Descrição inicial',
+            'description' => 'Descriï¿½ï¿½o inicial',
             'short_description' => 'Resumo inicial',
             'sku' => 'SKU-123',
             'image_path' => $initialPath,
@@ -84,7 +84,7 @@ class SellerProductImageUploadTest extends TestCase
 
         $response = $this->actingAs($seller)->post('/seller/products/'.$product->id, [
             'name' => 'Produto Teste Atualizado',
-            'description' => 'Descrição atualizada',
+            'description' => 'Descriï¿½ï¿½o atualizada',
             'short_description' => 'Resumo atualizado',
             'sku' => 'SKU-456',
             'image' => UploadedFile::fake()->image('produto-novo.jpg'),
@@ -116,7 +116,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto Teste',
             'slug' => Str::slug('Produto Teste'),
-            'description' => 'Descrição',
+            'description' => 'Descriï¿½ï¿½o',
             'short_description' => 'Resumo',
             'sku' => 'SKU-789',
             'image_path' => 'products/produto-teste.png',
@@ -137,7 +137,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto com miniatura',
             'slug' => Str::slug('Produto com miniatura'),
-            'description' => 'Descrição',
+            'description' => 'Descriï¿½ï¿½o',
             'short_description' => 'Resumo',
             'sku' => 'SKU-555',
             'image_path' => 'products/produto-miniatura.png',
@@ -165,7 +165,7 @@ class SellerProductImageUploadTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto com imagem',
             'slug' => Str::slug('Produto com imagem'),
-            'description' => 'Descrição',
+            'description' => 'Descriï¿½ï¿½o',
             'short_description' => 'Resumo',
             'sku' => 'SKU-777',
             'image_path' => $path,
@@ -186,8 +186,8 @@ class SellerProductImageUploadTest extends TestCase
         $seller = $this->createSeller();
 
         $response = $this->actingAs($seller)->post('/seller/products', [
-            'name' => 'Produto inválido',
-            'description' => 'Descrição',
+            'name' => 'Produto invï¿½lido',
+            'description' => 'Descriï¿½ï¿½o',
             'short_description' => 'Resumo',
             'sku' => 'SKU-999',
             'image' => UploadedFile::fake()->create('documento.gif', 10, 'image/gif'),
@@ -204,16 +204,20 @@ class SellerProductImageUploadTest extends TestCase
     public function test_the_edit_form_uses_a_fixed_square_preview_area(): void
     {
         $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutProductFormPage.jsx'));
+        $stylesSource = file_get_contents(base_path('resources/css/app.css'));
 
         $this->assertIsString($componentSource);
-        $this->assertStringContainsString("aspectRatio: '1 / 1'", $componentSource);
-        $this->assertStringContainsString("maxWidth: '260px'", $componentSource);
-        $this->assertStringContainsString('mx-auto mt-4 flex items-center justify-center', $componentSource);
-        $this->assertStringContainsString('object-contain p-4', $componentSource);
+        $this->assertIsString($stylesSource);
+        $this->assertStringContainsString('className="spa-product-image-preview mx-auto mt-4"', $componentSource);
+        $this->assertStringContainsString('className="spa-product-image-preview-image"', $componentSource);
         $this->assertStringContainsString('function getProductImageUrl(productId, imagePath) {', $componentSource);
         $this->assertStringContainsString('return `/seller/products/${productId}/image`;', $componentSource);
         $this->assertStringContainsString('setCurrentImageUrl(getProductImageUrl(params.productId, data.product.image_path ?? data.product.image_url ?? \'\'));', $componentSource);
         $this->assertStringContainsString('if (currentImageUrl) {', $componentSource);
         $this->assertStringContainsString('setImagePreviewUrl(getProductImageUrl(params.productId, currentImagePath));', $componentSource);
+        $this->assertStringContainsString('.spa-product-image-preview {', $stylesSource);
+        $this->assertStringContainsString('height: 320px;', $stylesSource);
+        $this->assertStringContainsString('min-height: 320px;', $stylesSource);
+        $this->assertStringContainsString('object-fit: contain;', $stylesSource);
     }
 }

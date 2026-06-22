@@ -27,6 +27,10 @@ function formatCurrency(value) {
     }).format(Number.isNaN(numericValue) ? 0 : numericValue);
 }
 
+function roundCurrency(value) {
+    return Math.round((Number(value) || 0) * 100) / 100;
+}
+
 function normalizeDigits(value) {
     return String(value ?? '').replace(/\D+/g, '');
 }
@@ -296,15 +300,17 @@ function setBusy(form, busy, label = 'Processando...') {
 }
 
 async function requestJson(url, options = {}) {
+    const { headers: customHeaders = {}, ...fetchOptions } = options;
+
     const response = await fetch(url, {
         credentials: 'same-origin',
+        ...fetchOptions,
         headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
             'X-CSRF-TOKEN': getCsrfToken(),
-            ...(options.headers || {}),
+            ...customHeaders,
         },
-        ...options,
     });
 
     const contentType = response.headers.get('content-type') || '';
@@ -423,6 +429,7 @@ function hydrateSession(session, config) {
         return;
     }
 
+    fillInput('[name="quantity"]', session.quantity || config?.checkoutLink?.quantity || 1);
     fillInput('[name="zipcode"]', session.zipcode);
     fillInput('[name="street"]', session.street);
     fillInput('[name="number"]', session.number);
@@ -959,25 +966,60 @@ function schedulePersonTypeSync(state, switchInput) {
     }, 0);
 }
 
+function normalizeCheckoutQuantity(value) {
+    const quantity = Number.parseInt(String(value ?? '').trim(), 10);
+
+    return Number.isFinite(quantity) && quantity >= 1 ? quantity : 1;
+}
+
+function setSummaryFieldValue(selector, value) {
+    const element = document.querySelector(selector);
+
+    if (!element) {
+        return;
+    }
+
+    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement || element instanceof HTMLSelectElement) {
+        element.value = String(value);
+        return;
+    }
+
+    element.textContent = String(value);
+}
+
+function syncQuantityControlState(state, config) {
+    const quantityInput = document.querySelector('[data-summary-quantity-input]');
+    const decrementButton = document.querySelector('[data-summary-quantity-decrement]');
+    const incrementButton = document.querySelector('[data-summary-quantity-increment]');
+    const disabled = Boolean(state.order || state.paymentTransaction);
+
+    if (!quantityInput) {
+        return;
+    }
+
+    quantityInput.min = '1';
+    quantityInput.step = '1';
+    quantityInput.value = String(normalizeCheckoutQuantity(state.session?.quantity || config.checkoutLink?.quantity || 1));
+    quantityInput.disabled = disabled;
+
+    if (decrementButton) {
+        decrementButton.disabled = disabled;
+    }
+
+    if (incrementButton) {
+        incrementButton.disabled = disabled;
+    }
+}
+
 function updateSummary(config, state) {
     const session = state.session || config.session || {};
+    syncQuantityControlState(state, config);
 
-    const summaryMap = {
-        '[data-summary-subtotal]': formatCurrency(session.subtotal),
-        '[data-summary-discount]': formatCurrency(session.discount_total),
-        '[data-summary-shipping]': formatCurrency(session.shipping_total),
-        '[data-summary-total]': formatCurrency(session.total),
-        '[data-summary-product]': config.product?.name || config.checkoutLink?.name || 'Produto',
-        '[data-summary-quantity]': session.quantity || config.checkoutLink?.quantity || 1,
-    };
-
-    Object.entries(summaryMap).forEach(([selector, value]) => {
-        const element = document.querySelector(selector);
-
-        if (element) {
-            element.textContent = value;
-        }
-    });
+    setSummaryFieldValue('[data-summary-subtotal]', formatCurrency(session.subtotal));
+    setSummaryFieldValue('[data-summary-discount]', formatCurrency(session.discount_total));
+    setSummaryFieldValue('[data-summary-shipping]', formatCurrency(session.shipping_total));
+    setSummaryFieldValue('[data-summary-total]', formatCurrency(session.total));
+    setSummaryFieldValue('[data-summary-product]', config.product?.name || config.checkoutLink?.name || 'Produto');
 }
 
 
@@ -1008,8 +1050,8 @@ function updatePaymentDetails(state, transaction) {
     if (message) {
         if (method === 'pix') {
             message.textContent = 'Escaneie o código ou copie e cole o Pix.';
-        } else if (method === 'credit_card' && (transaction?.requires_3ds || transaction?.response_payload?.requires_3ds || rawStatus === 'waiting_auth')) {
-            message.textContent = 'A transação foi criada e aguarda a autenticação 3DS do cartão.';
+        } else if (method === 'credit_card') {
+            message.textContent = 'Pagamento em processamento';
         } else if (showBoletoLoading) {
             message.textContent = 'Estamos gerando o boleto. Aguarde alguns segundos para ver os dados e abrir o documento.';
         } else {
@@ -1368,8 +1410,82 @@ function bindForms(state) {
     const identificationForms = Array.from(document.querySelectorAll('[data-checkout-form="identification"]'));
     const deliveryForm = document.getElementById('checkout-delivery-form');
     const paymentForm = document.getElementById('checkout-payment-form');
+    const quantityInput = document.querySelector('[data-summary-quantity-input]');
+    const quantityDecrementButton = document.querySelector('[data-summary-quantity-decrement]');
+    const quantityIncrementButton = document.querySelector('[data-summary-quantity-increment]');
     let zipcodeLookupTimer = null;
     let zipcodeLookupRequestId = 0;
+    let quantityUpdateTimer = null;
+    let quantityUpdateRequestId = 0;
+
+    const syncQuantityFromInput = async () => {
+        if (!(quantityInput instanceof HTMLInputElement) || quantityInput.disabled) {
+            return;
+        }
+
+        const previousQuantity = normalizeCheckoutQuantity(state.session?.quantity || state.config.checkoutLink?.quantity || 1);
+        const nextQuantity = normalizeCheckoutQuantity(quantityInput.value);
+
+        quantityInput.value = String(nextQuantity);
+
+        if (nextQuantity === previousQuantity) {
+            updateSummary(state.config, state);
+            return;
+        }
+
+        state.session = {
+            ...state.session,
+            quantity: nextQuantity,
+            subtotal: roundCurrency(nextQuantity * Number(state.config.checkoutLink?.unitPrice || 0)),
+            total: roundCurrency(nextQuantity * Number(state.config.checkoutLink?.unitPrice || 0)),
+            discount_total: 0,
+            shipping_total: 0,
+        };
+        updateSummary(state.config, state);
+
+        const requestId = ++quantityUpdateRequestId;
+
+        try {
+            const payload = await requestJson(state.config.urls.quantity, {
+                method: 'POST',
+                body: JSON.stringify({ quantity: nextQuantity }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (requestId !== quantityUpdateRequestId) {
+                return;
+            }
+
+            state.session = payload.checkout_session || state.session;
+            hydrateSession(state.session, state.config);
+            updateSummary(state.config, state);
+        } catch (error) {
+            if (requestId !== quantityUpdateRequestId) {
+                return;
+            }
+
+            state.session = {
+                ...state.session,
+                quantity: previousQuantity,
+                subtotal: roundCurrency(previousQuantity * Number(state.config.checkoutLink?.unitPrice || 0)),
+                total: roundCurrency(previousQuantity * Number(state.config.checkoutLink?.unitPrice || 0)),
+            };
+            hydrateSession(state.session, state.config);
+            updateSummary(state.config, state);
+            setFeedback(error.payload?.message || error.message || 'Não foi possível atualizar a quantidade.', 'error');
+        }
+    };
+
+    const changeQuantityBy = (step) => {
+        if (!(quantityInput instanceof HTMLInputElement) || quantityInput.disabled) {
+            return;
+        }
+
+        quantityInput.value = String(normalizeCheckoutQuantity(Number(quantityInput.value || 0) + step));
+        void syncQuantityFromInput();
+    };
 
     identificationForms.forEach((identificationForm) => {
         identificationForm.addEventListener('input', (event) => {
@@ -1519,6 +1635,57 @@ function bindForms(state) {
         zipcodeInput?.addEventListener('blur', () => {
             applyZipcodeMask(zipcodeInput);
             void lookupAddress();
+        });
+    }
+
+    if (quantityInput instanceof HTMLInputElement) {
+        quantityInput.addEventListener('input', () => {
+            if (quantityUpdateTimer) {
+                clearTimeout(quantityUpdateTimer);
+            }
+
+            const value = quantityInput.value;
+            if (value === '') {
+                return;
+            }
+
+            quantityUpdateTimer = window.setTimeout(() => {
+                void syncQuantityFromInput();
+            }, 350);
+        });
+
+        quantityInput.addEventListener('change', () => {
+            if (quantityUpdateTimer) {
+                clearTimeout(quantityUpdateTimer);
+            }
+
+            void syncQuantityFromInput();
+        });
+
+        quantityInput.addEventListener('blur', () => {
+            if (quantityUpdateTimer) {
+                clearTimeout(quantityUpdateTimer);
+            }
+
+            if (quantityInput.value === '') {
+                quantityInput.value = String(normalizeCheckoutQuantity(state.session?.quantity || state.config.checkoutLink?.quantity || 1));
+                updateSummary(state.config, state);
+                return;
+            }
+
+            void syncQuantityFromInput();
+        });
+    }
+
+    if (quantityDecrementButton instanceof HTMLButtonElement) {
+        quantityDecrementButton.addEventListener('click', () => {
+            changeQuantityBy(-1);
+        });
+    }
+
+    if (quantityIncrementButton instanceof HTMLButtonElement) {
+        quantityIncrementButton.addEventListener('click', () => {
+            changeQuantityBy(1);
         });
     }
 
