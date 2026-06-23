@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace Tests\Feature;
 
@@ -50,24 +50,75 @@ class CheckoutVisualConfigTest extends TestCase
         $formSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
 
         $this->assertIsString($formSource);
+        $this->assertStringContainsString("title={isEditing ? 'Editar link de checkout' : 'Criar'}", $formSource);
+        $this->assertStringNotContainsString('Configure o produto, preÃ§o congelado, regras de pagamento e a personalizaÃ§Ã£o visual.', $formSource);
         $this->assertStringContainsString('navbar_background_color: \'#FFFFFF\'', $formSource);
         $this->assertStringContainsString('primary_color: \'#FFC800\'', $formSource);
         $this->assertStringContainsString('primary_color: visualConfig.primary_color ?? visualDefaults.primary_color', $formSource);
         $this->assertStringContainsString('primary_color: visualDefaults.primary_color', $formSource);
-        $this->assertStringContainsString('const { primary_color, navbar_background_color, ...restValues } = values;', $formSource);
+        $this->assertStringContainsString('const {', $formSource);
+        $this->assertStringContainsString('store_name,', $formSource);
+        $this->assertStringContainsString('primary_color,', $formSource);
+        $this->assertStringContainsString('navbar_background_color,', $formSource);
+        $this->assertStringContainsString('offer_message,', $formSource);
+        $this->assertStringContainsString('footer_text,', $formSource);
+        $this->assertStringContainsString('...restValues', $formSource);
         $this->assertStringContainsString('primary_color: primary_color || visualDefaults.primary_color,', $formSource);
         $this->assertStringContainsString('navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color', $formSource);
         $this->assertStringContainsString('navbar_background_color: visualDefaults.navbar_background_color', $formSource);
         $this->assertStringContainsString('navbar_background_color: navbar_background_color || visualDefaults.navbar_background_color,', $formSource);
-        $this->assertStringContainsString('label="Cor primária"', $formSource);
+        $this->assertStringContainsString('store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name', $formSource);
+        $this->assertStringContainsString('offer_message: visualConfig.offer_message ?? visualDefaults.offer_message', $formSource);
+        $this->assertStringContainsString('footer_text: visualConfig.footer_text ?? visualDefaults.footer_text', $formSource);
+        $this->assertStringContainsString('label="Cor primÃ¡ria"', $formSource);
         $this->assertStringContainsString('label="Cor de fundo da navbar"', $formSource);
         $this->assertStringContainsString('label="Imagem do produto"', $formSource);
+        $this->assertStringContainsString('hidden label="Nome da loja"', $formSource);
+        $this->assertStringContainsString('hidden label="Mensagem da oferta"', $formSource);
+        $this->assertStringContainsString('hidden label="Texto do rodapé"', $formSource);
+        $this->assertStringContainsString('Como o checkout vai chamar sua loja no topo da pÃ¡gina.', $formSource);
+        $this->assertStringContainsString('Texto curto para destacar a oferta no checkout.', $formSource);
+        $this->assertStringContainsString('Mensagem opcional exibida no rodapÃ© do checkout.', $formSource);
         $this->assertStringContainsString('Envie uma imagem quadrada de 250x250 px, preferencialmente.', $formSource);
         $this->assertStringContainsString('accept="image/*"', $formSource);
         $this->assertStringContainsString('productImagePreviewUrl', $formSource);
         $this->assertStringContainsString('FormData', $formSource);
         $this->assertStringContainsString("payload.append('product_image', productImageFile);", $formSource);
         $this->assertStringContainsString("payload.append('_method', 'PUT');", $formSource);
+        $this->assertStringContainsString('visual_config: JSON.stringify({', $formSource);
         $this->assertStringContainsString('type="color"', $formSource);
+
+        $orderedLabels = [
+            'Nome do link',
+            'Produto',
+            'Quantidade',
+            'PreÃ§o unitÃ¡rio',
+            'Status',
+            'Permitir Pix',
+            'Desconto Pix',
+            'Valor do desconto Pix',
+            'Permitir Boleto',
+            'Desconto Boleto',
+            'Valor do desconto Boleto',
+            'Permitir CartÃ£o',
+            'Solicitar endereÃ§o do cliente',
+            'Expira em',
+            'Frete grÃ¡tis',
+            'Cor primÃ¡ria',
+            'URL de sucesso',
+            'URL de falha',
+        ];
+
+        $lastPosition = -1;
+
+        foreach ($orderedLabels as $label) {
+            $position = strpos($formSource, $label);
+
+            $this->assertNotFalse($position, sprintf('Expected to find "%s" in the checkout link form.', $label));
+            $this->assertGreaterThan($lastPosition, $position, sprintf('Expected "%s" to appear after the previous form field.', $label));
+            $lastPosition = $position;
+        }
+
+        $this->assertStringNotContainsString('ConfiguraÃ§Ã£o visual JSON', $formSource);
     }
 }

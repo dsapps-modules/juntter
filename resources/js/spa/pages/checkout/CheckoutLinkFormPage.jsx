@@ -1,4 +1,4 @@
-import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, Switch, Typography, message } from 'antd';
+﻿import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, Switch, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
@@ -80,9 +80,11 @@ export default function CheckoutLinkFormPage() {
                         ...checkoutLink,
                         request_address: checkoutLink.request_address ?? true,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
+                        store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name,
                         primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
                         navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color,
-                        visual_config: checkoutLink.visual_config ? JSON.stringify({ ...visualDefaults, ...visualConfig }, null, 2) : JSON.stringify(visualDefaults, null, 2),
+                        offer_message: visualConfig.offer_message ?? visualDefaults.offer_message,
+                        footer_text: visualConfig.footer_text ?? visualDefaults.footer_text,
                     });
                 } else {
                     form.setFieldsValue({
@@ -96,9 +98,11 @@ export default function CheckoutLinkFormPage() {
                         boleto_discount_type: 'none',
                         free_shipping: true,
                         unit_price: formatCurrencyInput(0),
+                        store_name: visualDefaults.store_name,
                         primary_color: visualDefaults.primary_color,
                         navbar_background_color: visualDefaults.navbar_background_color,
-                        visual_config: JSON.stringify(visualDefaults, null, 2),
+                        offer_message: visualDefaults.offer_message,
+                        footer_text: visualDefaults.footer_text,
                     });
                 }
             } catch (error) {
@@ -138,17 +142,25 @@ export default function CheckoutLinkFormPage() {
         setSaving(true);
 
         try {
-            const { primary_color, navbar_background_color, ...restValues } = values;
-            const parsedVisualConfig = restValues.visual_config ? JSON.parse(restValues.visual_config) : {};
+            const {
+                store_name,
+                primary_color,
+                navbar_background_color,
+                offer_message,
+                footer_text,
+                ...restValues
+            } = values;
             const payload = new FormData();
 
             Object.entries({
                 ...restValues,
                 unit_price: parseCurrencyInput(restValues.unit_price),
                 visual_config: JSON.stringify({
-                    ...parsedVisualConfig,
+                    store_name,
                     primary_color: primary_color || visualDefaults.primary_color,
                     navbar_background_color: navbar_background_color || visualDefaults.navbar_background_color,
+                    offer_message,
+                    footer_text,
                 }),
             }).forEach(([key, value]) => {
                 if (value === null || value === undefined) {
@@ -225,7 +237,7 @@ export default function CheckoutLinkFormPage() {
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
                 <Card
-                    title={isEditing ? 'Editar link de checkout' : 'Novo link de checkout'}
+                    title={isEditing ? 'Editar link de checkout' : 'Criar'}
                     extra={
                         isEditing ? (
                             <Button onClick={() => navigate('/seller/checkout-links')}>
@@ -234,19 +246,12 @@ export default function CheckoutLinkFormPage() {
                         ) : null
                     }
                 >
-                    <Typography.Paragraph type="secondary">
-                        Configure o produto, preço congelado, regras de pagamento e a personalização visual.
-                    </Typography.Paragraph>
-
                     {loading ? (
                         <Spin />
                     ) : (
                         <Form form={form} layout="vertical" onFinish={handleSubmit}>
                             <Form.Item label="Nome do link" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
                                 <Input />
-                            </Form.Item>
-                            <Form.Item label="Solicitar endereço do cliente" name="request_address" valuePropName="checked">
-                                <Switch />
                             </Form.Item>
                             <Form.Item label="Produto" name="product_id" rules={[{ required: true, message: 'Selecione um produto.' }]}>
                                 <Select
@@ -277,6 +282,11 @@ export default function CheckoutLinkFormPage() {
 
                             <Row gutter={16}>
                                 <Col xs={24} md={8}>
+                                    <Form.Item label="Permitir Pix" name="allow_pix" valuePropName="checked">
+                                        <Switch />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
                                     <Form.Item label="Desconto Pix" name="pix_discount_type">
                                         <Select options={discountTypeOptions} />
                                     </Form.Item>
@@ -284,29 +294,6 @@ export default function CheckoutLinkFormPage() {
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Valor do desconto Pix" name="pix_discount_value">
                                         <InputNumber className="w-full" min={0} step={0.01} />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={8}>
-                                    <Form.Item label="Desconto Boleto" name="boleto_discount_type">
-                                        <Select options={discountTypeOptions} />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
-
-                            <Row gutter={16}>
-                                <Col xs={24} md={8}>
-                                    <Form.Item label="Valor do desconto Boleto" name="boleto_discount_value">
-                                        <InputNumber className="w-full" min={0} step={0.01} />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={8}>
-                                    <Form.Item label="Frete grátis" name="free_shipping" valuePropName="checked">
-                                        <Switch />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={8}>
-                                    <Form.Item label="Permitir Pix" name="allow_pix" valuePropName="checked">
-                                        <Switch />
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -318,50 +305,88 @@ export default function CheckoutLinkFormPage() {
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>
-                                    <Form.Item label="Permitir Cartão" name="allow_credit_card" valuePropName="checked">
-                                        <Switch />
+                                    <Form.Item label="Desconto Boleto" name="boleto_discount_type">
+                                        <Select options={discountTypeOptions} />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>
-                                    <Form.Item label="Expira em" name="expires_at">
-                                        <Input type="datetime-local" />
+                                    <Form.Item label="Valor do desconto Boleto" name="boleto_discount_value">
+                                        <InputNumber className="w-full" min={0} step={0.01} />
                                     </Form.Item>
                                 </Col>
                             </Row>
 
+                            <Row gutter={16}>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Permitir Cartão" name="allow_credit_card" valuePropName="checked">
+                                        <Switch />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Solicitar endereço do cliente" name="request_address" valuePropName="checked">
+                                        <Switch />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Expira em" name="expires_at">
+                                        <Input type="datetime-local" />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Frete grátis" name="free_shipping" valuePropName="checked">
+                                        <Switch />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+
+                            <Row gutter={16}>
+                                <Col xs={24} md={8}>
+                                    <Form.Item label="Cor primária" name="primary_color">
+                                        <Input type="color" style={{ width: 120, padding: 4 }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <Form.Item label="Cor de fundo da navbar" name="navbar_background_color">
+                                        <Input type="color" style={{ width: 120, padding: 4 }} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <Form.Item
+                                        label="Imagem do produto"
+                                        extra="Envie uma imagem quadrada de 250x250 px, preferencialmente."
+                                    >
+                                        <input
+                                            accept="image/*"
+                                            type="file"
+                                            onChange={handleProductImageChange}
+                                        />
+                                        {productImagePreviewUrl ? (
+                                            <div style={{ marginTop: 12 }}>
+                                                <img
+                                                    alt="Pré-visualização da imagem do produto"
+                                                    src={productImagePreviewUrl}
+                                                    style={{ borderRadius: 12, display: 'block', height: 96, objectFit: 'cover', width: 96 }}
+                                                />
+                                            </div>
+                                        ) : null}
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+
+                            <Form.Item hidden label="Nome da loja" name="store_name" extra="Como o checkout vai chamar sua loja no topo da página.">
+                                <Input placeholder="Ex.: Juntter Shop" />
+                            </Form.Item>
+                            <Form.Item hidden label="Mensagem da oferta" name="offer_message" extra="Texto curto para destacar a oferta no checkout.">
+                                <Input.TextArea rows={3} placeholder="Ex.: Oferta especial disponível por tempo limitado." />
+                            </Form.Item>
+                            <Form.Item hidden label="Texto do rodapé" name="footer_text" extra="Mensagem opcional exibida no rodapé do checkout.">
+                                <Input.TextArea rows={3} placeholder="Ex.: Atendimento de segunda a sexta, das 9h às 18h." />
+                            </Form.Item>
                             <Form.Item label="URL de sucesso" name="success_url">
                                 <Input />
                             </Form.Item>
                             <Form.Item label="URL de falha" name="failure_url">
                                 <Input />
-                            </Form.Item>
-                            <Form.Item label="Cor primária" name="primary_color">
-                                <Input type="color" style={{ width: 120, padding: 4 }} />
-                            </Form.Item>
-                            <Form.Item label="Cor de fundo da navbar" name="navbar_background_color">
-                                <Input type="color" style={{ width: 120, padding: 4 }} />
-                            </Form.Item>
-                            <Form.Item
-                                label="Imagem do produto"
-                                extra="Envie uma imagem quadrada de 250x250 px, preferencialmente."
-                            >
-                                <input
-                                    accept="image/*"
-                                    type="file"
-                                    onChange={handleProductImageChange}
-                                />
-                                {productImagePreviewUrl ? (
-                                    <div style={{ marginTop: 12 }}>
-                                        <img
-                                            alt="Pré-visualização da imagem do produto"
-                                            src={productImagePreviewUrl}
-                                            style={{ borderRadius: 12, display: 'block', height: 96, objectFit: 'cover', width: 96 }}
-                                        />
-                                    </div>
-                                ) : null}
-                            </Form.Item>
-                            <Form.Item label="Configuração visual JSON" name="visual_config">
-                                <Input.TextArea rows={8} />
                             </Form.Item>
 
                             <Space>
@@ -382,3 +407,4 @@ export default function CheckoutLinkFormPage() {
         </Row>
     );
 }
+
