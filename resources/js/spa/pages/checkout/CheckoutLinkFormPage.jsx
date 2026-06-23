@@ -317,24 +317,24 @@ export default function CheckoutLinkFormPage() {
                             </Row>
 
                             <Row gutter={16}>
-                                <Col xs={24} md={6}>
+                                <Col xs={24} md={5}>
                                     <Form.Item label="Permitir Cartão" name="allow_credit_card" valuePropName="checked">
                                         <Switch />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} md={6}>
+                                <Col xs={24} md={5}>
                                     <Form.Item label="Solicitar endereço do cliente" name="request_address" valuePropName="checked">
+                                        <Switch />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Frete grátis" name="free_shipping" valuePropName="checked">
                                         <Switch />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={6}>
                                     <Form.Item label="Expira em" name="expires_at">
                                         <Input type="datetime-local" />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={6}>
-                                    <Form.Item label="Frete grátis" name="free_shipping" valuePropName="checked">
-                                        <Switch />
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -407,4 +407,3 @@ export default function CheckoutLinkFormPage() {
         </Row>
     );
 }
-
