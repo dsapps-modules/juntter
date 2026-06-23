@@ -123,12 +123,19 @@ class BoletoService
     {
         $identificador = $boleto['_id']
             ?? $boleto['id']
+            ?? $boleto['transaction_id']
             ?? data_get($boleto, 'boleto._id')
             ?? data_get($boleto, 'boleto.id')
+            ?? data_get($boleto, 'boleto.transaction_id')
             ?? data_get($boleto, 'api_boleto._id')
             ?? data_get($boleto, 'api_boleto.id')
+            ?? data_get($boleto, 'api_boleto.transaction_id')
+            ?? data_get($boleto, 'api_boleto.data._id')
+            ?? data_get($boleto, 'api_boleto.data.id')
+            ?? data_get($boleto, 'api_boleto.data.transaction_id')
             ?? data_get($boleto, 'data._id')
             ?? data_get($boleto, 'data.id')
+            ?? data_get($boleto, 'data.transaction_id')
             ?? null;
 
         if (! is_scalar($identificador) || trim((string) $identificador) === '') {

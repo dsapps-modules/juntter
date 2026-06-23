@@ -183,6 +183,51 @@ class PaytimeClientTest extends TestCase
 
     }
 
+    public function test_create_boleto_payment_uses_nested_transaction_id_when_top_level_id_is_missing(): void
+    {
+        Log::spy();
+
+        $seller = $this->makeVendorUser('127700');
+        $product = $this->makeProduct($seller);
+        $checkoutLink = $this->makeCheckoutLink($seller, $product);
+        $checkoutSession = $this->makeCheckoutSession($checkoutLink, [
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'zipcode' => '01001000',
+        ]);
+        $order = $this->makeOrder($seller, $checkoutLink, $checkoutSession, $product, [
+            'payment_method' => 'boleto',
+        ]);
+
+        $apiClient = $this->createMock(ApiClientService::class);
+        $apiClient->expects($this->once())
+            ->method('post')
+            ->willReturn([
+                'status' => 'PROCESSING',
+                'api_boleto' => [
+                    'data' => [
+                        'transaction_id' => 'boleto-api-nested-123',
+                        'url' => 'https://example.test/boleto.pdf',
+                        'barcode' => '12345678901234567890123456789012345678901234',
+                        'digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                    ],
+                ],
+            ]);
+
+        $boletoService = new BoletoService($apiClient);
+        $service = new PaytimeClient($apiClient, $boletoService);
+        $response = $service->createBoletoPayment($order);
+
+        $this->assertSame('boleto-api-nested-123', $response['gateway_transaction_id']);
+        $this->assertSame('https://example.test/boleto.pdf', $response['boleto_url']);
+        $this->assertSame('12345678901234567890123456789012345678901234', $response['boleto_barcode']);
+        $this->assertSame('23793.38128 60000.000000 01000.000000 1 98760000002000', $response['boleto_digitable_line']);
+    }
+
     public function test_create_credit_card_payment_uses_the_gateway_and_normalizes_the_response(): void
     {
         Log::spy();

@@ -178,25 +178,42 @@ class PublicCheckoutPaymentController extends Controller
 
         if ($gatewayTransactionId === null) {
             $gatewayErrorMessage = $this->resolveGatewayErrorMessage($gatewayResponse);
-            $message = $gatewayErrorMessage ?? 'A resposta do gateway não retornou o identificador da transação.';
+            $boletoIsUsableWithoutTransactionId = $paymentMethod === 'boleto'
+                && (
+                    filled($gatewayResponse['boleto_url'] ?? null)
+                    || filled($gatewayResponse['boleto_barcode'] ?? null)
+                    || filled($gatewayResponse['boleto_digitable_line'] ?? null)
+                );
 
-            Log::warning('Public checkout gateway error response received', [
+            if (! $boletoIsUsableWithoutTransactionId) {
+                $message = $gatewayErrorMessage ?? 'A resposta do gateway não retornou o identificador da transação.';
+
+                Log::warning('Public checkout gateway error response received', [
+                    'session_token' => $checkoutSession->session_token,
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'payment_method' => $paymentMethod,
+                    'message' => $message,
+                    'gateway_response' => $this->sanitizeGatewayResponseForLog($gatewayResponse),
+                ]);
+
+                return $this->respondToPaymentFailure(
+                    request: $request,
+                    checkoutSession: $checkoutSession,
+                    order: $order,
+                    message: $message,
+                    gatewayResponse: $gatewayResponse,
+                    statusCode: $gatewayErrorMessage !== null ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_BAD_GATEWAY
+                );
+            }
+
+            Log::warning('Public checkout boleto response is usable but missing transaction id', [
                 'session_token' => $checkoutSession->session_token,
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'payment_method' => $paymentMethod,
-                'message' => $message,
                 'gateway_response' => $this->sanitizeGatewayResponseForLog($gatewayResponse),
             ]);
-
-            return $this->respondToPaymentFailure(
-                request: $request,
-                checkoutSession: $checkoutSession,
-                order: $order,
-                message: $message,
-                gatewayResponse: $gatewayResponse,
-                statusCode: $gatewayErrorMessage !== null ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_BAD_GATEWAY
-            );
         }
 
         $paymentTransaction = PaymentTransaction::query()->updateOrCreate([

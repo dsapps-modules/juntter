@@ -460,8 +460,13 @@ class PaytimeClient
             ?? data_get($transaction, 'data.response.id')
             ?? data_get($transaction, 'api_boleto._id')
             ?? data_get($transaction, 'api_boleto.id')
+            ?? data_get($transaction, 'api_boleto.transaction_id')
+            ?? data_get($transaction, 'api_boleto.data._id')
+            ?? data_get($transaction, 'api_boleto.data.id')
+            ?? data_get($transaction, 'api_boleto.data.transaction_id')
             ?? data_get($transaction, 'data._id')
             ?? data_get($transaction, 'data.id')
+            ?? data_get($transaction, 'data.transaction_id')
             ?? null;
 
         if (! is_scalar($transactionId) || trim((string) $transactionId) === '') {

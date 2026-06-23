@@ -1299,7 +1299,12 @@ async function refreshBoletoUntilReady(state) {
     setBoletoLoadingState(state, true);
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-        await refreshExistingPayment(state);
+        const refreshed = await refreshExistingPayment(state);
+
+        if (!refreshed) {
+            setBoletoLoadingState(state, false);
+            return;
+        }
 
         if (hasCompleteBoletoDetails(state.paymentTransaction) || hasFailedBoletoDetails(state.paymentTransaction)) {
             setBoletoLoadingState(state, false);
@@ -1828,7 +1833,11 @@ function bindForms(state) {
                     showWaitingPanel(state, state.paymentTransaction);
                 } else if (state.paymentTransaction?.payment_method === 'boleto') {
                     if (!hasCompleteBoletoDetails(state.paymentTransaction)) {
-                        await refreshExistingPayment(state);
+                        const refreshed = await refreshExistingPayment(state);
+
+                        if (!refreshed) {
+                            setBoletoLoadingState(state, false);
+                        }
                     }
                 } else if (state.paymentTransaction?.payment_method === 'credit_card') {
                     const requires3ds = Boolean(
@@ -1992,8 +2001,10 @@ async function refreshExistingPayment(state) {
         syncRecipientDefault(state);
         updateSummary(state.config, state);
         updatePaymentDetails(state, state.paymentTransaction);
+        return true;
     } catch (error) {
         setFeedback(error.payload?.message || error.message || 'Não foi possível atualizar o pagamento.', 'error');
+        return false;
     }
 }
 

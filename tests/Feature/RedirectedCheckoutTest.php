@@ -2782,6 +2782,74 @@ class RedirectedCheckoutTest extends TestCase
         $this->assertDatabaseCount('payment_transactions', 0);
     }
 
+    public function test_boleto_payment_accepts_usable_response_even_when_transaction_id_is_missing(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createBoletoPayment')
+            ->willReturn([
+                'gateway_status' => 'PROCESSING',
+                'internal_status' => 'pending',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                'api_boleto' => [
+                    'data' => [
+                        'url' => 'https://example.test/boleto.pdf',
+                        'barcode' => '12345678901234567890123456789012345678901234',
+                        'digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                    ],
+                ],
+            ]);
+
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('payment_transaction.boleto_url', 'https://example.test/boleto.pdf');
+        $response->assertJsonPath('payment_transaction.gateway_transaction_id', null);
+
+        $order = Order::query()
+            ->where('checkout_session_id', $session->id)
+            ->where('payment_method', 'boleto')
+            ->latest()
+            ->firstOrFail();
+
+        $this->assertTrue(PaymentTransaction::query()
+            ->where('order_id', $order->id)
+            ->where('payment_method', 'boleto')
+            ->where('boleto_url', 'https://example.test/boleto.pdf')
+            ->whereNull('gateway_transaction_id')
+            ->exists());
+    }
+
     public function test_checkout_status_refreshes_incomplete_boleto_details(): void
     {
         $seller = $this->makeVendorUser();
