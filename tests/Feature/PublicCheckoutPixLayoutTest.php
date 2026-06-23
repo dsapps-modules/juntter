@@ -70,6 +70,8 @@ class PublicCheckoutPixLayoutTest extends TestCase
         $response->assertSee('Escaneie o QR Code', false);
         $response->assertSee('QR Code Pix', false);
         $response->assertSee('Resumo do pedido', false);
+        $response->assertDontSee('Desconto', false);
+        $response->assertDontSee('Frete', false);
         $response->assertDontSee('Status', false);
         $response->assertDontSee('Expira em', false);
         $response->assertDontSee('Aguardando', false);
