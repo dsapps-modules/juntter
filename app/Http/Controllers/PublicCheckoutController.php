@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PublicCheckoutController extends Controller
 {
@@ -147,6 +148,19 @@ class PublicCheckoutController extends Controller
             'order' => $order,
             'sellerLogoUrl' => $this->resolveSellerLogoUrl($checkoutSession->checkoutLink),
         ]);
+    }
+
+    public function productImage(string $publicToken): BinaryFileResponse
+    {
+        $checkoutLink = CheckoutLink::query()
+            ->where('public_token', $publicToken)
+            ->firstOrFail();
+
+        $productImagePath = $checkoutLink->product_image_path;
+
+        abort_unless(filled($productImagePath) && Storage::disk('public')->exists($productImagePath), 404);
+
+        return response()->file(Storage::disk('public')->path($productImagePath));
     }
 
     private function resolveSession(Request $request, CheckoutLink $checkoutLink): CheckoutSession

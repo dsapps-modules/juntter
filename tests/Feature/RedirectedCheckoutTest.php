@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Services\Payments\Paytime\PaytimePaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -80,6 +81,229 @@ class RedirectedCheckoutTest extends TestCase
             'unit_price' => 149.90,
             'request_address' => true,
         ]);
+    }
+
+    public function test_vendor_can_upload_a_product_image_for_a_checkout_link(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $product = $this->makeProduct($user);
+        $image = UploadedFile::fake()->image('product.jpg', 250, 250);
+
+        $response = $this->actingAs($user)->post('/seller/checkout-links', [
+            'product_id' => $product->id,
+            'name' => 'Oferta com imagem',
+            'status' => 'active',
+            'quantity' => 1,
+            'unit_price' => 149.90,
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+            'request_address' => true,
+            'product_image' => $image,
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#111827',
+                'navbar_background_color' => '#ffffff',
+            ],
+        ], ['Accept' => 'application/json']);
+
+        $response->assertCreated();
+
+        $checkoutLinkId = $response->json('checkout_link.id');
+        $productImagePath = $response->json('checkout_link.product_image_path');
+        $productImageUrl = $response->json('checkout_link.product_image_url');
+        $publicToken = $response->json('checkout_link.public_token');
+
+        $this->assertNotNull($productImagePath);
+        $this->assertSame(route('checkout.public.product-image', $publicToken), $productImageUrl);
+        Storage::disk('public')->assertExists($productImagePath);
+
+        $checkoutPage = $this->get(route('checkout.public.show', $publicToken));
+
+        $checkoutPage->assertOk();
+        $checkoutPage->assertSee('summary-title__thumb', false);
+        $checkoutPage->assertSee(route('checkout.public.product-image', $publicToken), false);
+        $checkoutPage->assertSee('Resumo do pedido', false);
+
+        $this->assertDatabaseHas('checkout_links', [
+            'id' => $checkoutLinkId,
+            'name' => 'Oferta com imagem',
+        ]);
+    }
+
+    public function test_vendor_can_update_a_checkout_link_without_replacing_its_product_image(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $product = $this->makeProduct($user);
+        $initialImage = UploadedFile::fake()->image('product.jpg', 250, 250);
+
+        $createResponse = $this->actingAs($user)->post('/seller/checkout-links', [
+            'product_id' => $product->id,
+            'name' => 'Oferta com imagem',
+            'status' => 'active',
+            'quantity' => 1,
+            'unit_price' => 149.90,
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+            'request_address' => true,
+            'product_image' => $initialImage,
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#111827',
+                'navbar_background_color' => '#ffffff',
+            ],
+        ], ['Accept' => 'application/json']);
+
+        $createResponse->assertCreated();
+
+        $checkoutLinkId = $createResponse->json('checkout_link.id');
+        $originalProductImagePath = $createResponse->json('checkout_link.product_image_path');
+
+        $this->assertNotNull($originalProductImagePath);
+        Storage::disk('public')->assertExists($originalProductImagePath);
+
+        $updateResponse = $this->actingAs($user)->putJson('/seller/checkout-links/'.$checkoutLinkId, [
+            'product_id' => $product->id,
+            'name' => 'Oferta com imagem atualizada',
+            'status' => 'active',
+            'quantity' => 2,
+            'unit_price' => 179.90,
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+            'request_address' => true,
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#0f172a',
+                'navbar_background_color' => '#ffffff',
+            ],
+        ]);
+
+        $updateResponse->assertOk();
+        $this->assertSame($originalProductImagePath, $updateResponse->json('checkout_link.product_image_path'));
+        $this->assertSame(route('checkout.public.product-image', $updateResponse->json('checkout_link.public_token')), $updateResponse->json('checkout_link.product_image_url'));
+        Storage::disk('public')->assertExists($originalProductImagePath);
+
+        $this->assertDatabaseHas('checkout_links', [
+            'id' => $checkoutLinkId,
+            'name' => 'Oferta com imagem atualizada',
+            'product_image_path' => $originalProductImagePath,
+        ]);
+    }
+
+    public function test_vendor_can_replace_a_checkout_link_product_image_and_remove_the_previous_file(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $product = $this->makeProduct($user);
+        $initialImage = UploadedFile::fake()->image('product-initial.jpg', 250, 250);
+        $replacementImage = UploadedFile::fake()->image('product-replacement.jpg', 250, 250);
+
+        $createResponse = $this->actingAs($user)->post('/seller/checkout-links', [
+            'product_id' => $product->id,
+            'name' => 'Oferta com imagem',
+            'status' => 'active',
+            'quantity' => 1,
+            'unit_price' => 149.90,
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+            'request_address' => true,
+            'product_image' => $initialImage,
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#111827',
+                'navbar_background_color' => '#ffffff',
+            ],
+        ], ['Accept' => 'application/json']);
+
+        $createResponse->assertCreated();
+
+        $checkoutLinkId = $createResponse->json('checkout_link.id');
+        $originalProductImagePath = $createResponse->json('checkout_link.product_image_path');
+
+        $this->assertNotNull($originalProductImagePath);
+        Storage::disk('public')->assertExists($originalProductImagePath);
+
+        $updateResponse = $this->actingAs($user)->post('/seller/checkout-links/'.$checkoutLinkId, [
+            '_method' => 'PUT',
+            'product_id' => $product->id,
+            'name' => 'Oferta com imagem substituída',
+            'status' => 'active',
+            'quantity' => 2,
+            'unit_price' => 179.90,
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+            'request_address' => true,
+            'product_image' => $replacementImage,
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#0f172a',
+                'navbar_background_color' => '#ffffff',
+            ],
+        ], ['Accept' => 'application/json']);
+
+        $updateResponse->assertOk();
+
+        $replacedProductImagePath = $updateResponse->json('checkout_link.product_image_path');
+
+        $this->assertNotSame($originalProductImagePath, $replacedProductImagePath);
+        $this->assertSame(route('checkout.public.product-image', $updateResponse->json('checkout_link.public_token')), $updateResponse->json('checkout_link.product_image_url'));
+        Storage::disk('public')->assertMissing($originalProductImagePath);
+        Storage::disk('public')->assertExists($replacedProductImagePath);
+
+        $this->assertDatabaseHas('checkout_links', [
+            'id' => $checkoutLinkId,
+            'name' => 'Oferta com imagem substituída',
+            'product_image_path' => $replacedProductImagePath,
+        ]);
+    }
+
+    public function test_vendor_can_update_primary_and_navbar_colors_independently(): void
+    {
+        $user = $this->makeVendorUser();
+        $product = $this->makeProduct($user);
+        $link = $this->makeCheckoutLink($user, $product, [
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#111827',
+                'navbar_background_color' => '#ffffff',
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->putJson('/seller/checkout-links/'.$link->id, [
+            'product_id' => $product->id,
+            'name' => 'Oferta principal atualizada',
+            'status' => 'active',
+            'quantity' => 1,
+            'unit_price' => 149.90,
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+            'request_address' => true,
+            'visual_config' => [
+                'store_name' => 'Loja Teste',
+                'primary_color' => '#ef4444',
+                'navbar_background_color' => '#f8fafc',
+            ],
+        ]);
+
+        $response->assertOk();
+
+        $this->assertDatabaseHas('checkout_links', [
+            'id' => $link->id,
+            'name' => 'Oferta principal atualizada',
+        ]);
+
+        $this->assertSame('#ef4444', data_get($response->json('checkout_link.visual_config'), 'primary_color'));
+        $this->assertSame('#f8fafc', data_get($response->json('checkout_link.visual_config'), 'navbar_background_color'));
     }
 
     public function test_vendor_checkout_links_index_marks_expired_links_as_unavailable(): void
@@ -197,10 +421,9 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertDontSee('Quantidade:');
         $response->assertDontSee('Token da sessão:');
         $response->assertSee('checkout-auth-page', false);
-        $response->assertSee('checkout-auth-logo', false);
-        $response->assertSee('checkout-auth-backdrop-left', false);
-        $response->assertSee('checkout-auth-backdrop-right', false);
-        $response->assertSee('checkout-logo-image', false);
+        $response->assertSee('checkout-navbar', false);
+        $response->assertSee('checkout-navbar__brand-image', false);
+        $response->assertSee('checkout-navbar__title', false);
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertSee('id="checkout-public-app"', false);
         $response->assertSee('Resumo do pedido', false);
@@ -1189,37 +1412,32 @@ class RedirectedCheckoutTest extends TestCase
         $thankYouView = file_get_contents(base_path('resources/views/checkout/thank-you.blade.php'));
         $unavailableView = file_get_contents(base_path('resources/views/checkout/unavailable.blade.php'));
 
-        $this->assertStringContainsString('radial-gradient(circle at top left, rgba(244, 196, 0, 0.16), transparent 28%)', $publicView);
-        $this->assertStringContainsString('linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%)', $publicView);
-        $this->assertStringContainsString('checkout-auth-page', $publicView);
-        $this->assertStringContainsString('checkout-auth-logo', $publicView);
-        $this->assertStringContainsString('right: 20px;', $publicView);
-        $this->assertStringContainsString('checkout-auth-backdrop-left', $publicView);
-        $this->assertStringContainsString('checkout-auth-backdrop-right', $publicView);
+        $this->assertStringContainsString('--checkout-bg: #f7f7f9;', $publicView);
+        $this->assertStringContainsString('--checkout-navbar-bg:', $publicView);
+        $this->assertStringContainsString('checkout-navbar', $publicView);
+        $this->assertStringContainsString('checkout-navbar__brand-image', $publicView);
+        $this->assertStringContainsString('checkout-navbar__title', $publicView);
         $this->assertStringContainsString('src="{{ $sellerLogoUrl }}"', $publicView);
         $this->assertStringContainsString('checkout-page-header', $publicView);
         $this->assertStringContainsString('checkout-page-title', $publicView);
-        $this->assertStringNotContainsString('hero-top', $publicView);
-        $this->assertStringNotContainsString('hero-brand', $publicView);
-        $this->assertStringNotContainsString('hero-copy-wrap', $publicView);
-        $this->assertStringNotContainsString('hero-copy', $publicView);
-        $this->assertStringNotContainsString('eyebrow', $publicView);
-        $this->assertStringNotContainsString('checkout-logo-image--hero', $publicView);
-        $this->assertStringContainsString('font-size: clamp(28px, 3.4vw, 46px);', $publicView);
         $this->assertStringContainsString('.panel,', $publicView);
         $this->assertStringContainsString('.summary-card {', $publicView);
         $this->assertStringContainsString('.pix-card,', $publicView);
         $this->assertStringContainsString('.boleto-card', $publicView);
         $this->assertStringContainsString('.feedback {', $publicView);
-        $this->assertStringNotContainsString('checkout-logo-card', $publicView);
+        $this->assertStringNotContainsString('radial-gradient(circle at top left', $publicView);
+        $this->assertStringNotContainsString('linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%)', $publicView);
+        $this->assertStringNotContainsString('filter: blur(80px);', $publicView);
         $this->assertStringContainsString('sellerLogoUrl', $thankYouView);
         $this->assertStringContainsString('sellerLogoUrl', $unavailableView);
         $this->assertStringContainsString('checkout-card-shell', $thankYouView);
         $this->assertStringContainsString('checkout-auth-page', $thankYouView);
-        $this->assertStringContainsString('right: 20px;', $thankYouView);
         $this->assertStringContainsString('checkout-card-shell', $unavailableView);
         $this->assertStringContainsString('checkout-auth-page', $unavailableView);
-        $this->assertStringContainsString('right: 20px;', $unavailableView);
+        $this->assertStringNotContainsString('radial-gradient(circle at top left', $thankYouView);
+        $this->assertStringNotContainsString('radial-gradient(circle at top left', $unavailableView);
+        $this->assertStringNotContainsString('filter: blur(80px);', $thankYouView);
+        $this->assertStringNotContainsString('filter: blur(80px);', $unavailableView);
     }
 
     public function test_frontend_price_is_ignored_when_starting_pix_payment(): void

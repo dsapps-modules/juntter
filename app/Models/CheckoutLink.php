@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CheckoutLink extends Model
@@ -33,6 +34,7 @@ class CheckoutLink extends Model
         'success_url',
         'failure_url',
         'expires_at',
+        'product_image_path',
         'visual_config',
     ];
 
@@ -49,6 +51,10 @@ class CheckoutLink extends Model
         'free_shipping' => 'boolean',
         'expires_at' => 'datetime',
         'visual_config' => 'array',
+    ];
+
+    protected $appends = [
+        'product_image_url',
     ];
 
     public static function generatePublicToken(): string
@@ -87,5 +93,18 @@ class CheckoutLink extends Model
         }
 
         return $this->seller?->isVendedor() ?? false;
+    }
+
+    public function getProductImageUrlAttribute(): ?string
+    {
+        if (! filled($this->product_image_path)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->product_image_path)) {
+            return null;
+        }
+
+        return route('checkout.public.product-image', $this->public_token);
     }
 }

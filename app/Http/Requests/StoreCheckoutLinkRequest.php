@@ -11,6 +11,29 @@ class StoreCheckoutLinkRequest extends FormRequest
         return $this->user() !== null && $this->user()->isVendedor();
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('visual_config')) {
+            return;
+        }
+
+        $visualConfig = $this->input('visual_config');
+
+        if (! is_string($visualConfig)) {
+            return;
+        }
+
+        $decodedVisualConfig = json_decode($visualConfig, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decodedVisualConfig)) {
+            return;
+        }
+
+        $this->merge([
+            'visual_config' => $decodedVisualConfig,
+        ]);
+    }
+
     public function rules(): array
     {
         return [
@@ -31,7 +54,10 @@ class StoreCheckoutLinkRequest extends FormRequest
             'success_url' => ['nullable', 'url'],
             'failure_url' => ['nullable', 'url'],
             'expires_at' => ['nullable', 'date'],
+            'product_image' => ['nullable', 'image', 'max:5120'],
             'visual_config' => ['nullable', 'array'],
+            'visual_config.primary_color' => ['nullable', 'string', 'max:32'],
+            'visual_config.navbar_background_color' => ['nullable', 'string', 'max:32'],
         ];
     }
 }

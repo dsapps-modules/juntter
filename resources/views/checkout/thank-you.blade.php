@@ -6,12 +6,12 @@
     <title>Obrigado pela compra</title>
     <style>
         :root {
-            --checkout-bg: #f4efe6;
+            --checkout-bg: #f7f7f9;
             --checkout-ink: #1f1a17;
             --checkout-muted: #6d655c;
             --checkout-border: rgba(31, 26, 23, 0.1);
-            --checkout-surface: rgba(255, 255, 255, 0.94);
-            --checkout-shadow: 0 24px 70px rgba(46, 30, 10, 0.11);
+            --checkout-surface: rgba(255, 255, 255, 0.98);
+            --checkout-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
         }
 
         * {
@@ -22,16 +22,13 @@
             margin: 0;
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--checkout-ink);
-            background:
-                radial-gradient(circle at top left, rgba(244, 196, 0, 0.16), transparent 28%),
-                linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%);
+            background: var(--checkout-bg);
             min-height: 100vh;
         }
 
         .checkout-auth-page {
             position: relative;
             min-height: 100vh;
-            overflow: hidden;
             padding: 32px;
         }
 
@@ -50,27 +47,7 @@
         }
 
         .checkout-auth-backdrop {
-            position: absolute;
-            border-radius: 999px;
-            filter: blur(80px);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .checkout-auth-backdrop-left {
-            top: -120px;
-            left: -60px;
-            width: 360px;
-            height: 360px;
-            background: rgba(244, 196, 0, 0.28);
-        }
-
-        .checkout-auth-backdrop-right {
-            right: -80px;
-            bottom: -80px;
-            width: 420px;
-            height: 420px;
-            background: rgba(255, 255, 255, 0.9);
+            display: none;
         }
 
         .checkout-card-shell {
@@ -86,7 +63,6 @@
             background: var(--checkout-surface);
             border: 1px solid var(--checkout-border);
             box-shadow: var(--checkout-shadow);
-            backdrop-filter: blur(10px);
             border-radius: 28px;
             padding: 32px;
         }

@@ -18,6 +18,7 @@ const discountTypeOptions = [
 const visualDefaults = {
     store_name: '',
     primary_color: '#FFC800',
+    navbar_background_color: '#FFFFFF',
     offer_message: '',
     footer_text: '',
 };
@@ -29,6 +30,8 @@ export default function CheckoutLinkFormPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo'));
     const [saving, setSaving] = useState(false);
+    const [productImagePreviewUrl, setProductImagePreviewUrl] = useState('');
+    const [productImageFile, setProductImageFile] = useState(null);
     const isEditing = Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo');
 
     useEffect(() => {
@@ -69,11 +72,17 @@ export default function CheckoutLinkFormPage() {
 
                     const linkData = await linkResponse.json();
                     const checkoutLink = linkData.checkout_link;
+                    const visualConfig = checkoutLink.visual_config ?? {};
+
+                    setProductImagePreviewUrl(checkoutLink.product_image_url ?? '');
+
                     form.setFieldsValue({
                         ...checkoutLink,
                         request_address: checkoutLink.request_address ?? true,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
-                        visual_config: checkoutLink.visual_config ? JSON.stringify({ ...visualDefaults, ...checkoutLink.visual_config }, null, 2) : JSON.stringify(visualDefaults, null, 2),
+                        primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
+                        navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color,
+                        visual_config: checkoutLink.visual_config ? JSON.stringify({ ...visualDefaults, ...visualConfig }, null, 2) : JSON.stringify(visualDefaults, null, 2),
                     });
                 } else {
                     form.setFieldsValue({
@@ -87,6 +96,8 @@ export default function CheckoutLinkFormPage() {
                         boleto_discount_type: 'none',
                         free_shipping: true,
                         unit_price: formatCurrencyInput(0),
+                        primary_color: visualDefaults.primary_color,
+                        navbar_background_color: visualDefaults.navbar_background_color,
                         visual_config: JSON.stringify(visualDefaults, null, 2),
                     });
                 }
@@ -104,25 +115,70 @@ export default function CheckoutLinkFormPage() {
         return () => controller.abort();
     }, [form, isEditing, params.checkoutLinkId]);
 
+    useEffect(() => {
+        return () => {
+            if (productImagePreviewUrl.startsWith('blob:')) {
+                URL.revokeObjectURL(productImagePreviewUrl);
+            }
+        };
+    }, [productImagePreviewUrl]);
+
+    function handleProductImageChange(event) {
+        const file = event.target.files?.[0] ?? null;
+
+        if (productImagePreviewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(productImagePreviewUrl);
+        }
+
+        setProductImageFile(file);
+        setProductImagePreviewUrl(file ? URL.createObjectURL(file) : '');
+    }
+
     async function handleSubmit(values) {
         setSaving(true);
 
         try {
-            const payload = {
-                ...values,
-                unit_price: parseCurrencyInput(values.unit_price),
-                visual_config: values.visual_config ? JSON.parse(values.visual_config) : null,
-            };
+            const { primary_color, navbar_background_color, ...restValues } = values;
+            const parsedVisualConfig = restValues.visual_config ? JSON.parse(restValues.visual_config) : {};
+            const payload = new FormData();
+
+            Object.entries({
+                ...restValues,
+                unit_price: parseCurrencyInput(restValues.unit_price),
+                visual_config: JSON.stringify({
+                    ...parsedVisualConfig,
+                    primary_color: primary_color || visualDefaults.primary_color,
+                    navbar_background_color: navbar_background_color || visualDefaults.navbar_background_color,
+                }),
+            }).forEach(([key, value]) => {
+                if (value === null || value === undefined) {
+                    return;
+                }
+
+                if (typeof value === 'boolean') {
+                    payload.append(key, value ? '1' : '0');
+                    return;
+                }
+
+                payload.append(key, String(value));
+            });
+
+            if (productImageFile) {
+                payload.append('product_image', productImageFile);
+            }
+
+            if (isEditing) {
+                payload.append('_method', 'PUT');
+            }
 
             const response = await fetch(isEditing ? `/seller/checkout-links/${params.checkoutLinkId}` : '/seller/checkout-links', {
-                method: isEditing ? 'PUT' : 'POST',
+                method: 'POST',
                 headers: {
                     Accept: 'application/json',
-                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify(payload),
+                body: payload,
             });
 
             const data = await response.json();
@@ -278,6 +334,31 @@ export default function CheckoutLinkFormPage() {
                             </Form.Item>
                             <Form.Item label="URL de falha" name="failure_url">
                                 <Input />
+                            </Form.Item>
+                            <Form.Item label="Cor primária" name="primary_color">
+                                <Input type="color" style={{ width: 120, padding: 4 }} />
+                            </Form.Item>
+                            <Form.Item label="Cor de fundo da navbar" name="navbar_background_color">
+                                <Input type="color" style={{ width: 120, padding: 4 }} />
+                            </Form.Item>
+                            <Form.Item
+                                label="Imagem do produto"
+                                extra="Envie uma imagem quadrada de 250x250 px, preferencialmente."
+                            >
+                                <input
+                                    accept="image/*"
+                                    type="file"
+                                    onChange={handleProductImageChange}
+                                />
+                                {productImagePreviewUrl ? (
+                                    <div style={{ marginTop: 12 }}>
+                                        <img
+                                            alt="Pré-visualização da imagem do produto"
+                                            src={productImagePreviewUrl}
+                                            style={{ borderRadius: 12, display: 'block', height: 96, objectFit: 'cover', width: 96 }}
+                                        />
+                                    </div>
+                                ) : null}
                             </Form.Item>
                             <Form.Item label="Configuração visual JSON" name="visual_config">
                                 <Input.TextArea rows={8} />

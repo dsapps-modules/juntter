@@ -10,6 +10,7 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class SellerCheckoutLinkController extends Controller
@@ -62,6 +63,7 @@ class SellerCheckoutLinkController extends Controller
             'success_url' => $request->input('success_url'),
             'failure_url' => $request->input('failure_url'),
             'expires_at' => $request->input('expires_at'),
+            'product_image_path' => $this->resolveProductImagePath($request),
             'visual_config' => $request->input('visual_config'),
         ]);
 
@@ -117,6 +119,7 @@ class SellerCheckoutLinkController extends Controller
             'success_url' => $request->input('success_url'),
             'failure_url' => $request->input('failure_url'),
             'expires_at' => $request->input('expires_at'),
+            'product_image_path' => $this->resolveProductImagePath($request, $checkoutLink),
             'visual_config' => $request->input('visual_config'),
         ]);
 
@@ -273,6 +276,21 @@ class SellerCheckoutLinkController extends Controller
         }
 
         return $paymentStatus !== '' ? $paymentStatus : 'pending';
+    }
+
+    private function resolveProductImagePath(Request $request, ?CheckoutLink $checkoutLink = null): ?string
+    {
+        if ($request->hasFile('product_image')) {
+            $previousImagePath = $checkoutLink?->product_image_path;
+
+            if (filled($previousImagePath)) {
+                Storage::disk('public')->delete($previousImagePath);
+            }
+
+            return $request->file('product_image')->store('checkout-links', 'public');
+        }
+
+        return $checkoutLink?->product_image_path;
     }
 
     private function isPaidOrder(Order $order): bool

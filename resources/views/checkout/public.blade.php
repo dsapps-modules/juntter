@@ -11,12 +11,16 @@
     @endif
     <style>
         :root {
-            --checkout-bg: #f4efe6;
+            --checkout-bg: #f7f7f9;
             --checkout-ink: #1f1a17;
+            --checkout-heading: #686d75;
+            --checkout-summary-value: #4b515b;
             --checkout-muted: #6d655c;
             --checkout-border: rgba(31, 26, 23, 0.1);
-            --checkout-surface: rgba(255, 255, 255, 0.9);
-            --checkout-shadow: 0 24px 70px rgba(46, 30, 10, 0.11);
+            --checkout-surface: rgba(255, 255, 255, 0.98);
+            --checkout-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+            --checkout-navbar-bg: {{ data_get($checkoutLink->visual_config, 'navbar_background_color', '#ffffff') }};
+            --checkout-navbar-height: 76px;
         }
 
         * {
@@ -27,61 +31,74 @@
             margin: 0;
             font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             color: var(--checkout-ink);
-            background:
-                radial-gradient(circle at top left, rgba(244, 196, 0, 0.16), transparent 28%),
-                linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%);
+            background: var(--checkout-bg);
             min-height: 100vh;
         }
 
         .checkout-auth-page {
             position: relative;
             min-height: 100vh;
-            overflow: hidden;
-            padding: 32px;
+            padding: calc(var(--checkout-navbar-height) + 24px) 32px 32px;
         }
 
-        .checkout-auth-logo {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 2;
+        .checkout-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            height: var(--checkout-navbar-height);
+            background: var(--checkout-navbar-bg);
+            border-bottom: 1px solid rgba(17, 24, 39, 0.08);
         }
 
-        .checkout-auth-logo-image {
+        .checkout-navbar__inner {
+            max-width: 1260px;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .checkout-navbar__brand {
+            display: inline-flex;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .checkout-navbar__brand-image {
             display: block;
-            width: 168px;
-            max-width: min(168px, calc(100vw - 40px));
+            width: 132px;
+            max-width: min(132px, calc(100vw - 180px));
             height: auto;
         }
 
+        .checkout-navbar__title {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+            text-align: right;
+            color: var(--checkout-heading);
+        }
+
+        .checkout-content {
+            position: relative;
+            z-index: 1;
+        }
+
         .checkout-auth-backdrop {
-            position: absolute;
-            border-radius: 999px;
-            filter: blur(80px);
-            opacity: 0.9;
-            pointer-events: none;
-        }
-
-        .checkout-auth-backdrop-left {
-            top: -120px;
-            left: -60px;
-            width: 360px;
-            height: 360px;
-            background: rgba(244, 196, 0, 0.28);
-        }
-
-        .checkout-auth-backdrop-right {
-            right: -80px;
-            bottom: -80px;
-            width: 420px;
-            height: 420px;
-            background: rgba(255, 255, 255, 0.9);
+            display: none;
         }
 
         .checkout-auth-grid {
             position: relative;
             z-index: 1;
-            min-height: calc(100vh - 64px);
+            min-height: calc(100vh - var(--checkout-navbar-height) - 56px);
         }
 
         [hidden] {
@@ -91,7 +108,7 @@
         .checkout-shell {
             max-width: 1260px;
             margin: 0 auto;
-            padding: 24px 20px 60px;
+            padding: 0 20px 60px;
         }
 
         h1,
@@ -104,13 +121,7 @@
         .checkout-page-header {
             margin-bottom: 18px;
             padding-top: 0;
-        }
-
-        .checkout-page-title {
-            margin: 0;
-            font-size: clamp(28px, 3.4vw, 46px);
-            line-height: 0.96;
-            letter-spacing: -0.05em;
+            display: none;
         }
 
         .grid {
@@ -142,10 +153,9 @@
         .summary-card {
             border-radius: 28px;
             padding: 24px;
-            background: rgba(255, 255, 255, 0.94);
-            border: 1px solid rgba(255, 255, 255, 0.82);
+            background: var(--checkout-surface);
+            border: 1px solid rgba(17, 24, 39, 0.08);
             box-shadow: var(--checkout-shadow);
-            backdrop-filter: blur(10px);
         }
 
         .panel-stack {
@@ -169,6 +179,7 @@
             margin-bottom: 6px;
             font-size: 26px;
             letter-spacing: -0.04em;
+            color: var(--checkout-heading);
         }
 
         .section-head p {
@@ -263,7 +274,7 @@
         label {
             font-size: 13px;
             font-weight: 700;
-            color: var(--checkout-ink);
+            color: var(--checkout-heading);
             letter-spacing: 0.01em;
         }
 
@@ -321,7 +332,7 @@
         .btn-primary {
             color: #fff;
             background: {{ data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17') }};
-            box-shadow: 0 16px 28px rgba(31, 26, 23, 0.16);
+            box-shadow: 0 10px 18px rgba(31, 26, 23, 0.12);
         }
 
         .btn-secondary {
@@ -336,11 +347,10 @@
         .boleto-card,
         .boleto-card__loading {
             border-radius: 22px;
-            border: 1px solid rgba(255, 255, 255, 0.82);
-            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(17, 24, 39, 0.08);
+            background: rgba(255, 255, 255, 0.96);
             padding: 18px;
             box-shadow: var(--checkout-shadow);
-            backdrop-filter: blur(10px);
         }
 
         .checkout-logo-image {
@@ -353,15 +363,38 @@
         .summary-title {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
-            align-items: flex-start;
+            gap: 16px;
+            align-items: center;
             margin-bottom: 18px;
+        }
+
+        .summary-title__header {
+            min-width: 0;
+        }
+
+        .summary-title__thumb {
+            flex: 0 0 auto;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid rgba(17, 24, 39, 0.08);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+        }
+
+        .summary-title__thumb img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .summary-title h2 {
             margin-bottom: 6px;
             font-size: 26px;
             letter-spacing: -0.04em;
+            color: var(--checkout-heading);
         }
 
         .summary-title p,
@@ -387,7 +420,7 @@
         }
 
         .summary-row strong {
-            color: var(--checkout-ink);
+            color: var(--checkout-summary-value);
             text-align: right;
         }
 
@@ -434,9 +467,13 @@
         .summary-total {
             font-size: 20px;
             font-weight: 800;
-            color: var(--checkout-ink);
+            color: var(--checkout-heading);
             padding-top: 12px;
-            border-top: 1px solid rgba(31, 26, 23, 0.08);
+            border-top: 1px solid rgba(17, 24, 39, 0.08);
+        }
+
+        .summary-total strong {
+            color: var(--checkout-heading);
         }
 
         .payment-badge {
@@ -445,8 +482,8 @@
             gap: 8px;
             border-radius: 999px;
             padding: 9px 13px;
-            background: rgba(31, 26, 23, 0.06);
-            color: var(--checkout-ink);
+            background: rgba(31, 41, 55, 0.06);
+            color: var(--checkout-heading);
             font-size: 13px;
             font-weight: 700;
         }
@@ -457,8 +494,8 @@
 
         .boleto-card {
             margin-top: 18px;
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(17, 24, 39, 0.08);
         }
 
         .boleto-card__header {
@@ -473,6 +510,7 @@
             margin-bottom: 4px;
             font-size: 20px;
             letter-spacing: -0.03em;
+            color: var(--checkout-heading);
         }
 
         .boleto-card__header p {
@@ -530,8 +568,8 @@
         .boleto-card__value {
             display: block;
             border-radius: 16px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(31, 26, 23, 0.08);
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(17, 24, 39, 0.08);
             padding: 13px 15px;
             color: var(--checkout-ink);
             word-break: break-word;
@@ -569,7 +607,7 @@
         .pix-code {
             border-radius: 18px;
             background: rgba(255, 255, 255, 0.94);
-            border: 1px dashed rgba(31, 26, 23, 0.14);
+            border: 1px dashed rgba(17, 24, 39, 0.14);
             padding: 16px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
             font-size: 12px;
@@ -584,8 +622,8 @@
             place-items: center;
             gap: 12px;
             border-radius: 18px;
-            background: rgba(31, 26, 23, 0.03);
-            border: 1px solid rgba(31, 26, 23, 0.08);
+            background: rgba(31, 41, 55, 0.03);
+            border: 1px solid rgba(17, 24, 39, 0.08);
             padding: 16px;
             margin-bottom: 14px;
         }
@@ -655,52 +693,63 @@
 
         @media (max-width: 820px) {
             .checkout-auth-page {
-                padding: 16px;
+                padding: calc(var(--checkout-navbar-height) + 16px) 16px 16px;
             }
 
-            .checkout-auth-logo {
-                top: 14px;
-                right: 16px;
+            .checkout-navbar__inner {
+                padding-inline: 16px;
             }
 
-            .checkout-auth-logo-image {
-                width: 144px;
-                max-width: min(144px, calc(100vw - 32px));
+            .checkout-navbar__brand-image {
+                width: 116px;
+                max-width: min(116px, calc(100vw - 160px));
             }
 
             .checkout-auth-grid {
-                min-height: calc(100vh - 32px);
+                min-height: calc(100vh - var(--checkout-navbar-height) - 32px);
             }
 
             .checkout-shell {
-                padding-inline: 14px;
+                padding-inline: 0;
             }
 
-            .hero,
             .panel,
             .summary-card {
                 border-radius: 22px;
                 padding: 18px;
             }
 
+            .summary-card {
+                order: -1;
+            }
+
             .field-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .summary-title__thumb {
+                width: 40px;
+                height: 40px;
+                border-radius: 12px;
             }
         }
     </style>
 </head>
 <body>
     <div class="checkout-auth-page">
-        <div class="checkout-auth-logo">
-            <img
-                src="{{ $sellerLogoUrl }}"
-                alt="{{ $checkoutLink->seller?->name ?? $checkoutPublicConfig['checkoutLink']['storeName'] ?? 'Juntter' }}"
-                class="checkout-auth-logo-image"
-                onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
-            >
-        </div>
-    <div class="checkout-auth-backdrop checkout-auth-backdrop-left" aria-hidden="true"></div>
-    <div class="checkout-auth-backdrop checkout-auth-backdrop-right" aria-hidden="true"></div>
+        <header class="checkout-navbar">
+            <div class="checkout-navbar__inner">
+                <div class="checkout-navbar__brand" aria-label="{{ $checkoutLink->seller?->name ?? 'Juntter' }}">
+                    <img
+                        src="{{ $sellerLogoUrl }}"
+                        alt="{{ $checkoutLink->seller?->name ?? 'Juntter' }}"
+                        class="checkout-navbar__brand-image"
+                        onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
+                    >
+                </div>
+                <p class="checkout-navbar__title">{{ $checkoutLink->name }}</p>
+            </div>
+        </header>
 
 @php
     $checkoutPageMode = $checkoutPageMode ?? 'details';
@@ -723,6 +772,7 @@
             'name' => $checkoutLink->name,
             'storeName' => data_get($checkoutLink->visual_config, 'store_name', $checkoutLink->seller->name ?? 'Checkout Juntter'),
             'primaryColor' => data_get($checkoutLink->visual_config, 'primary_color', '#1f1a17'),
+            'navbarBackgroundColor' => data_get($checkoutLink->visual_config, 'navbar_background_color', '#ffffff'),
             'offerMessage' => data_get($checkoutLink->visual_config, 'offer_message', 'Oferta disponível para pagamento direto no checkout.'),
             'requestAddress' => $checkoutLink->request_address ?? true,
             'quantity' => $checkoutLink->quantity,
@@ -1206,9 +1256,18 @@
 
         <aside class="summary-card">
             <div class="summary-title">
-                <div>
+                <div class="summary-title__header">
                     <h2>Resumo do pedido</h2>
                 </div>
+                @if(filled($checkoutLink->product_image_path))
+                    <div class="summary-title__thumb" aria-hidden="true">
+                        <img
+                            src="{{ $checkoutLink->product_image_url }}"
+                            alt=""
+                            loading="lazy"
+                        >
+                    </div>
+                @endif
             </div>
 
             <div class="summary-stack">

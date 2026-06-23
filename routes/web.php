@@ -61,6 +61,9 @@ Route::get('/company-logo', [PublicCompanyLogoController::class, 'show'])
 Route::get('/checkout/{publicToken}', [PublicCheckoutController::class, 'show'])
     ->where('publicToken', 'chk_[A-Za-z0-9]+')
     ->name('checkout.public.show');
+Route::get('/checkout/{publicToken}/product-image', [PublicCheckoutController::class, 'productImage'])
+    ->where('publicToken', 'chk_[A-Za-z0-9]+')
+    ->name('checkout.public.product-image');
 Route::post('/checkout/{publicToken}/session', [PublicCheckoutSessionController::class, 'createOrResume'])->name('checkout.public.session');
 Route::get('/checkout/cnpj/{cnpj}', [PublicCheckoutSessionController::class, 'lookupCompanyByCnpj'])
     ->where('cnpj', '[0-9]{14}')
