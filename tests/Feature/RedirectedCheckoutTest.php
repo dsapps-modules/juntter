@@ -2351,7 +2351,7 @@ class RedirectedCheckoutTest extends TestCase
         $pageResponse = $this->get(route('checkout.public.payment.details', $session->session_token));
 
         $pageResponse->assertOk();
-        $pageResponse->assertSee('Seu boleto');
+        $pageResponse->assertDontSee('Seu boleto', false);
         $pageResponse->assertSee('data-boleto-block', false);
         $pageResponse->assertDontSee('Abrir boleto');
         $pageResponse->assertDontSee('Gerar boleto', false);
