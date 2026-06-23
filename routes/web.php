@@ -70,6 +70,7 @@ Route::get('/checkout/cnpj/{cnpj}', [PublicCheckoutSessionController::class, 'lo
     ->name('checkout.public.cnpj.lookup');
 Route::post('/checkout/session/{sessionToken}/identification', [PublicCheckoutSessionController::class, 'saveIdentification'])->name('checkout.public.identification');
 Route::post('/checkout/session/{sessionToken}/quantity', [PublicCheckoutSessionController::class, 'updateQuantity'])->name('checkout.public.quantity');
+Route::get('/checkout/session/{sessionToken}/delivery', [PublicCheckoutController::class, 'deliveryPage'])->name('checkout.public.delivery.page');
 Route::post('/checkout/session/{sessionToken}/delivery', [PublicCheckoutSessionController::class, 'saveDelivery'])->name('checkout.public.delivery');
 Route::get('/checkout/session/{sessionToken}/payment', [PublicCheckoutController::class, 'paymentPage'])
     ->name('checkout.public.payment.page');

@@ -18,6 +18,51 @@ class PublicCheckoutController extends Controller
         return $this->renderCheckoutPage($request, $publicToken, 'details');
     }
 
+    public function deliveryPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
+    {
+        $checkoutSession = CheckoutSession::query()
+            ->with(['checkoutLink.product', 'checkoutLink.seller', 'orders.paymentTransaction'])
+            ->where('session_token', $sessionToken)
+            ->firstOrFail();
+
+        $checkoutLink = $checkoutSession->checkoutLink;
+
+        if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
+            return response()->view('checkout.unavailable', [
+                'message' => 'Este checkout não está disponível no momento.',
+                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+            ], 410);
+        }
+
+        [$order, $paymentTransaction] = $this->resolvePaymentContext($checkoutSession);
+
+        if (
+            in_array($order?->status, ['paid', 'authorized'], true)
+            || in_array(strtolower((string) ($paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        if ($checkoutSession->current_step === 'identification') {
+            return redirect()->route('checkout.public.show', $checkoutLink->public_token);
+        }
+
+        if ($checkoutSession->current_step === 'payment') {
+            return filled($checkoutSession->payment_method)
+                ? redirect()->route('checkout.public.payment.details', $checkoutSession->session_token)
+                : redirect()->route('checkout.public.payment.page', $checkoutSession->session_token);
+        }
+
+        return view('checkout.public', $this->buildCheckoutViewData(
+            checkoutLink: $checkoutLink,
+            checkoutSession: $checkoutSession,
+            order: $order,
+            paymentTransaction: $paymentTransaction,
+            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            checkoutPageMode: 'delivery',
+        ));
+    }
+
     public function paymentPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
     {
         $checkoutSession = CheckoutSession::query()
@@ -43,8 +88,12 @@ class PublicCheckoutController extends Controller
             return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
         }
 
-        if ($checkoutSession->current_step !== 'payment' && blank($checkoutSession->payment_method)) {
+        if ($checkoutSession->current_step === 'identification') {
             return redirect()->route('checkout.public.show', $checkoutLink->public_token);
+        }
+
+        if ($checkoutSession->current_step === 'delivery') {
+            return redirect()->route('checkout.public.delivery.page', $checkoutSession->session_token);
         }
 
         return view('checkout.public', $this->buildCheckoutViewData(
@@ -122,6 +171,16 @@ class PublicCheckoutController extends Controller
             || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
         ) {
             return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        if ($checkoutPageMode === 'details' && $checkoutSession->current_step === 'delivery') {
+            return redirect()->route('checkout.public.delivery.page', $checkoutSession->session_token);
+        }
+
+        if ($checkoutPageMode === 'details' && $checkoutSession->current_step === 'payment') {
+            return filled($checkoutSession->payment_method)
+                ? redirect()->route('checkout.public.payment.details', $checkoutSession->session_token)
+                : redirect()->route('checkout.public.payment.page', $checkoutSession->session_token);
         }
 
         return view('checkout.public', $this->buildCheckoutViewData(

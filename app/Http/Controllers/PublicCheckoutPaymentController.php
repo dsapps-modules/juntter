@@ -288,7 +288,7 @@ class PublicCheckoutPaymentController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Pagamento iniciado com sucesso.',
+                'message' => 'Boleto gerado com sucesso',
                 'order' => $order->fresh(),
                 'payment_transaction' => $paymentTransaction->fresh(),
                 'pricing' => $pricing,

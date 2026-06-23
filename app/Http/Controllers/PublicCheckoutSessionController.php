@@ -193,7 +193,6 @@ class PublicCheckoutSessionController extends Controller
         $checkoutSession = $this->findSession($sessionToken);
         $checkoutSession->loadMissing('checkoutLink');
         $recipientName = $checkoutSession->recipient_name;
-        $requestAddress = $checkoutSession->checkoutLink?->request_address ?? true;
 
         if (blank($recipientName) || $recipientName === $checkoutSession->customer_name) {
             $recipientName = $request->input('customer_name');
@@ -211,7 +210,7 @@ class PublicCheckoutSessionController extends Controller
             'customer_responsible_birth_date' => $request->input('customer_responsible_birth_date'),
             'recipient_name' => $recipientName,
             'status' => 'identification_completed',
-            'current_step' => $requestAddress ? 'delivery' : 'payment',
+            'current_step' => 'delivery',
             'last_activity_at' => now(),
         ]);
 
@@ -227,7 +226,7 @@ class PublicCheckoutSessionController extends Controller
         return response()->json([
             'message' => 'Identificação salva com sucesso.',
             'checkout_session' => $checkoutSession->fresh(),
-            'next_url' => $requestAddress ? null : route('checkout.public.payment.page', $checkoutSession->session_token),
+            'next_url' => route('checkout.public.delivery.page', $checkoutSession->session_token),
         ]);
     }
 

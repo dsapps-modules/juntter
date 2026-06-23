@@ -1286,6 +1286,11 @@ function setBoletoLoadingState(state, isLoading) {
     updatePaymentDetails(state, state.paymentTransaction);
 }
 
+function stopBoletoRefresh(state) {
+    state.boletoRefreshToken = (state.boletoRefreshToken || 0) + 1;
+    setBoletoLoadingState(state, false);
+}
+
 function sleep(ms) {
     return new Promise((resolve) => {
         window.setTimeout(resolve, ms);
@@ -1293,13 +1298,23 @@ function sleep(ms) {
 }
 
 async function refreshBoletoUntilReady(state) {
+    const refreshToken = (state.boletoRefreshToken || 0) + 1;
     const maxAttempts = 8;
     const intervalMs = 1500;
 
+    state.boletoRefreshToken = refreshToken;
     setBoletoLoadingState(state, true);
 
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        if (state.boletoRefreshToken !== refreshToken) {
+            return;
+        }
+
         const refreshed = await refreshExistingPayment(state);
+
+        if (state.boletoRefreshToken !== refreshToken) {
+            return;
+        }
 
         if (!refreshed) {
             setBoletoLoadingState(state, false);
@@ -1314,10 +1329,16 @@ async function refreshBoletoUntilReady(state) {
         if (attempt < maxAttempts - 1) {
             setBoletoLoadingState(state, true);
             await sleep(intervalMs);
+
+            if (state.boletoRefreshToken !== refreshToken) {
+                return;
+            }
         }
     }
 
-    setBoletoLoadingState(state, false);
+    if (state.boletoRefreshToken === refreshToken) {
+        setBoletoLoadingState(state, false);
+    }
 }
 
 function autoSubmitPaymentDetails(state, paymentForm) {
@@ -1350,6 +1371,7 @@ function redirectToThankYou(state) {
         window.__checkoutPixTimer = null;
     }
 
+    stopBoletoRefresh(state);
     window.location.assign(state.thankYouUrl);
 }
 
@@ -1555,12 +1577,7 @@ function bindForms(state) {
                 syncRecipientDefault(state);
                 updateSummary(state.config, state);
 
-                if (!state.config.checkoutLink?.requestAddress) {
-                    window.location.assign(payload.next_url || state.config.urls.payment);
-                    return;
-                }
-
-                setFeedback('Identificação salva com sucesso.', 'success');
+                window.location.assign(payload.next_url || state.config.urls.delivery);
             } catch (error) {
                 if (error.status === 422 && error.payload?.errors) {
                     setFieldErrors(error.payload.errors);
@@ -1833,11 +1850,7 @@ function bindForms(state) {
                     showWaitingPanel(state, state.paymentTransaction);
                 } else if (state.paymentTransaction?.payment_method === 'boleto') {
                     if (!hasCompleteBoletoDetails(state.paymentTransaction)) {
-                        const refreshed = await refreshExistingPayment(state);
-
-                        if (!refreshed) {
-                            setBoletoLoadingState(state, false);
-                        }
+                        await refreshBoletoUntilReady(state);
                     }
                 } else if (state.paymentTransaction?.payment_method === 'credit_card') {
                     const requires3ds = Boolean(
@@ -1876,7 +1889,7 @@ function bindForms(state) {
                 }
 
                 if (shouldShowStartedMessage) {
-                    setFeedback('Pagamento iniciado com sucesso. A confirmação será atualizada via webhook.', 'success');
+                    setFeedback('Boleto gerado com sucesso', 'success');
                 }
 
             } catch (error) {
@@ -2027,6 +2040,7 @@ function initCheckoutPublic() {
         order: config.order || null,
         paymentTransaction: config.paymentTransaction || null,
         boletoLoading: false,
+        boletoRefreshToken: 0,
         threeDsEnv: root.dataset.threeDsEnv || 'PROD',
         currentStep: config.currentStep || 'identification',
         thankYouUrl: config.thankYouUrl,
@@ -2050,6 +2064,10 @@ function initCheckoutPublic() {
     bindPaymentAction(state);
     updatePersonTypeUi(state);
     autoSubmitPaymentDetails(state, document.getElementById('checkout-payment-form'));
+
+    window.addEventListener('pagehide', () => {
+        state.boletoRefreshToken += 1;
+    });
 
     if (isPaidOrder(state.order, state.paymentTransaction, state.session)) {
         redirectToThankYou(state);
