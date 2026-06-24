@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Input, Row, Space, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, Input, Row, Space, Typography } from 'antd';
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 
@@ -56,16 +56,15 @@ export default function ResetPasswordPage() {
 
     return (
         <div className="spa-auth-page">
+            <div className="spa-auth-logo">
+                <img src="/img/logo/juntter_webp_640_174.webp" alt="Juntter" className="spa-auth-logo-image" />
+            </div>
             <div className="spa-auth-backdrop spa-auth-backdrop-left" />
             <div className="spa-auth-backdrop spa-auth-backdrop-right" />
 
             <Row className="spa-auth-grid" gutter={24} align="middle">
                 <Col xs={24} lg={12}>
                     <div className="spa-auth-hero">
-                        <Tag color="gold" className="spa-auth-tag">
-                            Nova senha
-                        </Tag>
-                        <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
                             Redefina sua senha.
                         </Typography.Title>

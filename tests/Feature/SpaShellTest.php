@@ -136,10 +136,10 @@ class SpaShellTest extends TestCase
 
         $this->assertStringContainsString('window.location.assign(payload.redirect ?? \'/app/login\');', $pageSource);
         $this->assertStringContainsString('Redefina sua senha.', $pageSource);
-        $this->assertStringNotContainsString('Redefina sua senha com a mesma linha visual da plataforma.', $pageSource);
-        $this->assertStringNotContainsString('O link é validado pelo backend, enquanto a interface mantém o padrão amarelo, limpo e direto da migração.', $pageSource);
-        $this->assertStringNotContainsString('Redefinir senha</Typography.Text>', $pageSource);
-        $this->assertStringNotContainsString('Digite o e-mail da conta e escolha uma nova senha.', $pageSource);
+        $this->assertStringContainsString('<div className="spa-auth-logo">', $pageSource);
+        $this->assertStringContainsString('<img src="/img/logo/juntter_webp_640_174.webp" alt="Juntter" className="spa-auth-logo-image" />', $pageSource);
+        $this->assertStringNotContainsString('<Tag color="gold" className="spa-auth-tag">', $pageSource);
+        $this->assertStringNotContainsString('<Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>', $pageSource);
         $this->assertStringContainsString('value={email}', $pageSource);
         $this->assertStringContainsString('readOnly', $pageSource);
         $this->assertStringNotContainsString('onChange={(event) => setEmail(event.target.value)}', $pageSource);
