@@ -73,6 +73,8 @@ class CheckoutVisualConfigTest extends TestCase
         $this->assertStringContainsString('label="Cor prim', $formSource);
         $this->assertStringContainsString('label="Cor de fundo da navbar"', $formSource);
         $this->assertStringContainsString('label="Imagem do produto"', $formSource);
+        $this->assertStringContainsString('label="Preço Padrão"', $formSource);
+        $this->assertStringContainsString('readOnly value={formatCurrencyInput(selectedProduct?.price ?? 0)}', $formSource);
         $this->assertStringContainsString('hidden label="Nome da loja"', $formSource);
         $this->assertStringContainsString('hidden label="Mensagem da oferta"', $formSource);
         $this->assertStringContainsString('hidden label="Texto do rod', $formSource);

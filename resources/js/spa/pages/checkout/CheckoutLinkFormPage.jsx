@@ -33,6 +33,8 @@ export default function CheckoutLinkFormPage() {
     const [productImagePreviewUrl, setProductImagePreviewUrl] = useState('');
     const [productImageFile, setProductImageFile] = useState(null);
     const isEditing = Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo');
+    const selectedProductId = Form.useWatch('product_id', form);
+    const selectedProduct = products.find((product) => product.id === selectedProductId);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -253,15 +255,24 @@ export default function CheckoutLinkFormPage() {
                             <Form.Item label="Nome do link" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
                                 <Input />
                             </Form.Item>
-                            <Form.Item label="Produto" name="product_id" rules={[{ required: true, message: 'Selecione um produto.' }]}>
-                                <Select
-                                    options={products.map((product) => ({
-                                        value: product.id,
-                                        label: product.name,
-                                    }))}
-                                    placeholder="Selecione um produto"
-                                />
-                            </Form.Item>
+                            <Row gutter={16}>
+                                <Col xs={24} md={16}>
+                                    <Form.Item label="Produto" name="product_id" rules={[{ required: true, message: 'Selecione um produto.' }]}>
+                                        <Select
+                                            options={products.map((product) => ({
+                                                value: product.id,
+                                                label: product.name,
+                                            }))}
+                                            placeholder="Selecione um produto"
+                                        />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={8}>
+                                    <Form.Item label="Preço Padrão">
+                                        <Input readOnly value={formatCurrencyInput(selectedProduct?.price ?? 0)} />
+                                    </Form.Item>
+                                </Col>
+                            </Row>
                             <Row gutter={16}>
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Quantidade" name="quantity" rules={[{ required: true }]}>
