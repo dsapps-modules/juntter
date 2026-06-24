@@ -366,6 +366,10 @@ a {
     align-items: stretch;
 }
 
+.spa-cobranca-pixout-page {
+    width: 100%;
+}
+
 .spa-pix-card {
     min-height: 100%;
 }
@@ -400,6 +404,11 @@ a {
 .spa-pix-form-panel {
     width: 100%;
     margin-top: 18px;
+}
+
+.spa-pix-summary-card-full,
+.spa-pix-form-card {
+    width: 100%;
 }
 
 .spa-pix-page-title {

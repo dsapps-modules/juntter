@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\ProcessCreatePaytimeEstablishment;
 use App\Jobs\ProcessPaytimeBilletStatusChange;
 use App\Jobs\ProcessPaytimeEstablishmentStatusChange;
+use App\Jobs\ProcessPaytimePixOutWebhook;
 use App\Jobs\ProcessPaytimeTransactionWebhook;
 use App\Jobs\ProcessUpdatePaytimeEstablishmentData;
 use App\Models\CheckoutEvent;
@@ -60,6 +61,8 @@ class PaytimeWebhookController extends Controller
             'updated-sub-transaction' => $this->handleUpdatedSubTransaction($payload),
             'new-pagseguro-transaction' => $this->handleNewPagseguroTransaction($payload),
             'updated-pagseguro-transaction' => $this->handleUpdatedPagseguroTransaction($payload),
+            'new-transfer-pix-out' => $this->handleNewTransferPixOut($payload),
+            'updated-transfer-pix-out' => $this->handleUpdatedTransferPixOut($payload),
             'new-zoop-transaction' => $this->handleNewZoopTransaction($payload),
             'updated-zoop-transaction' => $this->handleUpdatedZoopTransaction($payload),
             default => $this->handleUnknownEvent($event, $payload),
@@ -148,6 +151,32 @@ class PaytimeWebhookController extends Controller
     {
         Log::info('Paytime webhook received for updated-pagseguro-transaction', ['event' => 'updated-pagseguro-transaction']);
         Queue::push(new ProcessPaytimeTransactionWebhook($payload));
+    }
+
+    private function handleNewTransferPixOut(array $payload): void
+    {
+        $this->handleTransferPixOut($payload, 'new-transfer-pix-out');
+    }
+
+    private function handleUpdatedTransferPixOut(array $payload): void
+    {
+        $this->handleTransferPixOut($payload, 'updated-transfer-pix-out');
+    }
+
+    private function handleTransferPixOut(array $payload, string $event): void
+    {
+        $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+
+        Log::info('Paytime webhook received for PIX OUT transfer', [
+            'event' => $event,
+            'init_id' => $data['init_id'] ?? null,
+            'transaction_id' => $data['_id'] ?? ($data['transaction_id'] ?? null),
+            'status' => $data['status'] ?? null,
+            'gateway_authorization' => $data['gateway_authorization'] ?? null,
+            'data_keys' => array_keys($data),
+        ]);
+
+        Queue::push(new ProcessPaytimePixOutWebhook($this->payloadWithEvent($payload, $event)));
     }
 
     private function handleNewZoopTransaction(array $payload): void

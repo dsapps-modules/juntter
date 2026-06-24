@@ -15,6 +15,7 @@ import CobrancaCartaoCreditoPage from './pages/cobranca/CobrancaCartaoCreditoPag
 import CobrancaCreditoVistaPage from './pages/cobranca/CobrancaCreditoVistaPage';
 import CobrancaPlanoContratadoPage from './pages/cobranca/CobrancaPlanoContratadoPage';
 import CobrancaSaldoExtratoPage from './pages/cobranca/CobrancaSaldoExtratoPage';
+import CobrancaPixOutPage from './pages/cobranca/CobrancaPixOutPage';
 import CobrancaSimularPage from './pages/cobranca/CobrancaSimularPage';
 import CobrancaPixPage from './pages/cobranca/CobrancaPixPage';
 import CheckoutLinksPage from './pages/checkout/CheckoutLinksPage';
@@ -95,6 +96,7 @@ export default function App() {
                         <Route path="cobranca/planos" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="cobranca/planos/:planoId" element={<CobrancaPlanoContratadoPage />} />
                         <Route path="cobranca/saldoextrato" element={<CobrancaSaldoExtratoPage />} />
+                        <Route path="cobranca/pix-out" element={<CobrancaPixOutPage />} />
                         <Route path="cobranca/simular" element={<CobrancaSimularPage />} />
                         <Route path="links-pagamento" element={<LinksPagamentoPage />} />
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />

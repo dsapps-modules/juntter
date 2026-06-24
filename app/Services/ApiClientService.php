@@ -41,7 +41,6 @@ class ApiClientService
 
     private function request(string $method, string $endpoint, array $options): array
     {
-
         $attempts = 0;
 
         do {
@@ -64,7 +63,6 @@ class ApiClientService
             Log::info('Paytime API Request', [
                 'method' => $method,
                 'endpoint' => "{$this->baseUrl}/{$endpoint}",
-                'headers' => $headers,
                 'payload' => $this->sanitizeSensitiveData($options[$method === 'GET' ? 'query' : 'json'] ?? []),
             ]);
 
@@ -77,11 +75,7 @@ class ApiClientService
             }
 
             $response = Http::withHeaders($headers)
-                ->withOptions([
-                    'force_ip_resolve' => 'v4',
-                    'connect_timeout' => 10,
-                    'timeout' => 30,
-                ])
+                ->withOptions($this->buildHttpOptions())
                 ->beforeSending(function (Request $request) {
                     // Log::info('Headers enviados', ['headers' => $request->headers()]);
                     // Log::info('Query enviada',    ['query'   => $request->getUri()]);
@@ -117,7 +111,57 @@ class ApiClientService
             }
         }
 
+        foreach (['authentication-key', 'integration-key', 'x-token', 'pin', 'hash_code', 'pix_key', 'key'] as $sensitiveKey) {
+            if (isset($payload[$sensitiveKey]) && is_scalar($payload[$sensitiveKey])) {
+                $payload[$sensitiveKey] = $this->maskScalar((string) $payload[$sensitiveKey]);
+            }
+        }
+
         return $payload;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildHttpOptions(): array
+    {
+        $options = [
+            'force_ip_resolve' => 'v4',
+            'connect_timeout' => 10,
+            'timeout' => 30,
+        ];
+
+        $certPath = config('services.paytime.mtls_cert_path');
+        $keyPath = config('services.paytime.mtls_key_path');
+        $caPath = config('services.paytime.mtls_ca_path');
+        $verifyPeer = config('services.paytime.mtls_verify_peer');
+
+        if (is_string($certPath) && $certPath !== '') {
+            $options['cert'] = $certPath;
+        }
+
+        if (is_string($keyPath) && $keyPath !== '') {
+            $options['ssl_key'] = $keyPath;
+        }
+
+        if (is_string($caPath) && $caPath !== '') {
+            $options['verify'] = $caPath;
+        } elseif (is_bool($verifyPeer)) {
+            $options['verify'] = $verifyPeer;
+        }
+
+        return $options;
+    }
+
+    private function maskScalar(string $value): string
+    {
+        $length = strlen($value);
+
+        if ($length <= 4) {
+            return str_repeat('*', max($length, 1));
+        }
+
+        return str_repeat('*', $length - 4).substr($value, -4);
     }
 
     private function getToken(): string
@@ -146,11 +190,7 @@ class ApiClientService
         ];
 
         $response = Http::withHeaders($headers)
-            ->withOptions([
-                'force_ip_resolve' => 'v4',
-                'connect_timeout' => 10,
-                'timeout' => 30,
-            ])
+            ->withOptions($this->buildHttpOptions())
             ->post("{$this->baseUrl}/auth/login", $body);
 
         if (! $response->successful()) {

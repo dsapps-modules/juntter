@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Jobs\ProcessPaytimeBilletStatusChange;
+use App\Jobs\ProcessPaytimePixOutWebhook;
 use App\Jobs\ProcessPaytimeTransactionWebhook;
 use App\Models\PaytimeEstablishment;
+use App\Models\PixPayoutRequest;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
@@ -67,6 +70,31 @@ class PaytimeWebhookControllerTest extends TestCase
 
         Queue::assertPushed(ProcessPaytimeTransactionWebhook::class, function (ProcessPaytimeTransactionWebhook $job): bool {
             return ($job->payload['event'] ?? null) === 'new-pagseguro-transaction';
+        });
+    }
+
+    public function test_it_dispatches_the_pix_out_handler_from_the_single_paytime_webhook_route(): void
+    {
+        Queue::fake();
+
+        $response = $this
+            ->withBasicAuth('webhook-user', 'webhook-pass')
+            ->postJson('/api/webhook/paytime', [
+                'event' => 'new-transfer-pix-out',
+                'data' => [
+                    '_id' => 'pix-out-123',
+                    'init_id' => 'init-123',
+                    'status' => 'PROCESSING',
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Paytime webhook received',
+        ]);
+
+        Queue::assertPushed(ProcessPaytimePixOutWebhook::class, function (ProcessPaytimePixOutWebhook $job): bool {
+            return ($job->payload['event'] ?? null) === 'new-transfer-pix-out';
         });
     }
 
@@ -263,5 +291,57 @@ class PaytimeWebhookControllerTest extends TestCase
         $this->assertSame('LOW', $establishment->risk);
         $this->assertSame('Rua Nova', $establishment->address_json['street']);
         $this->assertSame('Responsavel Novo', $establishment->responsible_json['name']);
+    }
+
+    public function test_it_syncs_pix_out_status_updates_from_the_webhook_route(): void
+    {
+        config()->set('queue.default', 'sync');
+
+        $seller = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $seller->vendedor()->create([
+            'estabelecimento_id' => '5001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+        ]);
+
+        $payoutRequest = PixPayoutRequest::factory()->create([
+            'seller_id' => $seller->id,
+            'establishment_id' => '5001',
+            'amount' => 10000,
+            'pix_key_type' => 'CPF',
+            'pix_key' => '12345678901',
+            'status' => 'confirmed',
+            'init_id' => 'init-123',
+            'gateway_transaction_id' => null,
+            'confirmed_at' => null,
+        ]);
+
+        $response = $this
+            ->withBasicAuth('webhook-user', 'webhook-pass')
+            ->postJson('/api/webhook/paytime', [
+                'event' => 'updated-transfer-pix-out',
+                'data' => [
+                    '_id' => 'pix-out-123',
+                    'init_id' => 'init-123',
+                    'status' => 'PAID',
+                    'gateway_authorization' => 'CELCOIN',
+                ],
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Paytime webhook received',
+        ]);
+
+        $payoutRequest->refresh();
+
+        $this->assertSame('confirmed', $payoutRequest->status);
+        $this->assertSame('pix-out-123', $payoutRequest->gateway_transaction_id);
+        $this->assertSame('CELCOIN', $payoutRequest->gateway_authorization);
+        $this->assertNotNull($payoutRequest->webhook_payload);
     }
 }

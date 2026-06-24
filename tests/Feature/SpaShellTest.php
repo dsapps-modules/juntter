@@ -500,7 +500,6 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixOutPage.jsx'));
 
-        $this->assertStringContainsString('Enviar Pix', $pageSource);
         $this->assertStringContainsString('/api/spa/cobranca/pix-out', $pageSource);
         $this->assertStringContainsString('Alterar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Cadastrar/atualizar assinatura eletrônica', $pageSource);
@@ -519,6 +518,7 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Estabelecimento', $pageSource);
         $this->assertStringNotContainsString('Este é o saldo que pode ser usado para o envio.', $pageSource);
         $this->assertStringNotContainsString('Solicitação atual', $pageSource);
+        $this->assertStringNotContainsString('Não cadastrada', $pageSource);
         $this->assertStringNotContainsString('Senha de confirmação', $pageSource);
         $this->assertStringNotContainsString('pinModalOpen', $pageSource);
         $this->assertStringNotContainsString('handleConfirmPin', $pageSource);

@@ -25,6 +25,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'nivel_acesso',
         'email_verified_at',
         'company_logo_path',
+        'electronic_signature_hash',
+        'electronic_signature_pending_hash',
+        'electronic_signature_code_hash',
+        'electronic_signature_code_attempts',
+        'electronic_signature_code_sent_at',
+        'electronic_signature_code_expires_at',
+        'electronic_signature_verified_at',
     ];
 
     /**
@@ -44,6 +51,10 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'electronic_signature_code_attempts' => 'integer',
+        'electronic_signature_code_sent_at' => 'datetime',
+        'electronic_signature_code_expires_at' => 'datetime',
+        'electronic_signature_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 

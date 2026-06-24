@@ -106,6 +106,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/cobranca/planos', fn () => redirect('/app/cobranca/planos'))->name('cobranca.planos');
         Route::get('/cobranca/planos/{id}', fn ($id) => redirect('/app/cobranca/planos/'.$id))->name('cobranca.plano.detalhes');
         Route::get('/cobranca/saldoextrato', fn () => redirect('/app/cobranca/saldoextrato'))->name('cobranca.saldoextrato');
+        Route::get('/cobranca/pix-out', fn () => redirect('/app/cobranca/pix-out'))->name('cobranca.pix-out');
         Route::get('/cobranca/cartao-credito', fn () => redirect('/app/cobranca/cartao-credito'))->name('cobranca.cartao-credito');
 
         // Rotas de API para transações
