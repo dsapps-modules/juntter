@@ -135,6 +135,14 @@ class SpaShellTest extends TestCase
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/ResetPasswordPage.jsx'));
 
         $this->assertStringContainsString('window.location.assign(payload.redirect ?? \'/app/login\');', $pageSource);
+        $this->assertStringContainsString('Redefina sua senha.', $pageSource);
+        $this->assertStringNotContainsString('Redefina sua senha com a mesma linha visual da plataforma.', $pageSource);
+        $this->assertStringNotContainsString('O link é validado pelo backend, enquanto a interface mantém o padrão amarelo, limpo e direto da migração.', $pageSource);
+        $this->assertStringNotContainsString('Redefinir senha</Typography.Text>', $pageSource);
+        $this->assertStringNotContainsString('Digite o e-mail da conta e escolha uma nova senha.', $pageSource);
+        $this->assertStringContainsString('value={email}', $pageSource);
+        $this->assertStringContainsString('readOnly', $pageSource);
+        $this->assertStringNotContainsString('onChange={(event) => setEmail(event.target.value)}', $pageSource);
     }
 
     public function test_the_email_verification_route_is_available(): void
@@ -222,8 +230,10 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("icon: 'admin-estabelecimentos'", $navigationSource);
         $this->assertStringContainsString("icon: 'vendedores-estabelecimentos'", $navigationSource);
         $this->assertStringContainsString("icon: 'historico'", $navigationSource);
+        $this->assertStringContainsString("icon: 'pix'", $navigationSource);
         $this->assertStringContainsString("icon: 'checkout-produtos'", $navigationSource);
         $this->assertStringContainsString("icon: 'checkout-links'", $navigationSource);
+        $this->assertStringContainsString("label: 'Enviar Pix'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'estabelecimentos'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'unica'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'checkout'", $navigationSource);
@@ -313,15 +323,21 @@ class SpaShellTest extends TestCase
 
         $saldoPosition = strpos($vendedorSection, 'cobranca.saldo');
         $saldoRoutePosition = strpos($vendedorSection, '/cobranca/saldoextrato');
+        $enviarPixPosition = strpos($vendedorSection, 'cobranca.enviar-pix');
+        $enviarPixRoutePosition = strpos($vendedorSection, '/cobranca/pix-out');
         $simularRoutePosition = strpos($vendedorSection, '/cobranca/simular');
         $cobrancaHeaderPosition = strpos($vendedorSection, "label: 'Cobran");
         $simularPosition = strpos($vendedorSection, 'cobranca.simular');
         $this->assertNotFalse($saldoPosition);
         $this->assertNotFalse($saldoRoutePosition);
+        $this->assertNotFalse($enviarPixPosition);
+        $this->assertNotFalse($enviarPixRoutePosition);
         $this->assertNotFalse($simularRoutePosition);
         $this->assertNotFalse($simularPosition);
         $this->assertNotFalse($cobrancaHeaderPosition);
         $this->assertLessThan($simularPosition, $saldoPosition);
+        $this->assertLessThan($enviarPixPosition, $saldoPosition);
+        $this->assertLessThan($simularPosition, $enviarPixPosition);
         $this->assertLessThan($cobrancaHeaderPosition, $simularPosition);
     }
 
@@ -386,6 +402,7 @@ class SpaShellTest extends TestCase
 
         foreach ([
             '/app/cobranca/pix',
+            '/app/cobranca/pix-out',
             '/app/cobranca/credito-vista',
             '/app/cobranca/cartao-credito',
             '/app/cobranca/boleto',
@@ -477,6 +494,35 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('role="button"', $pageSource);
         $this->assertStringContainsString('tabIndex={0}', $pageSource);
         $this->assertStringNotContainsString('Abrir', $pageSource);
+    }
+
+    public function test_the_pix_out_page_contains_the_confirmation_flow(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixOutPage.jsx'));
+
+        $this->assertStringContainsString('Enviar Pix', $pageSource);
+        $this->assertStringContainsString('/api/spa/cobranca/pix-out', $pageSource);
+        $this->assertStringContainsString('Alterar assinatura eletrônica', $pageSource);
+        $this->assertStringContainsString('Cadastrar/atualizar assinatura eletrônica', $pageSource);
+        $this->assertStringContainsString('Valor disponível', $pageSource);
+        $this->assertStringContainsString('Valor a transferir', $pageSource);
+        $this->assertStringContainsString('Dados do recebedor', $pageSource);
+        $this->assertStringContainsString('Dados do devedor', $pageSource);
+        $this->assertStringContainsString('Código de verificação recebido por e-mail', $pageSource);
+        $this->assertStringContainsString('Pix confirmado com sucesso, aguardando efetivação pelo banco.', $pageSource);
+        $this->assertStringContainsString('handleStartTransaction', $pageSource);
+        $this->assertStringContainsString('handleConfirmTransaction', $pageSource);
+        $this->assertStringContainsString('handleSignatureFormSubmit', $pageSource);
+        $this->assertStringContainsString('handleSignatureCodeSubmit', $pageSource);
+        $this->assertStringNotContainsString('Transferência via PIX para conta de destino', $pageSource);
+        $this->assertStringNotContainsString('Resumo de segurança', $pageSource);
+        $this->assertStringNotContainsString('Estabelecimento', $pageSource);
+        $this->assertStringNotContainsString('Este é o saldo que pode ser usado para o envio.', $pageSource);
+        $this->assertStringNotContainsString('Solicitação atual', $pageSource);
+        $this->assertStringNotContainsString('Senha de confirmação', $pageSource);
+        $this->assertStringNotContainsString('pinModalOpen', $pageSource);
+        $this->assertStringNotContainsString('handleConfirmPin', $pageSource);
+        $this->assertStringNotContainsString('Últimas solicitações', $pageSource);
     }
 
     public function test_the_pix_page_shows_status_below_the_transaction_date(): void
@@ -830,6 +876,7 @@ class SpaShellTest extends TestCase
         $this->get('/cobranca/planos')->assertRedirect('/app/cobranca/planos');
         $this->get('/cobranca/planos/123')->assertRedirect('/app/cobranca/planos/123');
         $this->get('/cobranca/saldoextrato')->assertRedirect('/app/cobranca/saldoextrato');
+        $this->get('/cobranca/pix-out')->assertRedirect('/app/cobranca/pix-out');
     }
 
     public function test_the_link_form_route_is_available(): void

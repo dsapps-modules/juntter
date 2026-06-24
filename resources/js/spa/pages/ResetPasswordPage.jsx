@@ -6,7 +6,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 export default function ResetPasswordPage() {
     const { token } = useParams();
     const [searchParams] = useSearchParams();
-    const [email, setEmail] = useState(searchParams.get('email') ?? '');
+    const [email] = useState(searchParams.get('email') ?? '');
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [loading, setLoading] = useState(false);
@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
                 throw new Error(firstError ?? payload.message ?? 'Falha ao redefinir a senha.');
             }
 
-            setSuccess('Senha redefinida com sucesso. Você já pode entrar novamente.');
+            setSuccess('Senha redefinida com sucesso. VocÃª jÃ¡ pode entrar novamente.');
             window.location.assign(payload.redirect ?? '/app/login');
         } catch (submitError) {
             setError(submitError.message || 'Falha ao redefinir a senha.');
@@ -67,23 +67,16 @@ export default function ResetPasswordPage() {
                         </Tag>
                         <Typography.Text className="spa-brand-kicker">Juntter</Typography.Text>
                         <Typography.Title level={1} className="spa-auth-title">
-                            Redefina sua senha com a mesma linha visual da plataforma.
+                            Redefina sua senha.
                         </Typography.Title>
-                        <Typography.Paragraph className="spa-auth-description">
-                            O link é validado pelo backend, enquanto a interface mantém o padrão amarelo, limpo e direto da migração.
-                        </Typography.Paragraph>
                     </div>
                 </Col>
 
                 <Col xs={24} lg={10} xl={8}>
                     <Card className="spa-auth-card">
-                        <Typography.Text className="spa-brand-kicker">Redefinir senha</Typography.Text>
                         <Typography.Title level={3} className="spa-auth-card-title">
                             Criar nova senha
                         </Typography.Title>
-                        <Typography.Paragraph type="secondary">
-                            Digite o e-mail da conta e escolha uma nova senha.
-                        </Typography.Paragraph>
 
                         {error ? <Alert type="error" showIcon message={error} className="spa-auth-alert" /> : null}
                         {success ? <Alert type="success" showIcon message={success} className="spa-auth-alert" /> : null}
@@ -97,7 +90,7 @@ export default function ResetPasswordPage() {
                                         size="large"
                                         placeholder="nome@empresa.com"
                                         value={email}
-                                        onChange={(event) => setEmail(event.target.value)}
+                                        readOnly
                                         autoComplete="username"
                                         className="spa-auth-input"
                                     />
