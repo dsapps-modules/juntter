@@ -129,7 +129,10 @@ export default function LoginPage() {
                                     <Checkbox checked={remember} onChange={(event) => setRemember(event.target.checked)}>
                                         Manter conectado
                                     </Checkbox>
-                                    <Link to="/forgot-password" className="spa-auth-link">
+                                    <Link
+                                        to={`/forgot-password${email ? `?email=${encodeURIComponent(email)}` : ''}`}
+                                        className="spa-auth-link"
+                                    >
                                         Esqueci a senha
                                     </Link>
                                 </div>

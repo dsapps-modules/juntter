@@ -1,10 +1,11 @@
 import { ArrowRightOutlined, MailOutlined, SendOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Col, Input, Row, Space, Typography } from 'antd';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export default function ForgotPasswordPage() {
-    const [email, setEmail] = useState('');
+    const [searchParams] = useSearchParams();
+    const [email, setEmail] = useState(() => searchParams.get('email') ?? '');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
