@@ -119,6 +119,7 @@ class SpaCobrancaPixOutTest extends TestCase
     public function test_pix_out_store_initiates_transaction_and_sends_confirmation_code(): void
     {
         Mail::fake();
+        $this->configureMtlsForPixTests();
 
         $user = $this->createVendor();
         $user->forceFill([
@@ -218,6 +219,8 @@ class SpaCobrancaPixOutTest extends TestCase
 
     public function test_pix_out_confirm_rejects_an_incorrect_code(): void
     {
+        $this->configureMtlsForPixTests();
+
         $user = $this->createVendor();
 
         $payoutRequest = PixPayoutRequest::factory()->create([
@@ -251,6 +254,8 @@ class SpaCobrancaPixOutTest extends TestCase
 
     public function test_pix_out_confirm_confirms_with_a_valid_code(): void
     {
+        $this->configureMtlsForPixTests();
+
         $user = $this->createVendor();
 
         $payoutRequest = PixPayoutRequest::factory()->create([
@@ -320,5 +325,19 @@ class SpaCobrancaPixOutTest extends TestCase
         ]);
 
         return $user;
+    }
+
+    private function configureMtlsForPixTests(): void
+    {
+        $certPath = tempnam(sys_get_temp_dir(), 'paytime-cert-');
+        $keyPath = tempnam(sys_get_temp_dir(), 'paytime-key-');
+
+        file_put_contents($certPath, "-----BEGIN CERTIFICATE-----\nMIIB\n-----END CERTIFICATE-----\n");
+        file_put_contents($keyPath, "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----\n");
+
+        config([
+            'services.paytime.mtls_cert_path' => $certPath,
+            'services.paytime.mtls_key_path' => $keyPath,
+        ]);
     }
 }

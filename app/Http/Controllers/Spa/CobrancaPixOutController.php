@@ -259,6 +259,13 @@ class CobrancaPixOutController extends Controller
         $pixKeyType = $request->string('pix_key_type')->toString();
         $pixKey = $this->resolvePixKey($request, $pixKeyType);
 
+        $mtlsIssue = $this->resolveMtlsConfigurationIssue();
+        if ($mtlsIssue !== null) {
+            return response()->json([
+                'message' => $mtlsIssue,
+            ], 503);
+        }
+
         $pixPayoutRequest = PixPayoutRequest::query()->create([
             'seller_id' => $user->id,
             'establishment_id' => (string) $establishmentId,
@@ -397,6 +404,13 @@ class CobrancaPixOutController extends Controller
         }
 
         $submittedCode = $request->string('verification_code')->toString();
+
+        $mtlsIssue = $this->resolveMtlsConfigurationIssue();
+        if ($mtlsIssue !== null) {
+            return response()->json([
+                'message' => $mtlsIssue,
+            ], 503);
+        }
 
         if (! $this->matchesConfirmationCode($pixPayoutRequest, $submittedCode)) {
             $attempts = $pixPayoutRequest->confirmation_code_attempts + 1;
@@ -740,6 +754,28 @@ class CobrancaPixOutController extends Controller
     private function resolvePayoutFeeCents(): int
     {
         return max(0, (int) config('services.paytime.payout_fee_cents', 29));
+    }
+
+    private function resolveMtlsConfigurationIssue(): ?string
+    {
+        $certPath = config('services.paytime.mtls_cert_path');
+        $keyPath = config('services.paytime.mtls_key_path');
+
+        $missing = [];
+
+        if (! is_string($certPath) || trim($certPath) === '' || ! is_file($certPath) || ! is_readable($certPath)) {
+            $missing[] = 'certificado do cliente';
+        }
+
+        if (! is_string($keyPath) || trim($keyPath) === '' || ! is_file($keyPath) || ! is_readable($keyPath)) {
+            $missing[] = 'chave privada';
+        }
+
+        if ($missing === []) {
+            return null;
+        }
+
+        return 'Não foi possível enviar o PIX porque o certificado mTLS da Paytime não está configurado neste ambiente. Verifique o certificado do cliente e a chave privada antes de tentar novamente.';
     }
 
     private function formatFee(int $amount): array
