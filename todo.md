@@ -21,5 +21,11 @@
 [x] checkout: traduzir pending na página do pix
 [x] eliminar botão 'Ver página de confirmação'
 
-[] saldo e extrato: fazer saque via pix
-[] corrigir visual do checkout
+[x] saldo e extrato: fazer saque via pix
+[x] corrigir visual do checkout
+[ ] Eliminar o switch 'Solicitar endereço'
+[ ] Quando a opção de pagamento for única, ir direto a ela
+[ ] Dimensionar a imagem do produto no resumo do pedido
+[ ] Pagamento com cartão/pix apresentou mensagem: Boleto gerado com sucesso
+[ ] Depois do pagamento, não houve redirecionamento
+[ ] Permissão para gerar boleto

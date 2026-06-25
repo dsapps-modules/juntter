@@ -501,6 +501,9 @@ class SpaShellTest extends TestCase
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixOutPage.jsx'));
 
         $this->assertStringContainsString('/api/spa/cobranca/pix-out', $pageSource);
+        $this->assertStringContainsString('meta[name="csrf-token"]', $pageSource);
+        $this->assertStringContainsString('X-CSRF-TOKEN', $pageSource);
+        $this->assertStringContainsString('X-Requested-With', $pageSource);
         $this->assertStringContainsString('Alterar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Cadastrar/atualizar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Valor disponível', $pageSource);

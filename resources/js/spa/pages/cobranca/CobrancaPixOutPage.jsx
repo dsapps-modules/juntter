@@ -73,6 +73,19 @@ const defaultTransactionState = {
     receipt_url: '',
 };
 
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+}
+
+function buildJsonHeaders() {
+    return {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': getCsrfToken(),
+    };
+}
+
 export default function CobrancaPixOutPage() {
     const [form] = Form.useForm();
     const [signatureForm] = Form.useForm();
@@ -177,10 +190,7 @@ export default function CobrancaPixOutPage() {
         try {
             const response = await fetch('/api/spa/cobranca/pix-out/assinatura-eletronica', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
+                headers: buildJsonHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify(values),
             });
@@ -208,10 +218,7 @@ export default function CobrancaPixOutPage() {
         try {
             const response = await fetch('/api/spa/cobranca/pix-out/assinatura-eletronica/confirmar', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
+                headers: buildJsonHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify(values),
             });
@@ -239,10 +246,7 @@ export default function CobrancaPixOutPage() {
         try {
             const response = await fetch('/api/spa/cobranca/pix-out', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
+                headers: buildJsonHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify(values),
             });
@@ -281,10 +285,7 @@ export default function CobrancaPixOutPage() {
         try {
             const response = await fetch(`/api/spa/cobranca/pix-out/${transactionState.request.id}/confirmar`, {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
+                headers: buildJsonHeaders(),
                 credentials: 'same-origin',
                 body: JSON.stringify(values),
             });
