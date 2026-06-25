@@ -42,6 +42,7 @@ class SpaCobrancaPixOutTest extends TestCase
             ->assertJsonPath('balance.blocked_label', 'R$ 5,00')
             ->assertJsonPath('fee.label', 'R$ 0,29')
             ->assertJsonPath('available_after_fee.label', 'R$ 249,71')
+            ->assertJsonPath('seller_email', $user->email)
             ->assertJsonPath('electronic_signature.configured', false);
     }
 
@@ -87,6 +88,7 @@ class SpaCobrancaPixOutTest extends TestCase
 
         $response
             ->assertOk()
+            ->assertJsonPath('seller_email', $user->email)
             ->assertJsonPath('requires_code', true);
 
         Mail::assertSent(SecurityCodeMail::class, function (SecurityCodeMail $mail) use (&$code): bool {

@@ -42,6 +42,7 @@ class CobrancaPixOutController extends Controller
         if ($establishmentId === null || $establishmentId === '') {
             return response()->json([
                 'seller_name' => $this->resolveSellerName($user),
+                'seller_email' => (string) $user->email,
                 'establishment' => null,
                 'balance' => $this->emptyBalance(),
                 'fee' => $this->formatFee(0),
@@ -80,6 +81,7 @@ class CobrancaPixOutController extends Controller
 
         return response()->json([
             'seller_name' => $this->resolveSellerName($user),
+            'seller_email' => (string) $user->email,
             'establishment' => [
                 'id' => (string) $establishmentId,
                 'name' => $this->resolveEstablishmentName($user),
@@ -147,6 +149,7 @@ class CobrancaPixOutController extends Controller
         return response()->json([
             'message' => $currentSignatureHash ? 'Código enviado para atualizar a assinatura eletrônica.' : 'Código enviado para cadastrar a assinatura eletrônica.',
             'requires_code' => true,
+            'seller_email' => (string) $user->email,
             'electronic_signature' => $this->normalizeElectronicSignatureState($user->fresh()),
         ]);
     }

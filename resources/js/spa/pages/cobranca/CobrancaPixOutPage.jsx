@@ -25,6 +25,7 @@ import MoneyInputField from '../../components/form/MoneyInputField';
 
 const defaultOverview = {
     seller_name: 'Vendedor',
+    seller_email: '',
     establishment: null,
     balance: {
         available: 0,
@@ -127,6 +128,7 @@ export default function CobrancaPixOutPage() {
                 setOverview((current) => ({
                     ...current,
                     ...data,
+                    seller_email: data.seller_email ?? current.seller_email,
                     balance: data.balance ?? current.balance,
                     fee: data.fee ?? current.fee,
                     available_after_fee: data.available_after_fee ?? current.available_after_fee,
@@ -163,6 +165,7 @@ export default function CobrancaPixOutPage() {
         setOverview((current) => ({
             ...current,
             ...data,
+            seller_email: data.seller_email ?? current.seller_email,
             balance: data.balance ?? current.balance,
             fee: data.fee ?? current.fee,
             available_after_fee: data.available_after_fee ?? current.available_after_fee,
@@ -203,7 +206,8 @@ export default function CobrancaPixOutPage() {
 
             setSignatureStep('code');
             signatureForm.setFieldsValue({ verification_code: '' });
-            message.success(payload.message || 'Código enviado.');
+            const sellerEmail = payload.seller_email || overview.seller_email || 'o e-mail cadastrado';
+            message.success(payload.message || `Código enviado para ${sellerEmail}.`);
         } catch (error) {
             setFeedback({ type: 'error', message: error.message || 'Falha ao atualizar a assinatura eletrônica.' });
         } finally {
@@ -505,7 +509,7 @@ export default function CobrancaPixOutPage() {
                                 <Alert
                                     type="info"
                                     showIcon
-                                    message="Informe o código recebido por e-mail para salvar a nova assinatura eletrônica."
+                                    message={`Informe o código enviado para ${overview.seller_email || 'o e-mail cadastrado'} para salvar a nova assinatura eletrônica.`}
                                 />
                                 <Form.Item
                                     name="verification_code"
