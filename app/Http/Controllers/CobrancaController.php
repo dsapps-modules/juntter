@@ -47,7 +47,7 @@ class CobrancaController extends Controller
      * Converte valor brasileiro para centavos
      * Aceita formatos: 1.100,00, 1100,00, 1100.00, 1100
      */
-    private function converterValorParaCentavos($valor)
+    private function converterValorParaCentavos(mixed $valor): int
     {
         // Remover símbolos de moeda e espaços
         $valor = preg_replace('/[R$\s]/', '', $valor);
@@ -72,6 +72,39 @@ class CobrancaController extends Controller
     /**
      * Página principal de cobrança única
      */
+    private function converterValorParaCentavosSeguro(mixed $valor): int
+    {
+        if (is_numeric($valor)) {
+            $valor = (string) $valor;
+        }
+
+        $valor = trim((string) $valor);
+        $valor = preg_replace('/[^\d,.\-]/u', '', $valor) ?? '';
+
+        if ($valor === '') {
+            throw new \Exception('O valor deve ser pelo menos R$ 0,01');
+        }
+
+        if (str_contains($valor, ',') && str_contains($valor, '.')) {
+            if (strrpos($valor, ',') > strrpos($valor, '.')) {
+                $valor = str_replace('.', '', $valor);
+                $valor = str_replace(',', '.', $valor);
+            } else {
+                $valor = str_replace(',', '', $valor);
+            }
+        } elseif (str_contains($valor, ',')) {
+            $valor = str_replace(',', '.', $valor);
+        }
+
+        $valorFloat = (float) $valor;
+
+        if ($valorFloat < 0.01) {
+            throw new \Exception('O valor deve ser pelo menos R$ 0,01');
+        }
+
+        return (int) ($valorFloat * 100);
+    }
+
     public function index(Request $request)
     {
         try {
@@ -221,7 +254,7 @@ class CobrancaController extends Controller
     public function criarTransacaoCredito(CobrancaCartaoRequest $request)
     {
         try {
-            $valor = $this->converterValorParaCentavos($request->input('amount')) / 100;
+            $valor = $this->converterValorParaCentavosSeguro($request->input('amount')) / 100;
             $parcelas = (int) $request->input('installments');
 
             if ($parcelas > 1) {
@@ -236,7 +269,7 @@ class CobrancaController extends Controller
 
             $dados = $request->validated();
             $dados = $this->creditoService->organiza($dados);
-            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
+            $dados['amount'] = $this->converterValorParaCentavosSeguro($dados['amount']);
 
             // Tratar campos opcionais que a API espera como string
             if (empty($dados['client']['last_name'])) {
@@ -297,7 +330,7 @@ class CobrancaController extends Controller
             $dados = $request->validated();
 
             // Converter valor para centavos usando função helper
-            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
+            $dados['amount'] = $this->converterValorParaCentavosSeguro($dados['amount']);
 
             // Processar info_additional como string simples
             if (isset($dados['info_additional']) && ! empty($dados['info_additional'])) {
@@ -411,14 +444,14 @@ class CobrancaController extends Controller
             $dados = $request->validated();
 
             // Converter valores para centavos usando função helper
-            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
+            $dados['amount'] = $this->converterValorParaCentavosSeguro($dados['amount']);
 
             $dados = $this->boletoService->organiza($dados);
 
             // Converter outros valores numéricos usando função helper
-            $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavos($dados['instruction']['late_fee']['amount']) / 100.0;
-            $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavos($dados['instruction']['interest']['amount']) / 100.0;
-            $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavos($dados['instruction']['discount']['amount']) / 100.0;
+            $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['late_fee']['amount']) / 100.0;
+            $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['interest']['amount']) / 100.0;
+            $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['discount']['amount']) / 100.0;
 
             // Garantir tipos booleanos corretos exigidos pela API (normalização simples)
             $dados['recharge'] = $request->boolean('recharge');
@@ -534,7 +567,7 @@ class CobrancaController extends Controller
             ]);
 
             // Converter valor para centavos usando função helper
-            $dados['amount'] = $this->converterValorParaCentavos($dados['amount']);
+            $dados['amount'] = $this->converterValorParaCentavosSeguro($dados['amount']);
 
             $dados['flag_id'] = (int) $dados['flag_id'];
             $dados['gateway_id'] = 4; // SUBPAYTIME
@@ -682,7 +715,7 @@ class CobrancaController extends Controller
             }
 
             // Converter valor para centavos
-            $valorCentavos = $this->converterValorParaCentavos($dados['valor']);
+            $valorCentavos = $this->converterValorParaCentavosSeguro($dados['valor']);
             $valorFloat = $valorCentavos / 100;
 
             // Criar link de pagamento

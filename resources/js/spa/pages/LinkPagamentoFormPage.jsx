@@ -26,12 +26,31 @@ function getDocumentValidationMessage(document) {
     return isValidDocument(document) ? '' : 'O documento informado é inválido.';
 }
 
+function hasCustomerFieldsFilled(customerFields) {
+    const addressFields = customerFields?.endereco ?? {};
+
+    return Boolean(
+        customerFields?.nome ||
+            customerFields?.sobrenome ||
+            customerFields?.email ||
+            customerFields?.telefone ||
+            customerFields?.documento ||
+            addressFields.rua ||
+            addressFields.numero ||
+            addressFields.bairro ||
+            addressFields.cidade ||
+            addressFields.estado ||
+            addressFields.cep ||
+            addressFields.complemento,
+    );
+}
+
 const initialState = {
     tipo_pagamento: 'CARTAO',
     descricao: '',
     valor: '',
     parcelas: 1,
-    juros: 'CLIENT',
+    juros: 'ESTABLISHMENT',
     data_expiracao: null,
     data_vencimento: null,
     data_limite_pagamento: null,
@@ -70,6 +89,7 @@ export default function LinkPagamentoFormPage() {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [areCustomerFieldsEnabled, setAreCustomerFieldsEnabled] = useState(false);
     const [formState, setFormState] = useState({
         ...initialState,
         tipo_pagamento: searchParams.get('tipo') ?? 'CARTAO',
@@ -132,6 +152,7 @@ export default function LinkPagamentoFormPage() {
                         },
                     },
                 });
+                setAreCustomerFieldsEnabled(hasCustomerFieldsFilled(link.dados_cliente_preenchidos ?? {}));
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
                     setError(fetchError.message || 'Falha ao carregar o formulário.');
@@ -282,6 +303,7 @@ export default function LinkPagamentoFormPage() {
                 data_limite_pagamento: formState.data_limite_pagamento
                     ? formState.data_limite_pagamento.format('YYYY-MM-DD')
                     : null,
+                dados_cliente_preenchidos: areCustomerFieldsEnabled ? formState.dados_cliente_preenchidos : null,
                 instrucoes_boleto: {
                     ...formState.instrucoes_boleto,
                     discount: {
@@ -327,13 +349,16 @@ export default function LinkPagamentoFormPage() {
                 <Card className="spa-hero-card spa-link-pagamento-hero-card">
                     <Space direction="vertical" size={18} className="spa-hero-stack">
                         <div>
-                            <Typography.Text className="spa-brand-kicker">Links de pagamento</Typography.Text>
-                            <Typography.Title level={2} className="spa-hero-title">
-                                {isEdit ? 'Editar link' : 'Criar novo link'}
-                            </Typography.Title>
-                            <Typography.Paragraph className="spa-hero-description">
+                            {isEdit ? (
+                                <Typography.Title level={2} className="spa-hero-title">
+                                    Editar link
+                                </Typography.Title>
+                            ) : null}
+                            {isEdit ? (
+                                <Typography.Paragraph className="spa-hero-description">
                                 Ajuste tipo, valor, parcelamento e instruções do link sem sair do layout da SPA.
-                            </Typography.Paragraph>
+                                </Typography.Paragraph>
+                            ) : null}
                         </div>
 
                         {error ? <Alert type="error" showIcon message={error} /> : null}
@@ -478,11 +503,12 @@ export default function LinkPagamentoFormPage() {
                                         <div>
                                             <Typography.Text strong>Campos de cliente preenchidos</Typography.Text>
                                             <Switch
-                                                checked={Boolean(formState.dados_cliente_preenchidos.nome || formState.dados_cliente_preenchidos.email)}
+                                                checked={areCustomerFieldsEnabled}
                                                 onChange={(checked) => {
+                                                    setAreCustomerFieldsEnabled(checked);
+
                                                     if (!checked) {
                                                         updateField('dados_cliente_preenchidos', initialState.dados_cliente_preenchidos);
-                                                        return;
                                                     }
                                                 }}
                                             />
@@ -496,6 +522,7 @@ export default function LinkPagamentoFormPage() {
                                             value={formState.dados_cliente_preenchidos.nome}
                                             onChange={(event) => updateField('dados_cliente_preenchidos.nome', event.target.value)}
                                             placeholder="Nome do cliente"
+                                            disabled={!areCustomerFieldsEnabled}
                                         />
                                     </Col>
                                     <Col xs={24} md={12}>
@@ -503,6 +530,7 @@ export default function LinkPagamentoFormPage() {
                                             value={formState.dados_cliente_preenchidos.sobrenome}
                                             onChange={(event) => updateField('dados_cliente_preenchidos.sobrenome', event.target.value)}
                                             placeholder="Sobrenome do cliente"
+                                            disabled={!areCustomerFieldsEnabled}
                                         />
                                     </Col>
                                 </Row>
@@ -514,6 +542,7 @@ export default function LinkPagamentoFormPage() {
                                             value={formState.dados_cliente_preenchidos.email}
                                             onChange={(event) => updateField('dados_cliente_preenchidos.email', event.target.value)}
                                             placeholder="email@exemplo.com"
+                                            disabled={!areCustomerFieldsEnabled}
                                         />
                                     </Col>
                                     <Col xs={24} md={12}>
@@ -521,6 +550,7 @@ export default function LinkPagamentoFormPage() {
                                             value={formState.dados_cliente_preenchidos.telefone}
                                             onChange={(event) => updateField('dados_cliente_preenchidos.telefone', event.target.value)}
                                             placeholder="Telefone"
+                                            disabled={!areCustomerFieldsEnabled}
                                         />
                                     </Col>
                                 </Row>
@@ -531,6 +561,7 @@ export default function LinkPagamentoFormPage() {
                                             value={formState.dados_cliente_preenchidos.documento}
                                             onChange={(event) => updateField('dados_cliente_preenchidos.documento', event.target.value)}
                                             placeholder="CPF/CNPJ"
+                                            disabled={!areCustomerFieldsEnabled}
                                         />
                                     </Col>
                                     <Col xs={24} md={12}>
@@ -556,6 +587,7 @@ export default function LinkPagamentoFormPage() {
                                             value={formState.dados_cliente_preenchidos.endereco.cidade}
                                             onChange={(event) => updateField('dados_cliente_preenchidos.endereco.cidade', event.target.value)}
                                             placeholder="Cidade"
+                                            disabled={!areCustomerFieldsEnabled}
                                         />
                                     </Col>
                                 </Row>
@@ -570,6 +602,7 @@ export default function LinkPagamentoFormPage() {
                                                         updateField('dados_cliente_preenchidos.endereco.rua', event.target.value)
                                                     }
                                                     placeholder="Rua"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                 />
                                             </Col>
                                             <Col xs={24} md={12}>
@@ -579,6 +612,7 @@ export default function LinkPagamentoFormPage() {
                                                         updateField('dados_cliente_preenchidos.endereco.numero', event.target.value)
                                                     }
                                                     placeholder="Número"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                 />
                                             </Col>
                                         </Row>
@@ -591,6 +625,7 @@ export default function LinkPagamentoFormPage() {
                                                         updateField('dados_cliente_preenchidos.endereco.bairro', event.target.value)
                                                     }
                                                     placeholder="Bairro"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                 />
                                             </Col>
                                             <Col xs={24} md={12}>
@@ -600,6 +635,7 @@ export default function LinkPagamentoFormPage() {
                                                         updateField('dados_cliente_preenchidos.endereco.cidade', event.target.value)
                                                     }
                                                     placeholder="Cidade"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                 />
                                             </Col>
                                         </Row>
@@ -613,6 +649,7 @@ export default function LinkPagamentoFormPage() {
                                                     }
                                                     style={{ width: '100%' }}
                                                     placeholder="Estado"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                     options={[
                                                         'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG',
                                                         'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO',
@@ -626,6 +663,7 @@ export default function LinkPagamentoFormPage() {
                                                         updateField('dados_cliente_preenchidos.endereco.cep', event.target.value)
                                                     }
                                                     placeholder="CEP"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                 />
                                             </Col>
                                             <Col xs={24} md={8}>
@@ -635,6 +673,7 @@ export default function LinkPagamentoFormPage() {
                                                         updateField('dados_cliente_preenchidos.endereco.complemento', event.target.value)
                                                     }
                                                     placeholder="Complemento"
+                                                    disabled={!areCustomerFieldsEnabled}
                                                 />
                                             </Col>
                                         </Row>

@@ -1249,6 +1249,7 @@ a {
 .spa-link-pagamento-hero-card {
     min-height: auto;
     align-self: flex-start;
+    margin-bottom: 24px;
 }
 
 .spa-hero-stack {
