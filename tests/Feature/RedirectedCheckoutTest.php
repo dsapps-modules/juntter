@@ -1988,6 +1988,13 @@ class RedirectedCheckoutTest extends TestCase
                 'nome_fantasia' => 'Empresa Exemplo',
                 'email' => '[email protected]',
                 'ddd_telefone_1' => '11988887777',
+                'logradouro' => 'Rua Exemplo',
+                'numero' => '123',
+                'complemento' => 'Sala 10',
+                'bairro' => 'Centro',
+                'municipio' => 'Botucatu',
+                'uf' => 'SP',
+                'cep' => '18.600-000',
                 'qsa' => [
                     [
                         'nome_socio' => 'João da Silva',
@@ -2004,6 +2011,13 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertJsonPath('company_name', 'Empresa Exemplo LTDA');
         $response->assertJsonPath('email', '[email protected]');
         $response->assertJsonPath('phone', '11988887777');
+        $response->assertJsonPath('address.street', 'Rua Exemplo');
+        $response->assertJsonPath('address.number', '123');
+        $response->assertJsonPath('address.complement', 'Sala 10');
+        $response->assertJsonPath('address.neighborhood', 'Centro');
+        $response->assertJsonPath('address.city', 'Botucatu');
+        $response->assertJsonPath('address.state', 'SP');
+        $response->assertJsonPath('address.zip_code', '18600000');
         $response->assertJsonPath('responsible_name', 'João da Silva');
         $response->assertJsonPath('responsible_document', '12345678909');
         $response->assertJsonPath('trade_name', 'Empresa Exemplo');

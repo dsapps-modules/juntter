@@ -74,7 +74,7 @@ class SpaCobrancaPixMaskTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
 
-        $this->assertStringContainsString("import { formatDocument, isValidDocument } from '../../documentValidation';", $pageSource);
+        $this->assertStringContainsString("import { formatDocument, isValidCnpj, isValidDocument } from '../../documentValidation';", $pageSource);
         $this->assertStringContainsString('label="Vencimento"', $pageSource);
         $this->assertStringContainsString('expiration: dayjs().add(1, \'day\')', $pageSource);
         $this->assertStringContainsString("payment_limit_date: dayjs().add(2, 'day')", $pageSource);
@@ -88,6 +88,15 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('label="Telefone"', $pageSource);
         $this->assertStringContainsString('normalize={formatPhone}', $pageSource);
         $this->assertStringContainsString('maxLength={15}', $pageSource);
+        $this->assertTrue(strpos($pageSource, 'label="CPF/CNPJ"') < strpos($pageSource, 'label="Telefone"'));
+        $this->assertTrue(strpos($pageSource, 'label="Telefone"') < strpos($pageSource, 'label="Nome"'));
+        $this->assertStringContainsString('onBlur={handleDocumentBlur}', $pageSource);
+        $this->assertStringContainsString('fetch(`/checkout/cnpj/${digits}`', $pageSource);
+        $this->assertStringContainsString('company_name', $pageSource);
+        $this->assertStringContainsString('trade_name', $pageSource);
+        $this->assertStringContainsString('company.address ?? {}', $pageSource);
+        $this->assertStringContainsString('address: {', $pageSource);
+        $this->assertStringContainsString('zip_code: companyAddress.zip_code ? formatZipcode(companyAddress.zip_code)', $pageSource);
         $this->assertStringContainsString('<Col xs={24}>', $pageSource);
         $this->assertStringContainsString('slice(0, 3)', $pageSource);
         $this->assertStringContainsString('onClick={() => openBoletoDetails(item)}', $pageSource);

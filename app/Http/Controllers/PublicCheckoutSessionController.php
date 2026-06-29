@@ -182,6 +182,7 @@ class PublicCheckoutSessionController extends Controller
             'company_name' => $companyName,
             'email' => $this->resolveEmailFromLookup($payload),
             'phone' => $this->resolvePhoneFromLookup($payload),
+            'address' => $this->resolveAddressFromLookup($payload),
             'responsible_name' => data_get($responsible, 'name'),
             'responsible_document' => data_get($responsible, 'document'),
             'trade_name' => data_get($payload, 'nome_fantasia'),
@@ -340,6 +341,47 @@ class PublicCheckoutSessionController extends Controller
         }
 
         return null;
+    }
+
+    private function resolveAddressFromLookup(mixed $payload): array
+    {
+        if (! is_array($payload)) {
+            return [];
+        }
+
+        $address = [
+            'street' => $this->resolveStringValue(data_get($payload, 'logradouro')),
+            'number' => $this->resolveStringValue(data_get($payload, 'numero')),
+            'complement' => $this->resolveStringValue(data_get($payload, 'complemento')),
+            'neighborhood' => $this->resolveStringValue(data_get($payload, 'bairro')),
+            'city' => $this->resolveStringValue(data_get($payload, 'municipio')),
+            'state' => $this->resolveStringValue(data_get($payload, 'uf')),
+            'zip_code' => $this->resolveDigitsValue(data_get($payload, 'cep')),
+        ];
+
+        return array_filter($address, static fn ($value) => filled($value));
+    }
+
+    private function resolveStringValue(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = trim($value);
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function resolveDigitsValue(mixed $value): ?string
+    {
+        if (! is_string($value) && ! is_numeric($value)) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+
+        return $digits !== '' ? $digits : null;
     }
 
     private function resolveResponsibleFromLookup(mixed $payload): array

@@ -32,7 +32,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
-import { formatDocument, isValidDocument } from '../../documentValidation';
+import { formatDocument, isValidCnpj, isValidDocument } from '../../documentValidation';
 
 const stateOptions = [
     'AC',
@@ -233,6 +233,25 @@ async function lookupAddressByZipcode(zipcode) {
 
     if (payload.erro) {
         throw new Error('CEP não encontrado.');
+    }
+
+    return payload;
+}
+
+async function lookupCompanyByCnpj(cnpj) {
+    const digits = normalizeDigits(cnpj);
+
+    const response = await fetch(`/checkout/cnpj/${digits}`, {
+        headers: {
+            Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(payload.message || 'Não foi possível consultar o CNPJ.');
     }
 
     return payload;
@@ -496,6 +515,41 @@ export default function CobrancaBoletoPage() {
             form.setFieldValue(['client', 'address', 'state'], stateValue);
         } catch (error) {
             message.error(error.message || 'Não foi possível consultar o CEP.');
+        }
+    }
+
+    async function handleDocumentBlur() {
+        const document = form.getFieldValue(['client', 'document']);
+        const digits = normalizeDigits(document);
+
+        if (digits.length !== 14 || !isValidCnpj(digits)) {
+            return;
+        }
+
+        try {
+            const company = await lookupCompanyByCnpj(digits);
+            const companyAddress = company.address ?? {};
+
+            form.setFieldsValue({
+                client: {
+                    first_name: company.company_name ?? form.getFieldValue(['client', 'first_name']) ?? '',
+                    last_name: company.trade_name ?? form.getFieldValue(['client', 'last_name']) ?? '',
+                    document: formatDocument(company.cnpj ?? digits),
+                    phone: company.phone ? formatPhone(company.phone) : form.getFieldValue(['client', 'phone']) ?? '',
+                    email: company.email ?? form.getFieldValue(['client', 'email']) ?? '',
+                    address: {
+                        street: companyAddress.street ?? form.getFieldValue(['client', 'address', 'street']) ?? '',
+                        number: companyAddress.number ?? form.getFieldValue(['client', 'address', 'number']) ?? '',
+                        complement: companyAddress.complement ?? form.getFieldValue(['client', 'address', 'complement']) ?? '',
+                        neighborhood: companyAddress.neighborhood ?? form.getFieldValue(['client', 'address', 'neighborhood']) ?? '',
+                        city: companyAddress.city ?? form.getFieldValue(['client', 'address', 'city']) ?? '',
+                        state: companyAddress.state ?? form.getFieldValue(['client', 'address', 'state']) ?? '',
+                        zip_code: companyAddress.zip_code ? formatZipcode(companyAddress.zip_code) : form.getFieldValue(['client', 'address', 'zip_code']) ?? '',
+                    },
+                },
+            });
+        } catch (error) {
+            message.error(error.message || 'Não foi possível consultar o CNPJ.');
         }
     }
 
@@ -784,27 +838,6 @@ export default function CobrancaBoletoPage() {
                                         <Row gutter={[16, 16]}>
                                             <Col xs={24} md={12}>
                                                 <Form.Item
-                                                    label="Nome"
-                                                    name={['client', 'first_name']}
-                                                    rules={[{ required: true, message: 'Informe o nome.' }]}
-                                                >
-                                                    <Input size="large" placeholder="Nome" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label="Sobrenome"
-                                                    name={['client', 'last_name']}
-                                                    rules={[{ required: true, message: 'Informe o sobrenome.' }]}
-                                                >
-                                                    <Input size="large" placeholder="Sobrenome" />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-
-                                        <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
                                                     label="CPF/CNPJ"
                                                     name={['client', 'document']}
                                                     normalize={formatDocument}
@@ -817,6 +850,8 @@ export default function CobrancaBoletoPage() {
                                                         size="large"
                                                         placeholder="000.000.000-00"
                                                         maxLength={18}
+                                                        inputMode="numeric"
+                                                        onBlur={handleDocumentBlur}
                                                     />
                                                 </Form.Item>
                                             </Col>
@@ -833,6 +868,27 @@ export default function CobrancaBoletoPage() {
                                                         maxLength={15}
                                                         inputMode="numeric"
                                                     />
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+
+                                        <Row gutter={[16, 16]}>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item
+                                                    label="Nome"
+                                                    name={['client', 'first_name']}
+                                                    rules={[{ required: true, message: 'Informe o nome.' }]}
+                                                >
+                                                    <Input size="large" placeholder="Nome" />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item
+                                                    label="Sobrenome"
+                                                    name={['client', 'last_name']}
+                                                    rules={[{ required: true, message: 'Informe o sobrenome.' }]}
+                                                >
+                                                    <Input size="large" placeholder="Sobrenome" />
                                                 </Form.Item>
                                             </Col>
                                         </Row>
