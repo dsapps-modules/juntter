@@ -895,10 +895,20 @@ class SpaShellTest extends TestCase
     public function test_the_link_form_page_uses_a_non_stretching_hero_card_layout(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoFormPage.jsx'));
+        $stylesSource = file_get_contents(base_path('resources/css/app.css'));
         $appSource = file_get_contents(base_path('resources/js/spa/App.jsx'));
 
         $this->assertStringContainsString('align="top"', $pageSource);
         $this->assertStringContainsString('spa-link-pagamento-hero-card', $pageSource);
+        $this->assertStringNotContainsString('spa-brand-kicker', $pageSource);
+        $this->assertStringNotContainsString('Criar novo link', $pageSource);
+        $this->assertStringContainsString('const [areCustomerFieldsEnabled, setAreCustomerFieldsEnabled] = useState(false);', $pageSource);
+        $this->assertStringContainsString('setAreCustomerFieldsEnabled(hasCustomerFieldsFilled(link.dados_cliente_preenchidos ?? {}));', $pageSource);
+        $this->assertStringContainsString('checked={areCustomerFieldsEnabled}', $pageSource);
+        $this->assertStringContainsString('disabled={!areCustomerFieldsEnabled}', $pageSource);
+        $this->assertStringContainsString("juros: 'ESTABLISHMENT'", $pageSource);
+        $this->assertStringContainsString('.spa-link-pagamento-hero-card {', $stylesSource);
+        $this->assertStringContainsString('margin-bottom: 24px;', $stylesSource);
         $this->assertStringContainsString("import ptBR from 'antd/locale/pt_BR';", $appSource);
         $this->assertStringContainsString("import 'dayjs/locale/pt-br';", $appSource);
         $this->assertStringContainsString("dayjs.locale('pt-br');", $appSource);

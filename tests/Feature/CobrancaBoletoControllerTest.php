@@ -121,6 +121,102 @@ class CobrancaBoletoControllerTest extends TestCase
         ], session('boleto_data'));
     }
 
+    public function test_criar_boleto_aceita_valor_formatado_com_espaco_invisivel(): void
+    {
+        $nbsp = "\u{00A0}";
+
+        $dadosValidados = [
+            'amount' => 'R$'.$nbsp.'89,90',
+            'expiration' => '2026-04-20',
+            'payment_limit_date' => '2026-04-21',
+            'recharge' => '0',
+            'client' => [
+                'first_name' => 'Jhonny',
+                'last_name' => 'Quest',
+                'document' => '582.463.740-79',
+                'email' => 'projetojuntter@gmail.com',
+                'address' => [
+                    'street' => 'Rua Teste',
+                    'number' => '123',
+                    'complement' => 'Sala 1',
+                    'neighborhood' => 'Centro',
+                    'city' => 'Botucatu',
+                    'state' => 'SP',
+                    'zip_code' => '18600-000',
+                ],
+            ],
+            'instruction' => [
+                'booklet' => '0',
+                'description' => 'Boleto de teste 03',
+                'late_fee' => [
+                    'amount' => 'R$'.$nbsp.'3,00',
+                ],
+                'interest' => [
+                    'amount' => 'R$'.$nbsp.'4,00',
+                ],
+                'discount' => [
+                    'amount' => 'R$'.$nbsp.'6,00',
+                    'limit_date' => '2026-04-19',
+                ],
+            ],
+        ];
+
+        $user = User::factory()->make([
+            'nivel_acesso' => 'vendedor',
+        ]);
+
+        $user->setRelation('vendedor', new Vendedor([
+            'user_id' => $user->id,
+            'estabelecimento_id' => '127700',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]));
+
+        $boletoService = $this->createMock(BoletoService::class);
+        $boletoService->expects($this->once())
+            ->method('organiza')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('gerarBoletoComConsulta')
+            ->with($this->callback(function (array $dados): bool {
+                return $dados['amount'] === 8990
+                    && $dados['instruction']['late_fee']['amount'] === 3.0
+                    && $dados['instruction']['interest']['amount'] === 4.0
+                    && $dados['instruction']['discount']['amount'] === 6.0;
+            }))
+            ->willReturn([
+                '_id' => 'boleto-123',
+                'status' => 'PROCESSING',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                'amount' => 1810,
+            ]);
+
+        $request = $this->makeRequest(true, $dadosValidados);
+
+        $this->be($user);
+        $this->app['session']->start();
+
+        $controller = new CobrancaController(
+            $this->createMock(TransacaoService::class),
+            $this->createMock(CreditoService::class),
+            $this->createMock(PixService::class),
+            $boletoService,
+            $this->createMock(EstabelecimentoService::class),
+        );
+
+        $response = $controller->criarBoleto($request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('Boleto criado com sucesso!', $response->getData(true)['message']);
+    }
+
     public function test_criar_boleto_retorna_json_quando_requisicao_espera_json(): void
     {
         $dadosValidados = [
