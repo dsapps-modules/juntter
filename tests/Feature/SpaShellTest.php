@@ -461,6 +461,9 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Collapse', $pageSource);
         $this->assertStringNotContainsString('Abra para montar o PIX', $pageSource);
         $this->assertStringContainsString('Descreva o que o cliente', $pageSource);
+        $this->assertStringContainsString("interest: 'ESTABLISHMENT'", $pageSource);
+        $this->assertStringContainsString("juros: 'ESTABLISHMENT'", $pageSource);
+        $this->assertStringContainsString('placeholder="Estabelecimento"', $pageSource);
     }
 
     public function test_the_pix_page_contains_the_side_panel_content(): void

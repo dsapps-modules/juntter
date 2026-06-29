@@ -51,7 +51,7 @@ const defaultOverview = {
 
 const initialValues = {
     amount: '',
-    interest: 'CLIENT',
+    interest: 'ESTABLISHMENT',
     client: {
         first_name: '',
         last_name: '',
@@ -65,7 +65,7 @@ const initialValues = {
 const linkInitialValues = {
     descricao: '',
     valor: '',
-    juros: 'CLIENT',
+    juros: 'ESTABLISHMENT',
     data_expiracao: null,
     dados_cliente_preenchidos_habilitado: false,
     dados_cliente_preenchidos: {
@@ -1022,7 +1022,7 @@ export default function CobrancaPixPage() {
                                 name="juros"
                                 rules={[{ required: true, message: 'Selecione quem paga as taxas.' }]}
                             >
-                                <Select size="large" options={interestOptions} placeholder="Cliente" />
+                                <Select size="large" options={interestOptions} placeholder="Estabelecimento" />
                             </Form.Item>
                         </Col>
                         <Col xs={24} md={12}>
