@@ -148,13 +148,13 @@ const boletoInitialValues = {
         booklet: false,
         description: '',
         late_fee: {
-            amount: '2,00',
+            amount: '0,00',
         },
         interest: {
-            amount: '1,00',
+            amount: '0,00',
         },
         discount: {
-            amount: '5,00',
+            amount: '0,00',
             limit_date: dayjs(),
         },
     },

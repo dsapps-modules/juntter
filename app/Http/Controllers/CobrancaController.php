@@ -72,7 +72,7 @@ class CobrancaController extends Controller
     /**
      * Página principal de cobrança única
      */
-    private function converterValorParaCentavosSeguro(mixed $valor): int
+    private function converterValorParaCentavosSeguro(mixed $valor, float $minimo = 0.01): int
     {
         if (is_numeric($valor)) {
             $valor = (string) $valor;
@@ -98,7 +98,7 @@ class CobrancaController extends Controller
 
         $valorFloat = (float) $valor;
 
-        if ($valorFloat < 0.01) {
+        if ($valorFloat < $minimo) {
             throw new \Exception('O valor deve ser pelo menos R$ 0,01');
         }
 
@@ -449,9 +449,9 @@ class CobrancaController extends Controller
             $dados = $this->boletoService->organiza($dados);
 
             // Converter outros valores numéricos usando função helper
-            $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['late_fee']['amount']) / 100.0;
-            $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['interest']['amount']) / 100.0;
-            $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['discount']['amount']) / 100.0;
+            $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['late_fee']['amount'], 0.0) / 100.0;
+            $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['interest']['amount'], 0.0) / 100.0;
+            $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['discount']['amount'], 0.0) / 100.0;
 
             // Garantir tipos booleanos corretos exigidos pela API (normalização simples)
             $dados['recharge'] = $request->boolean('recharge');

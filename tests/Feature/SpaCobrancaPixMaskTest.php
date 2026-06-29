@@ -79,6 +79,9 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('expiration: dayjs().add(1, \'day\')', $pageSource);
         $this->assertStringContainsString("payment_limit_date: dayjs().add(2, 'day')", $pageSource);
         $this->assertStringContainsString('limit_date: dayjs(),', $pageSource);
+        $this->assertStringContainsString("late_fee: {\n            amount: '0,00',", $pageSource);
+        $this->assertStringContainsString("interest: {\n            amount: '0,00',", $pageSource);
+        $this->assertStringContainsString("discount: {\n            amount: '0,00',", $pageSource);
         $this->assertStringContainsString('function syncBoletoDates(form, expiration)', $pageSource);
         $this->assertStringContainsString("form.setFieldValue('payment_limit_date', expirationDate.add(1, 'day'));", $pageSource);
         $this->assertStringContainsString("form.setFieldValue(['instruction', 'discount', 'limit_date'], expirationDate.subtract(1, 'day'));", $pageSource);
