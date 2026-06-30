@@ -15,6 +15,7 @@ class RecorrenciaEmailController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'send_immediately' => ['present', 'boolean'],
             'send_via_email' => ['present', 'boolean'],
             'send_via_whatsapp' => ['present', 'boolean'],
             'recipient_name' => ['required', 'string', 'max:255'],
@@ -35,7 +36,7 @@ class RecorrenciaEmailController extends Controller
             'whatsapp_number' => ['nullable', 'string', 'max:32'],
             'pix_key' => ['nullable', 'string', 'max:255'],
             'pix_copy_paste' => ['nullable', 'string', 'max:5000'],
-            'pix_expiration_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'pix_expiration_minutes' => ['nullable', 'integer', 'min:1', 'max:43200'],
             'boleto_due_days' => ['nullable', 'integer', 'min:1', 'max:60'],
             'boleto_instructions' => ['nullable', 'string', 'max:5000'],
             'boleto_interest' => ['nullable', 'string', 'max:32'],
@@ -111,7 +112,7 @@ class RecorrenciaEmailController extends Controller
 
         $emailStatusMessage = 'Recorrência salva com sucesso.';
 
-        if ($validated['send_via_email'] && filled($validated['recipient_email'])) {
+        if ($validated['send_immediately'] && $validated['send_via_email'] && filled($validated['recipient_email'])) {
             try {
                 Mail::to($validated['recipient_email'])->send(new RecorrenciaLinkMail(
                     recipientName: $validated['recipient_name'],
@@ -124,15 +125,17 @@ class RecorrenciaEmailController extends Controller
                 ));
 
                 $recorrencia->forceFill(['status' => 'ENVIADA'])->save();
-                $emailStatusMessage = 'Recorrência salva e e-mail preparado com sucesso.';
+                $emailStatusMessage = 'Recorrência salva e e-mail enviado com sucesso.';
             } catch (\Throwable $throwable) {
                 Log::error('Falha ao enviar e-mail de cobrança recorrente.', [
                     'message' => $throwable->getMessage(),
                     'recorrencia_id' => $recorrencia->id,
                 ]);
 
-                $emailStatusMessage = 'Recorrência salva, mas não foi possível preparar o e-mail.';
+                $emailStatusMessage = 'Recorrência salva, mas não foi possível enviar o e-mail.';
             }
+        } elseif ($validated['send_immediately']) {
+            $emailStatusMessage = 'Recorrência salva, mas não foi possível preparar o e-mail.';
         }
 
         return response()->json([

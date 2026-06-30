@@ -75,12 +75,25 @@ class RecorrenciaTest extends TestCase
         $this->assertStringContainsString('/recorrencia/cartao-credito', $selectionPageSource);
         $this->assertStringContainsString('Configurar {option.title}', $selectionPageSource);
         $this->assertStringContainsString('Preparar cobrança', $formPageSource);
+        $this->assertStringContainsString('Enviar', $formPageSource);
         $this->assertStringContainsString('Enviar por e-mail', $formPageSource);
         $this->assertStringContainsString('Enviar por WhatsApp', $formPageSource);
         $this->assertStringContainsString('Link público da cobrança', $formPageSource);
         $this->assertStringContainsString('Dados do Pix', $formPageSource);
         $this->assertStringContainsString('Dados do boleto', $formPageSource);
         $this->assertStringContainsString('Dados do cartão', $formPageSource);
+        $this->assertStringContainsString('pix_expiration_minutes: 2,', $formPageSource);
+        $this->assertStringContainsString('addonAfter="dias"', $formPageSource);
+        $this->assertStringNotContainsString('Envio rápido com chave, QR Code e copia e cola.', $formPageSource);
+        $this->assertStringNotContainsString('Resumo da configuração', $formPageSource);
+        $this->assertStringNotContainsString('Assunto da cobrança', $formPageSource);
+        $this->assertStringNotContainsString('Mensagem que acompanha o link de pagamento', $formPageSource);
+        $this->assertStringNotContainsString('Sua cobrança recorrente via Pix está pronta', $formPageSource);
+        $this->assertStringNotContainsString('Olá, segue o link para a sua cobrança recorrente via Pix.', $formPageSource);
+        $this->assertStringNotContainsString('Seu boleto recorrente está disponível', $formPageSource);
+        $this->assertStringNotContainsString('Olá, segue o link do boleto recorrente.', $formPageSource);
+        $this->assertStringNotContainsString('Sua cobrança recorrente no cartão está pronta', $formPageSource);
+        $this->assertStringNotContainsString('Olá, segue o link para a cobrança recorrente no cartão de crédito.', $formPageSource);
     }
 
     public function test_the_recorrencia_email_endpoint_sends_the_mail(): void
@@ -89,6 +102,7 @@ class RecorrenciaTest extends TestCase
         $this->authenticateVendor();
 
         $response = $this->postJson('/api/spa/recorrencia/email', [
+            'send_immediately' => true,
             'send_via_email' => true,
             'send_via_whatsapp' => false,
             'customer_name' => 'Cliente Exemplo',
@@ -109,7 +123,7 @@ class RecorrenciaTest extends TestCase
             'whatsapp_number' => '(11) 99999-9999',
             'pix_key' => 'cliente@example.com',
             'pix_copy_paste' => '000201010212...',
-            'pix_expiration_minutes' => 60,
+            'pix_expiration_minutes' => 2880,
             'boleto_due_days' => 5,
             'boleto_instructions' => 'Pagar até o vencimento.',
             'boleto_interest' => '0,00',
@@ -121,7 +135,7 @@ class RecorrenciaTest extends TestCase
 
         $response->assertOk();
         $response->assertJson([
-            'message' => 'Recorrência salva e e-mail preparado com sucesso.',
+            'message' => 'Recorrência salva e e-mail enviado com sucesso.',
         ]);
 
         Mail::assertSent(RecorrenciaLinkMail::class, function (RecorrenciaLinkMail $mail): bool {
@@ -140,6 +154,57 @@ class RecorrenciaTest extends TestCase
         ]);
     }
 
+    public function test_the_recorrencia_email_endpoint_can_prepare_without_sending(): void
+    {
+        Mail::fake();
+        $this->authenticateVendor();
+
+        $response = $this->postJson('/api/spa/recorrencia/email', [
+            'send_immediately' => false,
+            'send_via_email' => true,
+            'send_via_whatsapp' => false,
+            'customer_name' => 'Cliente Exemplo',
+            'customer_email' => 'cliente@example.com',
+            'customer_phone' => '(11) 99999-9999',
+            'customer_document' => '12345678901',
+            'recipient_email' => 'cliente@example.com',
+            'recipient_name' => 'Cliente Exemplo',
+            'email_subject' => 'Cobrança recorrente',
+            'payment_type' => 'PIX',
+            'amount' => 'R$ 100,00',
+            'frequency' => 'MENSAL',
+            'charge_day' => 10,
+            'start_date' => '2026-07-01',
+            'end_date' => null,
+            'payment_link_url' => 'https://example.com/pagamento',
+            'email_message' => 'Segue o link da cobrança recorrente.',
+            'whatsapp_number' => '(11) 99999-9999',
+            'pix_key' => 'cliente@example.com',
+            'pix_copy_paste' => '000201010212...',
+            'pix_expiration_minutes' => 2880,
+            'boleto_due_days' => 5,
+            'boleto_instructions' => 'Pagar até o vencimento.',
+            'boleto_interest' => '0,00',
+            'boleto_fine' => '0,00',
+            'card_installments' => 3,
+            'card_descriptor' => 'CLI EXEMPLO',
+            'card_capture_mode' => 'AUTO',
+        ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'message' => 'Recorrência salva com sucesso.',
+        ]);
+
+        Mail::assertNothingSent();
+
+        $this->assertDatabaseHas('recorrencias', [
+            'customer_name' => 'Cliente Exemplo',
+            'payment_type' => 'PIX',
+            'status' => 'PENDENTE',
+        ]);
+    }
+
     public function test_the_recorrencia_email_endpoint_validates_required_fields(): void
     {
         $this->authenticateVendor();
@@ -148,6 +213,7 @@ class RecorrenciaTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors([
+            'send_immediately',
             'send_via_email',
             'send_via_whatsapp',
             'recipient_name',

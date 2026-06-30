@@ -1,13 +1,11 @@
-import {
+﻿import {
     BankOutlined,
     CreditCardOutlined,
-    ClockCircleOutlined,
     MailOutlined,
     MessageOutlined,
     QrcodeOutlined,
 } from '@ant-design/icons';
 import {
-    Alert,
     Button,
     Card,
     Col,
@@ -20,12 +18,11 @@ import {
     Select,
     Space,
     Switch,
-    Tag,
     Typography,
     message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
 import { formatDocument, isValidDocument } from '../../documentValidation';
@@ -44,19 +41,16 @@ const paymentTypeMeta = {
         title: 'Cobrança recorrente via Pix',
         icon: <QrcodeOutlined />,
         accent: 'gold',
-        summary: 'Envio rápido com chave, QR Code e copia e cola.',
     },
     BOLETO: {
         title: 'Cobrança recorrente via Boleto',
         icon: <BankOutlined />,
         accent: 'volcano',
-        summary: 'Cobrança bancária com vencimento, juros e instruções.',
     },
     CARTAO: {
         title: 'Cobrança recorrente via Cartão de Crédito',
         icon: <CreditCardOutlined />,
         accent: 'blue',
-        summary: 'Parcelamento, recorrência e política de captura.',
     },
 };
 
@@ -75,13 +69,13 @@ const initialValuesByType = {
         payment_type: 'PIX',
         send_via_email: true,
         recipient_email: '',
-        email_subject: 'Sua cobrança recorrente via Pix está pronta',
-        email_message: 'Olá, segue o link para a sua cobrança recorrente via Pix.',
+        email_subject: '',
+        email_message: '',
         send_via_whatsapp: false,
         whatsapp_number: '',
         pix_key: '',
         pix_copy_paste: '',
-        pix_expiration_minutes: 60,
+        pix_expiration_minutes: 2,
     },
     BOLETO: {
         customer_name: '',
@@ -97,8 +91,8 @@ const initialValuesByType = {
         payment_type: 'BOLETO',
         send_via_email: true,
         recipient_email: '',
-        email_subject: 'Seu boleto recorrente está disponível',
-        email_message: 'Olá, segue o link do boleto recorrente.',
+        email_subject: '',
+        email_message: '',
         send_via_whatsapp: false,
         whatsapp_number: '',
         boleto_due_days: 3,
@@ -120,8 +114,8 @@ const initialValuesByType = {
         payment_type: 'CARTAO',
         send_via_email: true,
         recipient_email: '',
-        email_subject: 'Sua cobrança recorrente no cartão está pronta',
-        email_message: 'Olá, segue o link para a cobrança recorrente no cartão de crédito.',
+        email_subject: '',
+        email_message: '',
         send_via_whatsapp: false,
         whatsapp_number: '',
         card_installments: 1,
@@ -186,6 +180,7 @@ function toIsoDate(value) {
 
 function buildRequestPayload(values, paymentType) {
     return {
+        send_immediately: values.send_immediately,
         send_via_email: values.send_via_email,
         send_via_whatsapp: values.send_via_whatsapp,
         customer_name: values.customer_name,
@@ -206,7 +201,9 @@ function buildRequestPayload(values, paymentType) {
         whatsapp_number: values.whatsapp_number,
         pix_key: values.pix_key,
         pix_copy_paste: values.pix_copy_paste,
-        pix_expiration_minutes: values.pix_expiration_minutes,
+        pix_expiration_minutes: paymentType === 'PIX'
+            ? Number(values.pix_expiration_minutes ?? 0) * 1440
+            : values.pix_expiration_minutes,
         boleto_due_days: values.boleto_due_days,
         boleto_instructions: values.boleto_instructions,
         boleto_interest: values.boleto_interest,
@@ -224,8 +221,8 @@ export default function RecorrenciaFormPage({
     const navigate = useNavigate();
     const [form] = Form.useForm();
     const [saving, setSaving] = useState(false);
+    const submitModeRef = useRef('prepare');
     const sendViaEmail = Form.useWatch('send_via_email', form);
-    const selectedFrequency = Form.useWatch('frequency', form);
 
     const meta = paymentTypeMeta[paymentType] ?? paymentTypeMeta.PIX;
     const initialValues = useMemo(() => initialValuesByType[paymentType] ?? initialValuesByType.PIX, [paymentType]);
@@ -234,7 +231,7 @@ export default function RecorrenciaFormPage({
         setSaving(true);
 
         try {
-            if (values.send_via_email) {
+            if (submitModeRef.current === 'send' && values.send_via_email) {
                 const response = await fetch('/api/spa/recorrencia/email', {
                     method: 'POST',
                     headers: {
@@ -252,7 +249,7 @@ export default function RecorrenciaFormPage({
                     throw new Error(payload.message || 'Não foi possível preparar o envio por e-mail.');
                 }
 
-                message.success(payload.message || 'Link preparado para envio por e-mail.');
+                message.success(payload.message || 'Recorrência salva e link enviado com sucesso.');
             } else {
                 message.success('Dados da recorrência preparados.');
             }
@@ -267,7 +264,7 @@ export default function RecorrenciaFormPage({
 
     return (
         <Row gutter={[20, 20]} className="spa-board">
-            <Col xs={24} xl={16}>
+            <Col xs={24} xl={24}>
                 <Card
                     title={(
                         <Space size={10}>
@@ -277,12 +274,6 @@ export default function RecorrenciaFormPage({
                     )}
                     extra={<Button onClick={() => navigate(selectorPath)}>Voltar</Button>}
                 >
-                    <Alert
-                        type="info"
-                        showIcon
-                        message={meta.summary}
-                        style={{ marginBottom: 20 }}
-                    />
 
                     <Form
                         form={form}
@@ -290,6 +281,9 @@ export default function RecorrenciaFormPage({
                         initialValues={initialValues}
                         onFinish={handleSubmit}
                     >
+                        <Form.Item name="send_immediately" initialValue={false} hidden>
+                            <Input type="hidden" />
+                        </Form.Item>
                         <Row gutter={16}>
                             <Col xs={24} md={12}>
                                 <Form.Item
@@ -407,7 +401,7 @@ export default function RecorrenciaFormPage({
                                     </Col>
                                     <Col xs={24} md={12}>
                                         <Form.Item label="Expiração do QR Code" name="pix_expiration_minutes" rules={[{ required: true }]}>
-                                            <InputNumber min={5} max={1440} className="w-full" addonAfter="minutos" />
+                                            <InputNumber min={1} max={30} className="w-full" addonAfter="dias" />
                                         </Form.Item>
                                     </Col>
                                 </Row>
@@ -510,7 +504,7 @@ export default function RecorrenciaFormPage({
                             name="email_subject"
                             rules={[{ required: Boolean(sendViaEmail), message: 'Informe o assunto do e-mail.' }]}
                         >
-                            <Input placeholder="Assunto da cobrança" />
+                            <Input />
                         </Form.Item>
 
                         <Form.Item
@@ -518,37 +512,42 @@ export default function RecorrenciaFormPage({
                             name="email_message"
                             rules={[{ required: Boolean(sendViaEmail), message: 'Informe a mensagem do e-mail.' }]}
                         >
-                            <Input.TextArea rows={5} placeholder="Mensagem que acompanha o link de pagamento" />
+                            <Input.TextArea rows={5} />
                         </Form.Item>
 
                         <Space wrap>
-                            <Button type="primary" htmlType="submit" loading={saving}>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={saving}
+                                onClick={() => {
+                                    submitModeRef.current = 'prepare';
+                                    form.setFieldsValue({ send_immediately: false });
+                                }}
+                            >
                                 Preparar cobrança
+                            </Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={saving}
+                                onClick={() => {
+                                    submitModeRef.current = 'send';
+                                    form.setFieldsValue({ send_immediately: true });
+                                }}
+                            >
+                                Enviar
                             </Button>
                             <Button onClick={() => navigate(selectorPath)}>Voltar</Button>
                         </Space>
                     </Form>
                 </Card>
             </Col>
-
-            <Col xs={24} xl={8}>
-                <Card className="spa-quick-view-card" title="Resumo da configuração">
-                    <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                        <Alert
-                            type={paymentType === 'CARTAO' ? 'info' : paymentType === 'BOLETO' ? 'warning' : 'success'}
-                            showIcon
-                            message="A cobrança ficará pronta para envio com os dados cadastrados."
-                        />
-                        <Space wrap>
-                            <Tag color={meta.accent}>{meta.title}</Tag>
-                            <Tag icon={<ClockCircleOutlined />}>{selectedFrequency ?? initialValues.frequency}</Tag>
-                        </Space>
-                        <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                            O formulário já prepara o envio por e-mail. O canal de WhatsApp fica registrado para a próxima etapa.
-                        </Typography.Paragraph>
-                    </Space>
-                </Card>
-            </Col>
         </Row>
     );
 }
+
+
+
+
+
