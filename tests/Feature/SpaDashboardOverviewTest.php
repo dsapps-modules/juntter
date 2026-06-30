@@ -124,6 +124,7 @@ class SpaDashboardOverviewTest extends TestCase
             ->assertJsonPath('overview_cards.5.href', '/cobranca/saldoextrato')
             ->assertJsonPath('distribution_sections.0.label', 'Cartão de Crédito')
             ->assertJsonPath('distribution_sections.0.cards.0.kind', 'amount')
+            ->assertJsonCount(3, 'distribution_sections')
             ->assertJsonPath('status_sections.0.key', 'status_counts')
             ->assertJsonPath('status_sections.0.cards.0.label', 'Pagamento Efetivado')
             ->assertJsonPath('status_sections.1.key', 'status_percentages')
@@ -134,6 +135,12 @@ class SpaDashboardOverviewTest extends TestCase
             ->assertJsonPath('summary.total_transactions', 1)
             ->assertJsonPath('summary.pending_transactions', 2)
             ->assertJsonPath('rows.0.name', 'Acme Corp');
+
+        $distributionLabels = collect($response->json('distribution_sections'))
+            ->pluck('label')
+            ->all();
+
+        $this->assertNotContains('Cartão de Débito', $distributionLabels);
     }
 
     public function test_dashboard_overview_counts_transactions_outside_top_rows_for_admin(): void

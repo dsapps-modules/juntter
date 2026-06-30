@@ -218,13 +218,6 @@ class DashboardOverviewController extends Controller
                 'cards' => $this->paymentMethodCards($transactionsByType->get('CREDIT'), $netAmount, 'Cartão de Crédito'),
             ],
             [
-                'key' => 'DEBIT',
-                'label' => 'Cartão de Débito',
-                'tone' => 'green',
-                'icon' => 'bank',
-                'cards' => $this->paymentMethodCards($transactionsByType->get('DEBIT'), $netAmount, 'Cartão de Débito'),
-            ],
-            [
                 'key' => 'PIX',
                 'label' => 'Pix',
                 'tone' => 'cyan',
