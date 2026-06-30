@@ -24,10 +24,13 @@ import CheckoutLinkSaleDetailPage from './pages/checkout/CheckoutLinkSaleDetailP
 import CheckoutLinkSalesPage from './pages/checkout/CheckoutLinkSalesPage';
 import CheckoutProductFormPage from './pages/checkout/CheckoutProductFormPage';
 import CheckoutProductsPage from './pages/checkout/CheckoutProductsPage';
-import LinksPagamentoPage from './pages/LinksPagamentoPage';
 import LinkPagamentoDetailPage from './pages/LinkPagamentoDetailPage';
 import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
 import LinkPagamentoPixDetailPage from './pages/LinkPagamentoPixDetailPage';
+import RecorrenciaPage from './pages/recorrencia/RecorrenciaPage';
+import RecorrenciaPixPage from './pages/recorrencia/RecorrenciaPixPage';
+import RecorrenciaBoletoPage from './pages/recorrencia/RecorrenciaBoletoPage';
+import RecorrenciaCartaoCreditoPage from './pages/recorrencia/RecorrenciaCartaoCreditoPage';
 import VendedoresPage from './pages/VendedoresPage';
 import VendedoresAcessoPage from './pages/VendedoresAcessoPage';
 import VendedoresFaturamentoPage from './pages/VendedoresFaturamentoPage';
@@ -98,7 +101,10 @@ export default function App() {
                         <Route path="cobranca/saldoextrato" element={<CobrancaSaldoExtratoPage />} />
                         <Route path="cobranca/pix-out" element={<CobrancaPixOutPage />} />
                         <Route path="cobranca/simular" element={<CobrancaSimularPage />} />
-                        <Route path="links-pagamento" element={<LinksPagamentoPage />} />
+                        <Route path="recorrencia" element={<RecorrenciaPage />} />
+                        <Route path="recorrencia/pix" element={<RecorrenciaPixPage />} />
+                        <Route path="recorrencia/boleto" element={<RecorrenciaBoletoPage />} />
+                        <Route path="recorrencia/cartao-credito" element={<RecorrenciaCartaoCreditoPage />} />
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
                         <Route path="links-pagamento/:linkId" element={<LinkPagamentoDetailPage />} />
                         <Route path="links-pagamento-pix/:linkId" element={<LinkPagamentoPixDetailPage />} />
