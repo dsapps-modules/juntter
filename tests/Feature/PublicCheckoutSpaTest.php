@@ -102,6 +102,9 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('applyCompanyLookupToForm', $source);
         $this->assertStringContainsString('cnpjCompanyLookupCache', $source);
         $this->assertStringContainsString('cnpjLookupTemplate', $source);
+        $this->assertStringContainsString('Digite um CPF válido.', $source);
+        $this->assertStringContainsString('Digite um CNPJ válido.', $source);
+        $this->assertStringContainsString('Não foi possível ler o formulário.', $source);
         $this->assertStringContainsString('viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $source);
         $this->assertStringContainsString('Consultando CEP...', $source);
         $this->assertStringContainsString('checkout-spa-step-card--payment-details', $source);

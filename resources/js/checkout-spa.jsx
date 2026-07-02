@@ -397,6 +397,128 @@ function mapErrors(errors = {}) {
     return flattened;
 }
 
+function isValidCpf(value) {
+    const cpf = normalizeDigits(value);
+
+    if (cpf.length !== 11) {
+        return false;
+    }
+
+    if (/^(\d)\1{10}$/.test(cpf)) {
+        return false;
+    }
+
+    for (let digitPosition = 9; digitPosition < 11; digitPosition += 1) {
+        let sum = 0;
+
+        for (let index = 0; index < digitPosition; index += 1) {
+            sum += Number(cpf[index]) * ((digitPosition + 1) - index);
+        }
+
+        const calculatedDigit = ((sum * 10) % 11) % 10;
+
+        if (Number(cpf[digitPosition]) !== calculatedDigit) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function isValidCnpj(value) {
+    const cnpj = normalizeDigits(value);
+
+    if (cnpj.length !== 14) {
+        return false;
+    }
+
+    if (/^(\d)\1{13}$/.test(cnpj)) {
+        return false;
+    }
+
+    const digits = cnpj.split('').map((digit) => Number(digit));
+    const weights1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    const weights2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+    let sum = 0;
+
+    for (let index = 0; index < 12; index += 1) {
+        sum += digits[index] * weights1[index];
+    }
+
+    let remainder = sum % 11;
+    const firstDigit = remainder < 2 ? 0 : 11 - remainder;
+
+    if (digits[12] !== firstDigit) {
+        return false;
+    }
+
+    sum = 0;
+
+    for (let index = 0; index < 13; index += 1) {
+        sum += digits[index] * weights2[index];
+    }
+
+    remainder = sum % 11;
+    const secondDigit = remainder < 2 ? 0 : 11 - remainder;
+
+    return digits[13] === secondDigit;
+}
+
+function validateIdentificationDocument(form, personType) {
+    const documentField = form?.querySelector('[name="customer_document"]');
+    const documentValue = documentField instanceof HTMLInputElement ? documentField.value : '';
+
+    if (personType === 'pj') {
+        if (!isValidCnpj(documentValue)) {
+            setFieldErrors({
+                customer_document: ['Digite um CNPJ válido.'],
+            });
+
+            return false;
+        }
+
+        setFieldErrors({
+            customer_document: [],
+        });
+
+        return true;
+    }
+
+    if (!isValidCpf(documentValue)) {
+        setFieldErrors({
+            customer_document: ['Digite um CPF válido.'],
+        });
+
+        return false;
+    }
+
+    setFieldErrors({
+        customer_document: [],
+    });
+
+    return true;
+}
+
+function validateResponsibleDocument(form) {
+    const documentField = form?.querySelector('[name="customer_responsible_document"]');
+    const documentValue = documentField instanceof HTMLInputElement ? documentField.value : '';
+
+    if (!isValidCpf(documentValue)) {
+        setFieldErrors({
+            customer_responsible_document: ['Digite um CPF válido para o responsável.'],
+        });
+
+        return false;
+    }
+
+    setFieldErrors({
+        customer_responsible_document: [],
+    });
+
+    return true;
+}
+
 function copyText(value) {
     const text = String(value || '').trim();
 
@@ -861,13 +983,45 @@ function CheckoutSpaApp() {
         setBusyAction('identification');
 
         try {
+            const form = event.currentTarget instanceof HTMLFormElement
+                ? event.currentTarget
+                : event.target instanceof HTMLFormElement
+                    ? event.target
+                    : null;
+
+            if (!form) {
+                setFeedback({
+                    type: 'error',
+                    message: 'Não foi possível ler o formulário. Recarregue a página e tente novamente.',
+                });
+                return;
+            }
+
+            if (!validateIdentificationDocument(form, personType)) {
+                setFeedback({
+                    type: 'error',
+                    message: personType === 'pj'
+                        ? 'Confira o CNPJ antes de continuar.'
+                        : 'Confira o CPF antes de continuar.',
+                });
+                return;
+            }
+
+            if (personType === 'pj' && !validateResponsibleDocument(form)) {
+                setFeedback({
+                    type: 'error',
+                    message: 'Confira o CPF do responsável antes de continuar.',
+                });
+                return;
+            }
+
             if (personType === 'pj') {
-                await syncCompanyDataByCnpj(event.currentTarget, event.currentTarget.querySelector('[name="customer_document"]')?.value || '');
+                await syncCompanyDataByCnpj(form, form.querySelector('[name="customer_document"]')?.value || '');
             }
 
             const response = await requestJson(config.urls.identify, {
                 method: 'POST',
-                body: new FormData(event.currentTarget),
+                body: new FormData(form),
             });
 
             setSession(response.checkout_session || session);
@@ -897,7 +1051,7 @@ function CheckoutSpaApp() {
             } else {
                 setFeedback({
                     type: 'error',
-                    message: error.payload?.message || error.message || 'Não foi possível salvar a identificação.',
+                    message: error.payload?.message || 'Não foi possível salvar a identificação. Confira os dados e tente novamente.',
                 });
             }
         } finally {

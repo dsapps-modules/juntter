@@ -25,13 +25,13 @@ class StoreCheckoutIdentificationRequest extends FormRequest
                     $documentType = $this->input('customer_document_type');
 
                     if ($documentType === 'cpf' && ! $this->isValidCpf((string) $value)) {
-                        $fail('O CPF informado é inválido.');
+                        $fail('Digite um CPF válido.');
 
                         return;
                     }
 
                     if ($documentType === 'cnpj' && ! $this->isValidCnpj((string) $value)) {
-                        $fail('O CNPJ informado é inválido.');
+                        $fail('Digite um CNPJ válido.');
                     }
                 },
             ],
@@ -46,7 +46,7 @@ class StoreCheckoutIdentificationRequest extends FormRequest
                 'max:20',
                 function (string $attribute, mixed $value, Closure $fail): void {
                     if ($this->input('customer_document_type') === 'cnpj' && ! $this->isValidCpf((string) $value)) {
-                        $fail('O CPF informado é inválido.');
+                        $fail('Digite um CPF válido para o responsável.');
                     }
                 },
             ],

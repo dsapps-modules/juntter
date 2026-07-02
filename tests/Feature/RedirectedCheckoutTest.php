@@ -1885,7 +1885,7 @@ class RedirectedCheckoutTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJsonValidationErrors(['customer_document'])
-            ->assertJsonPath('errors.customer_document.0', 'O CPF informado é inválido.');
+            ->assertJsonPath('errors.customer_document.0', 'Digite um CPF válido.');
 
         $this->assertDatabaseMissing('checkout_sessions', [
             'id' => $session->id,
@@ -2041,7 +2041,7 @@ class RedirectedCheckoutTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJsonValidationErrors(['customer_document'])
-            ->assertJsonPath('errors.customer_document.0', 'O CNPJ informado é inválido.');
+            ->assertJsonPath('errors.customer_document.0', 'Digite um CNPJ válido.');
 
         $this->assertDatabaseMissing('checkout_sessions', [
             'id' => $session->id,
