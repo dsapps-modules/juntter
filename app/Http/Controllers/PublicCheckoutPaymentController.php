@@ -20,6 +20,8 @@ use Illuminate\Support\Str;
 
 class PublicCheckoutPaymentController extends Controller
 {
+    private const MINIMUM_BOLETO_AMOUNT = 10.00;
+
     public function __construct(
         private readonly CheckoutPricingService $pricingService,
         private readonly PaytimePaymentService $paymentService,
@@ -97,6 +99,18 @@ class PublicCheckoutPaymentController extends Controller
         }
 
         $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod, $checkoutSession->quantity);
+
+        if (
+            $paymentMethod === 'boleto'
+            && ! $this->isBoletoAmountAllowed((float) $pricing['total'])
+        ) {
+            return $this->respondToPaymentError(
+                request: $request,
+                message: 'O valor mínimo permitido para o boleto é de dez reais.',
+                statusCode: Response::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
+
         $validatedRequest = $request->validated();
 
         $checkoutSession->update([
@@ -493,6 +507,11 @@ class PublicCheckoutPaymentController extends Controller
         };
     }
 
+    private function isBoletoAmountAllowed(float $amount): bool
+    {
+        return $amount >= self::MINIMUM_BOLETO_AMOUNT;
+    }
+
     private function generateOrderNumber(): string
     {
         $year = now()->year;
@@ -535,6 +554,10 @@ class PublicCheckoutPaymentController extends Controller
             ?? data_get($gatewayResponse, 'api_boleto.message')
             ?? data_get($gatewayResponse, 'api_transaction.message');
 
+        if (is_array($message)) {
+            $message = $this->resolveGatewayMessageFromArray($message);
+        }
+
         if (! is_scalar($message)) {
             return null;
         }
@@ -542,6 +565,23 @@ class PublicCheckoutPaymentController extends Controller
         $normalizedMessage = trim((string) $message);
 
         return $normalizedMessage !== '' ? $normalizedMessage : null;
+    }
+
+    private function resolveGatewayMessageFromArray(array $messages): ?string
+    {
+        $flattenedMessages = [];
+
+        array_walk_recursive($messages, function (mixed $value) use (&$flattenedMessages): void {
+            if (is_scalar($value)) {
+                $normalizedValue = trim((string) $value);
+
+                if ($normalizedValue !== '') {
+                    $flattenedMessages[] = $normalizedValue;
+                }
+            }
+        });
+
+        return $flattenedMessages[0] ?? null;
     }
 
     private function sanitizePaymentRequestPayload(array $payload): array

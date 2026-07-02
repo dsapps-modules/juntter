@@ -10,6 +10,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.jsx',
                 'resources/js/checkout-public.js',
+                'resources/js/checkout-spa.jsx',
             ],
             refresh: true,
         }),

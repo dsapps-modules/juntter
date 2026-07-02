@@ -61,6 +61,9 @@ Route::get('/company-logo', [PublicCompanyLogoController::class, 'show'])
 Route::get('/checkout/{publicToken}', [PublicCheckoutController::class, 'show'])
     ->where('publicToken', 'chk_[A-Za-z0-9]+')
     ->name('checkout.public.show');
+Route::get('/checkout/spa/{publicToken}', [PublicCheckoutController::class, 'showSpa'])
+    ->where('publicToken', 'chk_[A-Za-z0-9]+')
+    ->name('checkout.public.spa.show');
 Route::get('/checkout/{publicToken}/product-image', [PublicCheckoutController::class, 'productImage'])
     ->where('publicToken', 'chk_[A-Za-z0-9]+')
     ->name('checkout.public.product-image');

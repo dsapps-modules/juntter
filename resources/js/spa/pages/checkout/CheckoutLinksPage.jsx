@@ -87,8 +87,8 @@ export default function CheckoutLinksPage() {
         return () => controller.abort();
     }, []);
 
-    async function copyLink(publicToken) {
-        const url = `${window.location.origin}/checkout/${publicToken}`;
+    async function copyLink(link) {
+        const url = link.public_spa_url || `${window.location.origin}/checkout/spa/${link.public_token}`;
         await navigator.clipboard.writeText(url);
         message.success('Link copiado.');
     }
@@ -195,7 +195,7 @@ export default function CheckoutLinksPage() {
                                         <Space direction="vertical" size={0}>
                                             <Typography.Text strong>{value}</Typography.Text>
                                             <Typography.Text type="secondary">{record.product?.name}</Typography.Text>
-                                            <Typography.Text type="secondary">{`${window.location.origin}/checkout/${record.public_token}`}</Typography.Text>
+                                            <Typography.Text type="secondary">{record.public_spa_url || `${window.location.origin}/checkout/spa/${record.public_token}`}</Typography.Text>
                                         </Space>
                                     ),
                                 },
@@ -256,7 +256,7 @@ export default function CheckoutLinksPage() {
                                             <Button
                                                 aria-label="Copiar link"
                                                 icon={<CopyOutlined />}
-                                                onClick={() => copyLink(record.public_token)}
+                                                onClick={() => copyLink(record)}
                                                 title="Copiar link"
                                             />
                                             <Button

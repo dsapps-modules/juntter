@@ -18,6 +18,11 @@ class PublicCheckoutController extends Controller
         return $this->renderCheckoutPage($request, $publicToken, 'details');
     }
 
+    public function showSpa(Request $request, string $publicToken): View|\Illuminate\Http\Response|RedirectResponse
+    {
+        return $this->renderCheckoutSpaPage($request, $publicToken);
+    }
+
     public function deliveryPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
     {
         $checkoutSession = CheckoutSession::query()
@@ -193,6 +198,73 @@ class PublicCheckoutController extends Controller
         ));
     }
 
+    private function renderCheckoutSpaPage(Request $request, string $publicToken): View|\Illuminate\Http\Response|RedirectResponse
+    {
+        $checkoutLink = CheckoutLink::query()
+            ->with(['product', 'seller'])
+            ->where('public_token', $publicToken)
+            ->first();
+
+        if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
+            return response()->view('checkout.unavailable', [
+                'message' => 'Este checkout não está disponível no momento.',
+                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+            ], 410);
+        }
+
+        $checkoutSession = $this->resolveSession($request, $checkoutLink);
+        $order = Order::query()
+            ->with(['paymentTransaction'])
+            ->where('checkout_session_id', $checkoutSession->id)
+            ->latest()
+            ->first();
+
+        if (
+            in_array($order?->status, ['paid', 'authorized'], true)
+            || in_array(strtolower((string) ($order?->paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        return view('checkout.spa', $this->buildCheckoutViewData(
+            checkoutLink: $checkoutLink,
+            checkoutSession: $checkoutSession,
+            order: $order,
+            paymentTransaction: $order?->paymentTransaction,
+            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            checkoutPageMode: 'spa',
+            extraData: [
+                'checkoutSpaAssets' => $this->resolveCheckoutSpaAssets(),
+            ],
+        ));
+    }
+
+    private function resolveCheckoutSpaAssets(): array
+    {
+        $manifestPath = public_path('build/manifest.json');
+
+        if (! is_file($manifestPath)) {
+            return [];
+        }
+
+        $manifest = json_decode((string) file_get_contents($manifestPath), true);
+
+        if (! is_array($manifest) || ! isset($manifest['resources/js/checkout-spa.jsx'])) {
+            return [];
+        }
+
+        $entry = $manifest['resources/js/checkout-spa.jsx'];
+        $assets = [
+            'js' => asset('build/'.$entry['file']),
+            'css' => array_map(
+                fn (string $file): string => asset('build/'.$file),
+                $entry['css'] ?? []
+            ),
+        ];
+
+        return $assets;
+    }
+
     public function thankYou(string $sessionToken): View|\Illuminate\Http\Response
     {
         $checkoutSession = CheckoutSession::query()
@@ -309,15 +381,16 @@ class PublicCheckoutController extends Controller
         ?\App\Models\PaymentTransaction $paymentTransaction,
         string $sellerLogoUrl,
         string $checkoutPageMode,
+        array $extraData = [],
     ): array {
-        return [
+        return array_merge([
             'checkoutLink' => $checkoutLink,
             'checkoutSession' => $checkoutSession,
             'order' => $order,
             'paymentTransaction' => $paymentTransaction,
             'sellerLogoUrl' => $sellerLogoUrl,
             'checkoutPageMode' => $checkoutPageMode,
-        ];
+        ], $extraData);
     }
 
     /**

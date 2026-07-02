@@ -1142,7 +1142,7 @@ class RedirectedCheckoutTest extends TestCase
                 'gateway_status' => 'FAILED',
                 'internal_status' => 'failed',
                 'api_boleto' => [
-                    'message' => 'Data limite de desconto deve ser menor que a data de vencimento',
+                    'message' => ['Data limite de desconto deve ser menor que a data de vencimento'],
                     'status' => 403,
                     'code' => 'BNK000143',
                     'boleto_url' => null,
@@ -2793,6 +2793,52 @@ class RedirectedCheckoutTest extends TestCase
             ->assertJsonPath('message', 'Data limite de desconto deve ser menor que a data de vencimento')
             ->assertJsonPath('paytime_response.api_boleto.code', 'BNK000143');
 
+        $this->assertDatabaseCount('payment_transactions', 0);
+    }
+
+    public function test_boleto_payment_is_rejected_before_gateway_when_total_is_below_the_minimum(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => true,
+            'allow_credit_card' => false,
+            'unit_price' => 5.00,
+            'total_price' => 5.00,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->never())
+            ->method('createBoletoPayment');
+
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'O valor mínimo permitido para o boleto é de dez reais.');
+
+        $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseCount('payment_transactions', 0);
     }
 

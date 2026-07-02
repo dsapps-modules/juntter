@@ -19,6 +19,8 @@ const visualDefaults = {
     store_name: '',
     primary_color: '#FFC800',
     navbar_background_color: '#FFFFFF',
+    navbar_text_color: '#1F2937',
+    button_text_color: '#1F2937',
     offer_message: '',
     footer_text: '',
 };
@@ -85,6 +87,8 @@ export default function CheckoutLinkFormPage() {
                         store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name,
                         primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
                         navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color,
+                        navbar_text_color: visualConfig.navbar_text_color ?? visualDefaults.navbar_text_color,
+                        button_text_color: visualConfig.button_text_color ?? visualConfig.navbar_text_color ?? visualDefaults.button_text_color,
                         offer_message: visualConfig.offer_message ?? visualDefaults.offer_message,
                         footer_text: visualConfig.footer_text ?? visualDefaults.footer_text,
                     });
@@ -103,6 +107,8 @@ export default function CheckoutLinkFormPage() {
                         store_name: visualDefaults.store_name,
                         primary_color: visualDefaults.primary_color,
                         navbar_background_color: visualDefaults.navbar_background_color,
+                        navbar_text_color: visualDefaults.navbar_text_color,
+                        button_text_color: visualDefaults.button_text_color,
                         offer_message: visualDefaults.offer_message,
                         footer_text: visualDefaults.footer_text,
                     });
@@ -148,6 +154,8 @@ export default function CheckoutLinkFormPage() {
                 store_name,
                 primary_color,
                 navbar_background_color,
+                navbar_text_color,
+                button_text_color,
                 offer_message,
                 footer_text,
                 ...restValues
@@ -161,6 +169,8 @@ export default function CheckoutLinkFormPage() {
                     store_name,
                     primary_color: primary_color || visualDefaults.primary_color,
                     navbar_background_color: navbar_background_color || visualDefaults.navbar_background_color,
+                    navbar_text_color: navbar_text_color || visualDefaults.navbar_text_color,
+                    button_text_color: button_text_color || navbar_text_color || visualDefaults.button_text_color,
                     offer_message,
                     footer_text,
                 }),
@@ -233,6 +243,22 @@ export default function CheckoutLinkFormPage() {
 
         message.success('Link excluído.');
         navigate('/seller/checkout-links');
+    }
+
+    function handleNavbarBackgroundColorChange(event) {
+        const nextColor = event.target.value;
+
+        form.setFieldsValue({
+            primary_color: nextColor,
+        });
+    }
+
+    function handleNavbarTextColorChange(event) {
+        const nextColor = event.target.value;
+
+        form.setFieldsValue({
+            button_text_color: nextColor,
+        });
     }
 
     return (
@@ -351,16 +377,29 @@ export default function CheckoutLinkFormPage() {
                             </Row>
 
                             <Row gutter={16}>
-                                <Col xs={24} md={8}>
-                                    <Form.Item label="Cor primária" name="primary_color">
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Cor do topo" name="navbar_background_color">
+                                        <Input type="color" style={{ width: 120, padding: 4 }} onChange={handleNavbarBackgroundColorChange} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Cor do botão" name="primary_color">
                                         <Input type="color" style={{ width: 120, padding: 4 }} />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} md={8}>
-                                    <Form.Item label="Cor de fundo da navbar" name="navbar_background_color">
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Letra do topo" name="navbar_text_color">
+                                        <Input type="color" style={{ width: 120, padding: 4 }} onChange={handleNavbarTextColorChange} />
+                                    </Form.Item>
+                                </Col>
+                                <Col xs={24} md={6}>
+                                    <Form.Item label="Letra do botão" name="button_text_color">
                                         <Input type="color" style={{ width: 120, padding: 4 }} />
                                     </Form.Item>
                                 </Col>
+                            </Row>
+
+                            <Row gutter={16}>
                                 <Col xs={24} md={8}>
                                     <Form.Item
                                         label="Imagem do produto"

@@ -59,6 +59,8 @@ class StoreCheckoutLinkRequest extends FormRequest
             'visual_config.store_name' => ['nullable', 'string', 'max:255'],
             'visual_config.primary_color' => ['nullable', 'string', 'max:32'],
             'visual_config.navbar_background_color' => ['nullable', 'string', 'max:32'],
+            'visual_config.navbar_text_color' => ['nullable', 'string', 'max:32'],
+            'visual_config.button_text_color' => ['nullable', 'string', 'max:32'],
             'visual_config.offer_message' => ['nullable', 'string', 'max:500'],
             'visual_config.footer_text' => ['nullable', 'string', 'max:500'],
         ];

@@ -55,6 +55,7 @@ class CheckoutLink extends Model
 
     protected $appends = [
         'product_image_url',
+        'public_spa_url',
     ];
 
     public static function generatePublicToken(): string
@@ -106,5 +107,10 @@ class CheckoutLink extends Model
         }
 
         return route('checkout.public.product-image', $this->public_token);
+    }
+
+    public function getPublicSpaUrlAttribute(): string
+    {
+        return route('checkout.public.spa.show', $this->public_token);
     }
 }
