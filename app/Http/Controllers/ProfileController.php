@@ -34,11 +34,14 @@ class ProfileController extends Controller
         $user = $request->user();
         $validated = $request->validated();
         $previousLogoPath = $user->company_logo_path;
+        $removeCompanyLogo = $request->boolean('remove_company_logo');
 
         $user->fill($validated);
 
         if ($request->hasFile('company_logo')) {
             $user->company_logo_path = $request->file('company_logo')->store('company-logos', 'public');
+        } elseif ($removeCompanyLogo) {
+            $user->company_logo_path = null;
         }
 
         if ($user->isDirty('email')) {
@@ -57,6 +60,7 @@ class ProfileController extends Controller
                 'redirect' => '/app/perfil',
                 'profile' => [
                     'avatar_url' => $user->avatar_url,
+                    'company_logo_url' => $user->avatar_url,
                 ],
             ]);
         }

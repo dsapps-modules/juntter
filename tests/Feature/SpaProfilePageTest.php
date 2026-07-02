@@ -28,11 +28,14 @@ class SpaProfilePageTest extends TestCase
         $this->assertStringContainsString('Resumo da conta', $pageSource);
         $this->assertStringContainsString('Ações rápidas', $pageSource);
         $this->assertStringContainsString('Selecionar logotipo', $pageSource);
+        $this->assertStringContainsString('Remover logotipo', $pageSource);
         $this->assertStringContainsString('600x200', $pageSource);
         $this->assertStringContainsString('jpg, png e webp', $pageSource);
         $this->assertStringContainsString('accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"', $pageSource);
         $this->assertStringContainsString('Enviando logotipo...', $pageSource);
         $this->assertStringContainsString('Logotipo atualizado com sucesso', $pageSource);
+        $this->assertStringContainsString('Removendo logotipo...', $pageSource);
+        $this->assertStringContainsString('Logotipo removido com sucesso', $pageSource);
         $this->assertStringContainsString('Logotipo ativo', $pageSource);
         $this->assertStringNotContainsString('spa-mini-surface', $pageSource);
         $this->assertStringNotContainsString('/change-password', $pageSource);

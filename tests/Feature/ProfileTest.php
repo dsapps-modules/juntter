@@ -73,6 +73,36 @@ class ProfileTest extends TestCase
         Storage::disk('public')->assertExists($user->company_logo_path);
     }
 
+    public function test_profile_logo_can_be_removed(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'company_logo_path' => 'company-logos/old-logo.png',
+        ]);
+
+        Storage::disk('public')->put('company-logos/old-logo.png', 'fake-image-content');
+
+        $response = $this
+            ->actingAs($user)
+            ->post('/profile', [
+                '_method' => 'PATCH',
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                'remove_company_logo' => '1',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertNull($user->company_logo_path);
+        $this->assertNull($user->avatar_url);
+        Storage::disk('public')->assertMissing('company-logos/old-logo.png');
+    }
+
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void
     {
         $user = User::factory()->create();

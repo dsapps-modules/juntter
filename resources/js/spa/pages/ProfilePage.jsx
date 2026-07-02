@@ -1,4 +1,4 @@
-import { MailOutlined, LockOutlined, SaveOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons';
+import { DeleteOutlined, MailOutlined, LockOutlined, SaveOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Col, Divider, Input, Row, Space, Tag, Typography } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -141,6 +141,10 @@ export default function ProfilePage() {
             formData.append('company_logo', body.companyLogoFile);
         }
 
+        if (body.removeCompanyLogo) {
+            formData.append('remove_company_logo', '1');
+        }
+
         const response = await fetch('/profile', {
             method: 'POST',
             headers: {
@@ -162,6 +166,17 @@ export default function ProfilePage() {
         return payload;
     }
 
+    function syncProfileFromPayload(payload) {
+        setProfile((current) => ({
+            ...current,
+            ...profileForm,
+            avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
+            company_logo_url: payload.profile?.company_logo_url ?? payload.profile?.avatar_url ?? current.company_logo_url,
+        }));
+        setCompanyLogoFile(null);
+        setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? payload.profile?.company_logo_url ?? '');
+    }
+
     async function uploadCompanyLogo(file) {
         if (!file) {
             return;
@@ -178,14 +193,7 @@ export default function ProfilePage() {
             });
 
             setSuccess(payload.message ?? 'Perfil atualizado com sucesso.');
-            setProfile((current) => ({
-                ...current,
-                ...profileForm,
-                avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
-                company_logo_url: payload.profile?.avatar_url ?? current.company_logo_url,
-            }));
-            setCompanyLogoFile(null);
-            setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? profile.avatar_url ?? '');
+            syncProfileFromPayload(payload);
             setLogoUploadStatus('Logotipo atualizado com sucesso');
         } catch (uploadError) {
             setLogoUploadStatus('');
@@ -204,20 +212,35 @@ export default function ProfilePage() {
         try {
             const payload = await submitProfileForm(profileForm);
             setSuccess(payload.message ?? 'Perfil atualizado com sucesso.');
-
-            setProfile((current) => ({
-                ...current,
-                ...profileForm,
-                avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
-                company_logo_url: payload.profile?.avatar_url ?? current.company_logo_url,
-            }));
+            syncProfileFromPayload(payload);
             setLogoUploadStatus(companyLogoFile ? 'Logotipo atualizado com sucesso' : '');
-            setCompanyLogoFile(null);
-            setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? profile.avatar_url ?? '');
         } catch (submitError) {
             setError(submitError.message || 'Falha ao atualizar o perfil.');
         } finally {
             setSavingProfile(false);
+        }
+    }
+
+    async function removeCompanyLogo() {
+        setSavingLogo(true);
+        setError('');
+        setSuccess('');
+        setLogoUploadStatus('Removendo logotipo...');
+
+        try {
+            const payload = await submitProfileForm({
+                ...profileForm,
+                removeCompanyLogo: true,
+            });
+
+            setSuccess(payload.message ?? 'Perfil atualizado com sucesso.');
+            syncProfileFromPayload(payload);
+            setLogoUploadStatus('Logotipo removido com sucesso');
+        } catch (removeError) {
+            setLogoUploadStatus('');
+            setError(removeError.message || 'Falha ao remover o logotipo.');
+        } finally {
+            setSavingLogo(false);
         }
     }
 
@@ -457,6 +480,18 @@ export default function ProfilePage() {
                             >
                                 Selecionar logotipo
                             </Button>
+
+                            {(profile.avatar_url || profile.company_logo_url) ? (
+                                <Button
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => void removeCompanyLogo()}
+                                    loading={savingLogo}
+                                    block
+                                >
+                                    Remover logotipo
+                                </Button>
+                            ) : null}
 
                             {logoUploadStatus ? <Alert type="success" showIcon message={logoUploadStatus} /> : null}
 
