@@ -30,6 +30,7 @@
                 'delivery' => route('checkout.public.delivery', $checkoutSession->session_token),
                 'choosePaymentMethod' => route('checkout.public.payment.choose', $checkoutSession->session_token),
                 'startPayment' => route('checkout.public.payment', $checkoutSession->session_token),
+                'cnpjLookupTemplate' => route('checkout.public.cnpj.lookup', ['cnpj' => '__CNPJ__']),
                 'status' => route('checkout.public.status', $checkoutSession->session_token),
                 'thankYou' => route('checkout.public.thank-you', $checkoutSession->session_token),
                 'paymentDetails' => route('checkout.public.payment.details', $checkoutSession->session_token),

@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../css/checkout-spa.css';
 
+const cnpjCompanyLookupCache = new Map();
+
 function readCheckoutSpaData() {
     const element = document.getElementById('checkout-spa-data');
 
@@ -148,6 +150,16 @@ function formatDocument(value, personType) {
     return personType === 'pj' ? formatCnpj(value) : formatCpf(value);
 }
 
+function fillFormField(form, name, value) {
+    const element = form?.querySelector(`[name="${name}"]`);
+
+    if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)) {
+        return;
+    }
+
+    element.value = value ?? '';
+}
+
 function formatCardNumber(value) {
     const digits = normalizeDigits(value).slice(0, 19);
 
@@ -186,6 +198,40 @@ async function lookupAddressByZipcode(zipcode) {
     }
 
     return payload;
+}
+
+async function lookupCompanyByCnpj(cnpj, lookupTemplate) {
+    const cnpjDigits = normalizeDigits(cnpj);
+
+    if (cnpjDigits.length !== 14 || !lookupTemplate) {
+        return null;
+    }
+
+    const cachedData = cnpjCompanyLookupCache.get(cnpjDigits);
+
+    if (cachedData) {
+        return cachedData;
+    }
+
+    const payload = await requestJson(lookupTemplate.replace('__CNPJ__', cnpjDigits), {
+        method: 'GET',
+    });
+
+    if (!payload?.company_name) {
+        return null;
+    }
+
+    cnpjCompanyLookupCache.set(cnpjDigits, payload);
+
+    return payload;
+}
+
+function applyCompanyLookupToForm(form, payload) {
+    fillFormField(form, 'customer_company_name', payload?.company_name || '');
+    fillFormField(form, 'customer_email', payload?.email || '');
+    fillFormField(form, 'customer_phone', payload?.phone || '');
+    fillFormField(form, 'customer_name', payload?.responsible_name || '');
+    fillFormField(form, 'customer_responsible_document', payload?.responsible_document || '');
 }
 
 function isPaidState(order, paymentTransaction) {
@@ -520,6 +566,8 @@ function CheckoutSpaApp() {
     const pollTimerRef = useRef(null);
     const zipcodeTimerRef = useRef(null);
     const zipcodeLookupIdRef = useRef(0);
+    const cnpjTimerRef = useRef(null);
+    const cnpjLookupIdRef = useRef(0);
 
     useEffect(() => {
         if (!selectedPaymentMethod && allowedMethods.length === 1) {
@@ -587,8 +635,36 @@ function CheckoutSpaApp() {
             if (zipcodeTimerRef.current) {
                 window.clearTimeout(zipcodeTimerRef.current);
             }
+
+            if (cnpjTimerRef.current) {
+                window.clearTimeout(cnpjTimerRef.current);
+            }
         };
     }, []);
+
+    useEffect(() => {
+        if (personType !== 'pj') {
+            return undefined;
+        }
+
+        const cnpjDigits = normalizeDigits(session.customer_document || '');
+
+        if (cnpjDigits.length !== 14 || !config?.urls?.cnpjLookupTemplate) {
+            return undefined;
+        }
+
+        const timer = window.setTimeout(() => {
+            const form = document.querySelector('[data-person-form="pj"]');
+
+            if (form instanceof HTMLFormElement) {
+                void syncCompanyDataByCnpj(form, cnpjDigits);
+            }
+        }, 0);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [config?.urls?.cnpjLookupTemplate, personType, session.customer_document]);
 
     if (!config) {
         return null;
@@ -785,6 +861,10 @@ function CheckoutSpaApp() {
         setBusyAction('identification');
 
         try {
+            if (personType === 'pj') {
+                await syncCompanyDataByCnpj(event.currentTarget, event.currentTarget.querySelector('[name="customer_document"]')?.value || '');
+            }
+
             const response = await requestJson(config.urls.identify, {
                 method: 'POST',
                 body: new FormData(event.currentTarget),
@@ -1044,6 +1124,10 @@ function CheckoutSpaApp() {
 
         if (target.name === 'customer_document') {
             target.value = formatDocument(target.value, personType);
+
+            if (personType === 'pj') {
+                scheduleCompanyLookup(target.form, target.value);
+            }
         }
 
         if (target.name === 'customer_responsible_document') {
@@ -1065,6 +1149,83 @@ function CheckoutSpaApp() {
         if (target.name === 'card[card_number]') {
             target.value = formatCardNumber(target.value);
         }
+    }
+
+    function clearCompanyLookupErrors() {
+        setFieldErrors((current) => {
+            const nextErrors = { ...current };
+
+            delete nextErrors.customer_company_name;
+            delete nextErrors.customer_email;
+            delete nextErrors.customer_phone;
+            delete nextErrors.customer_name;
+            delete nextErrors.customer_responsible_document;
+
+            return nextErrors;
+        });
+    }
+
+    async function syncCompanyDataByCnpj(form, cnpjValue) {
+        const lookupTemplate = config?.urls?.cnpjLookupTemplate || '';
+        const cnpjDigits = normalizeDigits(cnpjValue);
+
+        if (personType !== 'pj' || cnpjDigits.length !== 14 || !lookupTemplate || !form) {
+            return null;
+        }
+
+        const lookupId = cnpjLookupIdRef.current + 1;
+        cnpjLookupIdRef.current = lookupId;
+
+        try {
+            const payload = await lookupCompanyByCnpj(cnpjDigits, lookupTemplate);
+
+            if (cnpjLookupIdRef.current !== lookupId || !payload) {
+                return null;
+            }
+
+            applyCompanyLookupToForm(form, payload);
+            clearCompanyLookupErrors();
+
+            return payload;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function scheduleCompanyLookup(form, cnpjValue) {
+        const cnpjDigits = normalizeDigits(cnpjValue);
+
+        if (cnpjTimerRef.current) {
+            window.clearTimeout(cnpjTimerRef.current);
+        }
+
+        if (personType !== 'pj' || cnpjDigits.length !== 14 || !form) {
+            return;
+        }
+
+        cnpjTimerRef.current = window.setTimeout(() => {
+            void syncCompanyDataByCnpj(form, cnpjDigits);
+        }, 350);
+    }
+
+    function handleDocumentBlur(event) {
+        const target = event.target;
+
+        if (!(target instanceof HTMLInputElement) || target.name !== 'customer_document' || personType !== 'pj') {
+            return;
+        }
+
+        const form = target.form;
+
+        if (!form) {
+            return;
+        }
+
+        if (cnpjTimerRef.current) {
+            window.clearTimeout(cnpjTimerRef.current);
+        }
+
+        void syncCompanyDataByCnpj(form, target.value);
     }
 
     function fillDeliveryField(form, selector, value) {
@@ -1231,6 +1392,7 @@ function CheckoutSpaApp() {
                                     placeholder="00.000.000/0000-00"
                                     inputMode="numeric"
                                     onInput={handleDocumentMask}
+                                    onBlur={handleDocumentBlur}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_document || ''}</p>
                             </label>

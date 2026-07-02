@@ -75,6 +75,7 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee('allow_credit_card', false);
         $response->assertSee('request_address', false);
         $response->assertSee('visual_config', false);
+        $response->assertSee('cnpjLookupTemplate', false);
         $response->assertSee('checkoutPageMode', false);
         $response->assertSee('threeDsEnv', false);
         $response->assertSee('paymentDetails', false);
@@ -97,6 +98,10 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('threeDsEnv', $source);
         $this->assertStringContainsString('Formas de pagamento', $source);
         $this->assertStringContainsString('lookupAddressByZipcode', $source);
+        $this->assertStringContainsString('lookupCompanyByCnpj', $source);
+        $this->assertStringContainsString('applyCompanyLookupToForm', $source);
+        $this->assertStringContainsString('cnpjCompanyLookupCache', $source);
+        $this->assertStringContainsString('cnpjLookupTemplate', $source);
         $this->assertStringContainsString('viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $source);
         $this->assertStringContainsString('Consultando CEP...', $source);
         $this->assertStringContainsString('checkout-spa-step-card--payment-details', $source);
