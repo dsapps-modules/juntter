@@ -793,6 +793,9 @@ function CheckoutSpaApp() {
     }
 
     const visualConfig = checkoutLink.visual_config || {};
+    const checkoutTheme = ['essential', 'noir', 'horizon', 'iris', 'atlantic'].includes(visualConfig.theme)
+        ? visualConfig.theme
+        : 'elegance';
     const summaryPricing = paymentTransaction
         ? {
             quantity: normalizeQuantity(session.quantity || quantity),
@@ -826,90 +829,101 @@ function CheckoutSpaApp() {
         || checkoutLink.seller?.name
         || 'Juntter';
     const paymentLogos = [
-        { label: 'Mastercard', variant: 'mastercard', icon: 'sprite' },
-        { label: 'Elo', variant: 'elo', icon: 'elo' },
-        { label: 'Boleto', variant: 'boleto', icon: 'boleto' },
-        { label: 'Pix', variant: 'pix', icon: 'pix' },
-        { label: 'Visa', variant: 'visa', icon: 'sprite' },
-        { label: 'Amex', variant: 'amex', icon: 'sprite' },
-        { label: 'Diners', variant: 'diners', icon: 'sprite' },
-        { label: 'Hiper', variant: 'hiper', icon: 'hiper' },
+        { label: 'Mastercard', variant: 'mastercard' },
+        { label: 'Elo', variant: 'elo' },
+        { label: 'Boleto', variant: 'boleto' },
+        { label: 'Pix', variant: 'pix' },
+        { label: 'Visa', variant: 'visa' },
+        { label: 'Amex', variant: 'amex' },
+        { label: 'Diners', variant: 'diners' },
+        { label: 'Hiper', variant: 'hiper' },
     ];
-    const paymentLogoSpriteUrl = '/adminlte/plugins/fontawesome-free/sprites/brands.svg';
 
     function renderPaymentLogo(paymentLogo) {
-        if (paymentLogo.icon === 'sprite') {
-            const symbolId = paymentLogo.variant === 'mastercard'
-                ? 'cc-mastercard'
-                : paymentLogo.variant === 'visa'
-                    ? 'cc-visa'
-                    : paymentLogo.variant === 'amex'
-                        ? 'cc-amex'
-                        : 'cc-diners-club';
-
+        if (paymentLogo.variant === 'mastercard') {
             return (
-                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 576 512">
-                    <use href={`${paymentLogoSpriteUrl}#${symbolId}`} />
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 48 28">
+                    <circle cx="20" cy="14" r="9" fill="#EB001B" />
+                    <circle cx="28" cy="14" r="9" fill="#F79E1B" />
+                    <path d="M24 7.2a9 9 0 0 1 0 13.6 9 9 0 0 1 0-13.6Z" fill="#FF5F00" />
                 </svg>
             );
         }
 
-        if (paymentLogo.icon === 'elo') {
+        if (paymentLogo.variant === 'elo') {
             return (
-                <svg className="checkout-spa-payment-logo-svg checkout-spa-payment-logo-svg--elo" aria-hidden="true" viewBox="0 0 120 40">
-                    <g fill="none" fillRule="evenodd">
-                        <path d="M19 28h15" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                        <path d="M19 21h11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                        <path d="M19 14h15" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-                        <circle cx="52" cy="20" r="7" fill="currentColor" />
-                        <rect x="72" y="11" width="8" height="18" rx="4" fill="currentColor" />
-                        <path d="M90 11v18h10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 52 28">
+                    <text x="3" y="20" fill="#123F3D" fontFamily="Arial, sans-serif" fontSize="19" fontWeight="800" letterSpacing="-1.5">elo</text>
+                    <circle cx="45" cy="9" r="2" fill="#F4B942" />
+                    <circle cx="47.5" cy="13.5" r="2" fill="#DF3B55" />
+                    <circle cx="44" cy="17.5" r="2" fill="#22A7A0" />
+                </svg>
+            );
+        }
+
+        if (paymentLogo.variant === 'boleto') {
+            return (
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 48 28">
+                    <g fill="#050505">
+                        <rect x="5" y="4" width="2" height="20" />
+                        <rect x="9" y="4" width="1" height="20" />
+                        <rect x="12" y="4" width="3" height="20" />
+                        <rect x="17" y="4" width="1" height="20" />
+                        <rect x="20" y="4" width="2" height="20" />
+                        <rect x="24" y="4" width="4" height="20" />
+                        <rect x="30" y="4" width="1" height="20" />
+                        <rect x="33" y="4" width="3" height="20" />
+                        <rect x="38" y="4" width="1" height="20" />
+                        <rect x="41" y="4" width="2" height="20" />
                     </g>
                 </svg>
             );
         }
 
-        if (paymentLogo.icon === 'boleto') {
+        if (paymentLogo.variant === 'pix') {
             return (
-                <svg className="checkout-spa-payment-logo-svg checkout-spa-payment-logo-svg--boleto" aria-hidden="true" viewBox="0 0 120 40">
-                    <rect x="4" y="6" width="112" height="28" rx="4" fill="none" stroke="currentColor" strokeWidth="2" />
-                    <g fill="currentColor">
-                        <rect x="14" y="10" width="3" height="20" />
-                        <rect x="20" y="10" width="2" height="20" />
-                        <rect x="25" y="10" width="5" height="20" />
-                        <rect x="33" y="10" width="2" height="20" />
-                        <rect x="39" y="10" width="4" height="20" />
-                        <rect x="47" y="10" width="2" height="20" />
-                        <rect x="53" y="10" width="6" height="20" />
-                        <rect x="62" y="10" width="2" height="20" />
-                        <rect x="67" y="10" width="4" height="20" />
-                        <rect x="74" y="10" width="2" height="20" />
-                        <rect x="79" y="10" width="5" height="20" />
-                        <rect x="87" y="10" width="2" height="20" />
-                        <rect x="92" y="10" width="4" height="20" />
-                        <rect x="100" y="10" width="2" height="20" />
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 40 28">
+                    <g fill="#52B7AA">
+                        <path d="M20 4a4 4 0 0 1 2.8 1.2l4 4-5.3 5.3a2.1 2.1 0 0 1-3 0l-5.3-5.3 4-4A4 4 0 0 1 20 4Z" />
+                        <path d="m28.2 10.6 4.2 4.2a4 4 0 0 1 0 5.6l-4 4-5.4-5.3a2.1 2.1 0 0 1 0-3l5.2-5.5Z" />
+                        <path d="m11.8 10.6 5.3 5.3a2.1 2.1 0 0 1 0 3l-5.4 5.3-4-4a4 4 0 0 1 0-5.6l4.1-4Z" />
+                        <path d="m20 19.6 1.5-1.5 5.3 5.3-4 4a4 4 0 0 1-5.6 0l-4-4 5.3-5.3 1.5 1.5Z" />
                     </g>
                 </svg>
             );
         }
 
-        if (paymentLogo.icon === 'pix') {
+        if (paymentLogo.variant === 'visa') {
             return (
-                <svg className="checkout-spa-payment-logo-svg checkout-spa-payment-logo-svg--pix" aria-hidden="true" viewBox="0 0 40 40">
-                    <path d="M20 4 33 17 20 30 7 17Z" fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" />
-                    <path d="M14 14c2 0 3 1 6 4s4 4 6 4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M14 26c2 0 3-1 6-4s4-4 6-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 52 28">
+                    <text x="3" y="20" fill="#17357E" fontFamily="Arial, sans-serif" fontSize="18" fontStyle="italic" fontWeight="900" letterSpacing="-1">VISA</text>
+                </svg>
+            );
+        }
+
+        if (paymentLogo.variant === 'amex') {
+            return (
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 54 28">
+                    <path d="M6 6h42l-4 16H2Z" fill="#18A9E0" />
+                    <path d="M8 8h36.5l-3 12H5Z" fill="#FFFFFF" />
+                    <text x="9" y="17" fill="#18A9E0" fontFamily="Arial, sans-serif" fontSize="9" fontStyle="italic" fontWeight="900">AMEX</text>
+                </svg>
+            );
+        }
+
+        if (paymentLogo.variant === 'diners') {
+            return (
+                <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 42 28">
+                    <circle cx="21" cy="14" r="10" fill="#FFFFFF" stroke="#17539B" strokeWidth="2.5" />
+                    <path d="M19 7.8a7 7 0 0 0 0 12.4V7.8Zm4 0v12.4a7 7 0 0 0 0-12.4Z" fill="#17539B" />
                 </svg>
             );
         }
 
         return (
-            <svg className="checkout-spa-payment-logo-svg checkout-spa-payment-logo-svg--hiper" aria-hidden="true" viewBox="0 0 120 40">
-                <rect x="4" y="6" width="112" height="28" rx="6" fill="currentColor" />
-                <path d="M26 11h10v18H26z" fill="#fff" opacity="0.96" />
-                <path d="M42 11h10l9 18H51l-1.7-3.7H43L41.4 29H31z" fill="#fff" opacity="0.96" />
-                <path d="M63 11h10c6 0 9 3 9 7 0 4-3 7-9 7h-4v4H63zm9 10c2 0 3-1 3-3 0-2-1-3-3-3h-4v6z" fill="#fff" opacity="0.96" />
-                <path d="M88 11h9c7 0 11 3 11 9s-4 9-11 9h-9zm8 14c3 0 4-1 4-5 0-3-1-5-4-5h-2v10z" fill="#fff" opacity="0.96" />
+            <svg className="checkout-spa-payment-logo-svg" aria-hidden="true" viewBox="0 0 48 30">
+                <path d="M7 5 39 2l4 24-32 2Z" fill="#F47C14" />
+                <text x="11" y="19" fill="#FFFFFF" fontFamily="Arial, sans-serif" fontSize="12" fontStyle="italic" fontWeight="800">Hiper</text>
             </svg>
         );
     }
@@ -2139,7 +2153,7 @@ function CheckoutSpaApp() {
     })();
 
     return (
-        <div className="checkout-spa-page" style={rootStyle}>
+        <div className={`checkout-spa-page checkout-spa-theme--${checkoutTheme}`} style={rootStyle}>
             <div className="checkout-spa-backdrop checkout-spa-backdrop--left" aria-hidden="true" />
             <div className="checkout-spa-backdrop checkout-spa-backdrop--right" aria-hidden="true" />
 

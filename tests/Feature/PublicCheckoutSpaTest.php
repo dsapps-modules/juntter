@@ -34,6 +34,7 @@ class PublicCheckoutSpaTest extends TestCase
             'free_shipping' => true,
             'visual_config' => [
                 'store_name' => 'Loja Teste',
+                'theme' => 'noir',
                 'primary_color' => '#111827',
                 'navbar_background_color' => '#ffffff',
             ],
@@ -43,6 +44,7 @@ class PublicCheckoutSpaTest extends TestCase
         $publicToken = $response->json('checkout_link.public_token');
 
         $this->assertSame(route('checkout.public.spa.show', $publicToken), $response->json('checkout_link.public_spa_url'));
+        $this->assertSame('noir', $response->json('checkout_link.visual_config.theme'));
     }
 
     public function test_public_checkout_spa_page_renders_the_initial_payload(): void
@@ -55,6 +57,7 @@ class PublicCheckoutSpaTest extends TestCase
             'request_address' => true,
             'visual_config' => [
                 'store_name' => 'Loja Teste',
+                'theme' => 'noir',
                 'primary_color' => '#111827',
                 'navbar_background_color' => '#ffffff',
                 'offer_message' => 'Oferta especial',
@@ -75,6 +78,7 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee('allow_credit_card', false);
         $response->assertSee('request_address', false);
         $response->assertSee('visual_config', false);
+        $response->assertSee('noir', false);
         $response->assertSee('cnpjLookupTemplate', false);
         $response->assertSee('checkoutPageMode', false);
         $response->assertSee('threeDsEnv', false);
@@ -97,6 +101,17 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('antifraudAuthTemplate', $source);
         $this->assertStringContainsString('threeDsEnv', $source);
         $this->assertStringContainsString('Formas de pagamento', $source);
+        $this->assertStringContainsString("{ label: 'Mastercard', variant: 'mastercard' }", $source);
+        $this->assertStringContainsString("{ label: 'Elo', variant: 'elo' }", $source);
+        $this->assertStringContainsString("{ label: 'Boleto', variant: 'boleto' }", $source);
+        $this->assertStringContainsString("{ label: 'Pix', variant: 'pix' }", $source);
+        $this->assertStringContainsString("{ label: 'Visa', variant: 'visa' }", $source);
+        $this->assertStringContainsString("{ label: 'Amex', variant: 'amex' }", $source);
+        $this->assertStringContainsString("{ label: 'Diners', variant: 'diners' }", $source);
+        $this->assertStringContainsString("{ label: 'Hiper', variant: 'hiper' }", $source);
+        $this->assertStringContainsString('fill="#EB001B"', $source);
+        $this->assertStringContainsString('fill="#52B7AA"', $source);
+        $this->assertStringNotContainsString('paymentLogoSpriteUrl', $source);
         $this->assertStringContainsString('lookupAddressByZipcode', $source);
         $this->assertStringContainsString('lookupCompanyByCnpj', $source);
         $this->assertStringContainsString('applyCompanyLookupToForm', $source);
@@ -117,6 +132,15 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('background: var(--checkout-spa-button, #ffffff);', $styles);
         $this->assertStringContainsString('color: var(--checkout-spa-button-ink, #17120d);', $styles);
         $this->assertStringContainsString('color: var(--checkout-spa-navbar-ink, #17120d);', $styles);
+        $this->assertStringContainsString('checkout-spa-theme--${checkoutTheme}', $source);
+        $this->assertStringContainsString('.checkout-spa-theme--essential', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--noir', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--horizon', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--iris', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--atlantic', $styles);
+        $this->assertStringContainsString('width: 49px;', $styles);
+        $this->assertStringContainsString('height: 34px;', $styles);
+        $this->assertStringContainsString('border: 1px solid #c9c9c9;', $styles);
     }
 
     private function makeVendorUser(): User

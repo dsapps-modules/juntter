@@ -102,5 +102,20 @@ class CheckoutLinkRequestValidationTest extends TestCase
         $this->assertArrayHasKey('visual_config.navbar_background_color', $rules);
         $this->assertArrayHasKey('visual_config.navbar_text_color', $rules);
         $this->assertArrayHasKey('visual_config.button_text_color', $rules);
+        $this->assertArrayHasKey('visual_config.theme', $rules);
+
+        $validThemeValidator = Validator::make([
+            'visual_config' => ['theme' => 'atlantic'],
+        ], [
+            'visual_config.theme' => $rules['visual_config.theme'],
+        ]);
+        $invalidThemeValidator = Validator::make([
+            'visual_config' => ['theme' => 'unknown'],
+        ], [
+            'visual_config.theme' => $rules['visual_config.theme'],
+        ]);
+
+        $this->assertFalse($validThemeValidator->fails());
+        $this->assertTrue($invalidThemeValidator->fails());
     }
 }

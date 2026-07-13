@@ -1,5 +1,6 @@
 ﻿import { Button, Card, Col, Form, Input, InputNumber, Row, Select, Space, Spin, Switch, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
+import { Radio } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
 
@@ -16,14 +17,90 @@ const discountTypeOptions = [
 ];
 
 const visualDefaults = {
+    theme: 'elegance',
     store_name: '',
-    primary_color: '#FFC800',
+    primary_color: '#1F2937',
     navbar_background_color: '#FFFFFF',
     navbar_text_color: '#1F2937',
-    button_text_color: '#1F2937',
+    button_text_color: '#FFFFFF',
     offer_message: '',
     footer_text: '',
 };
+
+const checkoutThemes = [
+    {
+        value: 'elegance',
+        name: 'Elegância',
+        description: 'Editorial, leve e sofisticado. É o visual atual do checkout.',
+        palette: ['#FFFFFF', '#F6F2EC', '#1F2937'],
+        colors: {
+            navbar_background_color: '#FFFFFF',
+            navbar_text_color: '#1F2937',
+            primary_color: '#1F2937',
+            button_text_color: '#FFFFFF',
+        },
+    },
+    {
+        value: 'essential',
+        name: 'Essencial',
+        description: 'Limpo, direto e funcional, com foco total no preenchimento rápido.',
+        palette: ['#F5F6F8', '#FFFFFF', '#000000'],
+        colors: {
+            navbar_background_color: '#FFFFFF',
+            navbar_text_color: '#111111',
+            primary_color: '#000000',
+            button_text_color: '#FFFFFF',
+        },
+    },
+    {
+        value: 'noir',
+        name: 'Noir Premium',
+        description: 'Experiência marcante em tons escuros, com acabamento dourado.',
+        palette: ['#11100E', '#24201B', '#D8B875'],
+        colors: {
+            navbar_background_color: '#171512',
+            navbar_text_color: '#F8F2E8',
+            primary_color: '#D8B875',
+            button_text_color: '#17120D',
+        },
+    },
+    {
+        value: 'horizon',
+        name: 'Horizonte',
+        description: 'Azul e cinza em uma composição contemporânea, serena e profissional.',
+        palette: ['#FFFFFF', '#EEF3F8', '#356B9A'],
+        colors: {
+            navbar_background_color: '#FFFFFF',
+            navbar_text_color: '#243B53',
+            primary_color: '#356B9A',
+            button_text_color: '#FFFFFF',
+        },
+    },
+    {
+        value: 'iris',
+        name: 'Íris',
+        description: 'Roxo profundo e amarelo suave para uma experiência refinada e acolhedora.',
+        palette: ['#FFFFFF', '#FFF8D8', '#37245F'],
+        colors: {
+            navbar_background_color: '#FFFFFF',
+            navbar_text_color: '#37245F',
+            primary_color: '#4A3278',
+            button_text_color: '#FFFFFF',
+        },
+    },
+    {
+        value: 'atlantic',
+        name: 'Atlântico',
+        description: 'Verde-água e azul escuro em um visual fresco, seguro e elegante.',
+        palette: ['#FFFFFF', '#E5F8F5', '#123B59'],
+        colors: {
+            navbar_background_color: '#FFFFFF',
+            navbar_text_color: '#123B59',
+            primary_color: '#147D82',
+            button_text_color: '#FFFFFF',
+        },
+    },
+];
 
 export default function CheckoutLinkFormPage() {
     const navigate = useNavigate();
@@ -84,6 +161,7 @@ export default function CheckoutLinkFormPage() {
                         ...checkoutLink,
                         request_address: checkoutLink.request_address ?? true,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
+                        theme: visualConfig.theme ?? visualDefaults.theme,
                         store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name,
                         primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
                         navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color,
@@ -104,6 +182,7 @@ export default function CheckoutLinkFormPage() {
                         boleto_discount_type: 'none',
                         free_shipping: true,
                         unit_price: formatCurrencyInput(0),
+                        theme: visualDefaults.theme,
                         store_name: visualDefaults.store_name,
                         primary_color: visualDefaults.primary_color,
                         navbar_background_color: visualDefaults.navbar_background_color,
@@ -151,6 +230,7 @@ export default function CheckoutLinkFormPage() {
 
         try {
             const {
+                theme,
                 store_name,
                 primary_color,
                 navbar_background_color,
@@ -166,6 +246,7 @@ export default function CheckoutLinkFormPage() {
                 ...restValues,
                 unit_price: parseCurrencyInput(restValues.unit_price),
                 visual_config: JSON.stringify({
+                    theme: theme || visualDefaults.theme,
                     store_name,
                     primary_color: primary_color || visualDefaults.primary_color,
                     navbar_background_color: navbar_background_color || visualDefaults.navbar_background_color,
@@ -261,6 +342,16 @@ export default function CheckoutLinkFormPage() {
         });
     }
 
+    function handleThemeChange(event) {
+        const selectedTheme = checkoutThemes.find((theme) => theme.value === event.target.value);
+
+        if (!selectedTheme) {
+            return;
+        }
+
+        form.setFieldsValue(selectedTheme.colors);
+    }
+
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
@@ -281,6 +372,33 @@ export default function CheckoutLinkFormPage() {
                             <Form.Item label="Nome do link" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
                                 <Input />
                             </Form.Item>
+                            <Form.Item
+                                label="Estilo do checkout"
+                                name="theme"
+                                extra="Escolha a experiência visual que seus clientes encontrarão ao pagar. Você pode ajustar as cores depois."
+                                rules={[{ required: true, message: 'Selecione um estilo para o checkout.' }]}
+                            >
+                                <Radio.Group className="checkout-theme-selector" onChange={handleThemeChange}>
+                                    {checkoutThemes.map((theme) => (
+                                        <Radio.Button className="checkout-theme-option" key={theme.value} value={theme.value}>
+                                            <span className="checkout-theme-option__preview" aria-hidden="true">
+                                                <span className="checkout-theme-option__top" style={{ background: theme.palette[0] }} />
+                                                <span className="checkout-theme-option__content" style={{ background: theme.palette[1] }}>
+                                                    <span style={{ background: theme.palette[2] }} />
+                                                    <span style={{ background: theme.palette[2] }} />
+                                                    <span style={{ background: theme.palette[2] }} />
+                                                </span>
+                                                <span className="checkout-theme-option__aside" style={{ background: theme.palette[2] }} />
+                                            </span>
+                                            <span className="checkout-theme-option__copy">
+                                                <strong>{theme.name}</strong>
+                                                <span>{theme.description}</span>
+                                            </span>
+                                        </Radio.Button>
+                                    ))}
+                                </Radio.Group>
+                            </Form.Item>
+
                             <Row gutter={16}>
                                 <Col xs={24} md={16}>
                                     <Form.Item label="Produto" name="product_id" rules={[{ required: true, message: 'Selecione um produto.' }]}>

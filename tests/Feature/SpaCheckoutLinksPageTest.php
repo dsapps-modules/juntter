@@ -6,6 +6,19 @@ use Tests\TestCase;
 
 class SpaCheckoutLinksPageTest extends TestCase
 {
+    public function test_the_checkout_link_form_offers_all_light_colored_themes(): void
+    {
+        $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
+
+        $this->assertIsString($componentSource);
+        $this->assertStringContainsString("value: 'horizon'", $componentSource);
+        $this->assertStringContainsString("name: 'Horizonte'", $componentSource);
+        $this->assertStringContainsString("value: 'iris'", $componentSource);
+        $this->assertStringContainsString("name: 'Íris'", $componentSource);
+        $this->assertStringContainsString("value: 'atlantic'", $componentSource);
+        $this->assertStringContainsString("name: 'Atlântico'", $componentSource);
+    }
+
     public function test_the_checkout_links_page_uses_icon_only_action_buttons(): void
     {
         $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinksPage.jsx'));

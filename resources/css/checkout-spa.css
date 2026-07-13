@@ -662,20 +662,20 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 12px;
+    gap: 15px;
 }
 
 .checkout-spa-payment-mark {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 30px;
-    padding: 2px 4px;
-    border: 1px solid rgba(39, 31, 21, 0.18);
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.96);
-    box-shadow: 0 6px 18px rgba(38, 28, 18, 0.08);
+    width: 49px;
+    height: 34px;
+    padding: 4px 6px;
+    border: 1px solid #c9c9c9;
+    border-radius: 3px;
+    background: #ffffff;
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -683,49 +683,6 @@
     display: block;
     width: 100%;
     height: 100%;
-}
-
-.checkout-spa-payment-logo-svg--elo,
-.checkout-spa-payment-logo-svg--hiper {
-    color: inherit;
-}
-
-.checkout-spa-payment-mark--mastercard {
-    width: 48px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 238, 0.88));
-}
-
-.checkout-spa-payment-mark--elo {
-    color: #133f39;
-}
-
-.checkout-spa-payment-mark--boleto {
-    background: linear-gradient(180deg, #ffffff, #fbf7f0);
-}
-
-.checkout-spa-payment-mark--pix {
-    color: #1f7a54;
-    border-color: rgba(31, 122, 84, 0.24);
-    background: linear-gradient(180deg, #f4fbf7, #ebf7ef);
-}
-
-.checkout-spa-payment-mark--visa {
-    color: #1a3b8f;
-}
-
-.checkout-spa-payment-mark--amex {
-    color: #0070ba;
-}
-
-.checkout-spa-payment-mark--diners {
-    color: #1e4b94;
-}
-
-.checkout-spa-payment-mark--hiper {
-    color: #ffffff;
-    border-color: rgba(255, 127, 0, 0.28);
-    background: linear-gradient(180deg, #ff8d1f, #ff7600);
-    box-shadow: 0 8px 18px rgba(255, 122, 0, 0.2);
 }
 
 .checkout-spa-status-card {
@@ -835,6 +792,646 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+/* Tema Essencial: checkout plano, direto e com alta densidade de informação. */
+.checkout-spa-theme--essential {
+    background: #f6f7f9;
+}
+
+.checkout-spa-theme--essential .checkout-spa-shell {
+    max-width: 1640px;
+    padding: 20px 40px 48px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-header {
+    align-items: center;
+    margin-bottom: 0;
+    padding: 16px 0;
+    border-bottom-color: #d5d8de;
+    background: transparent;
+    backdrop-filter: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-brand-logo {
+    width: 104px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-stepper {
+    flex: 1;
+    justify-content: flex-start;
+    max-width: 860px;
+    margin-left: auto;
+    gap: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-step {
+    flex: 1;
+    justify-content: center;
+    padding: 12px 10px 18px;
+    color: #8a91a2;
+    border-bottom-color: transparent;
+    font-size: 12px;
+    letter-spacing: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-step-number {
+    display: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-step.is-active {
+    color: #111111;
+    border-bottom: 3px solid #111111;
+}
+
+.checkout-spa-theme--essential .checkout-spa-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.9fr);
+    gap: 48px;
+    padding-top: 24px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-panel,
+.checkout-spa-theme--essential .checkout-spa-summary {
+    padding: 6px 0 24px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-summary {
+    top: 20px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-section-title,
+.checkout-spa-theme--essential .checkout-spa-summary-title,
+.checkout-spa-theme--essential .checkout-spa-step-card h3 {
+    color: #080808;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+.checkout-spa-theme--essential .checkout-spa-section-title {
+    font-size: clamp(1.5rem, 2vw, 2rem);
+}
+
+.checkout-spa-theme--essential .checkout-spa-summary-kicker {
+    display: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-summary-title {
+    font-size: 1.5rem;
+}
+
+.checkout-spa-theme--essential .checkout-spa-section-head,
+.checkout-spa-theme--essential .checkout-spa-summary-head,
+.checkout-spa-theme--essential .checkout-spa-step-card {
+    border-color: #d3d6dc;
+}
+
+.checkout-spa-theme--essential .checkout-spa-input,
+.checkout-spa-theme--essential .checkout-spa-select,
+.checkout-spa-theme--essential .checkout-spa-textarea {
+    min-height: 56px;
+    padding: 17px 16px 9px;
+    border: 0;
+    border-radius: 5px;
+    background: #eceef1;
+    box-shadow: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-input:focus,
+.checkout-spa-theme--essential .checkout-spa-select:focus,
+.checkout-spa-theme--essential .checkout-spa-textarea:focus {
+    outline: 2px solid #111111;
+    outline-offset: -2px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-label {
+    color: #303642;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.checkout-spa-theme--essential .checkout-spa-button {
+    min-height: 50px;
+    border-radius: 5px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-button.is-primary {
+    border-color: var(--checkout-spa-button, #000000);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.checkout-spa-theme--essential .checkout-spa-toggle-button,
+.checkout-spa-theme--essential .checkout-spa-method-card,
+.checkout-spa-theme--essential .checkout-spa-quantity-button {
+    border-radius: 5px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-payment-strip {
+    display: none;
+}
+
+/* Tema Noir Premium: alto contraste, superfícies profundas e acabamento champagne. */
+.checkout-spa-theme--noir {
+    min-height: 100vh;
+    color: #f7f0e5;
+    background:
+        radial-gradient(circle at 12% 8%, rgba(216, 184, 117, 0.13), transparent 28%),
+        radial-gradient(circle at 88% 82%, rgba(122, 85, 45, 0.12), transparent 32%),
+        #0d0c0b;
+}
+
+.checkout-spa-theme--noir .checkout-spa-shell {
+    max-width: 1500px;
+    padding: 30px;
+}
+
+.checkout-spa-theme--noir .checkout-spa-header {
+    padding: 22px 24px;
+    border: 1px solid rgba(216, 184, 117, 0.18);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(30, 27, 23, 0.96), rgba(18, 16, 14, 0.96));
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.checkout-spa-theme--noir .checkout-spa-brand-logo {
+    filter: brightness(0) invert(1) sepia(0.2);
+}
+
+.checkout-spa-theme--noir .checkout-spa-step {
+    color: #cfc5b7;
+}
+
+.checkout-spa-theme--noir .checkout-spa-step.is-active {
+    color: #f9f1e5;
+    border-bottom-color: #d8b875;
+}
+
+.checkout-spa-theme--noir .checkout-spa-step-number {
+    border-color: rgba(216, 184, 117, 0.45);
+    color: #d8b875;
+}
+
+.checkout-spa-theme--noir .checkout-spa-step.is-active .checkout-spa-step-number {
+    border-color: #d8b875;
+    color: #17120d;
+    background: #d8b875;
+}
+
+.checkout-spa-theme--noir .checkout-spa-panel,
+.checkout-spa-theme--noir .checkout-spa-summary {
+    border-color: rgba(216, 184, 117, 0.2);
+    border-radius: 16px;
+    background:
+        linear-gradient(145deg, rgba(35, 31, 26, 0.98), rgba(20, 18, 16, 0.98)),
+        #171512;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+}
+
+.checkout-spa-theme--noir .checkout-spa-summary {
+    background:
+        radial-gradient(circle at 100% 0, rgba(216, 184, 117, 0.1), transparent 32%),
+        linear-gradient(145deg, #201d19, #151310);
+}
+
+.checkout-spa-theme--noir .checkout-spa-section-title,
+.checkout-spa-theme--noir .checkout-spa-summary-title,
+.checkout-spa-theme--noir .checkout-spa-step-card h3,
+.checkout-spa-theme--noir .checkout-spa-summary-row strong,
+.checkout-spa-theme--noir .checkout-spa-summary-total,
+.checkout-spa-theme--noir .checkout-spa-method-name {
+    color: #fff9ef;
+}
+
+.checkout-spa-theme--noir .checkout-spa-summary-kicker,
+.checkout-spa-theme--noir .checkout-spa-label,
+.checkout-spa-theme--noir .checkout-spa-payment-strip-title {
+    color: #d8b875;
+}
+
+.checkout-spa-theme--noir .checkout-spa-section-text,
+.checkout-spa-theme--noir .checkout-spa-step-card p,
+.checkout-spa-theme--noir .checkout-spa-summary .summary-note,
+.checkout-spa-theme--noir .checkout-spa-summary-row,
+.checkout-spa-theme--noir .checkout-spa-method-text,
+.checkout-spa-theme--noir .checkout-spa-summary-footer {
+    color: rgba(247, 240, 229, 0.68);
+}
+
+.checkout-spa-theme--noir .checkout-spa-section-head,
+.checkout-spa-theme--noir .checkout-spa-summary-head,
+.checkout-spa-theme--noir .checkout-spa-summary-total,
+.checkout-spa-theme--noir .checkout-spa-summary-footer,
+.checkout-spa-theme--noir .checkout-spa-step-card {
+    border-color: rgba(216, 184, 117, 0.16);
+}
+
+.checkout-spa-theme--noir .checkout-spa-input,
+.checkout-spa-theme--noir .checkout-spa-select,
+.checkout-spa-theme--noir .checkout-spa-textarea {
+    color: #fff9ef;
+    border-color: rgba(216, 184, 117, 0.22);
+    background: rgba(255, 255, 255, 0.045);
+}
+
+.checkout-spa-theme--noir .checkout-spa-input::placeholder,
+.checkout-spa-theme--noir .checkout-spa-textarea::placeholder {
+    color: rgba(247, 240, 229, 0.34);
+}
+
+.checkout-spa-theme--noir .checkout-spa-input:focus,
+.checkout-spa-theme--noir .checkout-spa-select:focus,
+.checkout-spa-theme--noir .checkout-spa-textarea:focus {
+    border-color: #d8b875;
+    box-shadow: 0 0 0 3px rgba(216, 184, 117, 0.1);
+}
+
+.checkout-spa-theme--noir .checkout-spa-toggle-group,
+.checkout-spa-theme--noir .checkout-spa-toggle-button,
+.checkout-spa-theme--noir .checkout-spa-method-card,
+.checkout-spa-theme--noir .checkout-spa-quantity-button,
+.checkout-spa-theme--noir .checkout-spa-qrcode {
+    color: #f7f0e5;
+    border-color: rgba(216, 184, 117, 0.22);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.checkout-spa-theme--noir .checkout-spa-toggle-button.is-active,
+.checkout-spa-theme--noir .checkout-spa-method-card.is-selected {
+    color: #17120d;
+    border-color: #d8b875;
+    background: #d8b875;
+}
+
+.checkout-spa-theme--noir .checkout-spa-button {
+    border-radius: 7px;
+}
+
+.checkout-spa-theme--noir .checkout-spa-button.is-primary {
+    border-color: var(--checkout-spa-button, #d8b875);
+    box-shadow: 0 12px 30px rgba(216, 184, 117, 0.16);
+}
+
+.checkout-spa-theme--noir .checkout-spa-button.is-secondary {
+    color: #f7f0e5;
+    border-color: rgba(216, 184, 117, 0.3);
+    background: transparent;
+}
+
+.checkout-spa-theme--noir .checkout-spa-payment-mark {
+    border-color: #c9c9c9;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+/* Temas claros cromáticos: branco predominante com acentos de identidade. */
+.checkout-spa-theme--horizon,
+.checkout-spa-theme--iris,
+.checkout-spa-theme--atlantic {
+    min-height: 100vh;
+    color: #172033;
+    background: #ffffff;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-shell,
+.checkout-spa-theme--iris .checkout-spa-shell,
+.checkout-spa-theme--atlantic .checkout-spa-shell {
+    max-width: 1480px;
+    padding: 30px;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-header,
+.checkout-spa-theme--iris .checkout-spa-header,
+.checkout-spa-theme--atlantic .checkout-spa-header {
+    background: #ffffff;
+    backdrop-filter: none;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-panel,
+.checkout-spa-theme--iris .checkout-spa-panel,
+.checkout-spa-theme--atlantic .checkout-spa-panel {
+    background: #ffffff;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-input,
+.checkout-spa-theme--horizon .checkout-spa-select,
+.checkout-spa-theme--horizon .checkout-spa-textarea,
+.checkout-spa-theme--iris .checkout-spa-input,
+.checkout-spa-theme--iris .checkout-spa-select,
+.checkout-spa-theme--iris .checkout-spa-textarea,
+.checkout-spa-theme--atlantic .checkout-spa-input,
+.checkout-spa-theme--atlantic .checkout-spa-select,
+.checkout-spa-theme--atlantic .checkout-spa-textarea {
+    background: #ffffff;
+}
+
+/* Horizonte: geometria precisa em azul e cinza. */
+.checkout-spa-theme--horizon {
+    background:
+        linear-gradient(180deg, rgba(230, 238, 246, 0.72) 0, rgba(255, 255, 255, 0) 220px),
+        #ffffff;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-header {
+    align-items: center;
+    margin-bottom: 28px;
+    padding: 18px 4px;
+    border-top: 3px solid #356b9a;
+    border-bottom: 1px solid #d8e0e8;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-step {
+    color: #718096;
+    letter-spacing: 0.08em;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-step.is-active {
+    color: #243b53;
+    border-bottom-color: #356b9a;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-step-number {
+    color: #356b9a;
+    border-color: #9bb6cf;
+    background: #f5f8fb;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-step.is-active .checkout-spa-step-number {
+    color: #ffffff;
+    border-color: #356b9a;
+    background: #356b9a;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-grid {
+    grid-template-columns: minmax(0, 1.3fr) minmax(350px, 0.7fr);
+    gap: 30px;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-panel,
+.checkout-spa-theme--horizon .checkout-spa-summary {
+    border: 1px solid #dbe3eb;
+    border-radius: 8px;
+    box-shadow: 0 20px 48px rgba(51, 78, 104, 0.08);
+}
+
+.checkout-spa-theme--horizon .checkout-spa-panel {
+    border-top: 4px solid #8ba8c2;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-summary {
+    background: linear-gradient(155deg, #ffffff, #f1f5f8);
+}
+
+.checkout-spa-theme--horizon .checkout-spa-section-title,
+.checkout-spa-theme--horizon .checkout-spa-summary-title,
+.checkout-spa-theme--horizon .checkout-spa-step-card h3 {
+    color: #243b53;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-weight: 650;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-summary-kicker,
+.checkout-spa-theme--horizon .checkout-spa-label {
+    color: #356b9a;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-input,
+.checkout-spa-theme--horizon .checkout-spa-select,
+.checkout-spa-theme--horizon .checkout-spa-textarea {
+    border-color: #cbd7e2;
+    border-radius: 6px;
+}
+
+.checkout-spa-theme--horizon .checkout-spa-input:focus,
+.checkout-spa-theme--horizon .checkout-spa-select:focus,
+.checkout-spa-theme--horizon .checkout-spa-textarea:focus {
+    border-color: #356b9a;
+    box-shadow: 0 0 0 3px rgba(53, 107, 154, 0.1);
+}
+
+.checkout-spa-theme--horizon .checkout-spa-button,
+.checkout-spa-theme--horizon .checkout-spa-toggle-button,
+.checkout-spa-theme--horizon .checkout-spa-method-card,
+.checkout-spa-theme--horizon .checkout-spa-quantity-button {
+    border-radius: 6px;
+}
+
+/* Íris: roxo profundo com pontos de luz amarelo-claro. */
+.checkout-spa-theme--iris {
+    background:
+        radial-gradient(circle at 92% 6%, rgba(255, 234, 143, 0.24), transparent 24%),
+        radial-gradient(circle at 4% 52%, rgba(74, 50, 120, 0.055), transparent 24%),
+        #ffffff;
+}
+
+.checkout-spa-theme--iris .checkout-spa-header {
+    position: relative;
+    align-items: center;
+    padding: 18px 22px 22px;
+    border: 0;
+    border-bottom: 1px solid rgba(74, 50, 120, 0.16);
+}
+
+.checkout-spa-theme--iris .checkout-spa-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 22px;
+    width: 84px;
+    height: 4px;
+    border-radius: 999px;
+    background: #f2d675;
+}
+
+.checkout-spa-theme--iris .checkout-spa-step {
+    color: #766c86;
+    border: 0;
+}
+
+.checkout-spa-theme--iris .checkout-spa-step.is-active {
+    color: #37245f;
+}
+
+.checkout-spa-theme--iris .checkout-spa-step-number {
+    color: #4a3278;
+    border-color: rgba(74, 50, 120, 0.24);
+    background: #fffbea;
+}
+
+.checkout-spa-theme--iris .checkout-spa-step.is-active .checkout-spa-step-number {
+    color: #37245f;
+    border-color: #ead069;
+    background: #f7e59b;
+}
+
+.checkout-spa-theme--iris .checkout-spa-grid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+    gap: 34px;
+}
+
+.checkout-spa-theme--iris .checkout-spa-panel,
+.checkout-spa-theme--iris .checkout-spa-summary {
+    border: 1px solid rgba(74, 50, 120, 0.13);
+    border-radius: 24px 8px 24px 8px;
+    box-shadow: 0 24px 60px rgba(55, 36, 95, 0.08);
+}
+
+.checkout-spa-theme--iris .checkout-spa-summary {
+    background:
+        radial-gradient(circle at 100% 0, rgba(247, 229, 155, 0.5), transparent 34%),
+        #fffefa;
+}
+
+.checkout-spa-theme--iris .checkout-spa-section-title,
+.checkout-spa-theme--iris .checkout-spa-summary-title,
+.checkout-spa-theme--iris .checkout-spa-step-card h3,
+.checkout-spa-theme--iris .checkout-spa-summary-row strong {
+    color: #37245f;
+}
+
+.checkout-spa-theme--iris .checkout-spa-summary-kicker,
+.checkout-spa-theme--iris .checkout-spa-label,
+.checkout-spa-theme--iris .checkout-spa-payment-strip-title {
+    color: #5b4288;
+}
+
+.checkout-spa-theme--iris .checkout-spa-input,
+.checkout-spa-theme--iris .checkout-spa-select,
+.checkout-spa-theme--iris .checkout-spa-textarea {
+    border-color: rgba(74, 50, 120, 0.2);
+    border-radius: 12px 4px 12px 4px;
+}
+
+.checkout-spa-theme--iris .checkout-spa-input:focus,
+.checkout-spa-theme--iris .checkout-spa-select:focus,
+.checkout-spa-theme--iris .checkout-spa-textarea:focus {
+    border-color: #5b4288;
+    box-shadow: 0 0 0 3px rgba(242, 214, 117, 0.26);
+}
+
+.checkout-spa-theme--iris .checkout-spa-button,
+.checkout-spa-theme--iris .checkout-spa-toggle-button,
+.checkout-spa-theme--iris .checkout-spa-method-card,
+.checkout-spa-theme--iris .checkout-spa-quantity-button {
+    border-radius: 12px 4px 12px 4px;
+}
+
+.checkout-spa-theme--iris .checkout-spa-method-card.is-selected,
+.checkout-spa-theme--iris .checkout-spa-toggle-button.is-active {
+    border-color: #4a3278;
+    background: #fff9df;
+}
+
+/* Atlântico: frescor verde-água ancorado por azul-marinho. */
+.checkout-spa-theme--atlantic {
+    background:
+        linear-gradient(135deg, rgba(220, 247, 242, 0.46), transparent 32%),
+        #ffffff;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-header {
+    align-items: center;
+    padding: 16px 20px;
+    border: 1px solid #d5ebe8;
+    border-radius: 18px;
+    box-shadow: 0 14px 42px rgba(18, 59, 89, 0.055);
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-stepper {
+    gap: 6px;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-step {
+    padding: 9px 14px;
+    color: #56707f;
+    border: 0;
+    border-radius: 999px;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-step.is-active {
+    color: #123b59;
+    background: #e5f8f5;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-step-number {
+    color: #147d82;
+    border-color: #9ed7d2;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-step.is-active .checkout-spa-step-number {
+    color: #ffffff;
+    border-color: #147d82;
+    background: #147d82;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-grid {
+    gap: 24px;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-panel,
+.checkout-spa-theme--atlantic .checkout-spa-summary {
+    border: 1px solid #d5ebe8;
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(18, 59, 89, 0.07);
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-panel {
+    background:
+        linear-gradient(90deg, #147d82 0, #147d82 5px, #ffffff 5px),
+        #ffffff;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-summary {
+    background:
+        radial-gradient(circle at 92% 5%, rgba(147, 226, 215, 0.24), transparent 30%),
+        #fbfefd;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-section-title,
+.checkout-spa-theme--atlantic .checkout-spa-summary-title,
+.checkout-spa-theme--atlantic .checkout-spa-step-card h3,
+.checkout-spa-theme--atlantic .checkout-spa-summary-row strong,
+.checkout-spa-theme--atlantic .checkout-spa-summary-total {
+    color: #123b59;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-summary-kicker,
+.checkout-spa-theme--atlantic .checkout-spa-label,
+.checkout-spa-theme--atlantic .checkout-spa-payment-strip-title {
+    color: #147d82;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-input,
+.checkout-spa-theme--atlantic .checkout-spa-select,
+.checkout-spa-theme--atlantic .checkout-spa-textarea {
+    border-color: #c5dfdc;
+    border-radius: 10px;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-input:focus,
+.checkout-spa-theme--atlantic .checkout-spa-select:focus,
+.checkout-spa-theme--atlantic .checkout-spa-textarea:focus {
+    border-color: #147d82;
+    box-shadow: 0 0 0 3px rgba(20, 125, 130, 0.1);
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-button,
+.checkout-spa-theme--atlantic .checkout-spa-toggle-button,
+.checkout-spa-theme--atlantic .checkout-spa-method-card,
+.checkout-spa-theme--atlantic .checkout-spa-quantity-button {
+    border-radius: 10px;
+}
+
+.checkout-spa-theme--atlantic .checkout-spa-method-card.is-selected,
+.checkout-spa-theme--atlantic .checkout-spa-toggle-button.is-active {
+    border-color: #147d82;
+    background: #e8f8f6;
 }
 
 @media (max-width: 1120px) {
@@ -958,12 +1555,6 @@
     }
 
     .checkout-spa-payment-strip-grid {
-        gap: 10px;
-    }
-
-    .checkout-spa-payment-mark {
-        width: 42px;
-        height: 26px;
-        padding: 2px 3px;
+        gap: 12px;
     }
 }
