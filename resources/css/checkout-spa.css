@@ -893,8 +893,8 @@
 .checkout-spa-theme--essential .checkout-spa-input,
 .checkout-spa-theme--essential .checkout-spa-select,
 .checkout-spa-theme--essential .checkout-spa-textarea {
-    min-height: 56px;
-    padding: 17px 16px 9px;
+    min-height: 42px;
+    padding: 9px 12px;
     border: 0;
     border-radius: 5px;
     background: #eceef1;
@@ -912,6 +912,18 @@
     color: #303642;
     font-size: 12px;
     font-weight: 600;
+}
+
+.checkout-spa-theme--essential .checkout-spa-step-card--intro .checkout-spa-field-grid.is-two-columns {
+    column-gap: 28px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-quantity-input {
+    box-sizing: border-box;
+    width: 64px;
+    height: 36px;
+    min-height: 36px;
+    padding: 4px 0;
 }
 
 .checkout-spa-theme--essential .checkout-spa-button {

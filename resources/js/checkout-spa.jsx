@@ -795,7 +795,7 @@ function CheckoutSpaApp() {
     const visualConfig = checkoutLink.visual_config || {};
     const checkoutTheme = ['essential', 'noir', 'horizon', 'iris', 'atlantic'].includes(visualConfig.theme)
         ? visualConfig.theme
-        : 'elegance';
+        : 'essential';
     const summaryPricing = paymentTransaction
         ? {
             quantity: normalizeQuantity(session.quantity || quantity),

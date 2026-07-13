@@ -17,7 +17,7 @@ const discountTypeOptions = [
 ];
 
 const visualDefaults = {
-    theme: 'elegance',
+    theme: 'essential',
     store_name: '',
     primary_color: '#1F2937',
     navbar_background_color: '#FFFFFF',

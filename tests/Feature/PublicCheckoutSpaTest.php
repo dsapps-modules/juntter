@@ -133,7 +133,12 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('color: var(--checkout-spa-button-ink, #17120d);', $styles);
         $this->assertStringContainsString('color: var(--checkout-spa-navbar-ink, #17120d);', $styles);
         $this->assertStringContainsString('checkout-spa-theme--${checkoutTheme}', $source);
+        $this->assertStringContainsString(": 'essential';", $source);
         $this->assertStringContainsString('.checkout-spa-theme--essential', $styles);
+        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-input,[\s\S]*?min-height: 42px;[\s\S]*?padding: 9px 12px;/', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-step-card--intro .checkout-spa-field-grid.is-two-columns', $styles);
+        $this->assertStringContainsString('column-gap: 28px;', $styles);
+        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-quantity-input \{[\s\S]*?height: 36px;[\s\S]*?min-height: 36px;[\s\S]*?padding: 4px 0;/', $styles);
         $this->assertStringContainsString('.checkout-spa-theme--noir', $styles);
         $this->assertStringContainsString('.checkout-spa-theme--horizon', $styles);
         $this->assertStringContainsString('.checkout-spa-theme--iris', $styles);

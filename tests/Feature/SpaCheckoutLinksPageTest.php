@@ -11,6 +11,7 @@ class SpaCheckoutLinksPageTest extends TestCase
         $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
 
         $this->assertIsString($componentSource);
+        $this->assertStringContainsString("theme: 'essential'", $componentSource);
         $this->assertStringContainsString("value: 'horizon'", $componentSource);
         $this->assertStringContainsString("name: 'Horizonte'", $componentSource);
         $this->assertStringContainsString("value: 'iris'", $componentSource);
