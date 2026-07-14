@@ -326,6 +326,10 @@ function resolveInitialStep(config, defaultPaymentMethod) {
     const currentStep = String(config.currentStep || config.checkoutSession?.current_step || 'identification');
 
     if (currentStep === 'delivery') {
+        if (config.checkoutLink?.visual_config?.theme === 'essential') {
+            return 'identification';
+        }
+
         return config.checkoutLink?.request_address ? 'delivery' : (defaultPaymentMethod ? 'payment-details' : 'payment-method');
     }
 
@@ -465,20 +469,20 @@ function isValidCnpj(value) {
     return digits[13] === secondDigit;
 }
 
-function validateIdentificationDocument(form, personType) {
+function validateIdentificationDocument(form, personType, updateFieldErrors) {
     const documentField = form?.querySelector('[name="customer_document"]');
     const documentValue = documentField instanceof HTMLInputElement ? documentField.value : '';
 
     if (personType === 'pj') {
         if (!isValidCnpj(documentValue)) {
-            setFieldErrors({
+            updateFieldErrors({
                 customer_document: ['Digite um CNPJ válido.'],
             });
 
             return false;
         }
 
-        setFieldErrors({
+        updateFieldErrors({
             customer_document: [],
         });
 
@@ -486,33 +490,33 @@ function validateIdentificationDocument(form, personType) {
     }
 
     if (!isValidCpf(documentValue)) {
-        setFieldErrors({
+        updateFieldErrors({
             customer_document: ['Digite um CPF válido.'],
         });
 
         return false;
     }
 
-    setFieldErrors({
+    updateFieldErrors({
         customer_document: [],
     });
 
     return true;
 }
 
-function validateResponsibleDocument(form) {
+function validateResponsibleDocument(form, updateFieldErrors) {
     const documentField = form?.querySelector('[name="customer_responsible_document"]');
     const documentValue = documentField instanceof HTMLInputElement ? documentField.value : '';
 
     if (!isValidCpf(documentValue)) {
-        setFieldErrors({
+        updateFieldErrors({
             customer_responsible_document: ['Digite um CPF válido para o responsável.'],
         });
 
         return false;
     }
 
-    setFieldErrors({
+    updateFieldErrors({
         customer_responsible_document: [],
     });
 
@@ -796,6 +800,7 @@ function CheckoutSpaApp() {
     const checkoutTheme = ['essential', 'noir', 'horizon', 'iris', 'atlantic'].includes(visualConfig.theme)
         ? visualConfig.theme
         : 'essential';
+    const isEssentialTheme = checkoutTheme === 'essential';
     const summaryPricing = paymentTransaction
         ? {
             quantity: normalizeQuantity(session.quantity || quantity),
@@ -1011,7 +1016,7 @@ function CheckoutSpaApp() {
                 return;
             }
 
-            if (!validateIdentificationDocument(form, personType)) {
+            if (!validateIdentificationDocument(form, personType, setFieldErrors)) {
                 setFeedback({
                     type: 'error',
                     message: personType === 'pj'
@@ -1021,7 +1026,7 @@ function CheckoutSpaApp() {
                 return;
             }
 
-            if (personType === 'pj' && !validateResponsibleDocument(form)) {
+            if (personType === 'pj' && !validateResponsibleDocument(form, setFieldErrors)) {
                 setFeedback({
                     type: 'error',
                     message: 'Confira o CPF do responsável antes de continuar.',
@@ -1044,7 +1049,24 @@ function CheckoutSpaApp() {
                 message: response.message || 'Identificação salva com sucesso.',
             });
 
-            if (showDeliveryStep) {
+            if (showDeliveryStep && isEssentialTheme) {
+                const deliveryPayload = new FormData(form);
+
+                if (!deliveryPayload.get('recipient_name')) {
+                    deliveryPayload.set('recipient_name', deliveryPayload.get('customer_name') || '');
+                }
+
+                const deliveryResponse = await requestJson(config.urls.delivery, {
+                    method: 'POST',
+                    body: deliveryPayload,
+                });
+
+                setSession(deliveryResponse.checkout_session || response.checkout_session || session);
+                setFeedback({
+                    type: 'success',
+                    message: deliveryResponse.message || 'Dados salvos com sucesso.',
+                });
+            } else if (showDeliveryStep) {
                 setStep('delivery');
                 return;
             }
@@ -1136,6 +1158,7 @@ function CheckoutSpaApp() {
                 type: 'success',
                 message: response.message || 'Método de pagamento selecionado.',
             });
+            setStep('payment-details');
         } catch (error) {
             setFieldErrors(mapErrors(error.payload?.errors || {}));
             setFeedback({
@@ -1153,23 +1176,7 @@ function CheckoutSpaApp() {
             return;
         }
 
-        setStep(showDeliveryStep ? 'delivery' : 'identification');
-    }
-
-    function handleContinueToPaymentDetails() {
-        if (busyAction === 'payment-method') {
-            return;
-        }
-
-        if (!selectedPaymentMethod && !defaultPaymentMethod && allowedMethods.length > 1) {
-            setFeedback({
-                type: 'error',
-                message: 'Selecione uma forma de pagamento para continuar.',
-            });
-            return;
-        }
-
-        setStep('payment-details');
+        setStep(isEssentialTheme ? 'identification' : (showDeliveryStep ? 'delivery' : 'identification'));
     }
 
     async function handlePaymentSubmit(event) {
@@ -1515,6 +1522,85 @@ function CheckoutSpaApp() {
         void syncDeliveryAddressByZipcode(form, target.value);
     }
 
+    function renderDeliveryFields() {
+        return (
+            <div className="checkout-spa-field-grid checkout-spa-delivery-fields is-two-columns">
+                <label className="checkout-spa-field checkout-spa-field--zipcode">
+                    <span className="checkout-spa-label">CEP</span>
+                    <input
+                        className="checkout-spa-input"
+                        name="zipcode"
+                        defaultValue={session.zipcode || ''}
+                        maxLength={9}
+                        placeholder="00000-000"
+                        inputMode="numeric"
+                        onInput={(event) => {
+                            handleDocumentMask(event);
+                            handleZipcodeLookup(event);
+                        }}
+                        onBlur={handleZipcodeBlur}
+                    />
+                    {zipcodeLookupState === 'loading' ? (
+                        <p className="checkout-spa-field-note" aria-live="polite">
+                            Consultando CEP...
+                        </p>
+                    ) : null}
+                    <p className="checkout-spa-error">{fieldErrors.zipcode || ''}</p>
+                </label>
+
+                <label className="checkout-spa-field checkout-spa-field--street">
+                    <span className="checkout-spa-label">Endereço</span>
+                    <input
+                        className="checkout-spa-input"
+                        name="street"
+                        defaultValue={session.street || ''}
+                        placeholder="Rua, avenida, travessa..."
+                    />
+                    <p className="checkout-spa-error">{fieldErrors.street || ''}</p>
+                </label>
+
+                <label className="checkout-spa-field checkout-spa-field--number">
+                    <span className="checkout-spa-label">Número</span>
+                    <input className="checkout-spa-input" name="number" defaultValue={session.number || ''} placeholder="Número" />
+                    <p className="checkout-spa-error">{fieldErrors.number || ''}</p>
+                </label>
+
+                <label className="checkout-spa-field checkout-spa-field--complement">
+                    <span className="checkout-spa-label">Complemento</span>
+                    <input className="checkout-spa-input" name="complement" defaultValue={session.complement || ''} placeholder="Complemento" />
+                    <p className="checkout-spa-error">{fieldErrors.complement || ''}</p>
+                </label>
+
+                <label className="checkout-spa-field checkout-spa-field--neighborhood">
+                    <span className="checkout-spa-label">Bairro</span>
+                    <input className="checkout-spa-input" name="neighborhood" defaultValue={session.neighborhood || ''} placeholder="Bairro" />
+                    <p className="checkout-spa-error">{fieldErrors.neighborhood || ''}</p>
+                </label>
+
+                <label className="checkout-spa-field checkout-spa-field--city">
+                    <span className="checkout-spa-label">Cidade</span>
+                    <input className="checkout-spa-input" name="city" defaultValue={session.city || ''} placeholder="Cidade" />
+                    <p className="checkout-spa-error">{fieldErrors.city || ''}</p>
+                </label>
+
+                <label className="checkout-spa-field checkout-spa-field--state">
+                    <span className="checkout-spa-label">Estado</span>
+                    <input
+                        className="checkout-spa-input"
+                        name="state"
+                        defaultValue={session.state || ''}
+                        maxLength={2}
+                        placeholder="Estado"
+                        onInput={handleDocumentMask}
+                    />
+                    <p className="checkout-spa-error">{fieldErrors.state || ''}</p>
+                </label>
+
+                <input type="hidden" name="recipient_name" defaultValue={session.recipient_name || session.customer_name || ''} />
+            </div>
+        );
+    }
+
     function renderIdentificationStep() {
         const personIsCompany = personType === 'pj';
 
@@ -1525,8 +1611,11 @@ function CheckoutSpaApp() {
                     style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 0 }}
                 >
                     <div>
-                        <h2 className="checkout-spa-section-title">Identificação</h2>
+                        <h2 className="checkout-spa-section-title">
+                            {isEssentialTheme ? (personIsCompany ? 'Dados da empresa' : 'Dados pessoais') : 'Identificação'}
+                        </h2>
                     </div>
+                    {!isEssentialTheme ? (
                     <div className="checkout-spa-toggle-group" role="tablist" aria-label="Tipo de pessoa">
                         <button
                             type="button"
@@ -1543,13 +1632,14 @@ function CheckoutSpaApp() {
                             Pessoa jurídica
                         </button>
                     </div>
+                    ) : null}
                 </div>
 
                 <form className="checkout-spa-form" onSubmit={handleIdentificationSubmit}>
                     <input type="hidden" name="customer_document_type" value={personIsCompany ? 'cnpj' : 'cpf'} />
 
                     {personIsCompany ? (
-                        <div className="checkout-spa-field-grid is-two-columns">
+                        <div className="checkout-spa-field-grid checkout-spa-identification-fields checkout-spa-identification-fields--pj is-two-columns">
                             <label className="checkout-spa-field">
                                 <span className="checkout-spa-label">CNPJ</span>
                                 <input
@@ -1620,6 +1710,8 @@ function CheckoutSpaApp() {
                                     type="date"
                                     name="customer_responsible_birth_date"
                                     defaultValue={session.customer_responsible_birth_date || ''}
+                                    placeholder="Nascimento do responsável"
+                                    required
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_responsible_birth_date || ''}</p>
                             </label>
@@ -1639,7 +1731,7 @@ function CheckoutSpaApp() {
                             </label>
                         </div>
                     ) : (
-                        <div className="checkout-spa-field-grid is-two-columns">
+                        <div className="checkout-spa-field-grid checkout-spa-identification-fields checkout-spa-identification-fields--pf is-two-columns">
                             <label className="checkout-spa-field is-full">
                                 <span className="checkout-spa-label">Nome completo</span>
                                 <input
@@ -1684,6 +1776,8 @@ function CheckoutSpaApp() {
                                     type="date"
                                     name="customer_birth_date"
                                     defaultValue={session.customer_birth_date || ''}
+                                    placeholder="Data de nascimento"
+                                    required
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_birth_date || ''}</p>
                             </label>
@@ -1704,9 +1798,28 @@ function CheckoutSpaApp() {
                         </div>
                     )}
 
+                    {isEssentialTheme ? (
+                        <button
+                            type="button"
+                            className="checkout-spa-essential-person-toggle"
+                            onClick={() => setPersonType(personIsCompany ? 'pf' : 'pj')}
+                        >
+                            {personIsCompany ? 'Usar dados de pessoa física' : 'Incluir dados de pessoa jurídica'}
+                        </button>
+                    ) : null}
+
+                    {isEssentialTheme && showDeliveryStep ? (
+                        <section className="checkout-spa-essential-delivery-section">
+                            <h2 className="checkout-spa-section-title">Local de entrega</h2>
+                            {renderDeliveryFields()}
+                        </section>
+                    ) : null}
+
                     <div className="checkout-spa-actions">
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'identification'}>
-                            {busyAction === 'identification' ? 'Salvando...' : (showDeliveryStep ? 'Continuar para endereço' : 'Continuar para pagamento')}
+                            {busyAction === 'identification'
+                                ? 'Salvando...'
+                                : (isEssentialTheme ? 'Continuar' : (showDeliveryStep ? 'Continuar para endereço' : 'Continuar para pagamento'))}
                         </button>
                     </div>
                 </form>
@@ -1865,22 +1978,13 @@ function CheckoutSpaApp() {
                     ))}
                 </div>
 
-                <div className="checkout-spa-actions checkout-spa-actions--split">
+                <div className="checkout-spa-actions">
                     <button
                         className="checkout-spa-button is-secondary"
                         type="button"
                         onClick={handleGoToPreviousPaymentStep}
                     >
                         {showDeliveryStep ? 'Voltar para endereço' : 'Voltar'}
-                    </button>
-
-                    <button
-                        className="checkout-spa-button is-primary"
-                        type="button"
-                        onClick={handleContinueToPaymentDetails}
-                        disabled={busyAction === 'payment-method' || (!selectedPaymentMethod && !defaultPaymentMethod && allowedMethods.length > 1)}
-                    >
-                        Continuar para pagamento
                     </button>
                 </div>
             </section>
@@ -1984,7 +2088,6 @@ function CheckoutSpaApp() {
 
                 {pixMethod || boletoMethod ? (
                     <div className="checkout-spa-step-card checkout-spa-step-card--payment-note">
-                        <h3>{pixMethod ? 'Pix' : 'Boleto'}</h3>
                         <p>
                             {pixMethod
                                     ? 'O pagamento será processado com QR Code e copia e cola.'
@@ -2174,17 +2277,17 @@ function CheckoutSpaApp() {
                     <nav className="checkout-spa-stepper" aria-label="Etapas do checkout">
                         <span className={`checkout-spa-step ${step === 'identification' ? 'is-active' : ''}`}>
                             <span className="checkout-spa-step-number">1</span>
-                            Identificação
+                            {isEssentialTheme ? '1. Seus dados' : 'Identificação'}
                         </span>
                         {showDeliveryStep ? (
                             <span className={`checkout-spa-step ${step === 'delivery' ? 'is-active' : ''}`}>
                                 <span className="checkout-spa-step-number">2</span>
-                                Entrega
+                                {isEssentialTheme ? '2. Sua entrega' : 'Entrega'}
                             </span>
                         ) : null}
                         <span className={`checkout-spa-step ${showPaymentStep ? 'is-active' : ''}`}>
                             <span className="checkout-spa-step-number">{showDeliveryStep ? 3 : 2}</span>
-                            Pagamento
+                            {isEssentialTheme ? `${showDeliveryStep ? 3 : 2}. Seu pagamento` : 'Pagamento'}
                         </span>
                     </nav>
                 </header>
@@ -2202,6 +2305,46 @@ function CheckoutSpaApp() {
 
                     <div className="checkout-spa-sidebar">
                         <aside className="checkout-spa-summary" aria-label="Resumo do pedido">
+                            {isEssentialTheme ? (
+                                <div className="checkout-spa-essential-summary">
+                                    <h2>Itens ({quantity})</h2>
+
+                                    <div className="checkout-spa-essential-item">
+                                        {checkoutLink.product_image_url ? (
+                                            <div className="checkout-spa-essential-item-image" aria-hidden="true">
+                                                <img src={checkoutLink.product_image_url} alt="" />
+                                            </div>
+                                        ) : null}
+                                        <div className="checkout-spa-essential-item-copy">
+                                            <strong>{checkoutLink.product?.name || 'Produto'}</strong>
+                                            <span>Quantidade: {String(quantity).padStart(2, '0')}</span>
+                                        </div>
+                                        <strong className="checkout-spa-essential-item-price">{formatCurrency(summaryPricing.subtotal)}</strong>
+                                    </div>
+
+                                    <div className="checkout-spa-essential-totals">
+                                        <div>
+                                            <span>Produtos</span>
+                                            <strong>{formatCurrency(summaryPricing.subtotal)}</strong>
+                                        </div>
+                                        <div>
+                                            <span>Frete</span>
+                                            <strong>{summaryPricing.shipping_total > 0 ? formatCurrency(summaryPricing.shipping_total) : (checkoutLink.free_shipping ? 'Grátis' : 'A calcular')}</strong>
+                                        </div>
+                                        {summaryPricing.discount_total > 0 ? (
+                                            <div>
+                                                <span>Desconto</span>
+                                                <strong>- {formatCurrency(summaryPricing.discount_total)}</strong>
+                                            </div>
+                                        ) : null}
+                                        <div className="checkout-spa-essential-total">
+                                            <span>Total a pagar</span>
+                                            <strong>{formatCurrency(summaryPricing.total)}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : null}
+
                             <div className="checkout-spa-summary-head">
                                 <div>
                                     <p className="checkout-spa-summary-kicker">Resumo do pedido</p>

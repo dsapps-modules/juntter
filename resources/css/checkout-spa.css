@@ -794,45 +794,62 @@
     }
 }
 
-/* Tema Essencial: checkout plano, direto e com alta densidade de informação. */
+/* Tema Essencial: composição própria, inspirada em checkouts editoriais compactos. */
 .checkout-spa-theme--essential {
-    background: #f6f7f9;
+    min-height: 100vh;
+    color: #050505;
+    background: linear-gradient(to right, #ffffff 0 56%, #f7f8fa 56% 100%);
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .checkout-spa-theme--essential .checkout-spa-shell {
-    max-width: 1640px;
-    padding: 20px 40px 48px;
+    max-width: none;
+    padding: 0;
 }
 
 .checkout-spa-theme--essential .checkout-spa-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    width: 56%;
+    box-sizing: border-box;
     align-items: center;
-    margin-bottom: 0;
-    padding: 16px 0;
-    border-bottom-color: #d5d8de;
-    background: transparent;
+    gap: 25px;
+    margin: 0;
+    padding: 20px clamp(44px, 4.5vw, 76px) 0;
+    border: 0;
+    background: #ffffff;
     backdrop-filter: none;
 }
 
+.checkout-spa-theme--essential .checkout-spa-brand {
+    display: flex;
+    align-items: center;
+}
+
 .checkout-spa-theme--essential .checkout-spa-brand-logo {
-    width: 104px;
+    width: clamp(88px, 7vw, 112px);
+    max-width: 112px;
+    max-height: 44px;
+    object-position: left center;
 }
 
 .checkout-spa-theme--essential .checkout-spa-stepper {
-    flex: 1;
-    justify-content: flex-start;
-    max-width: 860px;
-    margin-left: auto;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     gap: 0;
 }
 
 .checkout-spa-theme--essential .checkout-spa-step {
-    flex: 1;
+    flex: 1 1 0;
     justify-content: center;
-    padding: 12px 10px 18px;
-    color: #8a91a2;
-    border-bottom-color: transparent;
-    font-size: 12px;
+    padding: 12px 8px 20px;
+    color: #9ca3b5;
+    border-bottom: 1px solid #d1d5dc;
+    font-size: 14px;
+    font-weight: 400;
     letter-spacing: 0;
+    text-transform: uppercase;
 }
 
 .checkout-spa-theme--essential .checkout-spa-step-number {
@@ -840,113 +857,373 @@
 }
 
 .checkout-spa-theme--essential .checkout-spa-step.is-active {
-    color: #111111;
-    border-bottom: 3px solid #111111;
+    color: #050505;
+    border-bottom: 3px solid #050505;
+    font-weight: 700;
+}
+
+.checkout-spa-theme--essential .checkout-spa-feedback {
+    width: calc(56% - clamp(88px, 9vw, 152px));
+    margin: 16px clamp(44px, 4.5vw, 76px) 0;
+    box-sizing: border-box;
 }
 
 .checkout-spa-theme--essential .checkout-spa-grid {
-    grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.9fr);
-    gap: 48px;
-    padding-top: 24px;
+    grid-template-columns: minmax(0, 56%) minmax(0, 44%);
+    gap: 0;
+    align-items: stretch;
 }
 
-.checkout-spa-theme--essential .checkout-spa-panel,
-.checkout-spa-theme--essential .checkout-spa-summary {
-    padding: 6px 0 24px;
+.checkout-spa-theme--essential .checkout-spa-panel {
+    min-width: 0;
+    padding: 24px clamp(44px, 4.5vw, 76px) 28px;
     border: 0;
     border-radius: 0;
+    background: #ffffff;
+    box-shadow: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-sidebar {
+    min-width: 0;
+    min-height: 100vh;
+    margin-top: -130px;
+    padding: 25px clamp(34px, 4vw, 68px);
+    box-sizing: border-box;
+    background: #f7f8fa;
+}
+
+.checkout-spa-theme--essential .checkout-spa-summary {
+    position: relative;
+    top: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    color: #050505;
     background: transparent;
     box-shadow: none;
 }
 
-.checkout-spa-theme--essential .checkout-spa-summary {
-    top: 20px;
-}
-
-.checkout-spa-theme--essential .checkout-spa-section-title,
-.checkout-spa-theme--essential .checkout-spa-summary-title,
-.checkout-spa-theme--essential .checkout-spa-step-card h3 {
-    color: #080808;
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-}
-
-.checkout-spa-theme--essential .checkout-spa-section-title {
-    font-size: clamp(1.5rem, 2vw, 2rem);
-}
-
-.checkout-spa-theme--essential .checkout-spa-summary-kicker {
+.checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-head,
+.checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-stack,
+.checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-footer,
+.checkout-spa-theme--essential .checkout-spa-payment-strip {
     display: none;
 }
 
-.checkout-spa-theme--essential .checkout-spa-summary-title {
-    font-size: 1.5rem;
+.checkout-spa-theme--essential .checkout-spa-step-card,
+.checkout-spa-theme--essential .checkout-spa-step-card--intro {
+    padding: 0;
+    border: 0;
+    background: transparent;
 }
 
-.checkout-spa-theme--essential .checkout-spa-section-head,
-.checkout-spa-theme--essential .checkout-spa-summary-head,
-.checkout-spa-theme--essential .checkout-spa-step-card {
-    border-color: #d3d6dc;
+.checkout-spa-theme--essential .checkout-spa-section-head {
+    margin: 0 0 20px;
+    padding: 0;
+    border: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-section-title,
+.checkout-spa-theme--essential .checkout-spa-step-card h3 {
+    margin: 0;
+    color: #050505;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-section-text {
+    display: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-method-card {
+    border-color: #d6d8dc;
+    background: #f0f1f3;
+}
+
+.checkout-spa-theme--essential .checkout-spa-method-card:hover {
+    border-color: #b9bdc4;
+    background: #e9eaed;
+}
+
+.checkout-spa-theme--essential .checkout-spa-method-card.is-selected {
+    border-color: #8d929a;
+    background: #e1e3e7;
+}
+
+.checkout-spa-theme--essential .checkout-spa-form {
+    gap: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-field-grid {
+    gap: 9px 20px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-field {
+    position: relative;
+    display: block;
+    min-width: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-label {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: 14px;
+    max-width: calc(100% - 28px);
+    overflow: hidden;
+    color: #5e6572;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
+    text-transform: none;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translateY(-50%);
+    transition: top 0.16s ease, color 0.16s ease, font-size 0.16s ease, transform 0.16s ease;
+}
+
+.checkout-spa-theme--essential .checkout-spa-field:focus-within .checkout-spa-label,
+.checkout-spa-theme--essential .checkout-spa-field:has(.checkout-spa-input:not([type="date"]):not(:placeholder-shown)) .checkout-spa-label,
+.checkout-spa-theme--essential .checkout-spa-field:has(.checkout-spa-input[type="date"]:valid) .checkout-spa-label {
+    top: 8px;
+    color: #263144;
+    font-size: 11px;
+    font-weight: 700;
+    transform: none;
 }
 
 .checkout-spa-theme--essential .checkout-spa-input,
 .checkout-spa-theme--essential .checkout-spa-select,
 .checkout-spa-theme--essential .checkout-spa-textarea {
-    min-height: 42px;
-    padding: 9px 12px;
+    width: 100%;
+    height: 52px;
+    min-height: 52px;
+    padding: 20px 14px 5px;
+    box-sizing: border-box;
     border: 0;
     border-radius: 5px;
-    background: #eceef1;
+    color: #050505;
+    background: #f0f1f3;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    line-height: 1.2;
     box-shadow: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-input::placeholder,
+.checkout-spa-theme--essential .checkout-spa-textarea::placeholder {
+    color: transparent;
+}
+
+.checkout-spa-theme--essential .checkout-spa-input:autofill,
+.checkout-spa-theme--essential .checkout-spa-input:-webkit-autofill,
+.checkout-spa-theme--essential .checkout-spa-input:-webkit-autofill:hover,
+.checkout-spa-theme--essential .checkout-spa-input:-webkit-autofill:focus,
+.checkout-spa-theme--essential .checkout-spa-input:-webkit-autofill:active {
+    color: #050505;
+    background-color: #f0f1f3;
+    caret-color: #050505;
+    box-shadow: 0 0 0 1000px #f0f1f3 inset;
+    -webkit-box-shadow: 0 0 0 1000px #f0f1f3 inset;
+    -webkit-text-fill-color: #050505;
 }
 
 .checkout-spa-theme--essential .checkout-spa-input:focus,
 .checkout-spa-theme--essential .checkout-spa-select:focus,
 .checkout-spa-theme--essential .checkout-spa-textarea:focus {
-    outline: 2px solid #111111;
+    outline: 2px solid #050505;
     outline-offset: -2px;
 }
 
-.checkout-spa-theme--essential .checkout-spa-label {
-    color: #303642;
-    font-size: 12px;
-    font-weight: 600;
+.checkout-spa-theme--essential .checkout-spa-input[type="date"]:not(:focus):invalid {
+    color: transparent;
 }
 
-.checkout-spa-theme--essential .checkout-spa-step-card--intro .checkout-spa-field-grid.is-two-columns {
-    column-gap: 28px;
+.checkout-spa-theme--essential .checkout-spa-input[type="date"]:not(:focus):invalid::-webkit-calendar-picker-indicator {
+    opacity: 0;
 }
 
-.checkout-spa-theme--essential .checkout-spa-quantity-input {
-    box-sizing: border-box;
-    width: 64px;
-    height: 36px;
-    min-height: 36px;
-    padding: 4px 0;
+.checkout-spa-theme--essential .checkout-spa-error,
+.checkout-spa-theme--essential .checkout-spa-field-note {
+    margin: 4px 2px 0;
+    min-height: 0;
+    font-size: 11px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-error:empty {
+    display: none;
+}
+
+.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_email"]) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+}
+
+.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_phone"]) {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]) {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_document"]) {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_birth_date"]) {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-person-toggle {
+    width: fit-content;
+    margin: 13px 0 0;
+    padding: 0;
+    border: 0;
+    border-bottom: 1px solid #596273;
+    color: #596273;
+    background: transparent;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-delivery-section {
+    margin-top: 24px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-delivery-section > .checkout-spa-section-title {
+    margin-bottom: 14px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-delivery-fields {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.checkout-spa-theme--essential .checkout-spa-field--zipcode,
+.checkout-spa-theme--essential .checkout-spa-field--street,
+.checkout-spa-theme--essential .checkout-spa-field--city,
+.checkout-spa-theme--essential .checkout-spa-field--state {
+    grid-column: span 3;
+}
+
+.checkout-spa-theme--essential .checkout-spa-field--number,
+.checkout-spa-theme--essential .checkout-spa-field--complement,
+.checkout-spa-theme--essential .checkout-spa-field--neighborhood {
+    grid-column: span 2;
+}
+
+.checkout-spa-theme--essential .checkout-spa-actions {
+    justify-content: center;
+    margin-top: clamp(48px, 10vh, 110px);
 }
 
 .checkout-spa-theme--essential .checkout-spa-button {
+    min-width: 310px;
     min-height: 50px;
-    border-radius: 5px;
+    padding: 12px 20px;
+    border-radius: 4px;
+    font-size: 18px;
     font-weight: 700;
-    text-transform: none;
     letter-spacing: 0;
+    text-transform: none;
 }
 
 .checkout-spa-theme--essential .checkout-spa-button.is-primary {
-    border-color: var(--checkout-spa-button, #000000);
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+    color: #ffffff;
+    border-color: #000000;
+    background: #000000;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.24);
 }
 
-.checkout-spa-theme--essential .checkout-spa-toggle-button,
-.checkout-spa-theme--essential .checkout-spa-method-card,
-.checkout-spa-theme--essential .checkout-spa-quantity-button {
+.checkout-spa-theme--essential .checkout-spa-essential-summary h2 {
+    margin: 0 0 24px;
+    font-size: 22px;
+    line-height: 1.2;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr) auto;
+    gap: 24px;
+    align-items: start;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #d0d4da;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-image {
+    width: 70px;
+    height: 70px;
+    overflow: hidden;
+    border: 1px solid #cbd0d7;
     border-radius: 5px;
+    background: #ffffff;
 }
 
-.checkout-spa-theme--essential .checkout-spa-payment-strip {
-    display: none;
+.checkout-spa-theme--essential .checkout-spa-essential-item-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-copy {
+    display: grid;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-copy strong,
+.checkout-spa-theme--essential .checkout-spa-essential-item-price {
+    color: #050505;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-copy span {
+    color: #667085;
+    font-size: 16px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-price {
+    padding-top: 4px;
+    white-space: nowrap;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-totals {
+    display: grid;
+    gap: 12px;
+    padding-top: 24px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-totals > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    color: #667085;
+    font-size: 16px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-totals strong {
+    color: #050505;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-totals .checkout-spa-essential-total {
+    margin-top: 22px;
+    padding-top: 28px;
+    border-top: 1px solid #d0d4da;
+    color: #050505;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 /* Tema Noir Premium: alto contraste, superfícies profundas e acabamento champagne. */
@@ -1568,5 +1845,122 @@
 
     .checkout-spa-payment-strip-grid {
         gap: 12px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .checkout-spa-theme--essential {
+        background: #ffffff;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-header {
+        width: 100%;
+        padding: 24px 28px 0;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-feedback {
+        width: auto;
+        margin: 16px 28px 0;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-panel {
+        order: 1;
+        padding: 24px 28px 48px;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-sidebar {
+        display: grid;
+        order: 0;
+        min-height: auto;
+        margin: 0;
+        padding: 30px 28px 44px;
+        background: #f7f8fa;
+    }
+}
+
+@media (max-width: 640px) {
+    .checkout-spa-theme--essential .checkout-spa-feedback.is-success {
+        display: none;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-header {
+        gap: 16px;
+        padding-inline: 18px;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-brand-logo {
+        width: 92px;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-step {
+        padding-inline: 4px;
+        font-size: 10px;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-panel,
+    .checkout-spa-theme--essential .checkout-spa-sidebar {
+        width: 100%;
+        min-width: 0;
+        padding-inline: 18px;
+        box-sizing: border-box;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields,
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields {
+        width: 100%;
+        min-width: 0;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields > .checkout-spa-field,
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field {
+        width: 100%;
+        min-width: 0;
+        grid-column: 1 / -1;
+        grid-row: auto;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has(.checkout-spa-input) {
+        grid-column: 1 / -1;
+        grid-row: auto;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-input,
+    .checkout-spa-theme--essential .checkout-spa-select,
+    .checkout-spa-theme--essential .checkout-spa-textarea {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-button {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-essential-item {
+        grid-template-columns: 56px minmax(0, 1fr);
+        gap: 14px;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-essential-item-image {
+        width: 56px;
+        height: 56px;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-essential-item-price {
+        grid-column: 2;
     }
 }
