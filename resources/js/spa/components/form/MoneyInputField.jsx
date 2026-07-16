@@ -1,22 +1,30 @@
 import { Input } from 'antd';
 import { useRef } from 'react';
 
-export function formatCurrencyInput(value) {
+function formatNumericInput(value, prefix) {
     if (value === null || value === undefined || value === '') {
-        return 'R$ 0,00';
+        return `${prefix}0,00`;
     }
 
     const digits = String(value).replace(/\D/g, '');
 
     if (digits === '') {
-        return 'R$ 0,00';
+        return `${prefix}0,00`;
     }
 
     const numericValue = Number(digits) / 100;
     const [integerPart, decimalPart] = numericValue.toFixed(2).split('.');
     const formattedInteger = Number(integerPart).toLocaleString('pt-BR');
 
-    return `R$ ${formattedInteger},${decimalPart}`;
+    return `${prefix}${formattedInteger},${decimalPart}`;
+}
+
+export function formatCurrencyInput(value) {
+    return formatNumericInput(value, 'R$ ');
+}
+
+export function formatPercentageInput(value) {
+    return formatNumericInput(value, '');
 }
 
 export function parseCurrencyInput(value) {
@@ -37,8 +45,8 @@ function extractDigits(value) {
     return String(value ?? '').replace(/\D/g, '');
 }
 
-function getNextFormattedValue(currentValue, nextDigits) {
-    return formatCurrencyInput(nextDigits || currentValue);
+function getNextFormattedValue(currentValue, nextDigits, formatter) {
+    return formatter(nextDigits || currentValue);
 }
 
 export default function MoneyInputField({
@@ -51,12 +59,14 @@ export default function MoneyInputField({
     placeholder = 'R$ 0,00',
     ariaLabel = 'Valor monetário',
     className,
+    showCurrencySymbol = true,
     ...props
 }) {
     const inputRef = useRef(null);
+    const formatter = showCurrencySymbol ? formatCurrencyInput : formatPercentageInput;
 
     function emitValue(nextValue) {
-        onChange?.(formatCurrencyInput(nextValue));
+        onChange?.(formatter(nextValue));
     }
 
     function moveCaretToEnd(target) {
@@ -81,19 +91,19 @@ export default function MoneyInputField({
 
         if (event.key >= '0' && event.key <= '9') {
             event.preventDefault();
-            emitValue(getNextFormattedValue(value, extractDigits(value) + event.key));
+            emitValue(getNextFormattedValue(value, extractDigits(value) + event.key, formatter));
             return;
         }
 
         if (event.key === 'Backspace') {
             event.preventDefault();
-            emitValue(getNextFormattedValue(value, extractDigits(value).slice(0, -1)));
+            emitValue(getNextFormattedValue(value, extractDigits(value).slice(0, -1), formatter));
             return;
         }
 
         if (event.key === 'Delete') {
             event.preventDefault();
-            emitValue('R$ 0,00');
+            emitValue('0');
         }
     }
 
@@ -133,7 +143,7 @@ export default function MoneyInputField({
         <Input
             {...props}
             ref={inputRef}
-            value={formatCurrencyInput(value)}
+            value={formatter(value)}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}

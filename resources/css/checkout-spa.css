@@ -1926,20 +1926,86 @@
     .checkout-spa-theme--essential .checkout-spa-delivery-fields {
         width: 100%;
         min-width: 0;
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .checkout-spa-theme--essential .checkout-spa-identification-fields > .checkout-spa-field,
     .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field {
         width: 100%;
         min-width: 0;
+        grid-row: auto;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]),
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_email"]),
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_phone"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="zipcode"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="street"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="neighborhood"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="city"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="state"]) {
         grid-column: 1 / -1;
         grid-row: auto;
     }
 
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has(.checkout-spa-input) {
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]) {
+        order: 1;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_document"]) {
+        order: 2;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_birth_date"]) {
+        order: 3;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_email"]) {
+        order: 4;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_phone"]) {
+        order: 5;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field--number,
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field--complement {
+        grid-column: span 1;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="zipcode"]) {
+        order: 1;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="street"]) {
+        order: 2;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="number"]) {
+        order: 3;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="complement"]) {
+        order: 4;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="neighborhood"]) {
+        order: 5;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="city"]) {
+        order: 6;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="state"]) {
+        order: 7;
+    }
+
+    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="zipcode"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="street"]),
+    .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="neighborhood"]) {
         grid-column: 1 / -1;
-        grid-row: auto;
     }
 
     .checkout-spa-theme--essential .checkout-spa-input,

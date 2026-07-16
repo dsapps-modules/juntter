@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Radio } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
-import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
+import MoneyInputField, { formatCurrencyInput, formatPercentageInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
 
 const statusOptions = [
     { value: 'active', label: 'Ativo' },
@@ -15,6 +15,16 @@ const discountTypeOptions = [
     { value: 'fixed', label: 'Fixo' },
     { value: 'percentage', label: 'Percentual' },
 ];
+
+function formatDiscountInput(discountType, discountValue) {
+    if (discountType === 'none') {
+        return null;
+    }
+
+    return discountType === 'percentage'
+        ? formatPercentageInput(discountValue ?? 0)
+        : formatCurrencyInput(discountValue ?? 0);
+}
 
 const visualDefaults = {
     theme: 'essential',
@@ -113,6 +123,8 @@ export default function CheckoutLinkFormPage() {
     const [productImageFile, setProductImageFile] = useState(null);
     const isEditing = Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo');
     const selectedProductId = Form.useWatch('product_id', form);
+    const pixDiscountType = Form.useWatch('pix_discount_type', form) ?? 'none';
+    const boletoDiscountType = Form.useWatch('boleto_discount_type', form) ?? 'none';
     const selectedProduct = products.find((product) => product.id === selectedProductId);
 
     useEffect(() => {
@@ -161,6 +173,8 @@ export default function CheckoutLinkFormPage() {
                         ...checkoutLink,
                         request_address: checkoutLink.request_address ?? true,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
+                        pix_discount_value: formatDiscountInput(checkoutLink.pix_discount_type, checkoutLink.pix_discount_value),
+                        boleto_discount_value: formatDiscountInput(checkoutLink.boleto_discount_type, checkoutLink.boleto_discount_value),
                         theme: visualConfig.theme ?? visualDefaults.theme,
                         store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name,
                         primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
@@ -179,7 +193,9 @@ export default function CheckoutLinkFormPage() {
                         allow_credit_card: true,
                         request_address: true,
                         pix_discount_type: 'none',
+                        pix_discount_value: null,
                         boleto_discount_type: 'none',
+                        boleto_discount_value: null,
                         free_shipping: true,
                         unit_price: formatCurrencyInput(0),
                         theme: visualDefaults.theme,
@@ -245,6 +261,12 @@ export default function CheckoutLinkFormPage() {
             Object.entries({
                 ...restValues,
                 unit_price: parseCurrencyInput(restValues.unit_price),
+                pix_discount_value: restValues.pix_discount_type === 'none'
+                    ? 0
+                    : parseCurrencyInput(restValues.pix_discount_value),
+                boleto_discount_value: restValues.boleto_discount_type === 'none'
+                    ? 0
+                    : parseCurrencyInput(restValues.boleto_discount_value),
                 visual_config: JSON.stringify({
                     theme: theme || visualDefaults.theme,
                     store_name,
@@ -352,6 +374,14 @@ export default function CheckoutLinkFormPage() {
         form.setFieldsValue(selectedTheme.colors);
     }
 
+    function handleDiscountTypeChange(discountValueField) {
+        return (discountType) => {
+            if (discountType === 'none') {
+                form.setFieldValue(discountValueField, null);
+            }
+        };
+    }
+
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
@@ -443,12 +473,17 @@ export default function CheckoutLinkFormPage() {
                                 </Col>
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Desconto Pix" name="pix_discount_type">
-                                        <Select options={discountTypeOptions} />
+                                        <Select options={discountTypeOptions} onChange={handleDiscountTypeChange('pix_discount_value')} />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Valor do desconto Pix" name="pix_discount_value">
-                                        <InputNumber className="w-full" min={0} step={0.01} />
+                                        <MoneyInputField
+                                            ariaLabel="Valor do desconto Pix"
+                                            className="w-full"
+                                            disabled={pixDiscountType === 'none'}
+                                            showCurrencySymbol={pixDiscountType !== 'percentage'}
+                                        />
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -461,12 +496,17 @@ export default function CheckoutLinkFormPage() {
                                 </Col>
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Desconto Boleto" name="boleto_discount_type">
-                                        <Select options={discountTypeOptions} />
+                                        <Select options={discountTypeOptions} onChange={handleDiscountTypeChange('boleto_discount_value')} />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} md={8}>
                                     <Form.Item label="Valor do desconto Boleto" name="boleto_discount_value">
-                                        <InputNumber className="w-full" min={0} step={0.01} />
+                                        <MoneyInputField
+                                            ariaLabel="Valor do desconto Boleto"
+                                            className="w-full"
+                                            disabled={boletoDiscountType === 'none'}
+                                            showCurrencySymbol={boletoDiscountType !== 'percentage'}
+                                        />
                                     </Form.Item>
                                 </Col>
                             </Row>

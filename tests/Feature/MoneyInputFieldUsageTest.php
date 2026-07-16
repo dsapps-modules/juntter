@@ -35,7 +35,14 @@ class MoneyInputFieldUsageTest extends TestCase
             ],
             base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx') => [
                 'MoneyInputField className="w-full"',
-                'unit_price: parseCurrencyInput(values.unit_price)',
+                "handleDiscountTypeChange('pix_discount_value')",
+                "handleDiscountTypeChange('boleto_discount_value')",
+                "disabled={pixDiscountType === 'none'}",
+                "disabled={boletoDiscountType === 'none'}",
+                "showCurrencySymbol={pixDiscountType !== 'percentage'}",
+                "showCurrencySymbol={boletoDiscountType !== 'percentage'}",
+                "restValues.pix_discount_type === 'none'",
+                "restValues.boleto_discount_type === 'none'",
             ],
         ];
 
