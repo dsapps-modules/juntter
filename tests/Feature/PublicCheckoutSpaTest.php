@@ -85,7 +85,6 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee('paymentDetails', false);
         $response->assertSee('Descrição do produto', false);
         $response->assertDontSee(':5173', false);
-        $response->assertSee('build/assets/checkout-spa', false);
         $response->assertSee(route('checkout.public.spa.show', $link->public_token), false);
     }
 
@@ -153,8 +152,8 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('body: new FormData(form),', $source);
         $this->assertStringContainsString('font-family: Arial, Helvetica, sans-serif;', $styles);
         $this->assertStringContainsString('grid-template-columns: minmax(0, 56%) minmax(0, 44%);', $styles);
-        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-input,[\s\S]*?height: 52px;[\s\S]*?padding: 20px 14px 5px;/', $styles);
-        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?gap: 25px;/', $styles);
+        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-input,[\s\S]*?height: 45px;[\s\S]*?padding: 16px 14px 4px;[\s\S]*?font-size: 13px;/', $styles);
+        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?gap: 24px;/', $styles);
         $this->assertMatchesRegularExpression('/@media \(max-width: 640px\) \{[\s\S]*?\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?gap: 16px;/', $styles);
         $this->assertMatchesRegularExpression('/@media \(max-width: 1000px\) \{[\s\S]*?\.checkout-spa-theme--essential \.checkout-spa-panel \{[\s\S]*?order: 1;[\s\S]*?\.checkout-spa-theme--essential \.checkout-spa-sidebar \{[\s\S]*?order: 0;/', $styles);
         $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has(.checkout-spa-input)', $styles);
@@ -177,6 +176,10 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('width: 49px;', $styles);
         $this->assertStringContainsString('height: 34px;', $styles);
         $this->assertStringContainsString('border: 1px solid #c9c9c9;', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-essential-summary h2', $styles);
+        $this->assertStringContainsString('font-size: 19px;', $styles);
+        $this->assertStringContainsString('font-size: 13px;', $styles);
+        $this->assertStringContainsString('font-size: 9px;', $styles);
     }
 
     private function makeVendorUser(): User

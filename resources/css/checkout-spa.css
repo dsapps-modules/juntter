@@ -846,7 +846,7 @@
     padding: 12px 8px 20px;
     color: #9ca3b5;
     border-bottom: 1px solid #d1d5dc;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
     letter-spacing: 0;
     text-transform: uppercase;
@@ -958,7 +958,7 @@
 }
 
 .checkout-spa-theme--essential .checkout-spa-field-grid {
-    gap: 9px 20px;
+    gap: 7px 17px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-field {
@@ -975,7 +975,7 @@
     max-width: calc(100% - 28px);
     overflow: hidden;
     color: #5e6572;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 400;
     line-height: 1;
     letter-spacing: 0;
@@ -992,7 +992,7 @@
 .checkout-spa-theme--essential .checkout-spa-field:has(.checkout-spa-input[type="date"]:valid) .checkout-spa-label {
     top: 8px;
     color: #263144;
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 700;
     transform: none;
 }
@@ -1001,16 +1001,16 @@
 .checkout-spa-theme--essential .checkout-spa-select,
 .checkout-spa-theme--essential .checkout-spa-textarea {
     width: 100%;
-    height: 52px;
-    min-height: 52px;
-    padding: 20px 14px 5px;
+    height: 45px;
+    min-height: 45px;
+    padding: 16px 14px 4px;
     box-sizing: border-box;
     border: 0;
     border-radius: 5px;
     color: #050505;
     background: #f0f1f3;
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 16px;
+    font-size: 13px;
     line-height: 1.2;
     box-shadow: none;
 }
@@ -1052,7 +1052,7 @@
 .checkout-spa-theme--essential .checkout-spa-field-note {
     margin: 4px 2px 0;
     min-height: 0;
-    font-size: 11px;
+    font-size: 9px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-error:empty {
@@ -1093,7 +1093,7 @@
     color: #596273;
     background: transparent;
     font: inherit;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
 }
 
@@ -1133,10 +1133,10 @@
 
 .checkout-spa-theme--essential .checkout-spa-button {
     min-width: 310px;
-    min-height: 50px;
-    padding: 12px 20px;
+    min-height: 48px;
+    padding: 11px 19px;
     border-radius: 4px;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
     letter-spacing: 0;
     text-transform: none;
@@ -1150,17 +1150,17 @@
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-summary h2 {
-    margin: 0 0 24px;
-    font-size: 22px;
+    margin: 0 0 21px;
+    font-size: 19px;
     line-height: 1.2;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item {
     display: grid;
     grid-template-columns: 70px minmax(0, 1fr) auto;
-    gap: 24px;
+    gap: 19px;
     align-items: start;
-    padding-bottom: 28px;
+    padding-bottom: 23px;
     border-bottom: 1px solid #d0d4da;
 }
 
@@ -1182,20 +1182,20 @@
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy {
     display: grid;
-    gap: 8px;
+    gap: 6px;
     padding-top: 4px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy strong,
 .checkout-spa-theme--essential .checkout-spa-essential-item-price {
     color: #050505;
-    font-size: 16px;
+    font-size: 13px;
     line-height: 1.35;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy span {
     color: #667085;
-    font-size: 16px;
+    font-size: 13px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-price {
@@ -1205,8 +1205,8 @@
 
 .checkout-spa-theme--essential .checkout-spa-essential-totals {
     display: grid;
-    gap: 12px;
-    padding-top: 24px;
+    gap: 9px;
+    padding-top: 21px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-totals > div {
@@ -1214,7 +1214,7 @@
     justify-content: space-between;
     gap: 20px;
     color: #667085;
-    font-size: 16px;
+    font-size: 13px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-totals strong {
@@ -1222,11 +1222,11 @@
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-totals .checkout-spa-essential-total {
-    margin-top: 22px;
-    padding-top: 28px;
+    margin-top: 19px;
+    padding-top: 23px;
     border-top: 1px solid #d0d4da;
     color: #050505;
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
 }
 
@@ -1911,7 +1911,7 @@
 
     .checkout-spa-theme--essential .checkout-spa-step {
         padding-inline: 4px;
-        font-size: 10px;
+        font-size: 9px;
     }
 
     .checkout-spa-theme--essential .checkout-spa-panel,
