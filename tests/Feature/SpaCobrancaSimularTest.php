@@ -26,45 +26,31 @@ class SpaCobrancaSimularTest extends TestCase
     public function test_the_simular_page_contains_the_new_simulation_controls(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaSimularPage.jsx'));
-        $amountFieldSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/PaymentAmountField.jsx'));
         $planSelectorSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/PaymentPlanSelector.jsx'));
         $installmentSelectorSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/PaymentInstallmentSelector.jsx'));
 
-        $this->assertStringNotContainsString('Monte a simulação em tempo real', $pageSource);
-        $this->assertStringNotContainsString('Simular Transação', $pageSource);
-        $this->assertStringNotContainsString('Calculadora de taxas', $pageSource);
-        $this->assertStringNotContainsString('Breadcrumb', $pageSource);
-        $this->assertStringContainsString('Valor', $pageSource);
+        $this->assertStringContainsString("fetch('/api/spa/cobranca/planos'", $pageSource);
+        $this->assertStringContainsString("return String(flag.name ?? '').toUpperCase() !== 'BACEN';", $pageSource);
+        $this->assertStringContainsString("return 'Outros';", $pageSource);
+        $this->assertStringContainsString('Bandeira', $pageSource);
+        $this->assertStringContainsString('Plano contratado', $pageSource);
         $this->assertStringContainsString('Resultado da simulação', $pageSource);
         $this->assertStringContainsString('Valor de cada parcela', $pageSource);
-        $this->assertStringContainsString('label="Taxa"', $pageSource);
-        $this->assertStringContainsString('label="Parcela"', $pageSource);
-        $this->assertStringContainsString('label="Total"', $pageSource);
-        $this->assertStringContainsString('PaymentPlanSelector', $pageSource);
-        $this->assertStringContainsString('PaymentAmountField', $pageSource);
-        $this->assertStringContainsString('PaymentInstallmentSelector', $pageSource);
-        $this->assertStringContainsString('buildInstallmentBreakdown(totalAmount, installments)', $pageSource);
-        $this->assertStringNotContainsString('spa-metric-tile', $pageSource);
-        $this->assertStringNotContainsString('Parcela estimada', $pageSource);
-        $this->assertStringNotContainsString('Taxa aplicada', $pageSource);
-        $this->assertStringNotContainsString('Taxa estimada', $pageSource);
-        $this->assertStringNotContainsString('Total com taxa', $pageSource);
-        $this->assertStringNotContainsString('Valor da compra', $pageSource);
-        $this->assertStringNotContainsString('feeAmount', $pageSource);
-        $this->assertStringNotContainsString('A taxa exibida abaixo usa a combinação do plano selecionado com a quantidade de parcelas.', $pageSource);
-        $this->assertStringContainsString('Plano considerado', $planSelectorSource);
-        $this->assertStringContainsString('Valor', $amountFieldSource);
-        $this->assertStringContainsString("align = 'left'", $amountFieldSource);
-        $this->assertStringContainsString("justifyContent: 'space-between'", $amountFieldSource);
-        $this->assertStringContainsString('align="right"', $pageSource);
-        $this->assertStringContainsString("align = 'left'", $planSelectorSource);
-        $this->assertStringContainsString("justifyContent: 'space-between'", $planSelectorSource);
-        $this->assertStringContainsString('align="right"', $pageSource);
+        $this->assertStringContainsString('spa-sim-result-header', $pageSource);
+        $this->assertStringContainsString('spa-sim-result-metrics', $pageSource);
+        $this->assertStringContainsString('spa-sim-installment-grid', $pageSource);
+        $this->assertStringContainsString('buildInstallmentOptions(selectedFlag)', $pageSource);
+        $this->assertStringContainsString('selectedFlagLabel', $pageSource);
+        $this->assertStringContainsString('label="Bandeira"', $pageSource);
+        $this->assertStringContainsString('options={flagOptions}', $pageSource);
+        $this->assertStringContainsString('options={installmentOptions}', $pageSource);
+        $this->assertStringContainsString("label = 'Plano considerado'", $planSelectorSource);
+        $this->assertStringNotContainsString('Ativa', $planSelectorSource);
+        $this->assertStringContainsString('options = []', $planSelectorSource);
+        $this->assertStringContainsString('ariaLabel =', $planSelectorSource);
         $this->assertStringContainsString('Quantidade de parcelas', $installmentSelectorSource);
-        $this->assertStringContainsString("align = 'left'", $installmentSelectorSource);
-        $this->assertStringContainsString("justifyContent: 'space-between'", $installmentSelectorSource);
-        $this->assertStringContainsString("flex: isRightAligned ? '0 0 260px' : '1 1 auto'", $installmentSelectorSource);
-        $this->assertStringContainsString('align="right"', $pageSource);
+        $this->assertStringContainsString('options = installmentOptions', $installmentSelectorSource);
+        $this->assertStringContainsString('ariaLabel =', $installmentSelectorSource);
     }
 
     public function test_the_shared_payment_simulation_config_contains_the_expected_plan_ranges(): void

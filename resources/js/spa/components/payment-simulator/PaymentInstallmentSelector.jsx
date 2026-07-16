@@ -1,7 +1,14 @@
 import { Select, Typography } from 'antd';
 import { installmentOptions } from './paymentSimulationConfig';
 
-export default function PaymentInstallmentSelector({ value, onChange, align = 'left' }) {
+export default function PaymentInstallmentSelector({
+    value,
+    onChange,
+    align = 'left',
+    options = installmentOptions,
+    label = 'Quantidade de parcelas',
+    ariaLabel = 'Selecionar quantidade de parcelas',
+}) {
     const isRightAligned = align === 'right';
 
     return (
@@ -24,11 +31,11 @@ export default function PaymentInstallmentSelector({ value, onChange, align = 'l
                     whiteSpace: 'nowrap',
                 }}
             >
-                Quantidade de parcelas
+                {label}
             </Typography.Text>
             <Select
                 value={value}
-                options={installmentOptions}
+                options={options}
                 onChange={onChange}
                 className="spa-sim-select"
                 style={{
@@ -36,7 +43,7 @@ export default function PaymentInstallmentSelector({ value, onChange, align = 'l
                     maxWidth: isRightAligned ? '260px' : '100%',
                     minWidth: '200px',
                 }}
-                aria-label="Selecionar quantidade de parcelas"
+                aria-label={ariaLabel}
             />
         </div>
     );

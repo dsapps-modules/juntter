@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class CobrancaPlanoContratadoController extends Controller
@@ -30,6 +31,13 @@ class CobrancaPlanoContratadoController extends Controller
 
         $sellerName = trim((string) $user->name) !== '' ? $user->name : 'Vendedor';
         $estabelecimentoId = $user->getEstabelecimentoId();
+
+        Log::info('Requisição recebida em /api/spa/cobranca/planos', [
+            'user_id' => $user->id,
+            'plano_id' => $planoId,
+            'query' => $request->query(),
+            'estabelecimento_id' => $estabelecimentoId,
+        ]);
 
         if ($estabelecimentoId === null) {
             return response()->json([
@@ -66,6 +74,14 @@ class CobrancaPlanoContratadoController extends Controller
         $plans = collect(data_get($estabelecimento, 'plans', []));
         $selectedPlan = $this->resolveSelectedPlan($plans, $planoId);
         $plan = $this->resolvePlanDetails($selectedPlan, $planoId);
+
+        Log::info('Dados resolvidos em /api/spa/cobranca/planos', [
+            'user_id' => $user->id,
+            'estabelecimento_id' => (string) $estabelecimentoId,
+            'plans_count' => $plans->count(),
+            'selected_plan_id' => data_get($selectedPlan, 'id'),
+            'plan_id' => data_get($plan, 'id'),
+        ]);
 
         if ($plan === null) {
             return response()->json([

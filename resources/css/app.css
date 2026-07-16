@@ -358,6 +358,70 @@ a {
     backdrop-filter: blur(10px);
 }
 
+.spa-sim-result-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.spa-sim-result-title {
+    min-width: 0;
+    flex: 1 1 320px;
+}
+
+.spa-sim-result-tags {
+    justify-content: flex-end;
+    flex: 0 0 auto;
+}
+
+.spa-sim-result-tag {
+    margin-inline-end: 0;
+}
+
+.spa-sim-result-metrics,
+.spa-sim-installment-grid {
+    width: 100%;
+}
+
+.spa-sim-result-metric-card,
+.spa-sim-installment-card {
+    height: 100%;
+}
+
+.spa-sim-result-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.spa-sim-result-metric-label {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.spa-sim-result-metric-value,
+.spa-sim-installment-value {
+    margin: 0;
+    word-break: break-word;
+}
+
+.spa-sim-result-metric-hint {
+    font-size: 12px;
+}
+
+.spa-sim-installment-card .ant-card-body {
+    height: 100%;
+}
+
+.spa-sim-installment-tag {
+    width: fit-content;
+    margin-inline-end: 0;
+}
+
 .spa-toolbar-stack,
 .spa-detail-stack {
     width: 100%;

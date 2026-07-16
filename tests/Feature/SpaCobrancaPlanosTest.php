@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\EstabelecimentoService;
 use App\Services\TransacaoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 
 class SpaCobrancaPlanosTest extends TestCase
@@ -61,6 +62,8 @@ class SpaCobrancaPlanosTest extends TestCase
 
     public function test_the_plan_overview_api_returns_the_contracted_plan(): void
     {
+        Log::spy();
+
         $user = User::factory()->create([
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
@@ -117,10 +120,30 @@ class SpaCobrancaPlanosTest extends TestCase
             ->assertJsonPath('plan.allow_anticipation_label', 'Sim')
             ->assertJsonPath('actions.0.href', '/cobranca')
             ->assertJsonPath('actions.1.href', '/cobranca/planos/77');
+
+        Log::shouldHaveReceived('info')
+            ->withArgs(function ($message, $context) use ($user): bool {
+                return $message === 'Requisição recebida em /api/spa/cobranca/planos'
+                    && $context['user_id'] === $user->id
+                    && $context['plano_id'] === null
+                    && $context['estabelecimento_id'] === '5001';
+            })
+            ->once();
+
+        Log::shouldHaveReceived('info')
+            ->withArgs(function ($message, $context): bool {
+                return $message === 'Dados resolvidos em /api/spa/cobranca/planos'
+                    && $context['plans_count'] === 1
+                    && $context['selected_plan_id'] === 77
+                    && $context['plan_id'] === 77;
+            })
+            ->once();
     }
 
     public function test_the_plan_overview_api_returns_an_empty_state_when_the_user_has_no_establishment(): void
     {
+        Log::spy();
+
         $user = User::factory()->create([
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
@@ -133,5 +156,14 @@ class SpaCobrancaPlanosTest extends TestCase
             ->assertJsonPath('plan', null)
             ->assertJsonPath('establishment', null)
             ->assertJsonPath('actions.0.href', '/cobranca');
+
+        Log::shouldHaveReceived('info')
+            ->withArgs(function ($message, $context) use ($user): bool {
+                return $message === 'Requisição recebida em /api/spa/cobranca/planos'
+                    && $context['user_id'] === $user->id
+                    && $context['plano_id'] === null
+                    && $context['estabelecimento_id'] === null;
+            })
+            ->once();
     }
 }

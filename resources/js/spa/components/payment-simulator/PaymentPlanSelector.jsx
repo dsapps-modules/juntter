@@ -1,7 +1,13 @@
 import { Select, Typography } from 'antd';
-import { paymentPlans } from './paymentSimulationConfig';
 
-export default function PaymentPlanSelector({ value, onChange, align = 'left' }) {
+export default function PaymentPlanSelector({
+    value,
+    onChange,
+    align = 'left',
+    label = 'Plano considerado',
+    options = [],
+    ariaLabel = 'Selecionar opção da simulação',
+}) {
     const isRightAligned = align === 'right';
 
     return (
@@ -24,11 +30,11 @@ export default function PaymentPlanSelector({ value, onChange, align = 'left' })
                     whiteSpace: 'nowrap',
                 }}
             >
-                Plano considerado
+                {label}
             </Typography.Text>
             <Select
                 value={value}
-                options={paymentPlans}
+                options={options}
                 onChange={onChange}
                 className="spa-sim-select"
                 style={{
@@ -36,7 +42,7 @@ export default function PaymentPlanSelector({ value, onChange, align = 'left' })
                     maxWidth: isRightAligned ? '260px' : '100%',
                     minWidth: '200px',
                 }}
-                aria-label="Selecionar plano considerado na simulação"
+                aria-label={ariaLabel}
             />
         </div>
     );
