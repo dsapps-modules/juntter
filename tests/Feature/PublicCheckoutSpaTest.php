@@ -142,6 +142,7 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('checkout-spa-theme--${checkoutTheme}', $source);
         $this->assertStringContainsString(": 'essential';", $source);
         $this->assertStringContainsString('.checkout-spa-theme--essential', $styles);
+        $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-shell \{[\s\S]*?width: min\(100%, 1440px\);[\s\S]*?margin: 0 auto;[\s\S]*?padding: 0 clamp\(24px, 2\.6vw, 48px\);/', $styles);
         $this->assertStringContainsString('const isEssentialTheme = checkoutTheme === \'essential\';', $source);
         $this->assertStringContainsString('background: linear-gradient(to right, #ffffff 0 56%, #f7f8fa 56% 100%);', $styles);
         $this->assertStringContainsString('checkout-spa-summary-description', $source);

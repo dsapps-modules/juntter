@@ -822,8 +822,10 @@
 }
 
 .checkout-spa-theme--essential .checkout-spa-shell {
-    max-width: none;
-    padding: 0;
+    width: min(100%, 1440px);
+    margin: 0 auto;
+    padding: 0 clamp(24px, 2.6vw, 48px);
+    box-sizing: border-box;
 }
 
 .checkout-spa-theme--essential .checkout-spa-header {
