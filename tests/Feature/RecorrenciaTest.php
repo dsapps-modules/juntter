@@ -30,18 +30,13 @@ class RecorrenciaTest extends TestCase
         return $user;
     }
 
-    public function test_the_recorrencia_sidebar_item_points_to_the_new_section(): void
+    public function test_the_recorrencia_sidebar_item_was_removed_from_the_navigation(): void
     {
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
 
-        $boletoPosition = strpos($navigationSource, 'cobranca.boleto');
-        $recorrenciaPosition = strpos($navigationSource, 'recorrencia.index');
-
-        $this->assertStringContainsString("label: 'Recorrência'", $navigationSource);
-        $this->assertStringContainsString("path: '/recorrencia'", $navigationSource);
-        $this->assertNotFalse($boletoPosition);
-        $this->assertNotFalse($recorrenciaPosition);
-        $this->assertLessThan($recorrenciaPosition, $boletoPosition);
+        $this->assertStringNotContainsString("label: 'RecorrÃªncia'", $navigationSource);
+        $this->assertStringNotContainsString("path: '/recorrencia'", $navigationSource);
+        $this->assertStringNotContainsString('recorrencia.index', $navigationSource);
     }
 
     public function test_the_recorrencia_pages_are_available_inside_the_spa(): void

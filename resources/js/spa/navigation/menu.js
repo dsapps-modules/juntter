@@ -28,7 +28,6 @@ export const navigationByRole = {
                 { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
                 { key: 'cobranca.planos', path: '/cobranca/planos', label: 'Plano contratado', icon: 'planos' },
-                { key: 'recorrencia.index', path: '/recorrencia', label: 'Recorrência', icon: 'recorrencia' },
             ],
         },
     ],
@@ -66,7 +65,6 @@ export const navigationByRole = {
                 { key: 'cobranca.cartao-credito', path: '/cobranca/cartao-credito', label: 'Cartão de Crédito', icon: 'cartao' },
                 { key: 'cobranca.boleto', path: '/cobranca/boleto', label: 'Boleto', icon: 'boleto' },
                 { key: 'cobranca.planos', path: '/cobranca/planos', label: 'Plano contratado', icon: 'planos' },
-                { key: 'recorrencia.index', path: '/recorrencia', label: 'Recorrência', icon: 'recorrencia' },
             ],
         },
         {

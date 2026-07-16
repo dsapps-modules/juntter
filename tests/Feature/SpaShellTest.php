@@ -349,17 +349,14 @@ class SpaShellTest extends TestCase
         $pixPosition = strpos($navigationSource, 'cobranca.pix');
         $cartaoCreditoPosition = strpos($navigationSource, 'cobranca.cartao-credito');
         $boletoPosition = strpos($navigationSource, 'cobranca.boleto');
-        $recorrenciaPosition = strpos($navigationSource, 'recorrencia.index');
 
         $this->assertNotFalse($historicoPosition);
         $this->assertNotFalse($pixPosition);
         $this->assertNotFalse($cartaoCreditoPosition);
         $this->assertNotFalse($boletoPosition);
-        $this->assertNotFalse($recorrenciaPosition);
         $this->assertLessThan($pixPosition, $historicoPosition);
         $this->assertLessThan($cartaoCreditoPosition, $pixPosition);
         $this->assertLessThan($boletoPosition, $cartaoCreditoPosition);
-        $this->assertLessThan($recorrenciaPosition, $boletoPosition);
     }
 
     public function test_the_links_pagamento_sidebar_item_and_overview_page_were_removed(): void
