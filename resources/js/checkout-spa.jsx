@@ -2316,10 +2316,15 @@ function CheckoutSpaApp() {
                                             </div>
                                         ) : null}
                                         <div className="checkout-spa-essential-item-copy">
-                                            <strong>{checkoutLink.product?.name || 'Produto'}</strong>
-                                            <span>Quantidade: {String(quantity).padStart(2, '0')}</span>
+                                            <div className="checkout-spa-essential-item-head">
+                                                <strong>{checkoutLink.product?.name || 'Produto'}</strong>
+                                                <strong className="checkout-spa-essential-item-price">{formatCurrency(summaryPricing.subtotal)}</strong>
+                                            </div>
                                         </div>
-                                        <strong className="checkout-spa-essential-item-price">{formatCurrency(summaryPricing.subtotal)}</strong>
+                                        {summaryDescription ? (
+                                            <div className="checkout-spa-essential-item-description">{summaryDescription}</div>
+                                        ) : null}
+                                        <span className="checkout-spa-essential-item-quantity">Quantidade: {String(quantity).padStart(2, '0')}</span>
                                     </div>
 
                                     <div className="checkout-spa-essential-totals">
@@ -2349,9 +2354,6 @@ function CheckoutSpaApp() {
                                 <div>
                                     <p className="checkout-spa-summary-kicker">Resumo do pedido</p>
                                     <h2 className="checkout-spa-summary-title">{checkoutLink.name || 'Checkout'}</h2>
-                                    <p className="summary-note">
-                                        {summaryDescription}
-                                    </p>
                                 </div>
 
                                 {checkoutLink.product_image_url ? (
@@ -2362,10 +2364,19 @@ function CheckoutSpaApp() {
                             </div>
 
                             <div className="checkout-spa-summary-stack">
-                                <div className="checkout-spa-summary-row">
-                                    <span>Produto</span>
-                                    <strong>{checkoutLink.product?.name || 'Produto'}</strong>
+                                <div className="checkout-spa-summary-row checkout-spa-summary-row--product">
+                                    <div className="checkout-spa-summary-product-copy">
+                                        <span>Produto</span>
+                                        <strong>{checkoutLink.product?.name || 'Produto'}</strong>
+                                    </div>
+                                    <strong>{formatCurrency(summaryPricing.subtotal)}</strong>
                                 </div>
+
+                                {summaryDescription ? (
+                                    <div className="checkout-spa-summary-description">
+                                        {summaryDescription}
+                                    </div>
+                                ) : null}
 
                                 <div className="checkout-spa-summary-row">
                                     <span>Quantidade</span>

@@ -39,6 +39,11 @@
                     '__TRANSACTION_ID__',
                 ]),
             ],
+            'product' => [
+                'name' => $checkoutLink->product->name,
+                'description' => $checkoutLink->product->description,
+                'short_description' => $checkoutLink->product->short_description,
+            ],
         ];
     @endphp
 

@@ -560,6 +560,25 @@
     font-size: 14px;
 }
 
+.checkout-spa-summary-product-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.checkout-spa-summary-row--product {
+    align-items: flex-start;
+    display: flex;
+    gap: 14px;
+}
+
+.checkout-spa-summary-description {
+    display: block;
+    width: 100%;
+    color: rgba(71, 85, 105, 0.82);
+    line-height: 1.5;
+    font-size: 14px;
+}
+
 .checkout-spa-summary-image {
     width: 58px;
     height: 58px;
@@ -1184,6 +1203,14 @@
     display: grid;
     gap: 6px;
     padding-top: 4px;
+    min-width: 0;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy strong,
@@ -1196,6 +1223,19 @@
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy span {
     color: #667085;
     font-size: 13px;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-description {
+    grid-column: 1 / -1;
+    display: block;
+    width: 100%;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-quantity {
+    grid-column: 1 / -1;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-price {
