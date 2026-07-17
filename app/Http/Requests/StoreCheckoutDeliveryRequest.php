@@ -22,6 +22,7 @@ class StoreCheckoutDeliveryRequest extends FormRequest
             'city' => ['required', 'string', 'max:255'],
             'state' => ['required', 'string', 'size:2'],
             'recipient_name' => ['nullable', 'string', 'max:255'],
+            'shipping_option_id' => ['nullable', 'integer'],
         ];
     }
 }

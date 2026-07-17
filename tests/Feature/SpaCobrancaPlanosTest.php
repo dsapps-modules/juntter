@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\PaytimeEstablishment;
 use App\Models\User;
 use App\Services\EstabelecimentoService;
 use App\Services\TransacaoService;
@@ -144,6 +145,215 @@ class SpaCobrancaPlanosTest extends TestCase
                     && $context['plan_id'] === 77;
             })
             ->once();
+    }
+
+    public function test_the_plan_overview_api_uses_the_cached_plan_snapshot_when_available(): void
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->vendedor()->create([
+            'estabelecimento_id' => '5001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]);
+
+        PaytimeEstablishment::query()->create([
+            'id' => 5001,
+            'type' => 'INDIVIDUAL',
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Cache',
+            'document' => '40400554895',
+            'email' => 'isadora@example.com',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [
+                [
+                    'id' => 77,
+                    'active' => true,
+                    'modality' => 'ONLINE',
+                    'name' => 'Plano Cache',
+                    'description' => 'Plano armazenado localmente.',
+                    'gateway_id' => 4,
+                    'type' => 'COMMERCIAL',
+                    'allow_anticipation' => true,
+                    'created_at' => '2026-05-01T10:30:00.000Z',
+                ],
+            ],
+            'fees_banking_json' => [
+                [
+                    'fees' => [
+                        'pix' => 100,
+                    ],
+                ],
+            ],
+            'pricing_snapshot_json' => [
+                'plans' => [
+                    [
+                        'id' => 77,
+                        'active' => true,
+                        'modality' => 'ONLINE',
+                    ],
+                ],
+                'fees_banking' => [
+                    [
+                        'fees' => [
+                            'pix' => 100,
+                        ],
+                    ],
+                ],
+            ],
+            'pricing_snapshot_hash' => sha1('cached-plan'),
+            'contracted_plan_json' => [
+                'id' => 77,
+                'name' => 'Plano Cache',
+                'description' => 'Plano armazenado localmente.',
+                'gateway_id' => 4,
+                'type' => 'COMMERCIAL',
+                'modality' => 'ONLINE',
+                'active' => true,
+                'allow_anticipation' => true,
+                'created_at' => '2026-05-01T10:30:00.000Z',
+                'updated_at' => '2026-05-01T10:30:00.000Z',
+                'categories' => [],
+                'flags' => [
+                    [
+                        'id' => 1,
+                        'name' => 'MASTERCARD',
+                        'active' => true,
+                        'fees' => [
+                            'credit' => [
+                                '1x' => 3.49,
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'contracted_plan_snapshot_hash' => sha1('cached-contract'),
+            'contracted_plan_synced_at' => now(),
+            'pricing_synced_at' => now(),
+        ]);
+
+        $this->mock(EstabelecimentoService::class, function ($mock): void {
+            $mock->shouldNotReceive('buscarEstabelecimento');
+        });
+
+        $this->mock(TransacaoService::class, function ($mock): void {
+            $mock->shouldNotReceive('detalhesPlanoComercial');
+        });
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca/planos');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('establishment.name', 'Loja Cache')
+            ->assertJsonPath('establishment.plans_count', 1)
+            ->assertJsonPath('plan.id', 77)
+            ->assertJsonPath('plan.name', 'Plano Cache')
+            ->assertJsonPath('plan.flags.0.name', 'MASTERCARD')
+            ->assertJsonPath('actions.1.href', '/cobranca/planos/77');
+    }
+
+    public function test_the_plan_overview_api_falls_back_to_the_api_when_the_cached_plan_snapshot_is_incomplete(): void
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->vendedor()->create([
+            'estabelecimento_id' => '5002',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]);
+
+        PaytimeEstablishment::query()->create([
+            'id' => 5002,
+            'type' => 'INDIVIDUAL',
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Parcial',
+            'document' => '40400554895',
+            'email' => 'isadora@example.com',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [
+                [
+                    'id' => 77,
+                    'active' => true,
+                    'modality' => 'ONLINE',
+                    'name' => 'Plano Parcial',
+                ],
+            ],
+            'pricing_snapshot_json' => [
+                'plans' => [
+                    [
+                        'id' => 77,
+                        'active' => true,
+                        'modality' => 'ONLINE',
+                    ],
+                ],
+            ],
+            'pricing_snapshot_hash' => sha1('partial-plan'),
+            'pricing_synced_at' => now(),
+        ]);
+
+        $this->mock(EstabelecimentoService::class, function ($mock): void {
+            $mock->shouldReceive('buscarEstabelecimento')
+                ->once()
+                ->with('5002')
+                ->andReturn([
+                    'fantasy_name' => 'Loja Parcial',
+                    'plans' => [
+                        [
+                            'id' => 77,
+                            'active' => true,
+                            'modality' => 'ONLINE',
+                        ],
+                    ],
+                ]);
+        });
+
+        $this->mock(TransacaoService::class, function ($mock): void {
+            $mock->shouldReceive('detalhesPlanoComercial')
+                ->once()
+                ->with(77)
+                ->andReturn([
+                    'id' => 77,
+                    'name' => 'Plano Parcial',
+                    'description' => 'Plano comercial com antecipação.',
+                    'gateway_id' => 4,
+                    'type' => 'Comercial',
+                    'modality' => 'ONLINE',
+                    'active' => true,
+                    'allow_anticipation' => true,
+                    'created_at' => '2026-05-01 10:30:00',
+                    'flags' => [
+                        [
+                            'id' => 1,
+                            'name' => 'MASTERCARD',
+                            'active' => true,
+                            'fees' => [
+                                'credit' => [
+                                    '1x' => 3.49,
+                                ],
+                            ],
+                        ],
+                    ],
+                ]);
+        });
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca/planos');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('plan.id', 77)
+            ->assertJsonPath('plan.flags.0.name', 'MASTERCARD');
     }
 
     public function test_the_plan_overview_api_ignores_offline_plans_when_only_offline_plans_exist(): void

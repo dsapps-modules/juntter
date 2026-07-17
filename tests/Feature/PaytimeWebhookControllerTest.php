@@ -273,6 +273,23 @@ class PaytimeWebhookControllerTest extends TestCase
                     'responsible' => [
                         'name' => 'Responsavel Novo',
                     ],
+                    'plans' => [
+                        [
+                            'id' => 23025,
+                            'active' => true,
+                            'modality' => 'ONLINE',
+                            'name' => 'Plano Economico D1 Online',
+                        ],
+                    ],
+                    'fees_banking' => [
+                        [
+                            'id' => 8,
+                            'fees' => [
+                                'pix' => 100,
+                                'dynamic_pix' => 100,
+                            ],
+                        ],
+                    ],
                 ],
             ]);
 
@@ -291,6 +308,10 @@ class PaytimeWebhookControllerTest extends TestCase
         $this->assertSame('LOW', $establishment->risk);
         $this->assertSame('Rua Nova', $establishment->address_json['street']);
         $this->assertSame('Responsavel Novo', $establishment->responsible_json['name']);
+        $this->assertSame(23025, $establishment->plans_json[0]['id']);
+        $this->assertSame(100, $establishment->fees_banking_json[0]['fees']['pix']);
+        $this->assertNotNull($establishment->pricing_snapshot_hash);
+        $this->assertNotNull($establishment->pricing_synced_at);
     }
 
     public function test_it_syncs_pix_out_status_updates_from_the_webhook_route(): void

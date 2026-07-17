@@ -6,13 +6,13 @@ use App\Models\CheckoutLink;
 
 class CheckoutPricingService
 {
-    public function calculate(CheckoutLink $checkoutLink, string $paymentMethod, ?int $quantity = null): array
+    public function calculate(CheckoutLink $checkoutLink, string $paymentMethod, ?int $quantity = null, float $shippingTotal = 0.0): array
     {
         $quantity = max(1, $quantity ?? (int) $checkoutLink->quantity);
         $unitPrice = (float) $checkoutLink->unit_price;
         $subtotal = round($quantity * $unitPrice, 2);
         $discount = $this->calculateDiscount($checkoutLink, $paymentMethod, $subtotal);
-        $shipping = $checkoutLink->free_shipping ? 0.0 : 0.0;
+        $shipping = round(max(0, $shippingTotal), 2);
         $total = round(max(0, $subtotal - $discount + $shipping), 2);
 
         return [

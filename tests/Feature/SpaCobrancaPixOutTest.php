@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\SecurityCodeMail;
+use App\Models\PaytimeEstablishment;
 use App\Models\PixPayoutRequest;
 use App\Models\User;
 use App\Services\BalanceService;
@@ -40,8 +41,8 @@ class SpaCobrancaPixOutTest extends TestCase
             ->assertOk()
             ->assertJsonPath('balance.available_label', 'R$ 94,01')
             ->assertJsonPath('balance.blocked_label', 'R$ 0,00')
-            ->assertJsonPath('fee.label', 'R$ 0,94')
-            ->assertJsonPath('available_after_fee.label', 'R$ 93,07')
+            ->assertJsonPath('fee.label', 'R$ 1,00')
+            ->assertJsonPath('available_after_fee.label', 'R$ 93,01')
             ->assertJsonPath('seller_email', $user->email)
             ->assertJsonPath('electronic_signature.configured', false);
     }
@@ -72,6 +73,59 @@ class SpaCobrancaPixOutTest extends TestCase
             ->assertJsonPath('pix_key_types.2.label', 'E-mail')
             ->assertJsonPath('pix_key_types.3.value', 'CNPJ')
             ->assertJsonPath('pix_key_types.3.label', 'CNPJ');
+    }
+
+    public function test_pix_out_overview_uses_the_cached_pix_fee_when_available(): void
+    {
+        $user = $this->createVendor();
+
+        config()->set('services.paytime.payout_fee_cents', 999);
+
+        PaytimeEstablishment::query()->create([
+            'id' => 5001,
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Cache',
+            'document' => '40400554895',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [],
+            'fees_banking_json' => [
+                [
+                    'fees' => [
+                        'pix' => 275,
+                    ],
+                ],
+            ],
+            'pricing_snapshot_json' => [
+                'fees_banking' => [
+                    [
+                        'fees' => [
+                            'pix' => 275,
+                        ],
+                    ],
+                ],
+            ],
+            'pricing_snapshot_hash' => sha1('cached-fee'),
+            'pricing_synced_at' => now(),
+        ]);
+
+        $this->mock(BalanceService::class, function ($mock): void {
+            $mock->shouldReceive('saldoAtual')
+                ->once()
+                ->andReturn([
+                    'balance' => 9401,
+                    'blocked_balance' => 0,
+                    'total_balance' => 9401,
+                ]);
+        });
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca/pix-out');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('fee.label', 'R$ 2,75')
+            ->assertJsonPath('available_after_fee.label', 'R$ 91,26');
     }
 
     public function test_signature_code_flow_saves_new_signature_after_email_confirmation(): void
@@ -168,8 +222,8 @@ class SpaCobrancaPixOutTest extends TestCase
             ->assertJsonPath('payout_request.status', 'awaiting_confirmation')
             ->assertJsonPath('payout_request.init_id', 'E13935893202604281747Y3pL5YlGFRs')
             ->assertJsonPath('review.amount_label', 'R$ 100,00')
-            ->assertJsonPath('review.fee_label', 'R$ 5,00')
-            ->assertJsonPath('review.available_after_fee_label', 'R$ 495,00');
+            ->assertJsonPath('review.fee_label', 'R$ 1,00')
+            ->assertJsonPath('review.available_after_fee_label', 'R$ 499,00');
 
         Mail::assertSent(SecurityCodeMail::class, function (SecurityCodeMail $mail): bool {
             return $mail->purpose === 'confirmação do envio PIX';

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -108,6 +109,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function vendedor()
     {
         return $this->hasOne(Vendedor::class);
+    }
+
+    public function shippingOptions(): HasMany
+    {
+        return $this->hasMany(CheckoutShippingOption::class, 'seller_id');
     }
 
     public function getAvatarUrlAttribute(): ?string

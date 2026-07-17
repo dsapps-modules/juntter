@@ -22,6 +22,7 @@ import CheckoutLinksPage from './pages/checkout/CheckoutLinksPage';
 import CheckoutLinkFormPage from './pages/checkout/CheckoutLinkFormPage';
 import CheckoutLinkSaleDetailPage from './pages/checkout/CheckoutLinkSaleDetailPage';
 import CheckoutLinkSalesPage from './pages/checkout/CheckoutLinkSalesPage';
+import CheckoutShippingPage from './pages/checkout/CheckoutShippingPage';
 import CheckoutProductFormPage from './pages/checkout/CheckoutProductFormPage';
 import CheckoutProductsPage from './pages/checkout/CheckoutProductsPage';
 import LinkPagamentoDetailPage from './pages/LinkPagamentoDetailPage';
@@ -115,6 +116,7 @@ export default function App() {
                         <Route path="seller/products/novo" element={<CheckoutProductFormPage />} />
                         <Route path="seller/products/:productId/editar" element={<CheckoutProductFormPage />} />
                         <Route path="seller/checkout-links" element={<CheckoutLinksPage />} />
+                        <Route path="seller/checkout-links/frete" element={<CheckoutShippingPage />} />
                         <Route path="seller/checkout-links/novo" element={<CheckoutLinkFormPage />} />
                         <Route path="seller/checkout-links/:checkoutLinkId/editar" element={<CheckoutLinkFormPage />} />
                         <Route path="seller/checkout-links/:checkoutLinkId/vendas" element={<CheckoutLinkSalesPage />} />

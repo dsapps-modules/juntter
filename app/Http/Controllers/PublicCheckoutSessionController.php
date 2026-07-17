@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateCheckoutQuantityRequest;
 use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
+use App\Models\CheckoutShippingOption;
 use App\Models\Order;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -234,11 +235,15 @@ class PublicCheckoutSessionController extends Controller
     public function saveDelivery(StoreCheckoutDeliveryRequest $request, string $sessionToken): JsonResponse
     {
         $checkoutSession = $this->findSession($sessionToken);
+        $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
         $recipientName = $request->input('recipient_name');
+        $shippingOption = $this->resolveShippingOption($checkoutLink, $request->input('shipping_option_id'));
 
         if (blank($recipientName)) {
             $recipientName = $checkoutSession->recipient_name ?: $checkoutSession->customer_name;
         }
+
+        $shippingTotal = round((float) $shippingOption['price'], 2);
 
         $checkoutSession->update([
             'zipcode' => $request->input('zipcode'),
@@ -249,6 +254,10 @@ class PublicCheckoutSessionController extends Controller
             'city' => $request->input('city'),
             'state' => $request->input('state'),
             'recipient_name' => $recipientName,
+            'shipping_option_id' => $shippingOption['id'],
+            'shipping_option_name' => $shippingOption['name'],
+            'shipping_total' => $shippingTotal,
+            'total' => round((float) $checkoutSession->subtotal + $shippingTotal, 2),
             'status' => 'delivery_completed',
             'current_step' => 'payment',
             'last_activity_at' => now(),
@@ -260,7 +269,11 @@ class PublicCheckoutSessionController extends Controller
             'seller_id' => $checkoutSession->seller_id,
             'event_type' => 'delivery_completed',
             'step' => 'delivery',
-            'metadata' => $request->validated(),
+            'metadata' => array_merge($request->validated(), [
+                'shipping_option_id' => $shippingOption['id'],
+                'shipping_option_name' => $shippingOption['name'],
+                'shipping_total' => $shippingTotal,
+            ]),
         ]);
 
         return response()->json([
@@ -273,6 +286,48 @@ class PublicCheckoutSessionController extends Controller
     private function findSession(string $sessionToken): CheckoutSession
     {
         return CheckoutSession::query()->where('session_token', $sessionToken)->firstOrFail();
+    }
+
+    /**
+     * @return array{id: int|null, name: string, price: float}
+     */
+    private function resolveShippingOption(CheckoutLink $checkoutLink, mixed $shippingOptionId): array
+    {
+        $optionsQuery = CheckoutShippingOption::query()
+            ->where('seller_id', $checkoutLink->seller_id)
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name');
+
+        if (is_numeric($shippingOptionId)) {
+            $shippingOption = $optionsQuery
+                ->whereKey((int) $shippingOptionId)
+                ->first();
+
+            if ($shippingOption) {
+                return [
+                    'id' => $shippingOption->id,
+                    'name' => $shippingOption->name,
+                    'price' => (float) $shippingOption->price,
+                ];
+            }
+        }
+
+        $shippingOption = $optionsQuery->first();
+
+        if ($shippingOption) {
+            return [
+                'id' => $shippingOption->id,
+                'name' => $shippingOption->name,
+                'price' => (float) $shippingOption->price,
+            ];
+        }
+
+        return [
+            'id' => null,
+            'name' => 'Frete padrão',
+            'price' => 0.0,
+        ];
     }
 
     private function resolveCompanyNameFromLookup(mixed $payload): ?string

@@ -2,21 +2,22 @@
 
 namespace App\Jobs;
 
+use App\Models\User;
+use App\Models\Vendedor;
+use App\Services\PaytimePricingCacheService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User;
-use App\Models\Vendedor;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class ProcessCreatePaytimeEstablishment implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    
+
     public $payload;
 
     public function __construct(array $payload)
@@ -30,33 +31,35 @@ class ProcessCreatePaytimeEstablishment implements ShouldQueue
         $data = $this->payload['data'] ?? [];
 
         if ($event !== 'new-establishment') {
-            Log::info("createEstablishment blocked: unknown event", ['event' => $event]);
+            Log::info('createEstablishment blocked: unknown event', ['event' => $event]);
+
             return;
         }
 
         // Verificação única: Estabelecimento já existe
         $vendedorExistente = Vendedor::where('estabelecimento_id', $data['id'])->first();
         if ($vendedorExistente) {
-            Log::info("createEstablishment blocked: user already exists", [
+            Log::info('createEstablishment blocked: user already exists', [
                 'estabelecimento_id' => $data['id'],
-                'vendedor_id' => $vendedorExistente->id
+                'vendedor_id' => $vendedorExistente->id,
             ]);
+
             return; // Já foi processado
         }
 
         // Processar criação
-        try{
+        try {
             DB::transaction(function () use ($data) {
                 // Criar usuário
                 $user = User::create([
-                    'name' => $data['first_name'] . ' ' . $data['last_name'],
+                    'name' => $data['first_name'].' '.$data['last_name'],
                     'email' => $data['email'],
                     'password' => Hash::make($data['id']), // Senha = ID da loja
                 ]);
                 $user->nivel_acesso = 'vendedor';
                 $user->email_verified_at = now();
                 $user->save();
-    
+
                 // Criar vendedor
                 Vendedor::create([
                     'user_id' => $user->id,
@@ -65,17 +68,19 @@ class ProcessCreatePaytimeEstablishment implements ShouldQueue
                     'status' => 'ativo',
                     'telefone' => $data['phone_number'],
                     'endereco' => json_encode($data['address']),
-                    'must_change_password' => true, 
+                    'must_change_password' => true,
                 ]);
-    
-                Log::info("createEstablishment job finished succesfully", [
+
+                Log::info('createEstablishment job finished succesfully', [
                     'estabelecimento_id' => $data['id'],
                     'user_id' => $user->id,
-                    'email' => $data['email']
+                    'email' => $data['email'],
                 ]);
             });
-        } catch(\Throwable $e) {
-            Log::error('createEstablishment failed: ' . $e->getMessage());
+
+            app(PaytimePricingCacheService::class)->persistPricingSnapshot($data);
+        } catch (\Throwable $e) {
+            Log::error('createEstablishment failed: '.$e->getMessage());
         }
     }
 }
@@ -127,6 +132,6 @@ Payload enviado via webhook quando um vendedor/estabelecimento é registrado no 
         "gateways":[],
         "plans":[]
     }
-} 
+}
 
 */

@@ -785,6 +785,125 @@
     flex: 1 1 180px;
 }
 
+.checkout-spa-delivery-layout {
+    display: grid;
+    gap: 18px;
+}
+
+.checkout-spa-delivery-summary {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 1px solid #d8dde3;
+    border-radius: 18px;
+    background: #f8fafc;
+}
+
+.checkout-spa-delivery-summary__kicker {
+    margin: 0 0 6px;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.checkout-spa-delivery-summary__name {
+    display: block;
+    margin-bottom: 8px;
+    color: #111827;
+}
+
+.checkout-spa-delivery-summary__text {
+    margin: 0 0 4px;
+    color: #475467;
+    line-height: 1.5;
+}
+
+.checkout-spa-link-button {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #7c4dff;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.checkout-spa-link-button--secondary {
+    color: #344054;
+}
+
+.checkout-spa-shipping-section {
+    display: grid;
+    gap: 14px;
+}
+
+.checkout-spa-shipping-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.checkout-spa-shipping-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    width: 100%;
+    padding: 16px 18px;
+    border: 1px solid #d8dde3;
+    border-radius: 18px;
+    background: #ffffff;
+    color: #101828;
+    text-align: left;
+    cursor: pointer;
+}
+
+.checkout-spa-shipping-card.is-selected {
+    border-color: #111827;
+    background: #f3f4f6;
+}
+
+.checkout-spa-shipping-card__radio {
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #98a2b3;
+    border-radius: 999px;
+}
+
+.checkout-spa-shipping-card__radio .is-filled {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #111827;
+}
+
+.checkout-spa-shipping-card__copy {
+    display: grid;
+    gap: 4px;
+}
+
+.checkout-spa-shipping-card__copy strong {
+    color: #101828;
+    font-size: 14px;
+}
+
+.checkout-spa-shipping-card__copy span {
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.checkout-spa-shipping-card__price {
+    color: #101828;
+    white-space: nowrap;
+}
+
 .checkout-spa-loading {
     display: grid;
     place-items: center;
@@ -1078,31 +1197,6 @@
 
 .checkout-spa-theme--essential .checkout-spa-error:empty {
     display: none;
-}
-
-.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_email"]) {
-    grid-column: 1 / -1;
-    grid-row: 1;
-}
-
-.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_phone"]) {
-    grid-column: 1;
-    grid-row: 2;
-}
-
-.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]) {
-    grid-column: 2;
-    grid-row: 2;
-}
-
-.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_document"]) {
-    grid-column: 1;
-    grid-row: 3;
-}
-
-.checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_birth_date"]) {
-    grid-column: 2;
-    grid-row: 3;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-person-toggle {
@@ -1979,8 +2073,6 @@
     }
 
     .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]),
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_email"]),
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_phone"]),
     .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="zipcode"]),
     .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="street"]),
     .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="neighborhood"]),
@@ -1988,26 +2080,6 @@
     .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field:has([name="state"]) {
         grid-column: 1 / -1;
         grid-row: auto;
-    }
-
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_name"]) {
-        order: 1;
-    }
-
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_document"]) {
-        order: 2;
-    }
-
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_birth_date"]) {
-        order: 3;
-    }
-
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_email"]) {
-        order: 4;
-    }
-
-    .checkout-spa-theme--essential .checkout-spa-identification-fields--pf > .checkout-spa-field:has([name="customer_phone"]) {
-        order: 5;
     }
 
     .checkout-spa-theme--essential .checkout-spa-delivery-fields > .checkout-spa-field--number,

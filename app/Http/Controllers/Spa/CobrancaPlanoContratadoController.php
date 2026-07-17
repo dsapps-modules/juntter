@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Spa;
 
 use App\Http\Controllers\Controller;
 use App\Services\EstabelecimentoService;
+use App\Services\PaytimePricingCacheService;
 use App\Services\TransacaoService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -17,6 +18,7 @@ class CobrancaPlanoContratadoController extends Controller
     public function __construct(
         private readonly EstabelecimentoService $estabelecimentoService,
         private readonly TransacaoService $transacaoService,
+        private readonly PaytimePricingCacheService $pricingCacheService,
     ) {}
 
     public function __invoke(Request $request, ?int $planoId = null): JsonResponse
@@ -31,6 +33,40 @@ class CobrancaPlanoContratadoController extends Controller
 
         $sellerName = trim((string) $user->name) !== '' ? $user->name : 'Vendedor';
         $estabelecimentoId = $user->getEstabelecimentoId();
+
+        if ($estabelecimentoId !== null && $estabelecimentoId !== '') {
+            $cachedEstablishment = $this->pricingCacheService->cachedEstablishment((string) $estabelecimentoId);
+
+            if ($cachedEstablishment !== null) {
+                $plans = collect($cachedEstablishment->plans_json)
+                    ->filter(fn ($plan): bool => $this->isOnlinePlan($plan))
+                    ->values();
+                $plan = $this->pricingCacheService->resolveContractedPlan((string) $estabelecimentoId, $planoId);
+
+                if ($plan !== null && ! empty(data_get($plan, 'flags', []))) {
+                    Log::info('Dados resolvidos em /api/spa/cobranca/planos', [
+                        'user_id' => $user->id,
+                        'estabelecimento_id' => (string) $estabelecimentoId,
+                        'plans_count' => $plans->count(),
+                        'selected_plan_id' => data_get($plan, 'id'),
+                        'plan_id' => data_get($plan, 'id'),
+                        'source' => 'cache',
+                    ]);
+
+                    return response()->json([
+                        'seller_name' => $sellerName,
+                        'establishment' => [
+                            'id' => (string) $estabelecimentoId,
+                            'name' => $cachedEstablishment->display_name,
+                            'plans_count' => $plans->count(),
+                            'has_active_plan' => (bool) data_get($plan, 'active', false),
+                        ],
+                        'plan' => $plan,
+                        'actions' => $this->buildActions($plan),
+                    ]);
+                }
+            }
+        }
 
         Log::info('Requisição recebida em /api/spa/cobranca/planos', [
             'user_id' => $user->id,

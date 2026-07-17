@@ -281,7 +281,7 @@ function resolveDefaultPaymentMethod(checkoutLink) {
     return '';
 }
 
-function calculatePricing(checkoutLink, quantity, paymentMethod) {
+function calculatePricing(checkoutLink, quantity, paymentMethod, shippingTotal = 0) {
     const subtotal = roundCurrency(Number(quantity || 1) * Number(checkoutLink?.unit_price || 0));
     let discount = 0;
 
@@ -301,7 +301,7 @@ function calculatePricing(checkoutLink, quantity, paymentMethod) {
         }
     }
 
-    const shipping = checkoutLink?.free_shipping ? 0 : 0;
+    const shipping = roundCurrency(Number(shippingTotal || 0));
     const total = roundCurrency(Math.max(0, subtotal - discount + shipping));
 
     return {
@@ -312,6 +312,25 @@ function calculatePricing(checkoutLink, quantity, paymentMethod) {
         shipping_total: roundCurrency(shipping),
         total,
     };
+}
+
+function formatShippingEstimate(etaDays) {
+    const days = Number.parseInt(String(etaDays ?? ''), 10);
+
+    if (!Number.isFinite(days) || days <= 0) {
+        return 'Prazo sob consulta';
+    }
+
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + days);
+
+    const formattedDate = new Intl.DateTimeFormat('pt-BR', {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+    }).format(targetDate);
+
+    return `Chega até ${formattedDate.replace(/^./, (character) => character.toUpperCase())}`;
 }
 
 function resolveInitialStep(config, defaultPaymentMethod) {
@@ -674,6 +693,7 @@ async function confirmCreditCard3DS(state, paymentForm, transaction) {
 function CheckoutSpaApp() {
     const [config] = useState(() => readCheckoutSpaData());
     const checkoutLink = config?.checkoutLink || {};
+    const shippingOptions = config?.shippingOptions || [];
     const allowedMethods = resolvePaymentMethods(checkoutLink);
     const defaultPaymentMethod = config?.checkoutSession?.payment_method || resolveDefaultPaymentMethod(checkoutLink);
     const initialQuantity = normalizeQuantity(config?.checkoutSession?.quantity || checkoutLink.quantity || 1);
@@ -684,6 +704,10 @@ function CheckoutSpaApp() {
     const [personType, setPersonType] = useState(String(config?.checkoutSession?.customer_document_type || 'cpf').toLowerCase() === 'cnpj' ? 'pj' : 'pf');
     const [quantity, setQuantity] = useState(initialQuantity);
     const [step, setStep] = useState(() => resolveInitialStep(config || {}, defaultPaymentMethod));
+    const [selectedShippingOptionId, setSelectedShippingOptionId] = useState(
+        String(config?.checkoutSession?.shipping_option_id || shippingOptions.find((option) => option.is_default)?.id || shippingOptions[0]?.id || ''),
+    );
+    const [showCustomDeliveryAddress, setShowCustomDeliveryAddress] = useState(() => !config?.checkoutSession?.street || !config?.checkoutSession?.zipcode);
     const [feedback, setFeedback] = useState({ type: 'info', message: '' });
     const [fieldErrors, setFieldErrors] = useState({});
     const [busyAction, setBusyAction] = useState('');
@@ -801,16 +825,23 @@ function CheckoutSpaApp() {
         ? visualConfig.theme
         : 'essential';
     const isEssentialTheme = checkoutTheme === 'essential';
+    const selectedShippingOption = shippingOptions.find((option) => String(option.id) === String(selectedShippingOptionId))
+        || shippingOptions.find((option) => option.is_default)
+        || shippingOptions[0]
+        || null;
+    const shippingTotalForSummary = paymentTransaction
+        ? Number(session.shipping_total || 0)
+        : Number(session.shipping_total || selectedShippingOption?.price || 0);
     const summaryPricing = paymentTransaction
         ? {
             quantity: normalizeQuantity(session.quantity || quantity),
             unit_price: roundCurrency(session.unit_price || checkoutLink.unit_price || 0),
             subtotal: roundCurrency(session.subtotal || 0),
             discount_total: roundCurrency(session.discount_total || 0),
-            shipping_total: roundCurrency(session.shipping_total || 0),
+            shipping_total: roundCurrency(shippingTotalForSummary),
             total: roundCurrency(session.total || 0),
         }
-        : calculatePricing(checkoutLink, quantity, selectedPaymentMethod);
+        : calculatePricing(checkoutLink, quantity, selectedPaymentMethod, shippingTotalForSummary);
     const paymentMethodLabel = paymentTransaction?.payment_method
         || selectedPaymentMethod
         || defaultPaymentMethod
@@ -1101,12 +1132,27 @@ function CheckoutSpaApp() {
         setBusyAction('delivery');
 
         try {
+            const form = event.currentTarget;
+            const formData = new FormData(form);
+
+            if (!formData.get('recipient_name')) {
+                formData.set('recipient_name', formData.get('customer_name') || session.customer_name || '');
+            }
+
+            if (!formData.get('shipping_option_id') && selectedShippingOption?.id) {
+                formData.set('shipping_option_id', String(selectedShippingOption.id));
+            }
+
             const response = await requestJson(config.urls.delivery, {
                 method: 'POST',
-                body: new FormData(event.currentTarget),
+                body: formData,
             });
 
             setSession(response.checkout_session || session);
+            if (response.checkout_session?.shipping_option_id) {
+                setSelectedShippingOptionId(String(response.checkout_session.shipping_option_id));
+            }
+            setShowCustomDeliveryAddress(false);
             setFeedback({
                 type: 'success',
                 message: response.message || 'Endereço salvo com sucesso.',
@@ -1522,81 +1568,180 @@ function CheckoutSpaApp() {
         void syncDeliveryAddressByZipcode(form, target.value);
     }
 
-    function renderDeliveryFields() {
+    function renderShippingSelector() {
+        const shippingOptionId = selectedShippingOptionId || '';
+        const shippingOptionName = selectedShippingOption?.name || 'Frete padr?o';
+        const shippingOptionPrice = Number(selectedShippingOption?.price || 0);
+
         return (
-            <div className="checkout-spa-field-grid checkout-spa-delivery-fields is-two-columns">
-                <label className="checkout-spa-field checkout-spa-field--zipcode">
-                    <span className="checkout-spa-label">CEP</span>
-                    <input
-                        className="checkout-spa-input"
-                        name="zipcode"
-                        defaultValue={session.zipcode || ''}
-                        maxLength={9}
-                        placeholder="00000-000"
-                        inputMode="numeric"
-                        onInput={(event) => {
-                            handleDocumentMask(event);
-                            handleZipcodeLookup(event);
-                        }}
-                        onBlur={handleZipcodeBlur}
-                    />
-                    {zipcodeLookupState === 'loading' ? (
-                        <p className="checkout-spa-field-note" aria-live="polite">
-                            Consultando CEP...
+            <section className="checkout-spa-shipping-section">
+                <div className="checkout-spa-section-head checkout-spa-section-head--compact">
+                    <div>
+                        <h3 className="checkout-spa-section-title" style={{ fontSize: 18, marginBottom: 6 }}>Escolha uma forma de entrega</h3>
+                        <p className="checkout-spa-section-text" style={{ marginBottom: 0 }}>
+                            Selecione o frete que ser? usado nesta compra.
                         </p>
-                    ) : null}
-                    <p className="checkout-spa-error">{fieldErrors.zipcode || ''}</p>
-                </label>
+                    </div>
+                </div>
 
-                <label className="checkout-spa-field checkout-spa-field--street">
-                    <span className="checkout-spa-label">Endereço</span>
-                    <input
-                        className="checkout-spa-input"
-                        name="street"
-                        defaultValue={session.street || ''}
-                        placeholder="Rua, avenida, travessa..."
-                    />
-                    <p className="checkout-spa-error">{fieldErrors.street || ''}</p>
-                </label>
+                <div className="checkout-spa-shipping-grid" role="radiogroup" aria-label="Tipos de frete">
+                    {shippingOptions.map((option) => {
+                        const optionId = option.id ? String(option.id) : '';
+                        const isSelected = shippingOptionId === optionId;
 
-                <label className="checkout-spa-field checkout-spa-field--number">
-                    <span className="checkout-spa-label">Número</span>
-                    <input className="checkout-spa-input" name="number" defaultValue={session.number || ''} placeholder="Número" />
-                    <p className="checkout-spa-error">{fieldErrors.number || ''}</p>
-                </label>
+                        return (
+                            <button
+                                key={optionId || option.name}
+                                type="button"
+                                className={"checkout-spa-shipping-card " + (isSelected ? 'is-selected' : '')}
+                                onClick={() => setSelectedShippingOptionId(optionId)}
+                            >
+                                <span className="checkout-spa-shipping-card__radio" aria-hidden="true">
+                                    <span className={isSelected ? 'is-filled' : ''} />
+                                </span>
 
-                <label className="checkout-spa-field checkout-spa-field--complement">
-                    <span className="checkout-spa-label">Complemento</span>
-                    <input className="checkout-spa-input" name="complement" defaultValue={session.complement || ''} placeholder="Complemento" />
-                    <p className="checkout-spa-error">{fieldErrors.complement || ''}</p>
-                </label>
+                                <span className="checkout-spa-shipping-card__copy">
+                                    <strong>{option.name}</strong>
+                                    <span>{option.eta_days ? formatShippingEstimate(option.eta_days) : 'Prazo sob consulta'}</span>
+                                </span>
 
-                <label className="checkout-spa-field checkout-spa-field--neighborhood">
-                    <span className="checkout-spa-label">Bairro</span>
-                    <input className="checkout-spa-input" name="neighborhood" defaultValue={session.neighborhood || ''} placeholder="Bairro" />
-                    <p className="checkout-spa-error">{fieldErrors.neighborhood || ''}</p>
-                </label>
+                                <strong className="checkout-spa-shipping-card__price">
+                                    {Number(option.price || 0) > 0 ? formatCurrency(option.price) : 'Gr?tis'}
+                                </strong>
+                            </button>
+                        );
+                    })}
+                </div>
 
-                <label className="checkout-spa-field checkout-spa-field--city">
-                    <span className="checkout-spa-label">Cidade</span>
-                    <input className="checkout-spa-input" name="city" defaultValue={session.city || ''} placeholder="Cidade" />
-                    <p className="checkout-spa-error">{fieldErrors.city || ''}</p>
-                </label>
+                {shippingOptions.length === 0 ? (
+                    <div className="checkout-spa-feedback is-info is-visible" style={{ marginTop: 16 }}>
+                        Nenhuma op??o de frete foi cadastrada ainda.
+                    </div>
+                ) : null}
 
-                <label className="checkout-spa-field checkout-spa-field--state">
-                    <span className="checkout-spa-label">Estado</span>
-                    <input
-                        className="checkout-spa-input"
-                        name="state"
-                        defaultValue={session.state || ''}
-                        maxLength={2}
-                        placeholder="Estado"
-                        onInput={handleDocumentMask}
-                    />
-                    <p className="checkout-spa-error">{fieldErrors.state || ''}</p>
-                </label>
+                <input type="hidden" name="shipping_option_id" value={shippingOptionId} />
+                <input type="hidden" name="shipping_option_name" value={shippingOptionName} />
+                <input type="hidden" name="shipping_total" value={shippingOptionPrice} />
+            </section>
+        );
+    }
 
-                <input type="hidden" name="recipient_name" defaultValue={session.recipient_name || session.customer_name || ''} />
+    function renderDeliveryFields() {
+        const hasSavedAddress = Boolean(session.zipcode || session.street || session.number || session.city || session.state);
+
+        return (
+            <div className="checkout-spa-delivery-layout">
+                {hasSavedAddress && !showCustomDeliveryAddress ? (
+                    <section className="checkout-spa-delivery-summary">
+                        <div>
+                            <p className="checkout-spa-delivery-summary__kicker">Seu endere?o</p>
+                            <strong className="checkout-spa-delivery-summary__name">{session.recipient_name || session.customer_name || 'Cliente'}</strong>
+                            <p className="checkout-spa-delivery-summary__text">
+                                {[session.street, session.number, session.complement].filter(Boolean).join(', ') || 'Endere?o n?o informado'}
+                            </p>
+                            <p className="checkout-spa-delivery-summary__text">
+                                {[session.neighborhood, session.city, session.state].filter(Boolean).join(' - ') || 'Complete seu endere?o'}
+                            </p>
+                            <p className="checkout-spa-delivery-summary__text">{session.zipcode || 'CEP n?o informado'}</p>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="checkout-spa-link-button"
+                            onClick={() => setShowCustomDeliveryAddress(true)}
+                        >
+                            + Novo endere?o
+                        </button>
+                    </section>
+                ) : null}
+
+                <div className="checkout-spa-field-grid checkout-spa-delivery-fields is-two-columns" hidden={hasSavedAddress && !showCustomDeliveryAddress}>
+                    <label className="checkout-spa-field checkout-spa-field--zipcode">
+                        <span className="checkout-spa-label">CEP</span>
+                        <input
+                            className="checkout-spa-input"
+                            name="zipcode"
+                            defaultValue={session.zipcode || ''}
+                            maxLength={9}
+                            placeholder="00000-000"
+                            inputMode="numeric"
+                            onInput={(event) => {
+                                handleDocumentMask(event);
+                                handleZipcodeLookup(event);
+                            }}
+                            onBlur={handleZipcodeBlur}
+                        />
+                        {zipcodeLookupState === 'loading' ? (
+                            <p className="checkout-spa-field-note" aria-live="polite">
+                                Consultando CEP...
+                            </p>
+                        ) : null}
+                        <p className="checkout-spa-error">{fieldErrors.zipcode || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--street">
+                        <span className="checkout-spa-label">Endere?o</span>
+                        <input
+                            className="checkout-spa-input"
+                            name="street"
+                            defaultValue={session.street || ''}
+                            placeholder="Rua, avenida, travessa..."
+                        />
+                        <p className="checkout-spa-error">{fieldErrors.street || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--number">
+                        <span className="checkout-spa-label">N?mero</span>
+                        <input className="checkout-spa-input" name="number" defaultValue={session.number || ''} placeholder="N?mero" />
+                        <p className="checkout-spa-error">{fieldErrors.number || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--complement">
+                        <span className="checkout-spa-label">Complemento</span>
+                        <input className="checkout-spa-input" name="complement" defaultValue={session.complement || ''} placeholder="Complemento" />
+                        <p className="checkout-spa-error">{fieldErrors.complement || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--neighborhood">
+                        <span className="checkout-spa-label">Bairro</span>
+                        <input className="checkout-spa-input" name="neighborhood" defaultValue={session.neighborhood || ''} placeholder="Bairro" />
+                        <p className="checkout-spa-error">{fieldErrors.neighborhood || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--city">
+                        <span className="checkout-spa-label">Cidade</span>
+                        <input className="checkout-spa-input" name="city" defaultValue={session.city || ''} placeholder="Cidade" />
+                        <p className="checkout-spa-error">{fieldErrors.city || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--state">
+                        <span className="checkout-spa-label">Estado</span>
+                        <input
+                            className="checkout-spa-input"
+                            name="state"
+                            defaultValue={session.state || ''}
+                            maxLength={2}
+                            placeholder="Estado"
+                            onInput={handleDocumentMask}
+                        />
+                        <p className="checkout-spa-error">{fieldErrors.state || ''}</p>
+                    </label>
+
+                    <input type="hidden" name="recipient_name" defaultValue={session.recipient_name || session.customer_name || ''} />
+                </div>
+
+                {hasSavedAddress ? (
+                    <button
+                        type="button"
+                        className="checkout-spa-link-button checkout-spa-link-button--secondary"
+                        onClick={() => setShowCustomDeliveryAddress((current) => !current)}
+                        style={{ marginTop: 12 }}
+                    >
+                        {showCustomDeliveryAddress ? 'Usar endere?o cadastrado' : 'Editar endere?o'}
+                    </button>
+                ) : null}
+
+                {renderShippingSelector()}
             </div>
         );
     }
@@ -1836,87 +1981,15 @@ function CheckoutSpaApp() {
             <section className="checkout-spa-step-card checkout-spa-step-card--delivery">
                 <div className="checkout-spa-section-head">
                     <div>
-                        <h2 className="checkout-spa-section-title">Endereço</h2>
+                        <h2 className="checkout-spa-section-title">Sua entrega</h2>
                         <p className="checkout-spa-section-text">
-                            Use o CEP para preencher os demais campos automaticamente.
+                            Confirme o endere?o e selecione a forma de frete para continuar.
                         </p>
                     </div>
                 </div>
 
                 <form className="checkout-spa-form" onSubmit={handleDeliverySubmit}>
-                    <div className="checkout-spa-field-grid is-two-columns">
-                        <label className="checkout-spa-field">
-                            <span className="checkout-spa-label">CEP</span>
-                            <input
-                                className="checkout-spa-input"
-                                name="zipcode"
-                                defaultValue={session.zipcode || ''}
-                                maxLength={9}
-                                placeholder="00000-000"
-                                inputMode="numeric"
-                                onInput={(event) => {
-                                    handleDocumentMask(event);
-                                    handleZipcodeLookup(event);
-                                }}
-                                onBlur={handleZipcodeBlur}
-                            />
-                            {zipcodeLookupState === 'loading' ? (
-                                <p className="checkout-spa-field-note" aria-live="polite">
-                                    Consultando CEP...
-                                </p>
-                            ) : null}
-                            <p className="checkout-spa-error">{fieldErrors.zipcode || ''}</p>
-                        </label>
-
-                        <label className="checkout-spa-field is-full">
-                            <span className="checkout-spa-label">Endereço</span>
-                            <input
-                                className="checkout-spa-input"
-                                name="street"
-                                defaultValue={session.street || ''}
-                                placeholder="Rua, avenida, travessa..."
-                            />
-                            <p className="checkout-spa-error">{fieldErrors.street || ''}</p>
-                        </label>
-
-                        <label className="checkout-spa-field">
-                            <span className="checkout-spa-label">Número</span>
-                            <input className="checkout-spa-input" name="number" defaultValue={session.number || ''} />
-                            <p className="checkout-spa-error">{fieldErrors.number || ''}</p>
-                        </label>
-
-                        <label className="checkout-spa-field">
-                            <span className="checkout-spa-label">Complemento</span>
-                            <input className="checkout-spa-input" name="complement" defaultValue={session.complement || ''} />
-                            <p className="checkout-spa-error">{fieldErrors.complement || ''}</p>
-                        </label>
-
-                        <label className="checkout-spa-field">
-                            <span className="checkout-spa-label">Bairro</span>
-                            <input className="checkout-spa-input" name="neighborhood" defaultValue={session.neighborhood || ''} />
-                            <p className="checkout-spa-error">{fieldErrors.neighborhood || ''}</p>
-                        </label>
-
-                        <label className="checkout-spa-field">
-                            <span className="checkout-spa-label">Cidade</span>
-                            <input className="checkout-spa-input" name="city" defaultValue={session.city || ''} />
-                            <p className="checkout-spa-error">{fieldErrors.city || ''}</p>
-                        </label>
-
-                        <label className="checkout-spa-field">
-                            <span className="checkout-spa-label">UF</span>
-                            <input
-                                className="checkout-spa-input"
-                                name="state"
-                                defaultValue={session.state || ''}
-                                maxLength={2}
-                                onInput={handleDocumentMask}
-                            />
-                            <p className="checkout-spa-error">{fieldErrors.state || ''}</p>
-                        </label>
-
-                        <input type="hidden" name="recipient_name" defaultValue={session.recipient_name || session.customer_name || ''} />
-                    </div>
+                    {renderDeliveryFields()}
 
                     <div className="checkout-spa-actions">
                         <button
@@ -1925,7 +1998,7 @@ function CheckoutSpaApp() {
                             onClick={() => setStep('identification')}
                             disabled={busyAction === 'delivery'}
                         >
-                            Voltar para identificação
+                            Voltar para identifica??o
                         </button>
 
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'delivery'}>
@@ -2334,7 +2407,7 @@ function CheckoutSpaApp() {
                                         </div>
                                         <div>
                                             <span>Frete</span>
-                                            <strong>{summaryPricing.shipping_total > 0 ? formatCurrency(summaryPricing.shipping_total) : (checkoutLink.free_shipping ? 'Grátis' : 'A calcular')}</strong>
+                                            <strong>{summaryPricing.shipping_total > 0 ? formatCurrency(summaryPricing.shipping_total) : (selectedShippingOption?.name ? 'Grátis' : 'A calcular')}</strong>
                                         </div>
                                         {summaryPricing.discount_total > 0 ? (
                                             <div>
@@ -2466,7 +2539,7 @@ function CheckoutSpaApp() {
                                 ) : (
                                     <div className="checkout-spa-summary-row">
                                         <span>Frete</span>
-                                        <strong>{checkoutLink.free_shipping ? 'Grátis' : 'A calcular'}</strong>
+                                        <strong>{selectedShippingOption?.name ? 'Grátis' : 'A calcular'}</strong>
                                     </div>
                                 )}
 

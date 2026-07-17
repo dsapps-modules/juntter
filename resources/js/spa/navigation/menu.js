@@ -74,6 +74,7 @@ export const navigationByRole = {
             children: [
                 { key: 'checkout.produtos', path: '/seller/products', label: 'Produtos', icon: 'checkout-produtos' },
                 { key: 'checkout.links', path: '/seller/checkout-links', label: 'Links de Checkout', icon: 'checkout-links' },
+                { key: 'checkout.frete', path: '/seller/checkout-links/frete', label: 'Configurar Frete', icon: 'checkout-frete' },
             ],
         },
     ],

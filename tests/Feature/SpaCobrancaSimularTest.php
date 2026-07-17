@@ -30,8 +30,8 @@ class SpaCobrancaSimularTest extends TestCase
         $installmentSelectorSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/PaymentInstallmentSelector.jsx'));
 
         $this->assertStringContainsString("fetch('/api/spa/cobranca/planos'", $pageSource);
-        $this->assertStringContainsString("return String(flag.name ?? '').toUpperCase() !== 'BACEN';", $pageSource);
-        $this->assertStringContainsString("return 'Outros';", $pageSource);
+        $this->assertStringContainsString('normalizeFlags(data.plan?.flags ?? [])', $pageSource);
+        $this->assertStringContainsString('formatFlagLabel(selectedFlag)', $pageSource);
         $this->assertStringContainsString('Bandeira', $pageSource);
         $this->assertStringContainsString('Plano contratado', $pageSource);
         $this->assertStringContainsString('Resultado da simulação', $pageSource);
@@ -39,6 +39,7 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('spa-sim-result-header', $pageSource);
         $this->assertStringContainsString('spa-sim-result-metrics', $pageSource);
         $this->assertStringContainsString('spa-sim-installment-grid', $pageSource);
+        $this->assertStringContainsString('resolveRate(selectedFlag, installments)', $pageSource);
         $this->assertStringContainsString('buildInstallmentOptions(selectedFlag)', $pageSource);
         $this->assertStringContainsString('selectedFlagLabel', $pageSource);
         $this->assertStringContainsString('label="Bandeira"', $pageSource);
@@ -53,15 +54,17 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('ariaLabel =', $installmentSelectorSource);
     }
 
-    public function test_the_shared_payment_simulation_config_contains_the_expected_plan_ranges(): void
+    public function test_the_shared_payment_simulation_config_is_now_snapshot_driven(): void
     {
         $configSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/paymentSimulationConfig.js'));
 
-        $this->assertStringContainsString('Plano Acelerar', $configSource);
-        $this->assertStringContainsString('Plano Turbo', $configSource);
-        $this->assertStringContainsString('Plano Econômico', $configSource);
-        $this->assertStringContainsString('2: 6.53', $configSource);
-        $this->assertStringContainsString('18: 22.79', $configSource);
+        $this->assertStringContainsString('normalizeFlags(flags)', $configSource);
+        $this->assertStringContainsString('formatFlagLabel(flag)', $configSource);
+        $this->assertStringContainsString('buildInstallmentOptions(flag)', $configSource);
+        $this->assertStringContainsString('resolveRate(flag, installmentValue)', $configSource);
         $this->assertStringContainsString('Array.from({ length: 17 }', $configSource);
+        $this->assertStringNotContainsString('Plano Acelerar', $configSource);
+        $this->assertStringNotContainsString('Plano Turbo', $configSource);
+        $this->assertStringNotContainsString('Plano Econômico', $configSource);
     }
 }

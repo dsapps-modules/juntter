@@ -29,6 +29,8 @@ class Order extends Model
         'shipping_total',
         'total',
         'payment_method',
+        'shipping_option_id',
+        'shipping_option_name',
         'success_url_used',
     ];
 
@@ -39,6 +41,7 @@ class Order extends Model
         'discount_total' => 'decimal:2',
         'shipping_total' => 'decimal:2',
         'total' => 'decimal:2',
+        'shipping_option_id' => 'integer',
     ];
 
     public function seller(): BelongsTo
@@ -54,6 +57,11 @@ class Order extends Model
     public function checkoutSession(): BelongsTo
     {
         return $this->belongsTo(CheckoutSession::class);
+    }
+
+    public function shippingOption(): BelongsTo
+    {
+        return $this->belongsTo(CheckoutShippingOption::class, 'shipping_option_id');
     }
 
     public function product(): BelongsTo

@@ -40,6 +40,8 @@ class CheckoutSession extends Model
         'state',
         'recipient_name',
         'payment_method',
+        'shipping_option_id',
+        'shipping_option_name',
         'subtotal',
         'discount_total',
         'shipping_total',
@@ -53,6 +55,7 @@ class CheckoutSession extends Model
         'customer_responsible_birth_date' => 'date',
         'customer_is_state_registration_exempt' => 'boolean',
         'quantity' => 'integer',
+        'shipping_option_id' => 'integer',
         'subtotal' => 'decimal:2',
         'discount_total' => 'decimal:2',
         'shipping_total' => 'decimal:2',
@@ -74,6 +77,11 @@ class CheckoutSession extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function shippingOption(): BelongsTo
+    {
+        return $this->belongsTo(CheckoutShippingOption::class, 'shipping_option_id');
     }
 
     public function orders(): HasMany

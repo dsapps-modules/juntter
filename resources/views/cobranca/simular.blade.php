@@ -44,6 +44,14 @@
                     </div>
                 @endif
 
+                @if(isset($planoContratado) && is_array($planoContratado) && !empty($planoContratado['name'] ?? null))
+                    <div class="alert alert-info border-0 shadow-sm" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Bandeiras e taxas carregadas a partir do plano contratado:
+                        <strong>{{ $planoContratado['name'] }}</strong>
+                    </div>
+                @endif
+
                 <!-- Formulário de simulação -->
                 <form action="{{ route('cobranca.transacao.simular') }}" method="POST" id="formSimularTransacao">
                     @csrf
@@ -73,13 +81,11 @@
                                 <select class="form-select @error('flag_id') is-invalid @enderror" 
                                         id="flag_id" name="flag_id" required>
                                     <option value="">Selecione a bandeira</option>
-                                    <option value="1">Mastercard</option>
-                                    <option value="2">Visa</option>
-                                    <option value="3">Elo</option>
-                                    <option value="4">American Express</option>
-                                    <option value="5">Hiper/Hipercard</option>
-                                    <option value="6">Outras</option>
-                                    <option value="8">Bacen</option>
+                                    @forelse(($simulationFlagOptions ?? []) as $flag)
+                                        <option value="{{ $flag['value'] }}">{{ $flag['label'] }}</option>
+                                    @empty
+                                        <option value="" disabled>Nenhuma bandeira disponível</option>
+                                    @endforelse
                                 </select>
                                 @error('flag_id')
                                     <div class="invalid-feedback">{{ $message }}</div>

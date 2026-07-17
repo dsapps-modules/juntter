@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
+use App\Models\CheckoutShippingOption;
 use App\Models\Order;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -390,7 +391,43 @@ class PublicCheckoutController extends Controller
             'paymentTransaction' => $paymentTransaction,
             'sellerLogoUrl' => $sellerLogoUrl,
             'checkoutPageMode' => $checkoutPageMode,
+            'shippingOptions' => $this->resolveShippingOptions($checkoutLink->seller_id),
         ], $extraData);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveShippingOptions(int $sellerId): array
+    {
+        $shippingOptions = CheckoutShippingOption::query()
+            ->where('seller_id', $sellerId)
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('name')
+            ->get();
+
+        if ($shippingOptions->isEmpty()) {
+            return [[
+                'id' => null,
+                'name' => 'Frete padrão',
+                'price' => 0,
+                'eta_days' => 5,
+                'is_default' => true,
+                'is_active' => true,
+            ]];
+        }
+
+        return $shippingOptions->map(static function (CheckoutShippingOption $shippingOption): array {
+            return [
+                'id' => $shippingOption->id,
+                'name' => $shippingOption->name,
+                'price' => (float) $shippingOption->price,
+                'eta_days' => $shippingOption->eta_days,
+                'is_default' => $shippingOption->is_default,
+                'is_active' => $shippingOption->is_active,
+            ];
+        })->all();
     }
 
     /**

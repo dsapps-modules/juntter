@@ -11,6 +11,7 @@ use App\Mail\SecurityCodeMail;
 use App\Models\PixPayoutRequest;
 use App\Models\User;
 use App\Services\BalanceService;
+use App\Services\PaytimePricingCacheService;
 use App\Services\PixPayoutService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ class CobrancaPixOutController extends Controller
     public function __construct(
         private readonly BalanceService $balanceService,
         private readonly PixPayoutService $pixPayoutService,
+        private readonly PaytimePricingCacheService $pricingCacheService,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -69,7 +71,7 @@ class CobrancaPixOutController extends Controller
             $warnings[] = 'Não foi possível carregar o saldo disponível: '.$throwable->getMessage();
         }
 
-        $feeCents = $this->resolvePayoutFeeCents($balance['available']);
+        $feeCents = $this->pricingCacheService->resolvePixOutFeeCents((string) $establishmentId);
         $availableAfterFee = max(0, $balance['available'] - $feeCents);
 
         $requests = PixPayoutRequest::query()
@@ -246,7 +248,7 @@ class CobrancaPixOutController extends Controller
 
         $amount = $this->convertAmountToCents($request->string('amount')->toString());
         $balance = $this->resolveAvailableBalance((string) $establishmentId);
-        $feeCents = $this->resolvePayoutFeeCents($balance ?? 0);
+        $feeCents = $this->pricingCacheService->resolvePixOutFeeCents((string) $establishmentId);
         $availableAfterFee = $balance !== null ? max(0, $balance - $feeCents) : null;
 
         if ($availableAfterFee !== null && $amount > $availableAfterFee) {
@@ -749,13 +751,6 @@ class CobrancaPixOutController extends Controller
         $hash = $request->confirmation_code_hash;
 
         return is_string($hash) && $hash !== '' && Hash::check($submittedCode, $hash);
-    }
-
-    private function resolvePayoutFeeCents(int $balanceCents): int
-    {
-        $percentage = max(0, (float) config('services.paytime.payout_fee_percent', 1));
-
-        return max(0, (int) round($balanceCents * ($percentage / 100), 0, PHP_ROUND_HALF_UP));
     }
 
     private function resolveMtlsConfigurationIssue(): ?string

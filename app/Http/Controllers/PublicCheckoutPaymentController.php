@@ -98,7 +98,12 @@ class PublicCheckoutPaymentController extends Controller
             );
         }
 
-        $pricing = $this->pricingService->calculate($checkoutLink, $paymentMethod, $checkoutSession->quantity);
+        $pricing = $this->pricingService->calculate(
+            $checkoutLink,
+            $paymentMethod,
+            $checkoutSession->quantity,
+            (float) $checkoutSession->shipping_total
+        );
 
         if (
             $paymentMethod === 'boleto'
@@ -152,6 +157,8 @@ class PublicCheckoutPaymentController extends Controller
             'discount_total' => $pricing['discount_total'],
             'shipping_total' => $pricing['shipping_total'],
             'total' => $pricing['total'],
+            'shipping_option_id' => $checkoutSession->shipping_option_id,
+            'shipping_option_name' => $checkoutSession->shipping_option_name,
             'success_url_used' => $checkoutLink->success_url,
         ]);
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\PublicCheckoutPaymentController;
 use App\Http\Controllers\PublicCheckoutSessionController;
 use App\Http\Controllers\PublicCompanyLogoController;
 use App\Http\Controllers\SellerCheckoutLinkController;
+use App\Http\Controllers\SellerCheckoutShippingController;
 use App\Http\Controllers\SellerClientExportController;
 use App\Http\Controllers\SellerProductController;
 use App\Providers\RouteServiceProvider;
@@ -162,6 +163,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/seller/products/{product}', [SellerProductController::class, 'destroy'])->name('seller.products.destroy');
 
         Route::get('/seller/clients/export', [SellerClientExportController::class, 'export'])->name('seller.clients.export');
+
+        Route::get('/seller/checkout-links/frete', [SellerCheckoutShippingController::class, 'index'])->name('seller.checkout-links.shipping.index');
+        Route::post('/seller/checkout-links/frete', [SellerCheckoutShippingController::class, 'store'])->name('seller.checkout-links.shipping.store');
+        Route::put('/seller/checkout-links/frete/{shippingOption}', [SellerCheckoutShippingController::class, 'update'])->name('seller.checkout-links.shipping.update');
+        Route::delete('/seller/checkout-links/frete/{shippingOption}', [SellerCheckoutShippingController::class, 'destroy'])->name('seller.checkout-links.shipping.destroy');
 
         Route::get('/seller/checkout-links', [SellerCheckoutLinkController::class, 'index'])->name('seller.checkout-links.index');
         Route::post('/seller/checkout-links', [SellerCheckoutLinkController::class, 'store'])->name('seller.checkout-links.store');

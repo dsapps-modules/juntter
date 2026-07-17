@@ -10,6 +10,7 @@ use App\Models\PaytimeTransaction;
 use App\Services\BoletoService;
 use App\Services\CreditoService;
 use App\Services\EstabelecimentoService;
+use App\Services\PaytimePricingCacheService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
 use Illuminate\Http\JsonResponse;
@@ -30,18 +31,22 @@ class CobrancaController extends Controller
 
     protected $estabelecimentoService;
 
+    protected $pricingCacheService;
+
     public function __construct(
         TransacaoService $transacaoService,
         CreditoService $creditoService,
         PixService $pixService,
         BoletoService $boletoService,
-        EstabelecimentoService $estabelecimentoService
+        EstabelecimentoService $estabelecimentoService,
+        PaytimePricingCacheService $pricingCacheService
     ) {
         $this->transacaoService = $transacaoService;
         $this->creditoService = $creditoService;
         $this->pixService = $pixService;
         $this->boletoService = $boletoService;
         $this->estabelecimentoService = $estabelecimentoService;
+        $this->pricingCacheService = $pricingCacheService;
     }
 
     /**
@@ -613,10 +618,18 @@ class CobrancaController extends Controller
     public function simularTransacao(Request $request)
     {
         try {
+            $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+            $simulationFlags = $this->resolveSimulationFlags($estabelecimentoId);
+            $allowedFlagIds = collect($simulationFlags)
+                ->pluck('id')
+                ->filter(fn ($value): bool => is_numeric($value))
+                ->map(fn ($value): int => (int) $value)
+                ->values()
+                ->all();
 
             $dados = $request->validate([
                 'amount' => 'required|string',
-                'flag_id' => 'required|integer|in:1,2,3,4,5,6,8',
+                'flag_id' => $allowedFlagIds !== [] ? 'required|integer|in:'.implode(',', $allowedFlagIds) : 'required|integer|in:1,2,3,4,5,6,8',
                 'interest' => 'required|in:CLIENT,ESTABLISHMENT',
             ]);
 
@@ -880,7 +893,24 @@ class CobrancaController extends Controller
      */
     public function mostrarSimulacao()
     {
-        return view('cobranca.simular');
+        $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+        $planoContratado = null;
+        $simulationFlags = [];
+        $simulationFlagOptions = [];
+
+        if ($estabelecimentoId !== null) {
+            $planoContratado = $this->pricingCacheService->resolveContractedPlan((string) $estabelecimentoId);
+
+            if ($planoContratado === null) {
+                $this->pricingCacheService->syncContractedPlanPricing((string) $estabelecimentoId);
+                $planoContratado = $this->pricingCacheService->resolveContractedPlan((string) $estabelecimentoId);
+            }
+
+            $simulationFlags = $this->resolveSimulationFlags($estabelecimentoId);
+            $simulationFlagOptions = $this->buildSimulationFlagOptions($simulationFlags);
+        }
+
+        return view('cobranca.simular', compact('planoContratado', 'simulationFlags', 'simulationFlagOptions'));
     }
 
     /**
@@ -1146,6 +1176,21 @@ class CobrancaController extends Controller
                 return view('cobranca.planos')->with('error', 'Estabelecimento não encontrado - Usuário: '.(auth()->user()?->id ?? 'não logado'));
             }
 
+            $cachedEstablishment = $this->pricingCacheService->cachedEstablishment((string) $estabelecimentoId);
+
+            if ($cachedEstablishment !== null) {
+                $planoContratado = $this->pricingCacheService->resolveContractedPlan((string) $estabelecimentoId);
+
+                if (is_array($planoContratado) && ! empty(data_get($planoContratado, 'flags', []))) {
+                    $estabelecimento = [
+                        'id' => (string) $cachedEstablishment->id,
+                        'display_name' => $cachedEstablishment->display_name,
+                    ];
+
+                    return view('cobranca.planos', compact('estabelecimento', 'planoContratado'));
+                }
+            }
+
             // Buscar informações do estabelecimento (que deve conter o plano contratado)
             try {
                 $estabelecimento = $this->estabelecimentoService->buscarEstabelecimento($estabelecimentoId);
@@ -1170,15 +1215,12 @@ class CobrancaController extends Controller
                 return $this->isOnlinePlan($plano);
             })->values();
 
-            // Verificar se tem planos ativos e online
             if ($planos->isNotEmpty()) {
-                // Pegar o primeiro plano ativo
                 $planoAtivo = $planos->firstWhere('active', true);
 
                 if ($planoAtivo) {
                     $planoId = $planoAtivo['id'];
 
-                    // Buscar detalhes do plano
                     try {
                         $planoContratado = $this->transacaoService->detalhesPlanoComercial($planoId);
                     } catch (\Exception $e) {
@@ -1201,7 +1243,16 @@ class CobrancaController extends Controller
     public function detalhesPlano($id)
     {
         try {
-            $plano = $this->transacaoService->detalhesPlanoComercial($id);
+            $estabelecimentoId = auth()->user()?->vendedor?->estabelecimento_id;
+            $plano = null;
+
+            if ($estabelecimentoId !== null) {
+                $plano = $this->pricingCacheService->resolveContractedPlan((string) $estabelecimentoId, (int) $id);
+            }
+
+            if ($plano === null) {
+                $plano = $this->transacaoService->detalhesPlanoComercial($id);
+            }
 
             if (! $plano) {
                 return redirect()->route('cobranca.planos')
@@ -1287,6 +1338,79 @@ class CobrancaController extends Controller
         }
 
         return $resultado;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function resolveSimulationFlags(?string $estabelecimentoId): array
+    {
+        if ($estabelecimentoId === null || trim($estabelecimentoId) === '') {
+            return [];
+        }
+
+        $planoContratado = $this->pricingCacheService->resolveContractedPlan((string) $estabelecimentoId);
+
+        if ($planoContratado === null) {
+            return [];
+        }
+
+        $flags = data_get($planoContratado, 'flags', []);
+
+        if (! is_array($flags)) {
+            return [];
+        }
+
+        return collect($flags)
+            ->filter(function (mixed $flag): bool {
+                return is_array($flag)
+                    && is_numeric(data_get($flag, 'id'))
+                    && is_array(data_get($flag, 'fees.credit'))
+                    && strtoupper((string) data_get($flag, 'name', '')) !== 'BACEN';
+            })
+            ->map(function (array $flag): array {
+                if (! isset($flag['parcelas_compactadas']) && isset($flag['fees']['credit']) && is_array($flag['fees']['credit'])) {
+                    $flag['parcelas_compactadas'] = $this->compactarParcelasCredito($flag['fees']['credit']);
+                }
+
+                return $flag;
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $flags
+     * @return array<int, array{value: string, label: string}>
+     */
+    private function buildSimulationFlagOptions(array $flags): array
+    {
+        return collect($flags)
+            ->map(function (array $flag): array {
+                $name = $this->formatSimulationFlagLabel((string) data_get($flag, 'name', ''));
+
+                return [
+                    'value' => (string) data_get($flag, 'id'),
+                    'label' => $name !== '' ? $name : 'Bandeira '.(string) data_get($flag, 'id'),
+                ];
+            })
+            ->all();
+    }
+
+    private function formatSimulationFlagLabel(string $name): string
+    {
+        $normalized = strtoupper(trim($name));
+
+        return match ($normalized) {
+            'MASTERCARD' => 'Mastercard',
+            'VISA' => 'Visa',
+            'ELO' => 'Elo',
+            'AMERICAN EXPRESS' => 'American Express',
+            'HIPER / HIPERCARD', 'HIPER/HIPERCARD' => 'Hiper/Hipercard',
+            'OTHERS' => 'Outras',
+            'BACEN' => 'Bacen',
+            default => $normalized !== '' ? ucwords(strtolower($normalized)) : '',
+        };
     }
 
     /**

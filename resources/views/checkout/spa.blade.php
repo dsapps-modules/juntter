@@ -23,6 +23,7 @@
             'checkoutPageMode' => $checkoutPageMode ?? 'spa',
             'threeDsEnv' => app()->environment('local') ? 'SANDBOX' : 'PROD',
             'currentStep' => $checkoutSession->current_step,
+            'shippingOptions' => $shippingOptions,
             'urls' => [
                 'createSession' => route('checkout.public.session', $checkoutLink->public_token),
                 'identify' => route('checkout.public.identification', $checkoutSession->session_token),

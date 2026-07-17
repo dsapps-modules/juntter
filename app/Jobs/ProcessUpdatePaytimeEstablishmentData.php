@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\PaytimeEstablishment;
+use App\Services\PaytimePricingCacheService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -46,27 +46,7 @@ class ProcessUpdatePaytimeEstablishmentData implements ShouldQueue
             return;
         }
 
-        $attributes = [
-            'type' => $data['type'] ?? null,
-            'first_name' => $data['first_name'] ?? null,
-            'last_name' => $data['last_name'] ?? null,
-            'fantasy_name' => $data['fantasy_name'] ?? null,
-            'document' => $data['document'] ?? null,
-            'email' => $data['email'] ?? null,
-            'phone_number' => $data['phone_number'] ?? null,
-            'active' => $data['active'] ?? true,
-            'status' => $data['status'] ?? null,
-            'risk' => $data['risk'] ?? null,
-            'category' => $data['category'] ?? null,
-            'code' => $data['code'] ?? null,
-            'revenue' => $data['revenue'] ?? null,
-            'address_json' => $data['address'] ?? null,
-            'responsible_json' => $data['responsible'] ?? ($data['representative'] ?? null),
-        ];
-
-        PaytimeEstablishment::query()->updateOrCreate([
-            'id' => (int) $establishmentId,
-        ], $attributes);
+        app(PaytimePricingCacheService::class)->persistPricingSnapshot($data);
 
         Log::info('Estabelecimento atualizado via webhook Paytime', [
             'event' => $event,

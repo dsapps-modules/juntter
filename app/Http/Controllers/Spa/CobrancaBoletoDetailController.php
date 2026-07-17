@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Spa;
 
 use App\Http\Controllers\Controller;
 use App\Services\BoletoService;
+use App\Services\PaytimePricingCacheService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +13,7 @@ class CobrancaBoletoDetailController extends Controller
 {
     public function __construct(
         private readonly BoletoService $boletoService,
+        private readonly PaytimePricingCacheService $pricingCacheService,
     ) {}
 
     public function __invoke(Request $request, string $boleto): JsonResponse
@@ -65,7 +67,7 @@ class CobrancaBoletoDetailController extends Controller
                 'boleto_digitable_line' => data_get($boletoData, 'boleto_digitable_line'),
                 'pix_emv' => data_get($boletoData, 'pix_emv') ?? data_get($boletoData, 'emv'),
                 'billing_instructions' => $this->resolveBillingInstructions($boletoData),
-                'fees_banking' => data_get($boletoData, 'fees_banking', []),
+                'fees_banking' => $this->resolveFeesBanking($boletoData, $establishmentId),
                 'customer' => [
                     'first_name' => $firstName,
                     'last_name' => $lastName,
@@ -164,6 +166,24 @@ class CobrancaBoletoDetailController extends Controller
         }
 
         return $result;
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function resolveFeesBanking(array $boletoData, string|int|null $establishmentId): array
+    {
+        if ($establishmentId !== null && (string) $establishmentId !== '') {
+            $cachedEstablishment = $this->pricingCacheService->cachedEstablishment((string) $establishmentId);
+
+            if ($cachedEstablishment?->fees_banking_json !== null) {
+                return $cachedEstablishment->fees_banking_json;
+            }
+        }
+
+        $feesBanking = data_get($boletoData, 'fees_banking', []);
+
+        return is_array($feesBanking) ? $feesBanking : [];
     }
 
     private function resolveBoletoId(array $boleto): string
