@@ -240,7 +240,7 @@ class LinkPagamentoPixController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Link de pagamento PIX atualizado com sucesso!',
-                    'redirect' => '/app/links-pagamento',
+                    'redirect' => '/app/links-pagamento-pix/'.$linkPagamento->id,
                 ]);
             }
 

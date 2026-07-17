@@ -1,8 +1,6 @@
 import {
-    BankOutlined,
     CreditCardOutlined,
-    EllipsisOutlined,
-    QrcodeOutlined,
+    EyeOutlined,
     ReloadOutlined,
 } from '@ant-design/icons';
 import {
@@ -10,10 +8,9 @@ import {
     Button,
     Card,
     Col,
-    Divider,
     Empty,
     Input,
-    List,
+    Modal,
     Row,
     Segmented,
     Select,
@@ -22,11 +19,9 @@ import {
     Statistic,
     Table,
     Tag,
-    Timeline,
     Typography,
 } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 const defaultPayload = {
     summary: {
@@ -55,11 +50,13 @@ const filters = ['Todos', 'Pagas', 'Pendentes', 'Falhas'];
 
 function getCurrentPeriod() {
     const now = new Date();
+
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function formatPeriodLabel(period) {
     const [year, month] = period.split('-');
+
     return `${month}/${year}`;
 }
 
@@ -78,6 +75,8 @@ export default function CobrancaPage() {
     const [filter, setFilter] = useState('Todos');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
+    const [selectedTransaction, setSelectedTransaction] = useState(null);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -88,7 +87,6 @@ export default function CobrancaPage() {
 
             try {
                 const params = new URLSearchParams();
-
                 params.set('period', selectedPeriod);
 
                 const response = await fetch(`/api/spa/cobranca${params.toString() !== '' ? `?${params.toString()}` : ''}`, {
@@ -161,7 +159,18 @@ export default function CobrancaPage() {
         });
     }, [filter, payload.rows, searchTerm]);
 
-    const selectedRow = visibleRows.find((item) => item.id === payload.selected?.id) ?? visibleRows[0] ?? payload.selected;
+    function openTransactionDetails(record) {
+        setSelectedTransaction(record);
+        setDetailsModalOpen(true);
+        setPayload((current) => ({
+            ...current,
+            selected: record,
+        }));
+    }
+
+    function closeTransactionDetails() {
+        setDetailsModalOpen(false);
+    }
 
     const columns = [
         {
@@ -194,11 +203,29 @@ export default function CobrancaPage() {
             title: 'Criado em',
             dataIndex: 'created_at',
         },
+        {
+            title: '',
+            key: 'actions',
+            render: (_, record) => (
+                <Button
+                    size="middle"
+                    icon={<EyeOutlined />}
+                    className="spa-pix-action-button spa-pix-action-button-view"
+                    onClick={(event) => {
+                        event.stopPropagation();
+                        openTransactionDetails(record);
+                    }}
+                    title="Ver detalhes"
+                    aria-label="Ver detalhes"
+                />
+            ),
+            width: 84,
+        },
     ];
 
     return (
         <Row gutter={[20, 20]} className="spa-board">
-            <Col xs={24} xl={16}>
+            <Col xs={24}>
                 <Row gutter={[20, 20]}>
                     <Col span={24}>
                         <Card className="spa-toolbar-card">
@@ -265,11 +292,11 @@ export default function CobrancaPage() {
                                     pagination={false}
                                     className="spa-table"
                                     onRow={(record) => ({
-                                        onClick: () => setPayload((current) => ({ ...current, selected: record })),
+                                        onClick: () => openTransactionDetails(record),
+                                        style: {
+                                            cursor: 'pointer',
+                                        },
                                     })}
-                                    rowClassName={(record) =>
-                                        record.id === selectedRow?.id ? 'spa-table-row-selected' : ''
-                                    }
                                 />
                             )}
                         </Card>
@@ -277,90 +304,73 @@ export default function CobrancaPage() {
                 </Row>
             </Col>
 
-            <Col xs={24} xl={8}>
-                <Card
-                    className="spa-quick-view-card"
-                    title={payload.seller_name || 'Vendedor'}
-                    extra={<EllipsisOutlined />}
-                >
-                    {!selectedRow ? (
-                        <Empty description="Selecione uma transação para ver detalhes" />
-                    ) : (
-                        <>
-                            <Row gutter={16}>
-                                <Col span={12}>
-                                    <Statistic title="Valor" value={selectedRow.amount} />
-                                </Col>
-                                <Col span={12}>
-                                    <Statistic title="Taxa" value={selectedRow.fee} />
-                                </Col>
-                            </Row>
-
-                            <Divider />
-
-                            <Space direction="vertical" size={10} className="spa-detail-stack">
-                                <Space wrap>
-                                    <Tag color="gold">{selectedRow.type}</Tag>
-                                    <Tag color={selectedRow.status === 'Pago' ? 'green' : 'volcano'}>{selectedRow.status}</Tag>
-                                </Space>
-                                <Typography.Text strong>{selectedRow.customer}</Typography.Text>
-                                <Typography.Text type="secondary">{selectedRow.establishment}</Typography.Text>
-                                <Typography.Text type="secondary">{selectedRow.created_at}</Typography.Text>
-                            </Space>
-
-                            <Divider />
-
-                            <Typography.Title level={4} className="spa-section-title">
-                                Links recentes
-                            </Typography.Title>
-
-                            <List
-                                dataSource={payload.recent_links}
-                                renderItem={(item) => (
-                                    <List.Item className="spa-quick-link-item">
-                                        <Link to="/links-pagamento" className="spa-quick-link">
-                                            <Space align="start" size={14}>
-                                                <div className="spa-quick-link-icon">
-                                                    {item.type === 'PIX' ? <QrcodeOutlined /> : item.type === 'Boleto' ? <BankOutlined /> : <CreditCardOutlined />}
-                                                </div>
-                                                <div>
-                                                    <Typography.Text strong>{item.title}</Typography.Text>
-                                                    <div>
-                                                        <Typography.Text type="secondary">
-                                                            {item.amount} • {item.status}
-                                                        </Typography.Text>
-                                                    </div>
-                                                </div>
-                                            </Space>
-                                        </Link>
-                                    </List.Item>
-                                )}
-                            />
-
-                            <Divider />
-
-                            <Typography.Title level={4} className="spa-section-title">
-                                Atividade
-                            </Typography.Title>
-
-                            <Timeline
-                                items={visibleRows.slice(0, 4).map((item) => ({
-                                    color: item.status === 'Pago' ? 'green' : 'gold',
-                                    children: (
-                                        <div>
-                                            <div>{item.customer}</div>
-                                            <Typography.Text type="secondary">
-                                                {item.type} • {item.created_at}
-                                            </Typography.Text>
-                                        </div>
-                                    ),
-                                }))}
-                                className="spa-timeline"
-                            />
-                        </>
-                    )}
-                </Card>
-            </Col>
+            <Modal
+                open={detailsModalOpen && Boolean(selectedTransaction)}
+                onCancel={closeTransactionDetails}
+                title="Detalhes da transação"
+                footer={[
+                    <Button key="close" onClick={closeTransactionDetails}>
+                        Fechar
+                    </Button>,
+                ]}
+                width={760}
+                className="spa-pix-modal"
+            >
+                {selectedTransaction ? (
+                    <Row gutter={[16, 16]}>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Cliente</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.customer}</Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Estabelecimento</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.establishment}</Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Tipo</Typography.Text>
+                            <div>
+                                <Tag color="cyan">{selectedTransaction.type}</Tag>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Status</Typography.Text>
+                            <div>
+                                <Tag color={selectedTransaction.status === 'Pago' ? 'green' : selectedTransaction.status === 'Falha' ? 'volcano' : 'gold'}>
+                                    {selectedTransaction.status}
+                                </Tag>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Valor</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.amount}</Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Taxa</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.fee}</Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Data</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.created_at}</Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">ID</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.id}</Typography.Text>
+                            </div>
+                        </Col>
+                    </Row>
+                ) : null}
+            </Modal>
         </Row>
     );
 }

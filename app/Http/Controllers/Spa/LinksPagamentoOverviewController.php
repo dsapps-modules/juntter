@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Spa;
 use App\Http\Controllers\Controller;
 use App\Models\LinkPagamento;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class LinksPagamentoOverviewController extends Controller
 {
@@ -19,8 +21,9 @@ class LinksPagamentoOverviewController extends Controller
         }
 
         $establishmentId = $user->getEstabelecimentoId();
+        $selectedPeriod = $this->resolveSelectedPeriod($request->string('period')->toString());
 
-        $linksQuery = LinkPagamento::query()->orderByDesc('created_at');
+        $linksQuery = LinkPagamento::query();
 
         if ($establishmentId !== null) {
             $linksQuery->where('estabelecimento_id', (string) $establishmentId);
@@ -28,7 +31,10 @@ class LinksPagamentoOverviewController extends Controller
             $linksQuery->whereRaw('1 = 0');
         }
 
-        $links = $linksQuery->limit(18)->get();
+        $periods = $this->buildPeriodOptions((clone $linksQuery)->get(['created_at']));
+        $links = $this->applyPeriodFilter($linksQuery, $selectedPeriod)
+            ->orderByDesc('created_at')
+            ->get();
 
         $summary = [
             'total_links' => $links->count(),
@@ -57,6 +63,7 @@ class LinksPagamentoOverviewController extends Controller
                 'return_url' => $link->url_retorno,
                 'webhook_url' => $link->url_webhook,
                 'created_at' => Carbon::parse($link->created_at)->format('d/m/Y H:i'),
+                'created_at_sort' => Carbon::parse($link->created_at)->getTimestamp(),
                 'detail_href' => '/links-pagamento/'.$link->id,
             ];
         });
@@ -85,6 +92,8 @@ class LinksPagamentoOverviewController extends Controller
 
         return response()->json([
             'summary' => $summary,
+            'periods' => $periods,
+            'selected_period' => $selectedPeriod,
             'filters' => ['Todos', 'Ativos', 'Expirados', 'Pagos'],
             'actions' => [
                 ['title' => 'Novo cartão', 'description' => 'Fluxo em Cartão.', 'href' => '/links-pagamento/novo?tipo=CARTAO'],
@@ -96,6 +105,66 @@ class LinksPagamentoOverviewController extends Controller
             'recent_links' => $rows->take(5)->values(),
             'recent_card_links' => $recentCardLinks,
         ]);
+    }
+
+    /**
+     * @return array<int, array{label: string, value: string}>
+     */
+    private function buildPeriodOptions(Collection $links): array
+    {
+        $currentPeriod = Carbon::now()->format('Y-m');
+
+        $availablePeriods = $links
+            ->map(function ($link): string {
+                return Carbon::parse($link->created_at)->format('Y-m');
+            })
+            ->unique()
+            ->sortDesc()
+            ->values();
+
+        return collect([$currentPeriod])
+            ->merge($availablePeriods)
+            ->unique()
+            ->map(function (string $period): array {
+                return [
+                    'label' => Carbon::createFromFormat('Y-m', $period)->format('m/Y'),
+                    'value' => $period,
+                ];
+            })
+            ->prepend([
+                'label' => 'Todos os meses',
+                'value' => 'all',
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function applyPeriodFilter(Builder $query, string $selectedPeriod): Builder
+    {
+        if ($selectedPeriod === 'all') {
+            return $query;
+        }
+
+        $period = Carbon::createFromFormat('Y-m', $selectedPeriod);
+
+        return $query
+            ->whereYear('created_at', $period->year)
+            ->whereMonth('created_at', $period->month);
+    }
+
+    private function resolveSelectedPeriod(string $selectedPeriod): string
+    {
+        if ($selectedPeriod === 'all') {
+            return 'all';
+        }
+
+        try {
+            Carbon::createFromFormat('Y-m', $selectedPeriod);
+        } catch (\Throwable) {
+            return Carbon::now()->format('Y-m');
+        }
+
+        return $selectedPeriod;
     }
 
     private function formatMoney(int $amountInCents): string

@@ -158,7 +158,7 @@ class LinkPagamentoController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Link de pagamento criado com sucesso!',
-                    'redirect' => '/app/links-pagamento',
+                    'redirect' => '/app/links-pagamento/'.$link->id,
                     'link_id' => $link->id,
                 ]);
             }

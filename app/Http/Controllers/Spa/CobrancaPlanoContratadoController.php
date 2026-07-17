@@ -71,7 +71,9 @@ class CobrancaPlanoContratadoController extends Controller
             ]);
         }
 
-        $plans = collect(data_get($estabelecimento, 'plans', []));
+        $plans = collect(data_get($estabelecimento, 'plans', []))
+            ->filter(fn ($plan): bool => $this->isOnlinePlan($plan))
+            ->values();
         $selectedPlan = $this->resolveSelectedPlan($plans, $planoId);
         $plan = $this->resolvePlanDetails($selectedPlan, $planoId);
 
@@ -170,6 +172,10 @@ class CobrancaPlanoContratadoController extends Controller
             return null;
         }
 
+        if (! $this->isOnlinePlan($planDetails)) {
+            return null;
+        }
+
         $active = (bool) data_get($planDetails, 'active', false);
         $allowAnticipation = (bool) data_get($planDetails, 'allow_anticipation', false);
         $modality = data_get($planDetails, 'modality', 'N/A');
@@ -192,6 +198,14 @@ class CobrancaPlanoContratadoController extends Controller
             'categories' => data_get($planDetails, 'categories', []),
             'flags' => data_get($planDetails, 'flags', []),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>|mixed  $plan
+     */
+    private function isOnlinePlan(mixed $plan): bool
+    {
+        return strtoupper((string) data_get($plan, 'modality', '')) === 'ONLINE';
     }
 
     /**

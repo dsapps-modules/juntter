@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\CobrancaController;
 use App\Http\Requests\CobrancaPixRequest;
+use App\Models\PaytimeTransaction;
 use App\Models\User;
 use App\Models\Vendedor;
 use App\Services\BoletoService;
@@ -11,6 +12,7 @@ use App\Services\CreditoService;
 use App\Services\EstabelecimentoService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,8 @@ use Tests\TestCase;
 
 class CobrancaPixControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -87,6 +91,17 @@ class CobrancaPixControllerTest extends TestCase
                 'status' => 'PENDING',
             ],
         ], $response->getData(true));
+
+        $transaction = PaytimeTransaction::query()->where('external_id', 'pix-123')->first();
+
+        $this->assertNotNull($transaction);
+        $this->assertSame('PIX', $transaction->type);
+        $this->assertSame('PENDING', $transaction->status);
+        $this->assertSame(12550, $transaction->amount);
+        $this->assertSame('Maria Silva', $transaction->customer_name);
+        $this->assertSame('123.456.789-09', $transaction->customer_document);
+        $this->assertSame('00020126580014br.gov.bcb.pix...', data_get($transaction->metadata, 'pix.pix_code'));
+        $this->assertSame('data:image/png;base64,ZmFrZQ==', data_get($transaction->metadata, 'pix.qr_code.qrcode'));
     }
 
     public function test_criar_transacao_pix_mantem_redirecionamento_legado_quando_nao_espera_json(): void

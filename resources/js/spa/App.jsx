@@ -27,6 +27,7 @@ import CheckoutProductsPage from './pages/checkout/CheckoutProductsPage';
 import LinkPagamentoDetailPage from './pages/LinkPagamentoDetailPage';
 import LinkPagamentoFormPage from './pages/LinkPagamentoFormPage';
 import LinkPagamentoPixDetailPage from './pages/LinkPagamentoPixDetailPage';
+import LinksPagamentoPage from './pages/LinksPagamentoPage';
 import RecorrenciaPage from './pages/recorrencia/RecorrenciaPage';
 import RecorrenciaPixPage from './pages/recorrencia/RecorrenciaPixPage';
 import RecorrenciaBoletoPage from './pages/recorrencia/RecorrenciaBoletoPage';
@@ -105,6 +106,7 @@ export default function App() {
                         <Route path="recorrencia/pix" element={<RecorrenciaPixPage />} />
                         <Route path="recorrencia/boleto" element={<RecorrenciaBoletoPage />} />
                         <Route path="recorrencia/cartao-credito" element={<RecorrenciaCartaoCreditoPage />} />
+                        <Route path="links-pagamento" element={<LinksPagamentoPage />} />
                         <Route path="links-pagamento/novo" element={<LinkPagamentoFormPage />} />
                         <Route path="links-pagamento/:linkId" element={<LinkPagamentoDetailPage />} />
                         <Route path="links-pagamento-pix/:linkId" element={<LinkPagamentoPixDetailPage />} />

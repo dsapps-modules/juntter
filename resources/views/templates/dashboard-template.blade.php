@@ -84,6 +84,8 @@
                                                     class="fas fa-qrcode me-2"></i>PIX</a></li>
                                         <li><a class="dropdown-item" href="{{ url('/app/links-pagamento/novo?tipo=BOLETO') }}"><i
                                                     class="fas fa-file-invoice me-2"></i>Boleto</a></li>
+                                        <li><a class="dropdown-item" href="{{ url('/app/links-pagamento') }}"><i
+                                                    class="fas fa-link me-2"></i>Links de Pagamento</a></li>
                                     </ul>
                                 </li>
                                 {{-- <li><a class="dropdown-item" href="{{ route('cobranca.recorrente') }}"><i

@@ -349,26 +349,36 @@ class SpaShellTest extends TestCase
         $pixPosition = strpos($navigationSource, 'cobranca.pix');
         $cartaoCreditoPosition = strpos($navigationSource, 'cobranca.cartao-credito');
         $boletoPosition = strpos($navigationSource, 'cobranca.boleto');
+        $linksPagamentoPosition = strpos($navigationSource, 'links-pagamento');
 
         $this->assertNotFalse($historicoPosition);
         $this->assertNotFalse($pixPosition);
         $this->assertNotFalse($cartaoCreditoPosition);
         $this->assertNotFalse($boletoPosition);
+        $this->assertNotFalse($linksPagamentoPosition);
         $this->assertLessThan($pixPosition, $historicoPosition);
         $this->assertLessThan($cartaoCreditoPosition, $pixPosition);
         $this->assertLessThan($boletoPosition, $cartaoCreditoPosition);
+        $this->assertLessThan($linksPagamentoPosition, $boletoPosition);
     }
 
-    public function test_the_links_pagamento_sidebar_item_and_overview_page_were_removed(): void
+    public function test_the_links_pagamento_sidebar_item_and_overview_page_are_available(): void
     {
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
         $appSource = file_get_contents(base_path('resources/js/spa/App.jsx'));
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinksPagamentoPage.jsx'));
 
-        $this->assertStringNotContainsString("label: 'Links de Pagamento'", $navigationSource);
-        $this->assertStringNotContainsString("path: '/links-pagamento'", $navigationSource);
-        $this->assertStringNotContainsString("import LinksPagamentoPage from './pages/LinksPagamentoPage';", $appSource);
-        $this->assertStringNotContainsString('<Route path="links-pagamento" element={<LinksPagamentoPage />} />', $appSource);
-        $this->assertFileDoesNotExist(base_path('resources/js/spa/pages/LinksPagamentoPage.jsx'));
+        $this->assertStringContainsString("label: 'Links de Pagamento'", $navigationSource);
+        $this->assertStringContainsString("path: '/links-pagamento'", $navigationSource);
+        $this->assertStringContainsString("import LinksPagamentoPage from './pages/LinksPagamentoPage';", $appSource);
+        $this->assertStringContainsString('<Route path="links-pagamento" element={<LinksPagamentoPage />} />', $appSource);
+        $this->assertStringContainsString('Links de pagamento do mês', $pageSource);
+        $this->assertStringContainsString('Ver detalhes', $pageSource);
+        $this->assertStringContainsString('Buscar título, descrição, tipo ou status', $pageSource);
+        $this->assertStringNotContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Atalhos', $pageSource);
+        $this->assertStringNotContainsString('Link selecionado', $pageSource);
+        $this->assertStringNotContainsString('Links recentes', $pageSource);
     }
 
     public function test_the_removed_cobranca_sidebar_items_are_not_present(): void
@@ -408,6 +418,7 @@ class SpaShellTest extends TestCase
             '/app/cobranca/planos/123',
             '/app/cobranca/saldoextrato',
             '/app/cobranca/simular',
+            '/app/links-pagamento',
             '/app/links-pagamento/1',
             '/app/links-pagamento-pix/1',
         ] as $path) {
@@ -472,7 +483,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Atalhos', $pageSource);
         $this->assertStringContainsString('Últimos links', $pageSource);
         $this->assertStringContainsString('Criar link PIX', $pageSource);
-        $this->assertStringContainsString('Ver links', $pageSource);
+        $this->assertStringContainsString('Ver links de pagamento', $pageSource);
         $this->assertStringNotContainsString('Atualizar painel', $pageSource);
         $this->assertStringContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
         $this->assertStringContainsString('refreshRecentLinks();', $pageSource);
@@ -526,6 +537,18 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('pinModalOpen', $pageSource);
         $this->assertStringNotContainsString('handleConfirmPin', $pageSource);
         $this->assertStringNotContainsString('Últimas solicitações', $pageSource);
+    }
+
+    public function test_the_cobranca_page_does_not_show_the_quick_view_ellipsis_icon(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/CobrancaPage.jsx'));
+
+        $this->assertStringNotContainsString('EllipsisOutlined', $pageSource);
+        $this->assertStringNotContainsString('extra={<EllipsisOutlined />}', $pageSource);
+        $this->assertStringNotContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Atalhos', $pageSource);
+        $this->assertStringNotContainsString('Links recentes', $pageSource);
+        $this->assertStringNotContainsString('spa-quick-view-card', $pageSource);
     }
 
     public function test_the_pix_page_shows_status_below_the_transaction_date(): void
@@ -651,6 +674,8 @@ class SpaShellTest extends TestCase
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
 
         $this->assertStringContainsString('Voltar', $pageSource);
+        $this->assertStringContainsString('Copiar link', $pageSource);
+        $this->assertStringContainsString('Testar link', $pageSource);
         $this->assertStringContainsString('/cobranca/pix', $pageSource);
         $this->assertStringContainsString('Resumo do link', $pageSource);
         $this->assertStringContainsString('Acoes recomendadas', $pageSource);
@@ -683,9 +708,9 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}`', $pageSource);
     }
 
-    public function test_the_links_pagamento_overview_page_was_removed(): void
+    public function test_the_links_pagamento_overview_page_is_present(): void
     {
-        $this->assertFileDoesNotExist(base_path('resources/js/spa/pages/LinksPagamentoPage.jsx'));
+        $this->assertFileExists(base_path('resources/js/spa/pages/LinksPagamentoPage.jsx'));
     }
 
     public function test_the_cobranca_route_is_available(): void

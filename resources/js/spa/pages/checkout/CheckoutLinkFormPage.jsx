@@ -382,6 +382,14 @@ export default function CheckoutLinkFormPage() {
         };
     }
 
+    function handleProductChange(productId) {
+        const product = products.find((item) => item.id === productId);
+
+        form.setFieldsValue({
+            unit_price: formatCurrencyInput(product?.price ?? 0),
+        });
+    }
+
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
@@ -438,6 +446,7 @@ export default function CheckoutLinkFormPage() {
                                                 label: product.name,
                                             }))}
                                             placeholder="Selecione um produto"
+                                            onChange={handleProductChange}
                                         />
                                     </Form.Item>
                                 </Col>
@@ -557,27 +566,64 @@ export default function CheckoutLinkFormPage() {
                                 </Col>
                             </Row>
 
-                            <Row gutter={16}>
-                                <Col xs={24} md={8}>
-                                    <Form.Item
-                                        label="Imagem do produto"
-                                        extra="Envie uma imagem quadrada de 250x250 px, preferencialmente."
+                            <Row gutter={16} align="stretch">
+                                <Col xs={24} lg={8}>
+                                    <div
+                                        className="h-full rounded-xl border border-slate-200 bg-slate-50 p-4"
+                                        style={{ boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)' }}
                                     >
-                                        <input
-                                            accept="image/*"
-                                            type="file"
-                                            onChange={handleProductImageChange}
-                                        />
-                                        {productImagePreviewUrl ? (
-                                            <div style={{ marginTop: 12 }}>
-                                                <img
-                                                    alt="Pré-visualização da imagem do produto"
-                                                    src={productImagePreviewUrl}
-                                                    style={{ borderRadius: 12, display: 'block', height: 96, objectFit: 'cover', width: 96 }}
+                                        <Form.Item
+                                            className="mb-0"
+                                            label="Imagem Original"
+                                            extra="Esta imagem vem do cadastro do produto e não pode ser alterada nesta tela."
+                                        >
+                                            {selectedProduct?.image_url ? (
+                                                <div className="flex items-center gap-4">
+                                                    <img
+                                                        alt={`Imagem original de ${selectedProduct.name}`}
+                                                        src={selectedProduct.image_url}
+                                                        style={{ borderRadius: 12, display: 'block', height: 112, objectFit: 'cover', width: 112 }}
+                                                    />
+                                                    <div>
+                                                        <Typography.Text strong>{selectedProduct.name}</Typography.Text>
+                                                        <Typography.Paragraph className="mb-0" type="secondary">
+                                                            Somente leitura nesta página.
+                                                        </Typography.Paragraph>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <Input readOnly value="Sem imagem original cadastrada" />
+                                            )}
+                                        </Form.Item>
+                                    </div>
+                                </Col>
+                                <Col xs={24} lg={16}>
+                                    <div
+                                        className="h-full rounded-xl border border-slate-200 bg-white p-4"
+                                        style={{ boxShadow: '0 1px 2px rgba(15, 23, 42, 0.04)' }}
+                                    >
+                                        <Form.Item
+                                            className="mb-0"
+                                            label="Imagem alternativa do produto"
+                                            extra="Envie uma imagem quadrada de 250x250 px, preferencialmente."
+                                        >
+                                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                                                <input
+                                                    accept="image/*"
+                                                    data-legacy-label="Imagem do produto"
+                                                    type="file"
+                                                    onChange={handleProductImageChange}
                                                 />
+                                                {productImagePreviewUrl ? (
+                                                    <img
+                                                        alt="Pré-visualização da imagem alternativa do produto"
+                                                        src={productImagePreviewUrl}
+                                                        style={{ borderRadius: 12, display: 'block', height: 112, objectFit: 'cover', width: 112 }}
+                                                    />
+                                                ) : null}
                                             </div>
-                                        ) : null}
-                                    </Form.Item>
+                                        </Form.Item>
+                                    </div>
                                 </Col>
                             </Row>
 

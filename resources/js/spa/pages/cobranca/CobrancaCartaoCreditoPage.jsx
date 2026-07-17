@@ -1192,7 +1192,7 @@ export default function CobrancaCartaoCreditoPage() {
                                         Criar link de cartão
                                     </Button>
                                     <Button block onClick={() => navigate('/links-pagamento')}>
-                                        Ver links
+                                        Ver links de pagamento
                                     </Button>
                                     <Button block onClick={() => refreshOverview()}>
                                         Atualizar painel

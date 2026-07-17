@@ -76,6 +76,8 @@ class CobrancaOverviewController extends Controller
 
         $rows = $transactions->map(function (PaytimeTransaction $transaction) use ($user): array {
             $establishmentName = $transaction->establishment?->display_name;
+            $metadata = is_array($transaction->metadata) ? $transaction->metadata : [];
+            $pixData = data_get($metadata, 'pix', []);
 
             if ($establishmentName === null && $user->vendedor && $user->vendedor->estabelecimento_id !== null) {
                 $establishmentName = $user->vendedor->estabelecimento_id;
@@ -93,6 +95,8 @@ class CobrancaOverviewController extends Controller
                 'fee' => $this->formatMoney((int) $transaction->fees),
                 'customer' => $transaction->customer_name ?? 'Cliente',
                 'establishment' => $establishmentName ?? 'Estabelecimento',
+                'pix_code' => data_get($pixData, 'pix_code'),
+                'qr_code' => data_get($pixData, 'qr_code'),
                 'created_at_sort' => Carbon::parse($transaction->created_at)->getTimestamp(),
                 'created_at' => Carbon::parse($transaction->created_at)->format('d/m/Y H:i'),
                 'raw_status' => $transaction->status,

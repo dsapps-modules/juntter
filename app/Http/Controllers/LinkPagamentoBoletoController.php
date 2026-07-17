@@ -129,7 +129,7 @@ class LinkPagamentoBoletoController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Link de pagamento Boleto criado com sucesso!',
-                    'redirect' => '/app/links-pagamento',
+                    'redirect' => '/app/links-pagamento/'.$link->id,
                     'link_id' => $link->id,
                 ]);
             }
@@ -271,7 +271,7 @@ class LinkPagamentoBoletoController extends Controller
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Link de pagamento Boleto atualizado com sucesso!',
-                    'redirect' => '/app/links-pagamento',
+                    'redirect' => '/app/links-pagamento/'.$linkPagamento->id,
                 ]);
             }
 

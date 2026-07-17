@@ -27,9 +27,9 @@ class SpaCobrancaPixOutTest extends TestCase
                 return ($filters['extra_headers']['establishment_id'] ?? null) === '5001';
             }))
             ->willReturn([
-                'balance' => 25000,
-                'blocked_balance' => 500,
-                'total_balance' => 25500,
+                'balance' => 9401,
+                'blocked_balance' => 0,
+                'total_balance' => 9401,
             ]);
 
         $this->app->instance(BalanceService::class, $balanceService);
@@ -38,10 +38,10 @@ class SpaCobrancaPixOutTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('balance.available_label', 'R$ 250,00')
-            ->assertJsonPath('balance.blocked_label', 'R$ 5,00')
-            ->assertJsonPath('fee.label', 'R$ 0,29')
-            ->assertJsonPath('available_after_fee.label', 'R$ 249,71')
+            ->assertJsonPath('balance.available_label', 'R$ 94,01')
+            ->assertJsonPath('balance.blocked_label', 'R$ 0,00')
+            ->assertJsonPath('fee.label', 'R$ 0,94')
+            ->assertJsonPath('available_after_fee.label', 'R$ 93,07')
             ->assertJsonPath('seller_email', $user->email)
             ->assertJsonPath('electronic_signature.configured', false);
     }
@@ -168,7 +168,8 @@ class SpaCobrancaPixOutTest extends TestCase
             ->assertJsonPath('payout_request.status', 'awaiting_confirmation')
             ->assertJsonPath('payout_request.init_id', 'E13935893202604281747Y3pL5YlGFRs')
             ->assertJsonPath('review.amount_label', 'R$ 100,00')
-            ->assertJsonPath('review.fee_label', 'R$ 0,29');
+            ->assertJsonPath('review.fee_label', 'R$ 5,00')
+            ->assertJsonPath('review.available_after_fee_label', 'R$ 495,00');
 
         Mail::assertSent(SecurityCodeMail::class, function (SecurityCodeMail $mail): bool {
             return $mail->purpose === 'confirmação do envio PIX';

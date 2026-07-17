@@ -12,7 +12,7 @@ class LinksPagamentoOverviewTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_links_pagamento_overview_returns_links_in_descending_order_for_pix_filtering(): void
+    public function test_links_pagamento_overview_returns_monthly_links_for_all_payment_types(): void
     {
         $user = User::factory()->create([
             'nivel_acesso' => 'vendedor',
@@ -26,7 +26,9 @@ class LinksPagamentoOverviewTest extends TestCase
             'must_change_password' => false,
         ]);
 
-        LinkPagamento::create([
+        $now = Carbon::now();
+
+        LinkPagamento::forceCreate([
             'estabelecimento_id' => '5001',
             'codigo_unico' => 'link_card_new',
             'descricao' => 'Cartão recente',
@@ -36,45 +38,67 @@ class LinksPagamentoOverviewTest extends TestCase
             'juros' => 'CLIENT',
             'status' => 'ATIVO',
             'tipo_pagamento' => 'CARTAO',
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
-        LinkPagamento::create([
+        LinkPagamento::forceCreate([
+            'estabelecimento_id' => '5001',
+            'codigo_unico' => 'link_boleto_new',
+            'descricao' => 'Boleto recente',
+            'valor' => 200.00,
+            'valor_centavos' => 20000,
+            'parcelas' => [1],
+            'juros' => 'CLIENT',
+            'status' => 'ATIVO',
+            'tipo_pagamento' => 'BOLETO',
+            'created_at' => $now->copy()->subMinute(),
+            'updated_at' => $now->copy()->subMinute(),
+        ]);
+
+        LinkPagamento::forceCreate([
             'estabelecimento_id' => '5001',
             'codigo_unico' => 'link_pix_recent',
-            'descricao' => 'Pix criado com a finalidade de testar a geração de Link de pagamento no checkout Juntter.',
+            'descricao' => 'Pix recente',
             'valor' => 105.00,
             'valor_centavos' => 10500,
             'parcelas' => [1],
             'juros' => 'CLIENT',
-            'status' => 'ATIVO',
+            'status' => 'PAID',
             'tipo_pagamento' => 'PIX',
-            'created_at' => Carbon::now()->subMinute(),
-            'updated_at' => Carbon::now()->subMinute(),
+            'created_at' => $now->copy()->subMinutes(2),
+            'updated_at' => $now->copy()->subMinutes(2),
         ]);
 
-        LinkPagamento::create([
+        LinkPagamento::forceCreate([
             'estabelecimento_id' => '5001',
             'codigo_unico' => 'link_pix_old',
-            'descricao' => 'Energia Elétrica - Residência',
+            'descricao' => 'Pix fora do mês atual',
             'valor' => 100.00,
             'valor_centavos' => 10000,
             'parcelas' => [1],
             'juros' => 'CLIENT',
             'status' => 'ATIVO',
             'tipo_pagamento' => 'PIX',
-            'created_at' => Carbon::now()->subMinutes(2),
-            'updated_at' => Carbon::now()->subMinutes(2),
+            'created_at' => $now->copy()->subYear(),
+            'updated_at' => $now->copy()->subYear(),
         ]);
 
-        $response = $this->actingAs($user)->getJson('/api/spa/links-pagamento');
+        $response = $this->actingAs($user)->getJson('/api/spa/links-pagamento?period='.$now->format('Y-m'));
 
         $response
             ->assertOk()
-            ->assertJsonCount(3, 'recent_links')
+            ->assertJsonPath('selected_period', $now->format('Y-m'))
+            ->assertJsonPath('summary.total_links', 3)
+            ->assertJsonPath('summary.card_links', 1)
+            ->assertJsonPath('summary.pix_links', 1)
+            ->assertJsonPath('summary.boleto_links', 1)
+            ->assertJsonPath('summary.paid_links', 1)
+            ->assertJsonPath('rows.0.code', 'link_card_new')
+            ->assertJsonPath('rows.1.code', 'link_boleto_new')
+            ->assertJsonPath('rows.2.code', 'link_pix_recent')
             ->assertJsonPath('recent_links.0.raw_type', 'CARTAO')
-            ->assertJsonPath('recent_links.1.raw_type', 'PIX')
+            ->assertJsonPath('recent_links.1.raw_type', 'BOLETO')
             ->assertJsonPath('recent_links.2.raw_type', 'PIX');
     }
 }

@@ -582,6 +582,42 @@ export default function CobrancaPixPage() {
         }
     }
 
+    function getTransactionPixCode(record) {
+        return record?.pix_code || record?.qr_code?.emv || '';
+    }
+
+    function getTransactionQrImage(record) {
+        return record?.qr_code?.qrcode || '';
+    }
+
+    async function copyTransactionPixCode() {
+        const pixCode = getTransactionPixCode(selectedTransaction);
+
+        if (!pixCode) {
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(pixCode);
+            message.success('Código Pix copiado.');
+        } catch (error) {
+            message.error('Não foi possível copiar o código Pix.');
+        }
+    }
+
+    function downloadTransactionQrCode() {
+        const qrCode = getTransactionQrImage(selectedTransaction);
+
+        if (!qrCode) {
+            return;
+        }
+
+        const link = document.createElement('a');
+        link.href = qrCode;
+        link.download = 'qrcode-pix.png';
+        link.click();
+    }
+
     async function cancelTransaction(record) {
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -693,6 +729,9 @@ export default function CobrancaPixPage() {
     function closeResultModal() {
         setResultModalOpen(false);
     }
+
+    const selectedTransactionPixCode = getTransactionPixCode(selectedTransaction);
+    const selectedTransactionQrImage = getTransactionQrImage(selectedTransaction);
 
     return (
         <Row gutter={[20, 20]} className="spa-board spa-pix-board">
@@ -924,7 +963,7 @@ export default function CobrancaPixPage() {
                                         Criar link PIX
                                     </Button>
                                     <Button block onClick={() => navigate('/links-pagamento')}>
-                                        Ver links
+                                        Ver links de pagamento
                                     </Button>
                                 </Space>
                             </Card>
@@ -1242,6 +1281,50 @@ export default function CobrancaPixPage() {
                                 <Typography.Text strong>{selectedTransaction.fee}</Typography.Text>
                             </div>
                         </Col>
+                        {selectedTransaction.kind === 'transaction' ? (
+                            <>
+                                <Col xs={24}>
+                                    <Divider />
+                                </Col>
+                                <Col xs={24} md={10}>
+                                    <Typography.Text type="secondary">QR Code</Typography.Text>
+                                    <div style={{ marginTop: 8 }}>
+                                        {selectedTransactionQrImage ? (
+                                            <img
+                                                src={selectedTransactionQrImage}
+                                                alt="QR Code Pix"
+                                                style={{ width: '100%', maxWidth: 220, display: 'block' }}
+                                            />
+                                        ) : (
+                                            <Empty description="QR Code indisponível" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                                        )}
+                                    </div>
+                                    {selectedTransactionQrImage ? (
+                                        <Space style={{ marginTop: 12 }} wrap>
+                                            <Button icon={<DownloadOutlined />} onClick={downloadTransactionQrCode}>
+                                                Baixar QR Code
+                                            </Button>
+                                        </Space>
+                                    ) : null}
+                                </Col>
+                                <Col xs={24} md={14}>
+                                    <Typography.Text type="secondary">Pix copia e cola</Typography.Text>
+                                    <div style={{ marginTop: 8 }}>
+                                        <Input
+                                            value={selectedTransactionPixCode}
+                                            readOnly
+                                            size="large"
+                                            onFocus={copyTransactionPixCode}
+                                        />
+                                    </div>
+                                    <Space style={{ marginTop: 12 }} wrap>
+                                        <Button icon={<CopyOutlined />} onClick={copyTransactionPixCode} disabled={!selectedTransactionPixCode}>
+                                            Copiar código
+                                        </Button>
+                                    </Space>
+                                </Col>
+                            </>
+                        ) : null}
                     </Row>
                 ) : null}
             </Modal>

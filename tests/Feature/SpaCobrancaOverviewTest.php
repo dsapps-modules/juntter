@@ -308,4 +308,45 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonPath('rows.0.type', 'PIX')
             ->assertJsonPath('rows.0.customer', 'Cliente Pix');
     }
+
+    public function test_cobranca_overview_exposes_pix_qr_data_for_pending_transactions(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Test User',
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        PaytimeTransaction::create([
+            'external_id' => 'trx-pix-pending',
+            'establishment_id' => '5001',
+            'type' => 'PIX',
+            'status' => 'PENDING',
+            'amount' => 12550,
+            'original_amount' => 12550,
+            'fees' => 0,
+            'customer_name' => 'Maria Silva',
+            'customer_document' => '123.456.789-09',
+            'metadata' => [
+                'pix' => [
+                    'transaction_id' => 'trx-pix-pending',
+                    'pix_code' => '00020126580014br.gov.bcb.pix...',
+                    'qr_code' => [
+                        'qrcode' => 'data:image/png;base64,ZmFrZQ==',
+                        'emv' => '00020126580014br.gov.bcb.pix...',
+                    ],
+                ],
+            ],
+            'created_at' => Carbon::now()->startOfMonth()->addDays(2)->setTime(14, 30),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca?period='.Carbon::now()->format('Y-m'));
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('rows.0.status', 'Pendente')
+            ->assertJsonPath('rows.0.pix_code', '00020126580014br.gov.bcb.pix...')
+            ->assertJsonPath('rows.0.qr_code.qrcode', 'data:image/png;base64,ZmFrZQ==');
+    }
 }

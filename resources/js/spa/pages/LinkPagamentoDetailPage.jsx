@@ -328,6 +328,21 @@ export default function LinkPagamentoDetailPage() {
                             </div>
 
                             <Space wrap>
+                                <Button
+                                    type="primary"
+                                    icon={<CopyOutlined />}
+                                    onClick={() => copyText(link.url_completa)}
+                                    disabled={!link.url_completa}
+                                >
+                                    Copiar link
+                                </Button>
+                                <Button
+                                    icon={<ThunderboltOutlined />}
+                                    onClick={() => window.open(link.url_completa, '_blank', 'noopener,noreferrer')}
+                                    disabled={!link.url_completa}
+                                >
+                                    Testar link
+                                </Button>
                                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/links-pagamento')}>
                                     Voltar
                                 </Button>

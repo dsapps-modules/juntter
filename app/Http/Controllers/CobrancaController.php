@@ -6,6 +6,7 @@ use App\Http\Requests\BoletoRequest;
 use App\Http\Requests\CobrancaCartaoRequest;
 use App\Http\Requests\CobrancaPixRequest;
 use App\Models\LinkPagamento;
+use App\Models\PaytimeTransaction;
 use App\Services\BoletoService;
 use App\Services\CreditoService;
 use App\Services\EstabelecimentoService;
@@ -383,6 +384,8 @@ class CobrancaController extends Controller
                 'status' => $transacao['status'] ?? null,
             ];
 
+            $this->persistPixTransaction($request, $transacao, $qrCode, $filteredPixData);
+
             return $this->respondPixSuccess($request, 'Transação PIX criada com sucesso!', $filteredPixData);
         } catch (\Exception $e) {
             Log::error('Erro ao criar transação PIX', ['error' => $e->getMessage(), 'user_id' => auth()->id()]);
@@ -433,6 +436,57 @@ class CobrancaController extends Controller
     private function shouldReturnJson(Request $request): bool
     {
         return $request->expectsJson() || $request->ajax();
+    }
+
+    /**
+     * Persiste a cobrança PIX localmente para que ela fique disponível na listagem.
+     *
+     * @param  array<string, mixed>  $transacao
+     * @param  array<string, mixed>|null  $qrCode
+     * @param  array<string, mixed>  $pixData
+     */
+    private function persistPixTransaction(Request $request, array $transacao, ?array $qrCode, array $pixData): void
+    {
+        $externalId = $transacao['_id'] ?? null;
+
+        if (! is_string($externalId) || trim($externalId) === '') {
+            return;
+        }
+
+        $validated = method_exists($request, 'validated') ? $request->validated() : [];
+        $client = is_array(data_get($validated, 'client')) ? data_get($validated, 'client') : [];
+        $customerName = trim(implode(' ', array_filter([
+            is_string(data_get($client, 'first_name')) ? data_get($client, 'first_name') : null,
+            is_string(data_get($client, 'last_name')) ? data_get($client, 'last_name') : null,
+        ])));
+        $customerDocument = data_get($client, 'document');
+        $status = strtoupper((string) ($transacao['status'] ?? 'PENDING'));
+        $amount = (int) ($transacao['amount'] ?? 0);
+
+        PaytimeTransaction::query()->updateOrCreate(
+            ['external_id' => $externalId],
+            [
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
+                'type' => 'PIX',
+                'status' => $status !== '' ? $status : 'PENDING',
+                'amount' => $amount,
+                'original_amount' => $amount,
+                'fees' => (int) ($transacao['fees'] ?? 0),
+                'installments' => 1,
+                'customer_name' => $customerName !== '' ? $customerName : null,
+                'customer_document' => is_string($customerDocument) && trim($customerDocument) !== '' ? $customerDocument : null,
+                'metadata' => [
+                    'pix' => [
+                        'transaction_id' => $externalId,
+                        'pix_code' => $pixData['pix_code'] ?? null,
+                        'qr_code' => $qrCode,
+                    ],
+                    'request' => [
+                        'info_additional' => data_get($validated, 'info_additional'),
+                    ],
+                ],
+            ],
+        );
     }
 
     /**
@@ -1112,11 +1166,14 @@ class CobrancaController extends Controller
 
             // Se o estabelecimento tem um plano contratado, buscar detalhes do plano
             $planoContratado = null;
+            $planos = collect($estabelecimento['plans'] ?? [])->filter(function ($plano): bool {
+                return $this->isOnlinePlan($plano);
+            })->values();
 
-            // Verificar se tem planos ativos
-            if (isset($estabelecimento['plans']) && is_array($estabelecimento['plans']) && count($estabelecimento['plans']) > 0) {
+            // Verificar se tem planos ativos e online
+            if ($planos->isNotEmpty()) {
                 // Pegar o primeiro plano ativo
-                $planoAtivo = collect($estabelecimento['plans'])->firstWhere('active', true);
+                $planoAtivo = $planos->firstWhere('active', true);
 
                 if ($planoAtivo) {
                     $planoId = $planoAtivo['id'];
@@ -1149,6 +1206,11 @@ class CobrancaController extends Controller
             if (! $plano) {
                 return redirect()->route('cobranca.planos')
                     ->with('error', 'Plano não encontrado.');
+            }
+
+            if (! $this->isOnlinePlan($plano)) {
+                return redirect()->route('cobranca.planos')
+                    ->with('error', 'Plano indisponível na modalidade online.');
             }
 
             // Compactar parcelas de crédito para cada bandeira
@@ -1225,6 +1287,14 @@ class CobrancaController extends Controller
         }
 
         return $resultado;
+    }
+
+    /**
+     * @param  array<string, mixed>|mixed  $plano
+     */
+    private function isOnlinePlan(mixed $plano): bool
+    {
+        return strtoupper((string) data_get($plano, 'modality', '')) === 'ONLINE';
     }
 
     // Autenticar transação com 3DS

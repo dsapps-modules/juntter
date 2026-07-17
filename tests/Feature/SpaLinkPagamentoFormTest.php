@@ -36,7 +36,7 @@ class SpaLinkPagamentoFormTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertJsonPath('redirect', '/app/links-pagamento');
+            ->assertJsonPath('redirect', '/app/links-pagamento/'.$response->json('link_id'));
 
         $this->assertDatabaseHas('links_pagamento', [
             'estabelecimento_id' => '7001',

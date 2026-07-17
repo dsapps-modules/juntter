@@ -69,7 +69,7 @@ class CobrancaPixOutController extends Controller
             $warnings[] = 'Não foi possível carregar o saldo disponível: '.$throwable->getMessage();
         }
 
-        $feeCents = $this->resolvePayoutFeeCents();
+        $feeCents = $this->resolvePayoutFeeCents($balance['available']);
         $availableAfterFee = max(0, $balance['available'] - $feeCents);
 
         $requests = PixPayoutRequest::query()
@@ -246,7 +246,7 @@ class CobrancaPixOutController extends Controller
 
         $amount = $this->convertAmountToCents($request->string('amount')->toString());
         $balance = $this->resolveAvailableBalance((string) $establishmentId);
-        $feeCents = $this->resolvePayoutFeeCents();
+        $feeCents = $this->resolvePayoutFeeCents($balance ?? 0);
         $availableAfterFee = $balance !== null ? max(0, $balance - $feeCents) : null;
 
         if ($availableAfterFee !== null && $amount > $availableAfterFee) {
@@ -352,7 +352,7 @@ class CobrancaPixOutController extends Controller
         return response()->json([
             'message' => 'Solicitação iniciada. Agora confirme com o código recebido por e-mail.',
             'payout_request' => $this->normalizeRequest($freshRequest),
-            'review' => $this->buildTransactionReview($user, $freshRequest, $response, $availableAfterFee),
+            'review' => $this->buildTransactionReview($user, $freshRequest, $response, $availableAfterFee, $feeCents),
         ]);
     }
 
@@ -591,15 +591,15 @@ class CobrancaPixOutController extends Controller
         return $payload;
     }
 
-    private function buildTransactionReview(User $user, PixPayoutRequest $request, array $response, ?int $availableAfterFee): array
+    private function buildTransactionReview(User $user, PixPayoutRequest $request, array $response, ?int $availableAfterFee, int $feeCents): array
     {
         $keyType = $this->resolvePixKeyTypeLabel($request->pix_key_type);
 
         return [
             'amount' => $request->amount,
             'amount_label' => $this->formatMoney((int) $request->amount),
-            'fee_cents' => $this->resolvePayoutFeeCents(),
-            'fee_label' => $this->formatMoney($this->resolvePayoutFeeCents()),
+            'fee_cents' => $feeCents,
+            'fee_label' => $this->formatMoney($feeCents),
             'available_after_fee' => $availableAfterFee,
             'available_after_fee_label' => $this->formatMoney($availableAfterFee ?? 0),
             'receiver' => [
@@ -751,9 +751,11 @@ class CobrancaPixOutController extends Controller
         return is_string($hash) && $hash !== '' && Hash::check($submittedCode, $hash);
     }
 
-    private function resolvePayoutFeeCents(): int
+    private function resolvePayoutFeeCents(int $balanceCents): int
     {
-        return max(0, (int) config('services.paytime.payout_fee_cents', 29));
+        $percentage = max(0, (float) config('services.paytime.payout_fee_percent', 1));
+
+        return max(0, (int) round($balanceCents * ($percentage / 100), 0, PHP_ROUND_HALF_UP));
     }
 
     private function resolveMtlsConfigurationIssue(): ?string
