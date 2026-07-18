@@ -129,10 +129,10 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('checkout-spa-step-card--payment-note', $source);
         $this->assertStringContainsString("const creditCardMethod = methods.find((method) => method.value === 'credit_card');", $source);
         $this->assertStringContainsString('if (creditCardMethod) {', $source);
-        $this->assertStringContainsString("if (defaultPaymentMethod === 'credit_card')", $source);
+        $this->assertStringContainsString('return creditCardMethod.value;', $source);
         $this->assertStringContainsString('checkout-spa-payment-method-links', $source);
-        $this->assertStringContainsString("handleChoosePaymentMethod('pix')", $source);
-        $this->assertStringContainsString("handleChoosePaymentMethod('boleto')", $source);
+        $this->assertStringContainsString("method.value === 'pix'", $source);
+        $this->assertStringContainsString("method.value === 'boleto'", $source);
         $this->assertStringNotContainsString("<h3>{pixMethod ? 'Pix' : 'Boleto'}</h3>", $source);
         $this->assertStringNotContainsString('Voltar para identificação', $source);
         $this->assertStringNotContainsString('Voltar para endereço', $source);
@@ -171,6 +171,7 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-input,[\s\S]*?height: 45px;[\s\S]*?padding: 16px 14px 4px;[\s\S]*?font-size: 13px;/', $styles);
         $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?gap: 24px;/', $styles);
         $this->assertStringContainsString('margin-top: -130px;', $styles);
+        $this->assertStringContainsString('margin-left: 2px;', $styles);
         $this->assertStringContainsString('padding: 25px clamp(34px, 4vw, 68px);', $styles);
         $this->assertMatchesRegularExpression('/@media \(max-width: 640px\) \{[\s\S]*?\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?gap: 16px;/', $styles);
         $this->assertStringContainsString('@media (max-width: 640px)', $styles);

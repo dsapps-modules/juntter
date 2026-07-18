@@ -355,11 +355,7 @@ function resolveInitialStep(config, defaultPaymentMethod, paymentMethodsCount) {
     }
 
     if (currentStep === 'payment') {
-        if (defaultPaymentMethod === 'credit_card') {
-            return 'payment-details';
-        }
-
-        return paymentMethodsCount <= 1 && defaultPaymentMethod ? 'payment-details' : 'payment-method';
+        return 'payment-details';
     }
 
     return 'identification';
@@ -972,6 +968,24 @@ function CheckoutSpaApp() {
         );
     }
 
+    function renderPaymentMethodShortcut(method, imageSrc, label) {
+        return (
+            <button
+                type="button"
+                className="checkout-spa-link-button checkout-spa-link-button--payment-method"
+                onClick={() => {
+                    void handleChoosePaymentMethod(method);
+                }}
+                disabled={busyAction === 'payment-method'}
+                aria-label={`Selecionar ${label}`}
+                title={label}
+            >
+                <img className="checkout-spa-link-button__icon" src={imageSrc} alt="" aria-hidden="true" />
+                <span className="checkout-spa-link-button__label">{label}</span>
+            </button>
+        );
+    }
+
     async function syncQuantity(nextQuantity, previousQuantity) {
         if (!config?.urls?.quantity || !canEditQuantity) {
             return;
@@ -1214,7 +1228,7 @@ function CheckoutSpaApp() {
     }
 
     function handleGoToPreviousPaymentStep() {
-        setStep(isEssentialTheme ? 'identification' : (showDeliveryStep ? 'delivery' : 'identification'));
+        setStep(showDeliveryStep ? 'delivery' : 'identification');
     }
 
     async function handlePaymentSubmit(event) {
@@ -2215,38 +2229,37 @@ function CheckoutSpaApp() {
         );
     }
 
-    function renderPaymentMethodLinks() {
-        if (!selectedPaymentMethod || selectedPaymentMethod !== 'credit_card') {
+    function renderPaymentMethodLinks(currentMethod) {
+        if (!currentMethod || allowedMethods.length <= 1) {
+            return null;
+        }
+
+        const shortcuts = allowedMethods
+            .filter((method) => method.value !== currentMethod)
+            .map((method) => {
+                if (method.value === 'credit_card') {
+                    return { ...method, imageSrc: '/img/payment/logo-credit-card.png', label: 'cartão' };
+                }
+
+                if (method.value === 'pix') {
+                    return { ...method, imageSrc: '/img/payment/logo-pix.png', label: 'pix' };
+                }
+
+                if (method.value === 'boleto') {
+                    return { ...method, imageSrc: '/img/payment/logo-boleto.jpg', label: 'boleto' };
+                }
+
+                return null;
+            })
+            .filter(Boolean);
+
+        if (shortcuts.length === 0) {
             return null;
         }
 
         return (
             <div className="checkout-spa-payment-method-links" aria-label="Outras formas de pagamento">
-                {allowedMethods.some((method) => method.value === 'pix') ? (
-                    <button
-                        type="button"
-                        className="checkout-spa-link-button checkout-spa-link-button--secondary checkout-spa-link-button--delivery-alternate"
-                        onClick={() => {
-                            void handleChoosePaymentMethod('pix');
-                        }}
-                        disabled={busyAction === 'payment-method'}
-                    >
-                        Pix
-                    </button>
-                ) : null}
-
-                {allowedMethods.some((method) => method.value === 'boleto') ? (
-                    <button
-                        type="button"
-                        className="checkout-spa-link-button checkout-spa-link-button--secondary checkout-spa-link-button--delivery-alternate"
-                        onClick={() => {
-                            void handleChoosePaymentMethod('boleto');
-                        }}
-                        disabled={busyAction === 'payment-method'}
-                    >
-                        Boleto
-                    </button>
-                ) : null}
+                {shortcuts.map((shortcut) => renderPaymentMethodShortcut(shortcut.value, shortcut.imageSrc, shortcut.label))}
             </div>
         );
     }
@@ -2256,10 +2269,10 @@ function CheckoutSpaApp() {
             return null;
         }
 
-        const method = selectedMethod?.value || defaultPaymentMethod;
-        if (!method && allowedMethods.length > 1) {
-            return renderPaymentSelection();
-        }
+        const method = selectedMethod?.value
+            || defaultPaymentMethod
+            || allowedMethods[0]?.value
+            || '';
         const cardMethod = method === 'credit_card';
         const boletoMethod = method === 'boleto';
         const pixMethod = method === 'pix';
@@ -2359,7 +2372,7 @@ function CheckoutSpaApp() {
                     </div>
                 ) : null}
 
-                    {cardMethod ? renderPaymentMethodLinks() : null}
+                    {renderPaymentMethodLinks(method)}
 
                     <div className="checkout-spa-actions checkout-spa-actions--split">
                         <button

@@ -829,14 +829,34 @@
 
 .checkout-spa-link-button {
     align-self: flex-start;
-    padding: 0;
-    border: 0;
-    background: transparent;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 92px;
+    padding: 12px 14px 10px;
+    border: 1px solid rgba(124, 77, 255, 0.14);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.9);
     color: #7c4dff;
     font: inherit;
     font-weight: 700;
-    text-align: left;
+    text-align: center;
     cursor: pointer;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.checkout-spa-link-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: rgba(124, 77, 255, 0.28);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+}
+
+.checkout-spa-link-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .checkout-spa-link-button--delivery-alternate {
@@ -848,10 +868,30 @@
     color: #7c4dff;
 }
 
+.checkout-spa-link-button--payment-method {
+    color: #1f2937;
+}
+
+.checkout-spa-link-button__icon {
+    display: block;
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.checkout-spa-link-button__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    line-height: 1;
+    text-transform: lowercase;
+    color: #667085;
+}
+
 .checkout-spa-payment-method-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 14px;
     margin-top: 16px;
 }
 
@@ -1045,6 +1085,7 @@
     min-width: 0;
     min-height: 100vh;
     margin-top: -130px;
+    margin-left: 2px;
     padding: 25px clamp(34px, 4vw, 68px);
     box-sizing: border-box;
     background: #f7f8fa;
