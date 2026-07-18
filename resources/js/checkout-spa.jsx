@@ -274,6 +274,12 @@ function resolvePaymentMethods(checkoutLink) {
 function resolveDefaultPaymentMethod(checkoutLink) {
     const methods = resolvePaymentMethods(checkoutLink);
 
+    const creditCardMethod = methods.find((method) => method.value === 'credit_card');
+
+    if (creditCardMethod) {
+        return creditCardMethod.value;
+    }
+
     if (methods.length === 1) {
         return methods[0].value;
     }
@@ -349,6 +355,10 @@ function resolveInitialStep(config, defaultPaymentMethod, paymentMethodsCount) {
     }
 
     if (currentStep === 'payment') {
+        if (defaultPaymentMethod === 'credit_card') {
+            return 'payment-details';
+        }
+
         return paymentMethodsCount <= 1 && defaultPaymentMethod ? 'payment-details' : 'payment-method';
     }
 
@@ -1083,13 +1093,15 @@ function CheckoutSpaApp() {
                 return;
             }
 
-            if (allowedMethods.length === 1) {
-                setSelectedPaymentMethod(allowedMethods[0].value);
-                setStep('payment-details');
-                return;
+            const nextPaymentMethod = allowedMethods.some((method) => method.value === 'credit_card')
+                ? 'credit_card'
+                : (allowedMethods[0]?.value || defaultPaymentMethod || '');
+
+            if (nextPaymentMethod) {
+                setSelectedPaymentMethod(nextPaymentMethod);
             }
 
-            setStep('payment-method');
+            setStep('payment-details');
         } catch (error) {
             if (error.status === 422 && error.payload?.errors) {
                 setFieldErrors(mapErrors(error.payload.errors));
@@ -1140,13 +1152,15 @@ function CheckoutSpaApp() {
                 message: response.message || 'Endereço salvo com sucesso.',
             });
 
-            if (allowedMethods.length === 1) {
-                setSelectedPaymentMethod(allowedMethods[0].value);
-                setStep('payment-details');
-                return;
+            const nextPaymentMethod = allowedMethods.some((method) => method.value === 'credit_card')
+                ? 'credit_card'
+                : (allowedMethods[0]?.value || defaultPaymentMethod || '');
+
+            if (nextPaymentMethod) {
+                setSelectedPaymentMethod(nextPaymentMethod);
             }
 
-            setStep('payment-method');
+            setStep('payment-details');
         } catch (error) {
             if (error.status === 422 && error.payload?.errors) {
                 setFieldErrors(mapErrors(error.payload.errors));
@@ -1200,11 +1214,6 @@ function CheckoutSpaApp() {
     }
 
     function handleGoToPreviousPaymentStep() {
-        if (step === 'payment-details' && allowedMethods.length > 1 && config?.urls?.choosePaymentMethod) {
-            setStep('payment-method');
-            return;
-        }
-
         setStep(isEssentialTheme ? 'identification' : (showDeliveryStep ? 'delivery' : 'identification'));
     }
 
@@ -2106,7 +2115,7 @@ function CheckoutSpaApp() {
                         </section>
                     ) : null}
 
-                    <div className="checkout-spa-actions">
+                    <div className="checkout-spa-actions checkout-spa-actions--split">
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'identification'}>
                             {busyAction === 'identification'
                                 ? 'Salvando...'
@@ -2133,14 +2142,14 @@ function CheckoutSpaApp() {
                 <form className="checkout-spa-form" data-checkout-form="delivery" onSubmit={handleDeliverySubmit}>
                     {renderDeliverySummaryAndShipping()}
 
-                    <div className="checkout-spa-actions">
+                    <div className="checkout-spa-actions checkout-spa-actions--split">
                         <button
                             className="checkout-spa-button is-secondary"
                             type="button"
                             onClick={() => setStep('identification')}
                             disabled={busyAction === 'delivery'}
                         >
-                            Voltar para identificação
+                            Voltar
                         </button>
 
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'delivery'}>
@@ -2199,10 +2208,46 @@ function CheckoutSpaApp() {
                         type="button"
                         onClick={handleGoToPreviousPaymentStep}
                     >
-                        {showDeliveryStep ? 'Voltar para endereço' : 'Voltar'}
+                        Voltar
                     </button>
                 </div>
             </section>
+        );
+    }
+
+    function renderPaymentMethodLinks() {
+        if (!selectedPaymentMethod || selectedPaymentMethod !== 'credit_card') {
+            return null;
+        }
+
+        return (
+            <div className="checkout-spa-payment-method-links" aria-label="Outras formas de pagamento">
+                {allowedMethods.some((method) => method.value === 'pix') ? (
+                    <button
+                        type="button"
+                        className="checkout-spa-link-button checkout-spa-link-button--secondary checkout-spa-link-button--delivery-alternate"
+                        onClick={() => {
+                            void handleChoosePaymentMethod('pix');
+                        }}
+                        disabled={busyAction === 'payment-method'}
+                    >
+                        Pix
+                    </button>
+                ) : null}
+
+                {allowedMethods.some((method) => method.value === 'boleto') ? (
+                    <button
+                        type="button"
+                        className="checkout-spa-link-button checkout-spa-link-button--secondary checkout-spa-link-button--delivery-alternate"
+                        onClick={() => {
+                            void handleChoosePaymentMethod('boleto');
+                        }}
+                        disabled={busyAction === 'payment-method'}
+                    >
+                        Boleto
+                    </button>
+                ) : null}
+            </div>
         );
     }
 
@@ -2314,6 +2359,8 @@ function CheckoutSpaApp() {
                     </div>
                 ) : null}
 
+                    {cardMethod ? renderPaymentMethodLinks() : null}
+
                     <div className="checkout-spa-actions checkout-spa-actions--split">
                         <button
                             className="checkout-spa-button is-secondary"
@@ -2321,7 +2368,7 @@ function CheckoutSpaApp() {
                             onClick={handleGoToPreviousPaymentStep}
                             disabled={busyAction === 'payment'}
                         >
-                            {allowedMethods.length > 1 && config?.urls?.choosePaymentMethod ? 'Voltar aos métodos' : (showDeliveryStep ? 'Voltar para endereço' : 'Voltar')}
+                            Voltar
                         </button>
 
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'payment'}>

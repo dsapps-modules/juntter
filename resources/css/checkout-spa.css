@@ -31,7 +31,8 @@
 .checkout-spa-header {
     display: flex;
     align-items: flex-end;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 24px;
     margin-bottom: 24px;
     padding: 20px 22px 18px;
@@ -170,7 +171,8 @@
 .checkout-spa-section-head {
     display: flex;
     align-items: flex-start;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 18px;
     margin-bottom: 20px;
     padding-bottom: 18px;
@@ -319,16 +321,16 @@
 }
 
 .checkout-spa-actions--split {
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
 }
 
 .checkout-spa-actions--split .checkout-spa-button {
-    flex: 1 1 220px;
+    width: 100%;
 }
 
 .checkout-spa-actions--split .checkout-spa-button.is-primary {
-    margin-left: auto;
 }
 
 .checkout-spa-button {
@@ -502,6 +504,10 @@
 .checkout-spa-step-card--payment-details {
     border-top: 0;
     padding-top: 0;
+}
+
+.checkout-spa-step-card--payment-details .checkout-spa-section-title {
+    font-size: clamp(1.44rem, 2vw, 2.16rem);
 }
 
 .checkout-spa-step-card--payment-note {
@@ -840,6 +846,13 @@
 
 .checkout-spa-link-button--secondary {
     color: #7c4dff;
+}
+
+.checkout-spa-payment-method-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
 }
 
 .checkout-spa-shipping-section {
@@ -1971,8 +1984,12 @@
         grid-template-columns: 1fr;
     }
 
-    .checkout-spa-actions--split .checkout-spa-button {
-        flex-basis: 100%;
+    .checkout-spa-field-grid.is-two-columns > .checkout-spa-field {
+        grid-column: 1 / -1;
+    }
+
+    .checkout-spa-actions--split {
+        grid-template-columns: 1fr;
     }
 
     .checkout-spa-section-head {

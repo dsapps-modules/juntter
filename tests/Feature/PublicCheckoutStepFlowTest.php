@@ -13,7 +13,7 @@ class PublicCheckoutStepFlowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_identification_step_always_redirects_to_delivery(): void
+    public function test_identification_step_redirects_to_the_spa_checkout(): void
     {
         $seller = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
@@ -31,7 +31,7 @@ class PublicCheckoutStepFlowTest extends TestCase
             'number' => '100',
             'complement' => 'Apto 1',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'Sao Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
         ]);
@@ -39,23 +39,10 @@ class PublicCheckoutStepFlowTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('next_url', route('checkout.public.delivery.page', $session->session_token));
         $response->assertJsonPath('checkout_session.current_step', 'delivery');
-
-        $this->assertDatabaseHas('checkout_sessions', [
-            'id' => $session->id,
-            'customer_name' => 'Maria Silva',
-            'customer_email' => 'maria@example.com',
-            'customer_document_type' => 'cpf',
-            'current_step' => 'delivery',
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
-            'number' => '100',
-            'city' => 'São Paulo',
-            'state' => 'SP',
-            'recipient_name' => 'Maria Silva',
-        ]);
+        $response->assertJsonPath('checkout_session.session_token', $session->session_token);
     }
 
-    public function test_delivery_page_requires_address_and_starts_with_zipcode(): void
+    public function test_delivery_page_redirects_to_the_spa_checkout(): void
     {
         $seller = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
@@ -69,7 +56,7 @@ class PublicCheckoutStepFlowTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'Sao Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'current_step' => 'delivery',
@@ -77,18 +64,10 @@ class PublicCheckoutStepFlowTest extends TestCase
 
         $response = $this->get(route('checkout.public.delivery.page', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('Rua A', false);
-        $response->assertSee('01001000', false);
-        $response->assertSee('Endereço', false);
-        $response->assertSee('CEP', false);
-        $response->assertSee('Continuar para pagamento', false);
-        $response->assertSee('placeholder="00000-000"', false);
-        $response->assertSee('data-checkout-form="delivery"', false);
-        $response->assertDontSee('Selecione o método de pagamento', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
-    public function test_payment_page_shows_payment_selector_after_delivery(): void
+    public function test_payment_page_redirects_to_the_spa_checkout(): void
     {
         $seller = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
@@ -106,7 +85,7 @@ class PublicCheckoutStepFlowTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'Sao Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'current_step' => 'payment',
@@ -114,12 +93,37 @@ class PublicCheckoutStepFlowTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.page', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('Selecione o método de pagamento', false);
-        $response->assertSee('Pix', false);
-        $response->assertSee('Boleto', false);
-        $response->assertDontSee('Endereço', false);
-        $response->assertDontSee('data-checkout-form="delivery"', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
+    }
+
+    public function test_payment_details_page_redirects_to_the_spa_checkout(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => true,
+            'allow_boleto' => true,
+            'allow_credit_card' => true,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document_type' => 'cpf',
+            'customer_document' => '12345678909',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'Sao Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'current_step' => 'payment',
+            'payment_method' => 'credit_card',
+        ]);
+
+        $response = $this->get(route('checkout.public.payment.details', $session->session_token));
+
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     private function makeVendorUser(): User

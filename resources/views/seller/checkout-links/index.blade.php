@@ -5,7 +5,7 @@
     <h1>Links de checkout</h1>
     <ul>
         @foreach($links as $link)
-            <li>{{ $link->name }} - {{ route('checkout.public.show', $link->public_token) }}</li>
+            <li>{{ $link->name }} - {{ route('checkout.public.spa.show', $link->public_token) }}</li>
         @endforeach
     </ul>
 </body>

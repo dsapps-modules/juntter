@@ -71,7 +71,7 @@ class SellerCheckoutLinkController extends Controller
             return response()->json([
                 'message' => 'Link de checkout criado com sucesso.',
                 'checkout_link' => $checkoutLink,
-                'public_url' => route('checkout.public.show', $checkoutLink->public_token),
+                'public_url' => route('checkout.public.spa.show', $checkoutLink->public_token),
             ], 201);
         }
 

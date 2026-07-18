@@ -16,7 +16,7 @@ class PublicCheckoutController extends Controller
 {
     public function show(Request $request, string $publicToken): View|\Illuminate\Http\Response|RedirectResponse
     {
-        return $this->renderCheckoutPage($request, $publicToken, 'details');
+        return redirect()->route('checkout.public.spa.show', $publicToken);
     }
 
     public function showSpa(Request $request, string $publicToken): View|\Illuminate\Http\Response|RedirectResponse
@@ -50,23 +50,10 @@ class PublicCheckoutController extends Controller
         }
 
         if ($checkoutSession->current_step === 'identification') {
-            return redirect()->route('checkout.public.show', $checkoutLink->public_token);
+            return redirect()->route('checkout.public.spa.show', $checkoutLink->public_token);
         }
 
-        if ($checkoutSession->current_step === 'payment') {
-            return filled($checkoutSession->payment_method)
-                ? redirect()->route('checkout.public.payment.details', $checkoutSession->session_token)
-                : redirect()->route('checkout.public.payment.page', $checkoutSession->session_token);
-        }
-
-        return view('checkout.public', $this->buildCheckoutViewData(
-            checkoutLink: $checkoutLink,
-            checkoutSession: $checkoutSession,
-            order: $order,
-            paymentTransaction: $paymentTransaction,
-            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
-            checkoutPageMode: 'delivery',
-        ));
+        return redirect()->route('checkout.public.spa.show', $checkoutLink->public_token);
     }
 
     public function paymentPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
@@ -95,21 +82,14 @@ class PublicCheckoutController extends Controller
         }
 
         if ($checkoutSession->current_step === 'identification') {
-            return redirect()->route('checkout.public.show', $checkoutLink->public_token);
+            return redirect()->route('checkout.public.spa.show', $checkoutLink->public_token);
         }
 
         if ($checkoutSession->current_step === 'delivery') {
             return redirect()->route('checkout.public.delivery.page', $checkoutSession->session_token);
         }
 
-        return view('checkout.public', $this->buildCheckoutViewData(
-            checkoutLink: $checkoutLink,
-            checkoutSession: $checkoutSession,
-            order: $order,
-            paymentTransaction: $paymentTransaction,
-            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
-            checkoutPageMode: 'payment-selector',
-        ));
+        return redirect()->route('checkout.public.spa.show', $checkoutLink->public_token);
     }
 
     public function paymentDetailsPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
@@ -141,14 +121,7 @@ class PublicCheckoutController extends Controller
             return redirect()->route('checkout.public.payment.page', $checkoutSession->session_token);
         }
 
-        return view('checkout.public', $this->buildCheckoutViewData(
-            checkoutLink: $checkoutLink,
-            checkoutSession: $checkoutSession,
-            order: $order,
-            paymentTransaction: $paymentTransaction,
-            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
-            checkoutPageMode: 'payment-details',
-        ));
+        return redirect()->route('checkout.public.spa.show', $checkoutLink->public_token);
     }
 
     private function renderCheckoutPage(Request $request, string $publicToken, string $checkoutPageMode): View|\Illuminate\Http\Response|RedirectResponse
