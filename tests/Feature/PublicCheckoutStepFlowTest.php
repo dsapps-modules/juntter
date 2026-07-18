@@ -26,6 +26,14 @@ class PublicCheckoutStepFlowTest extends TestCase
             'customer_document' => '12345678909',
             'customer_phone' => '11999999999',
             'customer_birth_date' => '1990-01-01',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
         ]);
 
         $response->assertOk();
@@ -38,6 +46,12 @@ class PublicCheckoutStepFlowTest extends TestCase
             'customer_email' => 'maria@example.com',
             'customer_document_type' => 'cpf',
             'current_step' => 'delivery',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
         ]);
     }
 
@@ -51,12 +65,21 @@ class PublicCheckoutStepFlowTest extends TestCase
             'customer_document_type' => 'cpf',
             'customer_document' => '12345678909',
             'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
             'current_step' => 'delivery',
         ]);
 
         $response = $this->get(route('checkout.public.delivery.page', $session->session_token));
 
         $response->assertOk();
+        $response->assertSee('Rua A', false);
+        $response->assertSee('01001000', false);
         $response->assertSee('Endereço', false);
         $response->assertSee('CEP', false);
         $response->assertSee('Continuar para pagamento', false);
@@ -122,7 +145,7 @@ class PublicCheckoutStepFlowTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto '.random_int(1, 9999),
             'slug' => 'produto-'.random_int(1, 9999),
-            'description' => 'Descricao do produto',
+            'description' => 'Descrição do produto',
             'short_description' => 'Resumo',
             'sku' => 'SKU-'.random_int(1, 9999),
             'price' => 100.00,
@@ -181,6 +204,14 @@ class PublicCheckoutStepFlowTest extends TestCase
             'city' => null,
             'state' => null,
             'recipient_name' => null,
+            'delivery_zipcode' => null,
+            'delivery_street' => null,
+            'delivery_number' => null,
+            'delivery_complement' => null,
+            'delivery_neighborhood' => null,
+            'delivery_city' => null,
+            'delivery_state' => null,
+            'delivery_recipient_name' => null,
             'payment_method' => null,
             'subtotal' => 100.00,
             'discount_total' => 0,

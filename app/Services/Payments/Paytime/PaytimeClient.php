@@ -259,15 +259,7 @@ class PaytimeClient
                 'email' => (string) $order->customer_email,
                 'phone' => $this->normalizeDigits((string) $order->customer_phone),
                 'document' => $this->normalizeDigits((string) $order->customer_document),
-                'address' => [
-                    'street' => (string) ($checkoutSession->street ?? ''),
-                    'number' => (string) ($checkoutSession->number ?? ''),
-                    'complement' => (string) ($checkoutSession->complement ?? ''),
-                    'neighborhood' => (string) ($checkoutSession->neighborhood ?? ''),
-                    'city' => (string) ($checkoutSession->city ?? ''),
-                    'state' => (string) ($checkoutSession->state ?? ''),
-                    'zip_code' => $this->normalizeDigits((string) ($checkoutSession->zipcode ?? '')),
-                ],
+                'address' => $this->resolveShippingAddress($order),
             ],
             'instruction' => [
                 'booklet' => false,
@@ -292,16 +284,7 @@ class PaytimeClient
         $customerName = trim((string) $order->customer_name);
         [$firstName, $lastName] = $this->splitName($customerName);
         $establishmentId = $this->resolveEstablishmentId($order);
-        $checkoutSession = $order->checkoutSession;
-        $address = [
-            'street' => (string) ($checkoutSession?->street ?? ''),
-            'number' => (string) ($checkoutSession?->number ?? ''),
-            'complement' => (string) ($checkoutSession?->complement ?? ''),
-            'neighborhood' => (string) ($checkoutSession?->neighborhood ?? ''),
-            'city' => (string) ($checkoutSession?->city ?? ''),
-            'state' => (string) ($checkoutSession?->state ?? ''),
-            'zip_code' => $this->normalizeDigits((string) ($checkoutSession?->zipcode ?? '')),
-        ];
+        $address = $this->resolveShippingAddress($order);
         $card = $cardData['card'] ?? [];
         $installments = (int) ($cardData['installments'] ?? 1);
 
@@ -375,6 +358,24 @@ class PaytimeClient
         }
 
         return $establishmentId;
+    }
+
+    /**
+     * @return array{street: string, number: string, complement: string, neighborhood: string, city: string, state: string, zip_code: string}
+     */
+    private function resolveShippingAddress(Order $order): array
+    {
+        $checkoutSession = $order->checkoutSession;
+
+        return [
+            'street' => (string) ($order->delivery_street ?: $checkoutSession?->delivery_street ?: $checkoutSession?->street ?: ''),
+            'number' => (string) ($order->delivery_number ?: $checkoutSession?->delivery_number ?: $checkoutSession?->number ?: ''),
+            'complement' => (string) ($order->delivery_complement ?: $checkoutSession?->delivery_complement ?: $checkoutSession?->complement ?: ''),
+            'neighborhood' => (string) ($order->delivery_neighborhood ?: $checkoutSession?->delivery_neighborhood ?: $checkoutSession?->neighborhood ?: ''),
+            'city' => (string) ($order->delivery_city ?: $checkoutSession?->delivery_city ?: $checkoutSession?->city ?: ''),
+            'state' => (string) ($order->delivery_state ?: $checkoutSession?->delivery_state ?: $checkoutSession?->state ?: ''),
+            'zip_code' => $this->normalizeDigits((string) ($order->delivery_zipcode ?: $checkoutSession?->delivery_zipcode ?: $checkoutSession?->zipcode ?: '')),
+        ];
     }
 
     private function toCents(float|string|int $value): int

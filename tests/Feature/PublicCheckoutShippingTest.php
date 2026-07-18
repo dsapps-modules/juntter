@@ -49,23 +49,23 @@ class PublicCheckoutShippingTest extends TestCase
         $response->assertSee('checkout-spa-data', false);
         $this->assertNotFalse($source);
         $this->assertStringContainsString('function renderShippingSelector()', $source);
-        $this->assertStringContainsString('function renderDeliveryFields()', $source);
+        $this->assertStringContainsString('function renderResidentialAddressForm()', $source);
+        $this->assertStringContainsString('function renderDeliveryAddressFields()', $source);
+        $this->assertStringContainsString('function renderDeliverySummaryAndShipping()', $source);
         $this->assertStringContainsString('checkout-spa-shipping-grid', $source);
         $this->assertStringContainsString('checkout-spa-delivery-summary', $source);
-        $this->assertStringContainsString('Sua entrega', $source);
         $this->assertStringContainsString('checkout-spa-link-button', $source);
+        $this->assertStringContainsString('+ Alterar endereço de entrega', $source);
+        $this->assertStringContainsString('Usar endereço cadastrado', $source);
+        $this->assertStringContainsString('Endereço do comprador', $source);
+        $this->assertStringContainsString('Endereço de entrega', $source);
+        $this->assertStringContainsString('checkout-spa-essential-delivery-section', $source);
     }
 
-    public function test_saving_delivery_persists_the_selected_shipping_option(): void
+    public function test_saving_delivery_persists_the_selected_shipping_option_and_keeps_billing_address_separate(): void
     {
         $seller = $this->makeVendorUser();
         $product = $this->makeProduct($seller);
-        $defaultOption = $this->makeShippingOption($seller, [
-            'name' => 'Frete padrão',
-            'price' => 0,
-            'eta_days' => 5,
-            'is_default' => true,
-        ]);
         $expressOption = $this->makeShippingOption($seller, [
             'name' => 'Frete expresso',
             'price' => 19.90,
@@ -79,31 +79,46 @@ class PublicCheckoutShippingTest extends TestCase
             'customer_document_type' => 'cpf',
             'customer_document' => '12345678909',
             'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'complement' => 'Apto 1',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
             'current_step' => 'delivery',
             'subtotal' => 100.00,
             'total' => 100.00,
         ]);
 
         $response = $this->postJson(route('checkout.public.delivery', $session->session_token), [
-            'zipcode' => '01001000',
-            'street' => 'Rua do Teste',
-            'number' => '100',
-            'complement' => 'Apto 12',
-            'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
-            'state' => 'SP',
-            'recipient_name' => 'Maria Silva',
+            'delivery_zipcode' => '01310100',
+            'delivery_street' => 'Avenida Paulista',
+            'delivery_number' => '1500',
+            'delivery_complement' => 'Conjunto 12',
+            'delivery_neighborhood' => 'Bela Vista',
+            'delivery_city' => 'São Paulo',
+            'delivery_state' => 'SP',
+            'delivery_recipient_name' => 'Maria Silva',
             'shipping_option_id' => $expressOption->id,
         ]);
 
         $response->assertOk();
         $response->assertJsonPath('checkout_session.shipping_option_id', $expressOption->id);
         $response->assertJsonPath('checkout_session.shipping_option_name', 'Frete expresso');
+        $response->assertJsonPath('checkout_session.zipcode', '01001000');
+        $response->assertJsonPath('checkout_session.delivery_zipcode', '01310100');
 
         $freshSession = $session->fresh();
+        $this->assertSame('01001000', $freshSession->zipcode);
+        $this->assertSame('Rua A', $freshSession->street);
+        $this->assertSame('01310100', $freshSession->delivery_zipcode);
+        $this->assertSame('Avenida Paulista', $freshSession->delivery_street);
         $this->assertSame((float) $expressOption->price, (float) $freshSession->shipping_total);
         $this->assertSame('Frete expresso', $freshSession->shipping_option_name);
         $this->assertSame(119.9, (float) $freshSession->total);
+
         $this->assertDatabaseHas('checkout_events', [
             'checkout_session_id' => $session->id,
             'event_type' => 'delivery_completed',
@@ -192,6 +207,14 @@ class PublicCheckoutShippingTest extends TestCase
             'city' => null,
             'state' => null,
             'recipient_name' => null,
+            'delivery_zipcode' => null,
+            'delivery_street' => null,
+            'delivery_number' => null,
+            'delivery_complement' => null,
+            'delivery_neighborhood' => null,
+            'delivery_city' => null,
+            'delivery_state' => null,
+            'delivery_recipient_name' => null,
             'payment_method' => null,
             'shipping_option_id' => null,
             'shipping_option_name' => null,

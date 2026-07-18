@@ -207,10 +207,19 @@ class PublicCheckoutSessionController extends Controller
             'customer_document_type' => $request->input('customer_document_type'),
             'customer_phone' => $request->input('customer_phone'),
             'customer_birth_date' => $request->input('customer_birth_date'),
+            'zipcode' => $request->input('zipcode'),
+            'street' => $request->input('street'),
+            'number' => $request->input('number'),
+            'complement' => $request->input('complement'),
+            'neighborhood' => $request->input('neighborhood'),
+            'city' => $request->input('city'),
+            'state' => $request->input('state'),
+            'recipient_name' => filled($request->input('recipient_name'))
+                ? $request->input('recipient_name')
+                : $recipientName,
             'customer_company_name' => $request->input('customer_company_name'),
             'customer_responsible_document' => $request->input('customer_responsible_document'),
             'customer_responsible_birth_date' => $request->input('customer_responsible_birth_date'),
-            'recipient_name' => $recipientName,
             'status' => 'identification_completed',
             'current_step' => 'delivery',
             'last_activity_at' => now(),
@@ -236,7 +245,7 @@ class PublicCheckoutSessionController extends Controller
     {
         $checkoutSession = $this->findSession($sessionToken);
         $checkoutLink = CheckoutLink::query()->findOrFail($checkoutSession->checkout_link_id);
-        $recipientName = $request->input('recipient_name');
+        $recipientName = $request->input('delivery_recipient_name');
         $shippingOption = $this->resolveShippingOption($checkoutLink, $request->input('shipping_option_id'));
 
         if (blank($recipientName)) {
@@ -246,13 +255,14 @@ class PublicCheckoutSessionController extends Controller
         $shippingTotal = round((float) $shippingOption['price'], 2);
 
         $checkoutSession->update([
-            'zipcode' => $request->input('zipcode'),
-            'street' => $request->input('street'),
-            'number' => $request->input('number'),
-            'complement' => $request->input('complement'),
-            'neighborhood' => $request->input('neighborhood'),
-            'city' => $request->input('city'),
-            'state' => $request->input('state'),
+            'delivery_zipcode' => $request->input('delivery_zipcode'),
+            'delivery_street' => $request->input('delivery_street'),
+            'delivery_number' => $request->input('delivery_number'),
+            'delivery_complement' => $request->input('delivery_complement'),
+            'delivery_neighborhood' => $request->input('delivery_neighborhood'),
+            'delivery_city' => $request->input('delivery_city'),
+            'delivery_state' => $request->input('delivery_state'),
+            'delivery_recipient_name' => $recipientName,
             'recipient_name' => $recipientName,
             'shipping_option_id' => $shippingOption['id'],
             'shipping_option_name' => $shippingOption['name'],
@@ -270,6 +280,13 @@ class PublicCheckoutSessionController extends Controller
             'event_type' => 'delivery_completed',
             'step' => 'delivery',
             'metadata' => array_merge($request->validated(), [
+                'billing_zipcode' => $checkoutSession->zipcode,
+                'billing_street' => $checkoutSession->street,
+                'billing_number' => $checkoutSession->number,
+                'billing_complement' => $checkoutSession->complement,
+                'billing_neighborhood' => $checkoutSession->neighborhood,
+                'billing_city' => $checkoutSession->city,
+                'billing_state' => $checkoutSession->state,
                 'shipping_option_id' => $shippingOption['id'],
                 'shipping_option_name' => $shippingOption['name'],
                 'shipping_total' => $shippingTotal,

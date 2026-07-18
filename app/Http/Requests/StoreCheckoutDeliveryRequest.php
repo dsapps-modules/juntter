@@ -14,14 +14,14 @@ class StoreCheckoutDeliveryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'zipcode' => ['required', 'string', 'max:10'],
-            'street' => ['required', 'string', 'max:255'],
-            'number' => ['required', 'string', 'max:20'],
-            'complement' => ['nullable', 'string', 'max:255'],
-            'neighborhood' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'state' => ['required', 'string', 'size:2'],
-            'recipient_name' => ['nullable', 'string', 'max:255'],
+            'delivery_zipcode' => ['required', 'string', 'max:10'],
+            'delivery_street' => ['required', 'string', 'max:255'],
+            'delivery_number' => ['required', 'string', 'max:20'],
+            'delivery_complement' => ['nullable', 'string', 'max:255'],
+            'delivery_neighborhood' => ['required', 'string', 'max:255'],
+            'delivery_city' => ['required', 'string', 'max:255'],
+            'delivery_state' => ['required', 'string', 'size:2'],
+            'delivery_recipient_name' => ['nullable', 'string', 'max:255'],
             'shipping_option_id' => ['nullable', 'integer'],
         ];
     }

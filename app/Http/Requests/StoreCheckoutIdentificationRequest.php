@@ -17,6 +17,14 @@ class StoreCheckoutIdentificationRequest extends FormRequest
         return [
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
+            'zipcode' => ['nullable', 'string', 'max:10'],
+            'street' => ['nullable', 'string', 'max:255'],
+            'number' => ['nullable', 'string', 'max:20'],
+            'complement' => ['nullable', 'string', 'max:255'],
+            'neighborhood' => ['nullable', 'string', 'max:255'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'state' => ['nullable', 'string', 'size:2'],
+            'recipient_name' => ['nullable', 'string', 'max:255'],
             'customer_document' => [
                 'required',
                 'string',

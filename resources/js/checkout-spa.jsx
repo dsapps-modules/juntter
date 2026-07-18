@@ -333,7 +333,7 @@ function formatShippingEstimate(etaDays) {
     return `Chega até ${formattedDate.replace(/^./, (character) => character.toUpperCase())}`;
 }
 
-function resolveInitialStep(config, defaultPaymentMethod) {
+function resolveInitialStep(config, defaultPaymentMethod, paymentMethodsCount) {
     if (isPaidState(config.order, config.paymentTransaction)) {
         return 'status';
     }
@@ -345,15 +345,11 @@ function resolveInitialStep(config, defaultPaymentMethod) {
     const currentStep = String(config.currentStep || config.checkoutSession?.current_step || 'identification');
 
     if (currentStep === 'delivery') {
-        if (config.checkoutLink?.visual_config?.theme === 'essential') {
-            return 'identification';
-        }
-
-        return config.checkoutLink?.request_address ? 'delivery' : (defaultPaymentMethod ? 'payment-details' : 'payment-method');
+        return 'delivery';
     }
 
     if (currentStep === 'payment') {
-        return defaultPaymentMethod ? 'payment-details' : 'payment-method';
+        return paymentMethodsCount <= 1 && defaultPaymentMethod ? 'payment-details' : 'payment-method';
     }
 
     return 'identification';
@@ -703,11 +699,11 @@ function CheckoutSpaApp() {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(defaultPaymentMethod);
     const [personType, setPersonType] = useState(String(config?.checkoutSession?.customer_document_type || 'cpf').toLowerCase() === 'cnpj' ? 'pj' : 'pf');
     const [quantity, setQuantity] = useState(initialQuantity);
-    const [step, setStep] = useState(() => resolveInitialStep(config || {}, defaultPaymentMethod));
+    const [step, setStep] = useState(() => resolveInitialStep(config || {}, defaultPaymentMethod, allowedMethods.length));
     const [selectedShippingOptionId, setSelectedShippingOptionId] = useState(
         String(config?.checkoutSession?.shipping_option_id || shippingOptions.find((option) => option.is_default)?.id || shippingOptions[0]?.id || ''),
     );
-    const [showCustomDeliveryAddress, setShowCustomDeliveryAddress] = useState(() => !config?.checkoutSession?.street || !config?.checkoutSession?.zipcode);
+    const [showCustomDeliveryAddress, setShowCustomDeliveryAddress] = useState(false);
     const [feedback, setFeedback] = useState({ type: 'info', message: '' });
     const [fieldErrors, setFieldErrors] = useState({});
     const [busyAction, setBusyAction] = useState('');
@@ -846,11 +842,13 @@ function CheckoutSpaApp() {
         || selectedPaymentMethod
         || defaultPaymentMethod
         || '';
-    const showDeliveryStep = checkoutLink.request_address;
+    const showDeliveryStep = checkoutLink.request_address !== false || shippingOptions.length > 0;
     const showPaymentStep = step === 'payment-method' || step === 'payment-details' || step === 'status';
     const showPaymentSelector = step === 'payment-method';
     const showPaymentDetails = step === 'payment-details';
-    const selectedMethod = allowedMethods.find((method) => method.value === paymentMethodLabel) || allowedMethods[0] || null;
+    const selectedMethod = allowedMethods.find((method) => method.value === paymentMethodLabel)
+        || allowedMethods.find((method) => method.value === selectedPaymentMethod)
+        || (allowedMethods.length === 1 ? allowedMethods[0] : null);
     const currentStatusLabel = paymentStatusLabel(paymentTransaction);
     const canEditQuantity = !paymentTransaction && !order && step !== 'status';
     const rootStyle = {
@@ -1080,29 +1078,13 @@ function CheckoutSpaApp() {
                 message: response.message || 'Identificação salva com sucesso.',
             });
 
-            if (showDeliveryStep && isEssentialTheme) {
-                const deliveryPayload = new FormData(form);
-
-                if (!deliveryPayload.get('recipient_name')) {
-                    deliveryPayload.set('recipient_name', deliveryPayload.get('customer_name') || '');
-                }
-
-                const deliveryResponse = await requestJson(config.urls.delivery, {
-                    method: 'POST',
-                    body: deliveryPayload,
-                });
-
-                setSession(deliveryResponse.checkout_session || response.checkout_session || session);
-                setFeedback({
-                    type: 'success',
-                    message: deliveryResponse.message || 'Dados salvos com sucesso.',
-                });
-            } else if (showDeliveryStep) {
+            if (showDeliveryStep) {
                 setStep('delivery');
                 return;
             }
 
-            if (selectedPaymentMethod || allowedMethods.length === 1) {
+            if (allowedMethods.length === 1) {
+                setSelectedPaymentMethod(allowedMethods[0].value);
                 setStep('payment-details');
                 return;
             }
@@ -1158,7 +1140,8 @@ function CheckoutSpaApp() {
                 message: response.message || 'Endereço salvo com sucesso.',
             });
 
-            if (selectedPaymentMethod || allowedMethods.length === 1) {
+            if (allowedMethods.length === 1) {
+                setSelectedPaymentMethod(allowedMethods[0].value);
                 setStep('payment-details');
                 return;
             }
@@ -1459,25 +1442,29 @@ function CheckoutSpaApp() {
         element.value = value ?? '';
     }
 
-    function clearDeliveryLookupFields(form) {
-        fillDeliveryField(form, '[name="street"]', '');
-        fillDeliveryField(form, '[name="neighborhood"]', '');
-        fillDeliveryField(form, '[name="city"]', '');
-        fillDeliveryField(form, '[name="state"]', '');
+    function getAddressFieldSelector(prefix, field) {
+        return `[name="${prefix}${field}"]`;
     }
 
-    function applyZipcodeLookupResult(form, address) {
-        fillDeliveryField(form, '[name="street"]', address.logradouro || '');
-        fillDeliveryField(form, '[name="neighborhood"]', address.bairro || '');
-        fillDeliveryField(form, '[name="city"]', address.localidade || '');
-        fillDeliveryField(form, '[name="state"]', address.uf || '');
+    function clearDeliveryLookupFields(form, prefix = '') {
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'street'), '');
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'neighborhood'), '');
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'city'), '');
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'state'), '');
     }
 
-    async function syncDeliveryAddressByZipcode(form, zipcode) {
+    function applyZipcodeLookupResult(form, address, prefix = '') {
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'street'), address.logradouro || '');
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'neighborhood'), address.bairro || '');
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'city'), address.localidade || '');
+        fillDeliveryField(form, getAddressFieldSelector(prefix, 'state'), address.uf || '');
+    }
+
+    async function syncDeliveryAddressByZipcode(form, zipcode, prefix = '') {
         const normalizedZipcode = normalizeDigits(zipcode);
 
         if (!isValidZipcode(normalizedZipcode)) {
-            clearDeliveryLookupFields(form);
+            clearDeliveryLookupFields(form, prefix);
             setZipcodeLookupState('idle');
             return;
         }
@@ -1493,7 +1480,7 @@ function CheckoutSpaApp() {
                 return;
             }
 
-            applyZipcodeLookupResult(form, address);
+            applyZipcodeLookupResult(form, address, prefix);
             setFieldErrors((current) => {
                 if (!current.zipcode) {
                     return current;
@@ -1509,7 +1496,7 @@ function CheckoutSpaApp() {
                 return;
             }
 
-            clearDeliveryLookupFields(form);
+            clearDeliveryLookupFields(form, prefix);
             setZipcodeLookupState('error');
             setFieldErrors({
                 zipcode: [error.message || 'Não foi possível consultar o CEP.'],
@@ -1520,7 +1507,7 @@ function CheckoutSpaApp() {
     function handleZipcodeLookup(event) {
         const target = event.target;
 
-        if (!(target instanceof HTMLInputElement) || target.name !== 'zipcode') {
+        if (!(target instanceof HTMLInputElement) || !['zipcode', 'delivery_zipcode'].includes(target.name)) {
             return;
         }
 
@@ -1537,20 +1524,20 @@ function CheckoutSpaApp() {
         const normalizedZipcode = normalizeDigits(target.value);
 
         if (!isValidZipcode(normalizedZipcode)) {
-            clearDeliveryLookupFields(form);
+            clearDeliveryLookupFields(form, target.name.startsWith('delivery_') ? 'delivery_' : '');
             setZipcodeLookupState('idle');
             return;
         }
 
         zipcodeTimerRef.current = window.setTimeout(() => {
-            void syncDeliveryAddressByZipcode(form, normalizedZipcode);
+            void syncDeliveryAddressByZipcode(form, normalizedZipcode, target.name.startsWith('delivery_') ? 'delivery_' : '');
         }, 350);
     }
 
     function handleZipcodeBlur(event) {
         const target = event.target;
 
-        if (!(target instanceof HTMLInputElement) || target.name !== 'zipcode') {
+        if (!(target instanceof HTMLInputElement) || !['zipcode', 'delivery_zipcode'].includes(target.name)) {
             return;
         }
 
@@ -1565,22 +1552,18 @@ function CheckoutSpaApp() {
         }
 
         setZipcodeLookupState('loading');
-        void syncDeliveryAddressByZipcode(form, target.value);
+        void syncDeliveryAddressByZipcode(form, target.value, target.name.startsWith('delivery_') ? 'delivery_' : '');
     }
 
     function renderShippingSelector() {
         const shippingOptionId = selectedShippingOptionId || '';
-        const shippingOptionName = selectedShippingOption?.name || 'Frete padr?o';
+        const shippingOptionName = selectedShippingOption?.name || 'Frete padrão';
         const shippingOptionPrice = Number(selectedShippingOption?.price || 0);
 
         return (
             <section className="checkout-spa-shipping-section">
                 <div className="checkout-spa-section-head checkout-spa-section-head--compact">
                     <div>
-                        <h3 className="checkout-spa-section-title" style={{ fontSize: 18, marginBottom: 6 }}>Escolha uma forma de entrega</h3>
-                        <p className="checkout-spa-section-text" style={{ marginBottom: 0 }}>
-                            Selecione o frete que ser? usado nesta compra.
-                        </p>
                     </div>
                 </div>
 
@@ -1606,7 +1589,7 @@ function CheckoutSpaApp() {
                                 </span>
 
                                 <strong className="checkout-spa-shipping-card__price">
-                                    {Number(option.price || 0) > 0 ? formatCurrency(option.price) : 'Gr?tis'}
+                                    {Number(option.price || 0) > 0 ? formatCurrency(option.price) : 'Grátis'}
                                 </strong>
                             </button>
                         );
@@ -1615,7 +1598,7 @@ function CheckoutSpaApp() {
 
                 {shippingOptions.length === 0 ? (
                     <div className="checkout-spa-feedback is-info is-visible" style={{ marginTop: 16 }}>
-                        Nenhuma op??o de frete foi cadastrada ainda.
+                        Nenhuma opção de frete foi cadastrada ainda.
                     </div>
                 ) : null}
 
@@ -1626,42 +1609,58 @@ function CheckoutSpaApp() {
         );
     }
 
-    function renderDeliveryFields() {
-        const hasSavedAddress = Boolean(session.zipcode || session.street || session.number || session.city || session.state);
+    function resolveResidentialAddress() {
+        return {
+            zipcode: session.zipcode || '',
+            street: session.street || '',
+            number: session.number || '',
+            complement: session.complement || '',
+            neighborhood: session.neighborhood || '',
+            city: session.city || '',
+            state: session.state || '',
+            recipient_name: session.recipient_name || session.customer_name || '',
+        };
+    }
+
+    function resolveDeliveryAddress() {
+        return {
+            zipcode: session.delivery_zipcode || session.zipcode || '',
+            street: session.delivery_street || session.street || '',
+            number: session.delivery_number || session.number || '',
+            complement: session.delivery_complement || session.complement || '',
+            neighborhood: session.delivery_neighborhood || session.neighborhood || '',
+            city: session.delivery_city || session.city || '',
+            state: session.delivery_state || session.state || '',
+            recipient_name: session.delivery_recipient_name || session.recipient_name || session.customer_name || '',
+        };
+    }
+
+    function clearDeliveryAddress() {
+        setSession((currentSession) => ({
+            ...currentSession,
+            delivery_zipcode: '',
+            delivery_street: '',
+            delivery_number: '',
+            delivery_complement: '',
+            delivery_neighborhood: '',
+            delivery_city: '',
+            delivery_state: '',
+            delivery_recipient_name: '',
+        }));
+    }
+
+    function renderResidentialAddressForm() {
+        const address = resolveResidentialAddress();
 
         return (
             <div className="checkout-spa-delivery-layout">
-                {hasSavedAddress && !showCustomDeliveryAddress ? (
-                    <section className="checkout-spa-delivery-summary">
-                        <div>
-                            <p className="checkout-spa-delivery-summary__kicker">Seu endere?o</p>
-                            <strong className="checkout-spa-delivery-summary__name">{session.recipient_name || session.customer_name || 'Cliente'}</strong>
-                            <p className="checkout-spa-delivery-summary__text">
-                                {[session.street, session.number, session.complement].filter(Boolean).join(', ') || 'Endere?o n?o informado'}
-                            </p>
-                            <p className="checkout-spa-delivery-summary__text">
-                                {[session.neighborhood, session.city, session.state].filter(Boolean).join(' - ') || 'Complete seu endere?o'}
-                            </p>
-                            <p className="checkout-spa-delivery-summary__text">{session.zipcode || 'CEP n?o informado'}</p>
-                        </div>
-
-                        <button
-                            type="button"
-                            className="checkout-spa-link-button"
-                            onClick={() => setShowCustomDeliveryAddress(true)}
-                        >
-                            + Novo endere?o
-                        </button>
-                    </section>
-                ) : null}
-
-                <div className="checkout-spa-field-grid checkout-spa-delivery-fields is-two-columns" hidden={hasSavedAddress && !showCustomDeliveryAddress}>
+                <div className="checkout-spa-field-grid checkout-spa-delivery-fields is-two-columns">
                     <label className="checkout-spa-field checkout-spa-field--zipcode">
                         <span className="checkout-spa-label">CEP</span>
                         <input
                             className="checkout-spa-input"
                             name="zipcode"
-                            defaultValue={session.zipcode || ''}
+                            defaultValue={address.zipcode}
                             maxLength={9}
                             placeholder="00000-000"
                             inputMode="numeric"
@@ -1680,37 +1679,37 @@ function CheckoutSpaApp() {
                     </label>
 
                     <label className="checkout-spa-field checkout-spa-field--street">
-                        <span className="checkout-spa-label">Endere?o</span>
+                        <span className="checkout-spa-label">Endereço</span>
                         <input
                             className="checkout-spa-input"
                             name="street"
-                            defaultValue={session.street || ''}
+                            defaultValue={address.street}
                             placeholder="Rua, avenida, travessa..."
                         />
                         <p className="checkout-spa-error">{fieldErrors.street || ''}</p>
                     </label>
 
                     <label className="checkout-spa-field checkout-spa-field--number">
-                        <span className="checkout-spa-label">N?mero</span>
-                        <input className="checkout-spa-input" name="number" defaultValue={session.number || ''} placeholder="N?mero" />
+                        <span className="checkout-spa-label">Número</span>
+                        <input className="checkout-spa-input" name="number" defaultValue={address.number} placeholder="Número" />
                         <p className="checkout-spa-error">{fieldErrors.number || ''}</p>
                     </label>
 
                     <label className="checkout-spa-field checkout-spa-field--complement">
                         <span className="checkout-spa-label">Complemento</span>
-                        <input className="checkout-spa-input" name="complement" defaultValue={session.complement || ''} placeholder="Complemento" />
+                        <input className="checkout-spa-input" name="complement" defaultValue={address.complement} placeholder="Complemento" />
                         <p className="checkout-spa-error">{fieldErrors.complement || ''}</p>
                     </label>
 
                     <label className="checkout-spa-field checkout-spa-field--neighborhood">
                         <span className="checkout-spa-label">Bairro</span>
-                        <input className="checkout-spa-input" name="neighborhood" defaultValue={session.neighborhood || ''} placeholder="Bairro" />
+                        <input className="checkout-spa-input" name="neighborhood" defaultValue={address.neighborhood} placeholder="Bairro" />
                         <p className="checkout-spa-error">{fieldErrors.neighborhood || ''}</p>
                     </label>
 
                     <label className="checkout-spa-field checkout-spa-field--city">
                         <span className="checkout-spa-label">Cidade</span>
-                        <input className="checkout-spa-input" name="city" defaultValue={session.city || ''} placeholder="Cidade" />
+                        <input className="checkout-spa-input" name="city" defaultValue={address.city} placeholder="Cidade" />
                         <p className="checkout-spa-error">{fieldErrors.city || ''}</p>
                     </label>
 
@@ -1719,7 +1718,7 @@ function CheckoutSpaApp() {
                         <input
                             className="checkout-spa-input"
                             name="state"
-                            defaultValue={session.state || ''}
+                            defaultValue={address.state}
                             maxLength={2}
                             placeholder="Estado"
                             onInput={handleDocumentMask}
@@ -1727,21 +1726,168 @@ function CheckoutSpaApp() {
                         <p className="checkout-spa-error">{fieldErrors.state || ''}</p>
                     </label>
 
-                    <input type="hidden" name="recipient_name" defaultValue={session.recipient_name || session.customer_name || ''} />
+                    <input type="hidden" name="recipient_name" defaultValue={address.recipient_name} />
                 </div>
+            </div>
+        );
+    }
 
-                {hasSavedAddress ? (
-                    <button
-                        type="button"
-                        className="checkout-spa-link-button checkout-spa-link-button--secondary"
-                        onClick={() => setShowCustomDeliveryAddress((current) => !current)}
-                        style={{ marginTop: 12 }}
-                    >
-                        {showCustomDeliveryAddress ? 'Usar endere?o cadastrado' : 'Editar endere?o'}
-                    </button>
-                ) : null}
+    function renderDeliveryAddressFields() {
+        const address = resolveDeliveryAddress();
 
-                {renderShippingSelector()}
+        return (
+            <div className="checkout-spa-delivery-layout">
+                <div className="checkout-spa-field-grid checkout-spa-delivery-fields is-two-columns">
+                    <label className="checkout-spa-field checkout-spa-field--zipcode">
+                        <span className="checkout-spa-label">CEP</span>
+                        <input
+                            className="checkout-spa-input"
+                            name="delivery_zipcode"
+                            defaultValue={address.zipcode}
+                            maxLength={9}
+                            placeholder="00000-000"
+                            inputMode="numeric"
+                            onInput={(event) => {
+                                handleDocumentMask(event);
+                                handleZipcodeLookup(event);
+                            }}
+                            onBlur={handleZipcodeBlur}
+                        />
+                        {zipcodeLookupState === 'loading' ? (
+                            <p className="checkout-spa-field-note" aria-live="polite">
+                                Consultando CEP...
+                            </p>
+                        ) : null}
+                        <p className="checkout-spa-error">{fieldErrors.delivery_zipcode || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--street">
+                        <span className="checkout-spa-label">Endereço</span>
+                        <input
+                            className="checkout-spa-input"
+                            name="delivery_street"
+                            defaultValue={address.street}
+                            placeholder="Rua, avenida, travessa..."
+                        />
+                        <p className="checkout-spa-error">{fieldErrors.delivery_street || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--number">
+                        <span className="checkout-spa-label">Número</span>
+                        <input className="checkout-spa-input" name="delivery_number" defaultValue={address.number} placeholder="Número" />
+                        <p className="checkout-spa-error">{fieldErrors.delivery_number || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--complement">
+                        <span className="checkout-spa-label">Complemento</span>
+                        <input className="checkout-spa-input" name="delivery_complement" defaultValue={address.complement} placeholder="Complemento" />
+                        <p className="checkout-spa-error">{fieldErrors.delivery_complement || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--neighborhood">
+                        <span className="checkout-spa-label">Bairro</span>
+                        <input className="checkout-spa-input" name="delivery_neighborhood" defaultValue={address.neighborhood} placeholder="Bairro" />
+                        <p className="checkout-spa-error">{fieldErrors.delivery_neighborhood || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--city">
+                        <span className="checkout-spa-label">Cidade</span>
+                        <input className="checkout-spa-input" name="delivery_city" defaultValue={address.city} placeholder="Cidade" />
+                        <p className="checkout-spa-error">{fieldErrors.delivery_city || ''}</p>
+                    </label>
+
+                    <label className="checkout-spa-field checkout-spa-field--state">
+                        <span className="checkout-spa-label">Estado</span>
+                        <input
+                            className="checkout-spa-input"
+                            name="delivery_state"
+                            defaultValue={address.state}
+                            maxLength={2}
+                            placeholder="Estado"
+                            onInput={handleDocumentMask}
+                        />
+                        <p className="checkout-spa-error">{fieldErrors.delivery_state || ''}</p>
+                    </label>
+
+                    <input type="hidden" name="delivery_recipient_name" defaultValue={address.recipient_name} />
+                </div>
+            </div>
+        );
+    }
+
+    function renderDeliveryAddressHiddenFields() {
+        const address = resolveDeliveryAddress();
+
+        return (
+            <>
+                <input type="hidden" name="delivery_zipcode" value={address.zipcode} />
+                <input type="hidden" name="delivery_street" value={address.street} />
+                <input type="hidden" name="delivery_number" value={address.number} />
+                <input type="hidden" name="delivery_complement" value={address.complement} />
+                <input type="hidden" name="delivery_neighborhood" value={address.neighborhood} />
+                <input type="hidden" name="delivery_city" value={address.city} />
+                <input type="hidden" name="delivery_state" value={address.state} />
+                <input type="hidden" name="delivery_recipient_name" value={address.recipient_name} />
+            </>
+        );
+    }
+
+    function renderDeliverySummaryAndShipping() {
+        const residentialAddress = resolveResidentialAddress();
+        const deliveryAddress = resolveDeliveryAddress();
+        const hasSavedAddress = Boolean(residentialAddress.zipcode || residentialAddress.street || residentialAddress.number || residentialAddress.city || residentialAddress.state);
+        const summaryAddress = deliveryAddress.street || deliveryAddress.zipcode ? deliveryAddress : residentialAddress;
+
+        return (
+            <div className="checkout-spa-delivery-layout">
+                <section className="checkout-spa-delivery-summary">
+                    <div>
+                        <p className="checkout-spa-delivery-summary__kicker">Endereço de entrega</p>
+                        <strong className="checkout-spa-delivery-summary__name">{summaryAddress.recipient_name || 'Cliente'}</strong>
+                        <p className="checkout-spa-delivery-summary__text">
+                            {[summaryAddress.street, summaryAddress.number, summaryAddress.complement].filter(Boolean).join(', ') || 'Endereço não informado'}
+                        </p>
+                        <p className="checkout-spa-delivery-summary__text">
+                            {[summaryAddress.neighborhood, summaryAddress.city, summaryAddress.state].filter(Boolean).join(' - ') || 'Complete seu endereço'}
+                        </p>
+                        <p className="checkout-spa-delivery-summary__text">{summaryAddress.zipcode || 'CEP não informado'}</p>
+                    </div>
+
+                    {!showCustomDeliveryAddress ? (
+                        <button
+                            type="button"
+                            className="checkout-spa-link-button checkout-spa-link-button--delivery-alternate"
+                            onClick={() => setShowCustomDeliveryAddress(true)}
+                        >
+                            + Alterar endereço de entrega
+                        </button>
+                    ) : null}
+                </section>
+
+                {showCustomDeliveryAddress ? (
+                    <div style={{ marginTop: 16 }}>
+                        {renderDeliveryAddressFields()}
+                        {hasSavedAddress ? (
+                            <button
+                                type="button"
+                                className="checkout-spa-link-button checkout-spa-link-button--secondary checkout-spa-link-button--delivery-alternate"
+                                onClick={() => {
+                                    clearDeliveryAddress();
+                                    setShowCustomDeliveryAddress(false);
+                                }}
+                                style={{ marginTop: 12 }}
+                            >
+                                Usar endereço cadastrado
+                            </button>
+                        ) : null}
+                    </div>
+                ) : (
+                    renderDeliveryAddressHiddenFields()
+                )}
+
+                <div className="checkout-spa-delivery-shipping" style={{ marginTop: 16 }}>
+                    {renderShippingSelector()}
+                </div>
             </div>
         );
     }
@@ -1780,7 +1926,7 @@ function CheckoutSpaApp() {
                     ) : null}
                 </div>
 
-                <form className="checkout-spa-form" onSubmit={handleIdentificationSubmit}>
+                <form className="checkout-spa-form" data-checkout-form="identification" onSubmit={handleIdentificationSubmit}>
                     <input type="hidden" name="customer_document_type" value={personIsCompany ? 'cnpj' : 'cpf'} />
 
                     {personIsCompany ? (
@@ -1955,8 +2101,8 @@ function CheckoutSpaApp() {
 
                     {isEssentialTheme && showDeliveryStep ? (
                         <section className="checkout-spa-essential-delivery-section">
-                            <h2 className="checkout-spa-section-title">Local de entrega</h2>
-                            {renderDeliveryFields()}
+                            <h2 className="checkout-spa-section-title">Endereço do comprador</h2>
+                            {renderResidentialAddressForm()}
                         </section>
                     ) : null}
 
@@ -1964,7 +2110,7 @@ function CheckoutSpaApp() {
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'identification'}>
                             {busyAction === 'identification'
                                 ? 'Salvando...'
-                                : (isEssentialTheme ? 'Continuar' : (showDeliveryStep ? 'Continuar para endereço' : 'Continuar para pagamento'))}
+                                : (showDeliveryStep ? 'Continuar para entrega' : 'Continuar para pagamento')}
                         </button>
                     </div>
                 </form>
@@ -1981,15 +2127,11 @@ function CheckoutSpaApp() {
             <section className="checkout-spa-step-card checkout-spa-step-card--delivery">
                 <div className="checkout-spa-section-head">
                     <div>
-                        <h2 className="checkout-spa-section-title">Sua entrega</h2>
-                        <p className="checkout-spa-section-text">
-                            Confirme o endere?o e selecione a forma de frete para continuar.
-                        </p>
                     </div>
                 </div>
 
-                <form className="checkout-spa-form" onSubmit={handleDeliverySubmit}>
-                    {renderDeliveryFields()}
+                <form className="checkout-spa-form" data-checkout-form="delivery" onSubmit={handleDeliverySubmit}>
+                    {renderDeliverySummaryAndShipping()}
 
                     <div className="checkout-spa-actions">
                         <button
@@ -1998,7 +2140,7 @@ function CheckoutSpaApp() {
                             onClick={() => setStep('identification')}
                             disabled={busyAction === 'delivery'}
                         >
-                            Voltar para identifica??o
+                            Voltar para identificação
                         </button>
 
                         <button className="checkout-spa-button is-primary" type="submit" disabled={busyAction === 'delivery'}>
@@ -2070,6 +2212,9 @@ function CheckoutSpaApp() {
         }
 
         const method = selectedMethod?.value || defaultPaymentMethod;
+        if (!method && allowedMethods.length > 1) {
+            return renderPaymentSelection();
+        }
         const cardMethod = method === 'credit_card';
         const boletoMethod = method === 'boleto';
         const pixMethod = method === 'pix';

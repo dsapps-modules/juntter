@@ -833,8 +833,13 @@
     cursor: pointer;
 }
 
+.checkout-spa-link-button--delivery-alternate {
+    font-size: 90%;
+    font-weight: 400;
+}
+
 .checkout-spa-link-button--secondary {
-    color: #344054;
+    color: #7c4dff;
 }
 
 .checkout-spa-shipping-section {
