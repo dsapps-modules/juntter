@@ -172,7 +172,7 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?gap: 24px;/', $styles);
         $this->assertStringContainsString('margin-top: -130px;', $styles);
         $this->assertStringContainsString('margin-left: 2px;', $styles);
-        $this->assertStringContainsString('padding: 25px clamp(34px, 4vw, 68px);', $styles);
+        $this->assertStringContainsString('padding: 80px clamp(34px, 4vw, 68px) 25px;', $styles);
         $this->assertMatchesRegularExpression('/@media \(max-width: 640px\) \{[\s\S]*?\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?gap: 16px;/', $styles);
         $this->assertStringContainsString('@media (max-width: 640px)', $styles);
         $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-identification-fields {', $styles);
