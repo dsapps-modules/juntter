@@ -37,6 +37,12 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('flag?.fees?.pix', $pageSource);
         $this->assertStringContainsString("String(flag?.name ?? '').toUpperCase() === 'BACEN'", $pageSource);
         $this->assertStringContainsString('spa-sim-method-toggle', $pageSource);
+        $this->assertStringContainsString('minimumCardInstallmentAmount', $pageSource);
+        $this->assertStringContainsString('minimumCardInstallmentCount', $pageSource);
+        $this->assertStringContainsString('filteredInstallmentOptions', $pageSource);
+        $this->assertStringContainsString('optionInstallments === 1', $pageSource);
+        $this->assertStringContainsString("value: '1x'", $pageSource);
+        $this->assertStringContainsString('chargeAmount / optionInstallments >= minimumCardInstallmentAmount', $pageSource);
         $this->assertStringContainsString('Simular recebimento por PIX', $pageSource);
         $this->assertStringContainsString('Bandeira', $pageSource);
         $this->assertStringContainsString('title={planName}', $pageSource);
@@ -52,7 +58,7 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('selectedFlagLabel', $pageSource);
         $this->assertStringContainsString('label="Bandeira"', $pageSource);
         $this->assertStringContainsString('options={flagOptions}', $pageSource);
-        $this->assertStringContainsString('options={installmentOptions}', $pageSource);
+        $this->assertStringContainsString('options={filteredInstallmentOptions}', $pageSource);
         $this->assertStringContainsString("label = 'Plano considerado'", $planSelectorSource);
         $this->assertStringNotContainsString('Ativa', $planSelectorSource);
         $this->assertStringContainsString('options = []', $planSelectorSource);

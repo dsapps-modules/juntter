@@ -72,7 +72,9 @@ class SpaCobrancaPixOutTest extends TestCase
             ->assertJsonPath('pix_key_types.2.value', 'EMAIL')
             ->assertJsonPath('pix_key_types.2.label', 'E-mail')
             ->assertJsonPath('pix_key_types.3.value', 'CNPJ')
-            ->assertJsonPath('pix_key_types.3.label', 'CNPJ');
+            ->assertJsonPath('pix_key_types.3.label', 'CNPJ')
+            ->assertJsonPath('pix_key_types.4.value', 'RANDOM')
+            ->assertJsonPath('pix_key_types.4.label', 'Chave aleatória');
     }
 
     public function test_pix_out_overview_uses_the_cached_pix_fee_when_available(): void
@@ -176,6 +178,20 @@ class SpaCobrancaPixOutTest extends TestCase
         $this->configureMtlsForPixTests();
 
         $user = $this->createVendor();
+        PaytimeEstablishment::query()->create([
+            'id' => 5001,
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Pix',
+            'document' => '40400554895',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [],
+            'fees_banking_json' => [],
+            'pricing_snapshot_json' => [],
+            'pricing_snapshot_hash' => sha1('pix-out-establishment'),
+            'pricing_synced_at' => now(),
+        ]);
         $user->forceFill([
             'electronic_signature_hash' => Hash::make('assinatura-secreta'),
             'electronic_signature_verified_at' => now(),
@@ -196,7 +212,12 @@ class SpaCobrancaPixOutTest extends TestCase
             ->with($this->callback(function (array $payload): bool {
                 return ($payload['type'] ?? null) === 'PHONE'
                     && ($payload['key'] ?? null) === '11999998888'
-                    && ! isset($payload['amount']);
+                    && ($payload['key_pix'] ?? null) === '11999998888'
+                    && ($payload['document'] ?? null) === '40400554895'
+                    && ($payload['external_number'] ?? null) !== null
+                    && ($payload['due_date'] ?? null) === now()->toDateString()
+                    && ($payload['value'] ?? null) === '100.00'
+                    && ($payload['amount'] ?? null) === 10000;
             }))
             ->willReturn([
                 'status' => 'PROCESSING',
@@ -240,6 +261,46 @@ class SpaCobrancaPixOutTest extends TestCase
         ]);
     }
 
+    public function test_pix_out_store_rejects_when_establishment_document_is_missing(): void
+    {
+        Mail::fake();
+        $this->configureMtlsForPixTests();
+
+        $user = $this->createVendor();
+        $user->forceFill([
+            'electronic_signature_hash' => Hash::make('assinatura-secreta'),
+            'electronic_signature_verified_at' => now(),
+        ])->save();
+
+        $balanceService = $this->createMock(BalanceService::class);
+        $balanceService->expects($this->once())
+            ->method('saldoAtual')
+            ->willReturn([
+                'balance' => 50000,
+                'blocked_balance' => 0,
+                'total_balance' => 50000,
+            ]);
+
+        $pixPayoutService = $this->createMock(PixPayoutService::class);
+        $pixPayoutService->expects($this->never())
+            ->method('initiate');
+
+        $this->app->instance(BalanceService::class, $balanceService);
+        $this->app->instance(PixPayoutService::class, $pixPayoutService);
+
+        $response = $this->actingAs($user)->postJson('/api/spa/cobranca/pix-out', [
+            'amount' => 'R$ 100,00',
+            'pix_key_type' => 'PHONE',
+            'pix_key' => '11999998888',
+            'description' => 'Retirada semanal',
+            'electronic_signature' => 'assinatura-secreta',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Cadastre o documento do estabelecimento antes de enviar o PIX.');
+    }
+
     public function test_pix_out_store_rejects_an_invalid_signature_before_processing(): void
     {
         $user = $this->createVendor();
@@ -277,6 +338,20 @@ class SpaCobrancaPixOutTest extends TestCase
         $this->configureMtlsForPixTests();
 
         $user = $this->createVendor();
+        PaytimeEstablishment::query()->create([
+            'id' => 5001,
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Pix',
+            'document' => '40400554895',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [],
+            'fees_banking_json' => [],
+            'pricing_snapshot_json' => [],
+            'pricing_snapshot_hash' => sha1('pix-out-confirm-invalid'),
+            'pricing_synced_at' => now(),
+        ]);
 
         $payoutRequest = PixPayoutRequest::factory()->create([
             'seller_id' => $user->id,
@@ -312,6 +387,20 @@ class SpaCobrancaPixOutTest extends TestCase
         $this->configureMtlsForPixTests();
 
         $user = $this->createVendor();
+        PaytimeEstablishment::query()->create([
+            'id' => 5001,
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Pix',
+            'document' => '40400554895',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [],
+            'fees_banking_json' => [],
+            'pricing_snapshot_json' => [],
+            'pricing_snapshot_hash' => sha1('pix-out-confirm-valid'),
+            'pricing_synced_at' => now(),
+        ]);
 
         $payoutRequest = PixPayoutRequest::factory()->create([
             'seller_id' => $user->id,
@@ -334,7 +423,11 @@ class SpaCobrancaPixOutTest extends TestCase
                 return ($payload['type'] ?? null) === 'CPF'
                     && ($payload['key'] ?? null) === '12345678901'
                     && ($payload['amount'] ?? null) === 10000
-                    && ($payload['init_id'] ?? null) === 'E13935893202604281747Y3pL5YlGFRs';
+                    && ($payload['init_id'] ?? null) === 'E13935893202604281747Y3pL5YlGFRs'
+                    && ($payload['key_pix'] ?? null) === '12345678901'
+                    && ($payload['document'] ?? null) === '40400554895'
+                    && ($payload['value'] ?? null) === '100.00'
+                    && ($payload['due_date'] ?? null) === now()->toDateString();
             }))
             ->willReturn([
                 '_id' => '69f0f2cf71ad0804c940575a',
@@ -362,6 +455,72 @@ class SpaCobrancaPixOutTest extends TestCase
         ]);
 
         $this->assertNotNull($payoutRequest->fresh()->confirmation_code_verified_at);
+    }
+
+    public function test_pix_out_store_uses_the_requested_pix_key_type_random_without_normalizing_it(): void
+    {
+        Mail::fake();
+        $this->configureMtlsForPixTests();
+
+        $user = $this->createVendor();
+        PaytimeEstablishment::query()->create([
+            'id' => 5001,
+            'first_name' => 'Isadora',
+            'last_name' => 'Prado',
+            'fantasy_name' => 'Loja Pix',
+            'document' => '40400554895',
+            'active' => true,
+            'status' => 'APPROVED',
+            'plans_json' => [],
+            'fees_banking_json' => [],
+            'pricing_snapshot_json' => [],
+            'pricing_snapshot_hash' => sha1('pix-out-establishment-random'),
+            'pricing_synced_at' => now(),
+        ]);
+        $user->forceFill([
+            'electronic_signature_hash' => Hash::make('assinatura-secreta'),
+            'electronic_signature_verified_at' => now(),
+        ])->save();
+
+        $balanceService = $this->createMock(BalanceService::class);
+        $balanceService->expects($this->once())
+            ->method('saldoAtual')
+            ->willReturn([
+                'balance' => 50000,
+                'blocked_balance' => 0,
+                'total_balance' => 50000,
+            ]);
+
+        $pixPayoutService = $this->createMock(PixPayoutService::class);
+        $pixPayoutService->expects($this->once())
+            ->method('initiate')
+            ->with($this->callback(function (array $payload): bool {
+                return ($payload['type'] ?? null) === 'RANDOM'
+                    && ($payload['key'] ?? null) === 'chave-aleatoria-exemplo'
+                    && ($payload['key_pix'] ?? null) === 'chave-aleatoria-exemplo';
+            }))
+            ->willReturn([
+                'status' => 'PROCESSING',
+                'gateway_authorization' => 'CELCOIN',
+                'expected_at' => '2026-06-24T12:00:00.000Z',
+                'init_id' => 'E13935893202604281747Y3pL5YlGFRs',
+                '_id' => '69f0f2cf71ad0804c940575a',
+            ]);
+
+        $this->app->instance(BalanceService::class, $balanceService);
+        $this->app->instance(PixPayoutService::class, $pixPayoutService);
+
+        $response = $this->actingAs($user)->postJson('/api/spa/cobranca/pix-out', [
+            'amount' => 'R$ 100,00',
+            'pix_key_type' => 'RANDOM',
+            'pix_key' => 'chave-aleatoria-exemplo',
+            'description' => 'Retirada semanal',
+            'electronic_signature' => 'assinatura-secreta',
+        ]);
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('payout_request.pix_key_type', 'RANDOM');
     }
 
     private function createVendor(string $password = 'secret'): User

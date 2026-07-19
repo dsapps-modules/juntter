@@ -104,6 +104,13 @@ export default function CobrancaPixOutPage() {
     const [transactionState, setTransactionState] = useState(defaultTransactionState);
 
     const watchedPixKeyType = Form.useWatch('pix_key_type', form) ?? 'PHONE';
+    const pixKeyPlaceholders = {
+        PHONE: 'celular',
+        CPF: 'CPF',
+        EMAIL: 'e-mail',
+        CNPJ: 'CNPJ',
+        RANDOM: 'chave aleatória',
+    };
 
     useEffect(() => {
         const controller = new AbortController();
@@ -406,7 +413,7 @@ export default function CobrancaPixOutPage() {
                                         label="Chave Pix*"
                                         rules={[{ required: true, message: 'Informe a chave PIX.' }]}
                                     >
-                                        <Input placeholder={`Informe a chave de ${watchedPixKeyType === 'PHONE' ? 'celular' : watchedPixKeyType === 'EMAIL' ? 'e-mail' : watchedPixKeyType.toLowerCase()}`} />
+                                        <Input placeholder={`Informe a ${pixKeyPlaceholders[watchedPixKeyType] ?? 'chave PIX'}`} />
                                     </Form.Item>
                                 </Col>
                             </Row>

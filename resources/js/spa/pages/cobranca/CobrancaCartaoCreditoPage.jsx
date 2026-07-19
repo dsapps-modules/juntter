@@ -396,7 +396,6 @@ export default function CobrancaCartaoCreditoPage() {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
     const [reloadToken, setReloadToken] = useState(0);
-    const [recentLinksState, setRecentLinksState] = useState([]);
     const [overview, setOverview] = useState(defaultOverview);
 
     useEffect(() => {
@@ -430,7 +429,6 @@ export default function CobrancaCartaoCreditoPage() {
                     periods: data.periods ?? current.periods,
                     selected_period: data.selected_period ?? current.selected_period,
                 }));
-                setRecentLinksState((current) => (current.length === 0 ? (data.recent_card_links ?? []).slice(0, 2) : current));
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
                     setFeedback({
@@ -476,19 +474,6 @@ export default function CobrancaCartaoCreditoPage() {
             .sort((left, right) => (right.created_at_sort ?? 0) - (left.created_at_sort ?? 0));
     }, [overview.rows]);
 
-    const recentLinks = useMemo(() => {
-        return recentLinksState;
-    }, [recentLinksState]);
-
-    const creditSummary = useMemo(() => {
-        return {
-            total_transactions: creditRows.length,
-            approved_transactions: creditRows.filter((row) => ['PAID', 'APPROVED'].includes(row.raw_status)).length,
-            pending_transactions: creditRows.filter((row) => ['PENDING', 'PROCESSING'].includes(row.raw_status)).length,
-            active_links: recentLinks.filter((item) => item.status === 'Ativo' || item.raw_status === 'ATIVO').length,
-        };
-    }, [creditRows, recentLinks]);
-
     const tableTitle = selectedPeriod === 'all'
         ? 'Transações de cartão de todos os meses'
         : `Transações de cartão do mês ${formatPeriodLabel(selectedPeriod)}`;
@@ -499,30 +484,6 @@ export default function CobrancaCartaoCreditoPage() {
         }
 
         setSelectedPeriod(nextPeriod);
-    }
-
-    async function refreshRecentLinks() {
-        try {
-            const params = new URLSearchParams();
-            params.set('period', selectedPeriod);
-
-            const response = await fetch(`/api/spa/cobranca${params.toString() !== '' ? `?${params.toString()}` : ''}`, {
-                headers: {
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                return;
-            }
-
-            const data = await response.json();
-
-            setRecentLinksState((data.recent_card_links ?? []).slice(0, 2));
-        } catch {
-            // Mantém o snapshot atual se a recarga falhar.
-        }
     }
 
     function openTransactionDetails(record) {
@@ -723,7 +684,6 @@ export default function CobrancaCartaoCreditoPage() {
 
             message.success(result.message ?? 'Link de pagamento criado com sucesso.');
             closeLinkModal();
-            await refreshRecentLinks();
             await refreshOverview();
         } catch (error) {
             message.error(error.message || 'Falha ao salvar o link.');
@@ -821,7 +781,7 @@ export default function CobrancaCartaoCreditoPage() {
 
     return (
         <Row gutter={[20, 20]} className="spa-board spa-pix-board">
-            <Col xs={24} xl={16}>
+            <Col xs={24} xl={24}>
                 <Card className="spa-table-card spa-pix-card">
                     <Space direction="vertical" size={18} className="spa-pix-stack">
                         {feedback ? (
@@ -1151,94 +1111,6 @@ export default function CobrancaCartaoCreditoPage() {
                     </Space>
                 </Card>
             </Col>
-
-            <Col xs={24} xl={8}>
-                <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                    <Card
-                        className="spa-quick-view-card spa-pix-sidebar-card"
-                        title={(
-                            <Space align="center" size={10} className="spa-pix-sidebar-title">
-                                <BankOutlined className="spa-pix-sidebar-title-icon" />
-                                <span>Visão rápida</span>
-                            </Space>
-                        )}
-                        bordered={false}
-                    >
-                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
-
-                            <Row gutter={[12, 12]}>
-                                {[
-                                    ['Transações', creditSummary.total_transactions],
-                                    ['Aprovadas', creditSummary.approved_transactions],
-                                    ['Pendentes', creditSummary.pending_transactions],
-                                    ['Links ativos', creditSummary.active_links],
-                                ].map(([label, value]) => (
-                                    <Col xs={12} sm={12} key={label}>
-                                        <Card size="small" bordered={false} className="spa-pix-mini-stat-card">
-                                            <Typography.Text type="secondary">{label}</Typography.Text>
-                                            <div>
-                                                <Typography.Title level={3} style={{ marginBottom: 0 }}>
-                                                    {value}
-                                                </Typography.Title>
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
-
-                            <Card size="small" title="Atalhos" bordered={false}>
-                                <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                                    <Button type="primary" block onClick={openLinkModal} className="spa-primary-button">
-                                        Criar link de cartão
-                                    </Button>
-                                    <Button block onClick={() => navigate('/links-pagamento')}>
-                                        Ver links de pagamento
-                                    </Button>
-                                    <Button block onClick={() => refreshOverview()}>
-                                        Atualizar painel
-                                    </Button>
-                                </Space>
-                            </Card>
-
-                            <Card size="small" title="Últimos links" bordered={false}>
-                                {recentLinks.length === 0 ? (
-                                    <Empty description="Nenhum link recente encontrado." />
-                                ) : (
-                                    <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                        {recentLinks.slice(0, 2).map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="spa-pix-side-link-item"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => navigate(`/links-pagamento/${item.id}`)}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === 'Enter' || event.key === ' ') {
-                                                        event.preventDefault();
-                                                        navigate(`/links-pagamento/${item.id}`);
-                                                    }
-                                                }}
-                                            >
-                                                <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                                                    <Typography.Text strong>{item.title}</Typography.Text>
-                                                    <Typography.Text type="secondary">{item.code}</Typography.Text>
-                                                </Space>
-                                                <Space wrap>
-                                                    <Tag color="green">{item.amount}</Tag>
-                                                    <Tag color={item.status === 'Ativo' ? 'green' : 'gold'}>{item.status}</Tag>
-                                                </Space>
-                                                <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
-                                            </div>
-                                        ))}
-                                    </Space>
-                                )}
-                            </Card>
-
-                        </Space>
-                    </Card>
-                </Space>
-            </Col>
-
             <Modal
                 open={linkModalOpen}
                 onCancel={closeLinkModal}

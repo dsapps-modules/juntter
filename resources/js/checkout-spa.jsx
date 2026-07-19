@@ -76,6 +76,21 @@ function roundCurrency(value) {
     return Math.round((Number(value) || 0) * 100) / 100;
 }
 
+function getCreditCardInstallmentAmountError(totalAmount, installments) {
+    if (installments <= 1) {
+        return '';
+    }
+
+    const totalInCents = Math.round((Number(totalAmount) || 0) * 100);
+    const minimumTotalInCents = installments * 500;
+
+    if (totalInCents >= minimumTotalInCents) {
+        return '';
+    }
+
+    return 'Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.';
+}
+
 function formatPhone(value) {
     const digits = normalizeDigits(value).slice(0, 11);
 
@@ -986,6 +1001,25 @@ function CheckoutSpaApp() {
         );
     }
 
+    function renderPaymentLogosStrip() {
+        return (
+            <section className="checkout-spa-payment-strip" aria-label="Formas de pagamento">
+                <div className="checkout-spa-payment-strip-grid">
+                    {paymentLogos.map((paymentLogo) => (
+                        <span
+                            key={paymentLogo.label}
+                            className={`checkout-spa-payment-mark checkout-spa-payment-mark--${paymentLogo.variant}`}
+                            aria-label={paymentLogo.label}
+                            title={paymentLogo.label}
+                        >
+                            {renderPaymentLogo(paymentLogo)}
+                        </span>
+                    ))}
+                </div>
+            </section>
+        );
+    }
+
     async function syncQuantity(nextQuantity, previousQuantity) {
         if (!config?.urls?.quantity || !canEditQuantity) {
             return;
@@ -1211,10 +1245,6 @@ function CheckoutSpaApp() {
             });
 
             setSession(response.checkout_session || session);
-            setFeedback({
-                type: 'success',
-                message: response.message || 'Método de pagamento selecionado.',
-            });
             setStep('payment-details');
         } catch (error) {
             setFieldErrors(mapErrors(error.payload?.errors || {}));
@@ -1239,9 +1269,25 @@ function CheckoutSpaApp() {
         try {
             const paymentForm = event.currentTarget;
             const formData = new FormData(paymentForm);
+            const submittedPaymentMethod = String(formData.get('payment_method') || selectedPaymentMethod || defaultPaymentMethod || '').toLowerCase();
+            const installments = Number.parseInt(String(formData.get('installments') || 1), 10) || 1;
+            const installmentAmountError = submittedPaymentMethod === 'credit_card'
+                ? getCreditCardInstallmentAmountError(session.total || order?.total || 0, installments)
+                : '';
 
             if (!formData.get('payment_method')) {
                 formData.set('payment_method', selectedPaymentMethod || defaultPaymentMethod || '');
+            }
+
+            if (installmentAmountError) {
+                setFieldErrors({
+                    installments: installmentAmountError,
+                });
+                setFeedback({
+                    type: 'error',
+                    message: installmentAmountError,
+                });
+                return;
             }
 
             const response = await requestJson(config.urls.startPayment, {
@@ -2372,7 +2418,7 @@ function CheckoutSpaApp() {
                     </div>
                 ) : null}
 
-                    {renderPaymentMethodLinks(method)}
+                    {cardMethod ? renderPaymentLogosStrip() : null}
 
                     <div className="checkout-spa-actions checkout-spa-actions--split">
                         <button
@@ -2388,6 +2434,8 @@ function CheckoutSpaApp() {
                             {busyAction === 'payment' ? 'Processando...' : (pixMethod ? 'Gerar Pix' : (boletoMethod ? 'Gerar boleto' : 'Pagar'))}
                         </button>
                     </div>
+
+                    {renderPaymentMethodLinks(method)}
                 </form>
             </section>
         );
@@ -2761,21 +2809,6 @@ function CheckoutSpaApp() {
                             ) : null}
                         </aside>
 
-                        <section className="checkout-spa-payment-strip" aria-label="Formas de pagamento">
-                            <p className="checkout-spa-payment-strip-title">Formas de pagamento</p>
-                            <div className="checkout-spa-payment-strip-grid">
-                                {paymentLogos.map((paymentLogo) => (
-                                    <span
-                                        key={paymentLogo.label}
-                                        className={`checkout-spa-payment-mark checkout-spa-payment-mark--${paymentLogo.variant}`}
-                                        aria-label={paymentLogo.label}
-                                        title={paymentLogo.label}
-                                    >
-                                        {renderPaymentLogo(paymentLogo)}
-                                    </span>
-                                ))}
-                            </div>
-                        </section>
                     </div>
                 </div>
             </main>

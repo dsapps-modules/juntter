@@ -127,6 +127,9 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('Consultando CEP...', $source);
         $this->assertStringContainsString('checkout-spa-step-card--payment-details', $source);
         $this->assertStringContainsString('checkout-spa-step-card--payment-note', $source);
+        $this->assertStringContainsString('function renderPaymentLogosStrip()', $source);
+        $this->assertStringContainsString('cardMethod ? renderPaymentLogosStrip() : null', $source);
+        $this->assertStringNotContainsString('checkout-spa-payment-strip-title', $source);
         $this->assertStringContainsString("const creditCardMethod = methods.find((method) => method.value === 'credit_card');", $source);
         $this->assertStringContainsString('if (creditCardMethod) {', $source);
         $this->assertStringContainsString('return creditCardMethod.value;', $source);
@@ -134,6 +137,8 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString("method.value === 'pix'", $source);
         $this->assertStringContainsString("method.value === 'boleto'", $source);
         $this->assertStringNotContainsString("<h3>{pixMethod ? 'Pix' : 'Boleto'}</h3>", $source);
+        $this->assertStringContainsString('getCreditCardInstallmentAmountError', $source);
+        $this->assertStringContainsString('Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.', $source);
         $this->assertStringNotContainsString('Voltar para identificação', $source);
         $this->assertStringNotContainsString('Voltar para endereço', $source);
         $this->assertStringNotContainsString('Voltar aos métodos', $source);
@@ -141,12 +146,23 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('Continuar para pagamento', $source);
         $this->assertStringNotContainsString('function handleContinueToPaymentDetails()', $source);
         $this->assertStringNotContainsString('onClick={handleContinueToPaymentDetails}', $source);
-        $this->assertMatchesRegularExpression('/async function handleChoosePaymentMethod\(paymentMethod\)[\s\S]*?Método de pagamento selecionado\.[\s\S]*?setStep\(\'payment-details\'\);/', $source);
+        $this->assertStringNotContainsString('Método de pagamento selecionado.', $source);
+        $this->assertMatchesRegularExpression('/async function handleChoosePaymentMethod\(paymentMethod\)[\s\S]*?setStep\(\'payment-details\'\);/', $source);
         $this->assertStringContainsString("const nextPaymentMethod = allowedMethods.some((method) => method.value === 'credit_card')", $source);
         $this->assertStringContainsString("setStep('payment-details');", $source);
+        $this->assertLessThan(
+            strpos($source, 'renderPaymentMethodLinks(method)'),
+            strpos($source, 'cardMethod ? renderPaymentLogosStrip() : null')
+        );
         $this->assertStringContainsString('background: var(--checkout-spa-button, #ffffff);', $styles);
         $this->assertStringContainsString('.checkout-spa-step-card--payment-details .checkout-spa-section-title {', $styles);
         $this->assertStringContainsString('font-size: clamp(1.44rem, 2vw, 2.16rem);', $styles);
+        $this->assertStringContainsString('.checkout-spa-payment-strip {', $styles);
+        $this->assertStringNotContainsString('.checkout-spa-theme--essential .checkout-spa-payment-strip {', $styles);
+        $this->assertStringContainsString('padding: 12px 0 0;', $styles);
+        $this->assertStringContainsString('margin-top: 12px;', $styles);
+        $this->assertStringContainsString('gap: 22px;', $styles);
+        $this->assertStringContainsString('margin-top: 28px;', $styles);
         $this->assertStringContainsString('.checkout-spa-actions--split {', $styles);
         $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);', $styles);
         $this->assertStringContainsString('color: var(--checkout-spa-button-ink, #17120d);', $styles);

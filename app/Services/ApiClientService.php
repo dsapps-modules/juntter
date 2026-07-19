@@ -131,17 +131,18 @@ class ApiClientService
             'timeout' => 30,
         ];
 
-        $certPath = config('services.paytime.mtls_cert_path');
-        $keyPath = config('services.paytime.mtls_key_path');
+        $certPath = $this->resolveMtlsCertificatePath();
+        $keyPath = $this->resolveMtlsKeyPath();
         $caPath = config('services.paytime.mtls_ca_path');
         $verifyPeer = config('services.paytime.mtls_verify_peer');
 
-        if (is_string($certPath) && $certPath !== '') {
+        if (is_string($certPath) && $certPath !== '' && is_file($certPath) && is_readable($certPath)) {
             $options['cert'] = $certPath;
-        }
-
-        if (is_string($keyPath) && $keyPath !== '') {
-            $options['ssl_key'] = $keyPath;
+            if (is_string($keyPath) && $keyPath !== '' && is_file($keyPath) && is_readable($keyPath)) {
+                $options['ssl_key'] = $keyPath;
+            } elseif ($this->certificateContainsPrivateKey($certPath)) {
+                $options['ssl_key'] = $certPath;
+            }
         }
 
         if (is_string($caPath) && $caPath !== '') {
@@ -151,6 +152,130 @@ class ApiClientService
         }
 
         return $options;
+    }
+
+    private function certificateContainsPrivateKey(string $certPath): bool
+    {
+        $contents = @file_get_contents($certPath);
+
+        if (! is_string($contents) || trim($contents) === '') {
+            return false;
+        }
+
+        return str_contains($contents, 'BEGIN PRIVATE KEY')
+            || str_contains($contents, 'BEGIN RSA PRIVATE KEY')
+            || str_contains($contents, 'BEGIN ENCRYPTED PRIVATE KEY');
+    }
+
+    private function resolveMtlsCertificatePath(): ?string
+    {
+        $configuredPath = config('services.paytime.mtls_cert_path');
+        if (is_string($configuredPath) && $this->isReadableCertificateFile($configuredPath)) {
+            return $configuredPath;
+        }
+
+        foreach ([
+            base_path('.keys/client.crt'),
+            base_path('.keys/client.pem'),
+            base_path('.keys/client.cer'),
+            base_path('.keys/cert.crt'),
+            base_path('.keys/cert.pem'),
+            base_path('.keys/certificate.crt'),
+            base_path('.keys/certificate.pem'),
+        ] as $candidate) {
+            if ($this->isReadableCertificateFile($candidate)) {
+                return $candidate;
+            }
+        }
+
+        foreach ($this->findKeysDirectoryFiles(['*.crt', '*.pem', '*.cer']) as $candidate) {
+            if ($this->isReadableCertificateFile($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return is_string($configuredPath) && $configuredPath !== '' ? $configuredPath : null;
+    }
+
+    private function resolveMtlsKeyPath(): ?string
+    {
+        $configuredPath = config('services.paytime.mtls_key_path');
+        if (is_string($configuredPath) && $this->isReadablePrivateKeyFile($configuredPath)) {
+            return $configuredPath;
+        }
+
+        foreach ([
+            base_path('.keys/client.key'),
+            base_path('.keys/cert.key'),
+            base_path('.keys/private.key'),
+            base_path('.keys/client.pem'),
+        ] as $candidate) {
+            if ($this->isReadablePrivateKeyFile($candidate)) {
+                return $candidate;
+            }
+        }
+
+        foreach ($this->findKeysDirectoryFiles(['*.key', '*.pem']) as $candidate) {
+            if ($this->isReadablePrivateKeyFile($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return is_string($configuredPath) && $configuredPath !== '' ? $configuredPath : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function findKeysDirectoryFiles(array $patterns): array
+    {
+        $files = [];
+
+        foreach ($patterns as $pattern) {
+            foreach (glob(base_path('.keys'.DIRECTORY_SEPARATOR.$pattern)) ?: [] as $candidate) {
+                if (is_string($candidate)) {
+                    $files[] = $candidate;
+                }
+            }
+        }
+
+        return array_values(array_unique($files));
+    }
+
+    private function isReadableCertificateFile(string $path): bool
+    {
+        if (! is_file($path) || ! is_readable($path)) {
+            return false;
+        }
+
+        $contents = @file_get_contents($path);
+
+        if (! is_string($contents) || trim($contents) === '') {
+            return false;
+        }
+
+        if (str_contains($contents, 'BEGIN CERTIFICATE REQUEST')) {
+            return false;
+        }
+
+        return str_contains($contents, 'BEGIN CERTIFICATE');
+    }
+
+    private function isReadablePrivateKeyFile(string $path): bool
+    {
+        if (! is_file($path) || ! is_readable($path)) {
+            return false;
+        }
+
+        $contents = @file_get_contents($path);
+
+        if (! is_string($contents) || trim($contents) === '') {
+            return false;
+        }
+
+        return str_contains($contents, 'BEGIN PRIVATE KEY')
+            || str_contains($contents, 'BEGIN RSA PRIVATE KEY')
+            || str_contains($contents, 'BEGIN ENCRYPTED PRIVATE KEY');
     }
 
     private function maskScalar(string $value): string

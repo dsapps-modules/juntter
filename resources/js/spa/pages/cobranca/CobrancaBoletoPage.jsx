@@ -759,7 +759,7 @@ export default function CobrancaBoletoPage() {
 
     return (
         <Row gutter={[20, 20]} className="spa-board spa-pix-board">
-            <Col xs={24} xl={16}>
+            <Col xs={24} xl={24}>
                 <Card className="spa-table-card spa-pix-card">
                     <Space direction="vertical" size={18} className="spa-pix-stack">
                         {feedback ? (
@@ -1115,87 +1115,6 @@ export default function CobrancaBoletoPage() {
                         </Card>
                     </Space>
                 </Card>
-            </Col>
-
-            <Col xs={24} xl={8}>
-                <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                    <Card
-                        className="spa-quick-view-card spa-pix-sidebar-card"
-                        title={(
-                            <Space align="center" size={10} className="spa-pix-sidebar-title">
-                                <BankOutlined className="spa-pix-sidebar-title-icon" />
-                                <span>Visão rápida</span>
-                            </Space>
-                        )}
-                        bordered={false}
-                    >
-                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                            <Row gutter={[12, 12]}>
-                                {[
-                                    ['Boletos', boletoSummary.total_billets ?? 0],
-                                    ['Pagos', boletoSummary.paid_billets ?? 0],
-                                    ['Pendentes', boletoSummary.pending_billets ?? 0],
-                                    ['Falhas', boletoSummary.failed_billets ?? 0],
-                                ].map(([label, value]) => (
-                                    <Col xs={12} sm={12} key={label}>
-                                        <Card size="small" bordered={false} className="spa-pix-mini-stat-card">
-                                            <Typography.Text type="secondary">{label}</Typography.Text>
-                                            <div>
-                                                <Typography.Title level={3} style={{ marginBottom: 0 }}>
-                                                    {value}
-                                                </Typography.Title>
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
-
-                            <Card size="small" title="Atalhos" bordered={false}>
-                                <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                                    <Button type="primary" block onClick={() => setFormVisible(true)} className="spa-primary-button">
-                                        Criar boleto
-                                    </Button>
-                                    <Button block onClick={() => navigate('/cobranca')}>
-                                        Ver histórico
-                                    </Button>
-                                </Space>
-                            </Card>
-
-                            <Card size="small" title="Últimos boletos" bordered={false}>
-                                {recentBoletos.length === 0 ? (
-                                    <Empty description="Nenhum boleto recente encontrado." />
-                                ) : (
-                                    <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                        {recentBoletos.map((item) => (
-                                            <div
-                                                key={item.code}
-                                                className="spa-pix-side-link-item"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => openBoletoDetails(item)}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === 'Enter' || event.key === ' ') {
-                                                        event.preventDefault();
-                                                        openBoletoDetails(item);
-                                                    }
-                                                }}
-                                            >
-                                                <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                                                    <Typography.Text strong>{item.title}</Typography.Text>
-                                                </Space>
-                                                <Space wrap>
-                                                    <Tag color="gold">{item.amount}</Tag>
-                                                    <Tag color={item.status === 'Pago' ? 'green' : 'gold'}>{item.status}</Tag>
-                                                </Space>
-                                                <Typography.Text type="secondary">{item.created_at}</Typography.Text>
-                                            </div>
-                                        ))}
-                                    </Space>
-                                )}
-                            </Card>
-                        </Space>
-                    </Card>
-                </Space>
             </Col>
 
         </Row>

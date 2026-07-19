@@ -258,14 +258,21 @@ class CobrancaPixOutController extends Controller
             ], 422);
         }
 
-        $pixKeyType = $request->string('pix_key_type')->toString();
-        $pixKey = $this->resolvePixKey($request, $pixKeyType);
-
         $mtlsIssue = $this->resolveMtlsConfigurationIssue();
         if ($mtlsIssue !== null) {
             return response()->json([
                 'message' => $mtlsIssue,
             ], 503);
+        }
+
+        $pixKeyType = $request->string('pix_key_type')->toString();
+        $pixKey = $this->resolvePixKey($request, $pixKeyType);
+        $establishmentDocument = $this->resolveEstablishmentDocument($user);
+
+        if ($establishmentDocument === '') {
+            return response()->json([
+                'message' => 'Cadastre o documento do estabelecimento antes de enviar o PIX.',
+            ], 422);
         }
 
         $pixPayoutRequest = PixPayoutRequest::query()->create([
@@ -276,12 +283,16 @@ class CobrancaPixOutController extends Controller
             'pix_key' => $pixKey['pix_key'],
             'description' => $request->string('description')->toString(),
             'status' => 'initiating',
-            'init_payload' => $this->buildInitPayload((string) $establishmentId, $pixKeyType, $pixKey),
             'confirmation_code_attempts' => 0,
         ]);
 
+        $initPayload = $this->buildPixOutPayload($pixPayoutRequest, $establishmentDocument);
+        $pixPayoutRequest->update([
+            'init_payload' => $initPayload,
+        ]);
+
         try {
-            $response = $this->pixPayoutService->initiate($pixPayoutRequest->init_payload ?? []);
+            $response = $this->pixPayoutService->initiate($initPayload);
         } catch (Throwable $throwable) {
             $pixPayoutRequest->update([
                 'status' => 'failed',
@@ -429,17 +440,24 @@ class CobrancaPixOutController extends Controller
         }
 
         try {
-            $response = $this->pixPayoutService->confirm([
-                'type' => $pixPayoutRequest->pix_key_type,
-                'key' => $pixPayoutRequest->pix_key,
-                'amount' => $pixPayoutRequest->amount,
-                'init_id' => $pixPayoutRequest->init_id,
-            ]);
+            $confirmPayload = is_array($pixPayoutRequest->init_payload) && $pixPayoutRequest->init_payload !== []
+                ? $pixPayoutRequest->init_payload
+                : $this->buildPixOutPayload($pixPayoutRequest, $this->resolveEstablishmentDocument($user));
+
+            if (! isset($confirmPayload['document']) || ! is_string($confirmPayload['document']) || trim($confirmPayload['document']) === '') {
+                return response()->json([
+                    'message' => 'Cadastre o documento do estabelecimento antes de confirmar o PIX.',
+                ], 422);
+            }
+
+            $confirmPayload['init_id'] = $pixPayoutRequest->init_id;
+
+            $response = $this->pixPayoutService->confirm($confirmPayload);
         } catch (Throwable $throwable) {
             $pixPayoutRequest->update([
                 'status' => 'failed',
                 'last_error' => $throwable->getMessage(),
-                'confirm_payload' => [
+                'confirm_payload' => $confirmPayload ?? [
                     'type' => $pixPayoutRequest->pix_key_type,
                     'amount' => $pixPayoutRequest->amount,
                     'init_id' => $pixPayoutRequest->init_id,
@@ -562,7 +580,7 @@ class CobrancaPixOutController extends Controller
     private function resolvePixKey(StorePixPayoutRequest $request, string $pixKeyType): array
     {
         return [
-            'pix_key' => $request->string('pix_key')->toString(),
+            'pix_key' => $this->normalizePixKey($pixKeyType, $request->string('pix_key')->toString()),
         ];
     }
 
@@ -576,19 +594,28 @@ class CobrancaPixOutController extends Controller
             ['value' => 'CPF', 'label' => 'CPF', 'help' => 'Chave vinculada ao CPF.'],
             ['value' => 'EMAIL', 'label' => 'E-mail', 'help' => 'Chave de e-mail cadastrada.'],
             ['value' => 'CNPJ', 'label' => 'CNPJ', 'help' => 'Chave vinculada ao CNPJ.'],
+            ['value' => 'RANDOM', 'label' => 'Chave aleatória', 'help' => 'Chave aleatória cadastrada.'],
         ];
     }
 
-    private function buildInitPayload(string $establishmentId, string $pixKeyType, array $pixKey): array
+    private function buildPixOutPayload(PixPayoutRequest $request, string $establishmentDocument): array
     {
+        $establishmentId = (string) $request->establishment_id;
+
         $payload = [
-            'type' => $pixKeyType,
+            'external_number' => (string) $request->id,
+            'key_pix' => (string) $request->pix_key,
+            'document' => $establishmentDocument,
+            'description' => (string) ($request->description ?? ''),
+            'due_date' => now()->toDateString(),
+            'value' => $this->formatMoneyForApi((int) $request->amount),
+            'type' => (string) $request->pix_key_type,
+            'key' => (string) $request->pix_key,
+            'amount' => (int) $request->amount,
             'extra_headers' => [
                 'establishment_id' => $establishmentId,
             ],
         ];
-
-        $payload['key'] = $pixKey['pix_key'] ?? null;
 
         return $payload;
     }
@@ -755,21 +782,15 @@ class CobrancaPixOutController extends Controller
 
     private function resolveMtlsConfigurationIssue(): ?string
     {
-        $certPath = config('services.paytime.mtls_cert_path');
-        $keyPath = config('services.paytime.mtls_key_path');
+        $certPath = $this->resolveMtlsCertificatePath();
+        $keyPath = $this->resolveMtlsKeyPath();
 
-        $missing = [];
-
-        if (! is_string($certPath) || trim($certPath) === '' || ! is_file($certPath) || ! is_readable($certPath)) {
-            $missing[] = 'certificado do cliente';
-        }
-
-        if (! is_string($keyPath) || trim($keyPath) === '' || ! is_file($keyPath) || ! is_readable($keyPath)) {
-            $missing[] = 'chave privada';
-        }
-
-        if ($missing === []) {
+        if ($this->hasReadableMtlsCertificate($certPath) && $this->hasReadableMtlsKey($keyPath)) {
             return null;
+        }
+
+        if (is_string($certPath) && $this->isCertificateRequestFile($certPath)) {
+            return 'Não foi possível enviar o PIX porque o arquivo de certificado informado é uma CSR. É necessário o certificado de cliente assinado pela Paytime e a chave privada correspondente.';
         }
 
         return 'Não foi possível enviar o PIX porque o certificado mTLS da Paytime não está configurado neste ambiente. Verifique o certificado do cliente e a chave privada antes de tentar novamente.';
@@ -846,6 +867,156 @@ class CobrancaPixOutController extends Controller
         }
 
         return (int) round($amountFloat * 100);
+    }
+
+    private function formatMoneyForApi(int $amount): string
+    {
+        return number_format($amount / 100, 2, '.', '');
+    }
+
+    private function normalizePixKey(string $pixKeyType, string $pixKey): string
+    {
+        $cleanValue = trim($pixKey);
+
+        return match ($pixKeyType) {
+            'PHONE', 'CPF', 'CNPJ' => $this->normalizeDigits($cleanValue),
+            'EMAIL' => mb_strtolower($cleanValue),
+            default => $cleanValue,
+        };
+    }
+
+    private function resolveEstablishmentDocument(User $user): string
+    {
+        $user->loadMissing('vendedor.estabelecimento');
+
+        $document = data_get($user->vendedor?->estabelecimento, 'document');
+
+        return is_string($document) ? $this->normalizeDigits($document) : '';
+    }
+
+    private function hasReadableMtlsCertificate(mixed $certPath): bool
+    {
+        return is_string($certPath) && trim($certPath) !== '' && is_file($certPath) && is_readable($certPath) && ! $this->isCertificateRequestFile($certPath) && $this->fileContainsCertificate($certPath);
+    }
+
+    private function hasReadableMtlsKey(mixed $keyPath): bool
+    {
+        if (is_string($keyPath) && trim($keyPath) !== '' && is_file($keyPath) && is_readable($keyPath)) {
+            return $this->fileContainsPrivateKey($keyPath);
+        }
+
+        return false;
+    }
+
+    private function resolveMtlsCertificatePath(): ?string
+    {
+        $configuredPath = config('services.paytime.mtls_cert_path');
+        if (is_string($configuredPath) && $this->hasReadableMtlsCertificate($configuredPath)) {
+            return $configuredPath;
+        }
+
+        foreach ([
+            base_path('.keys/client.crt'),
+            base_path('.keys/client.pem'),
+            base_path('.keys/client.cer'),
+            base_path('.keys/cert.crt'),
+            base_path('.keys/cert.pem'),
+            base_path('.keys/certificate.crt'),
+            base_path('.keys/certificate.pem'),
+        ] as $candidate) {
+            if ($this->hasReadableMtlsCertificate($candidate)) {
+                return $candidate;
+            }
+        }
+
+        foreach ($this->findKeysDirectoryFiles(['*.crt', '*.pem', '*.cer']) as $candidate) {
+            if ($this->hasReadableMtlsCertificate($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return is_string($configuredPath) && $configuredPath !== '' ? $configuredPath : null;
+    }
+
+    private function resolveMtlsKeyPath(): ?string
+    {
+        $configuredPath = config('services.paytime.mtls_key_path');
+        if (is_string($configuredPath) && $this->hasReadableMtlsKey($configuredPath)) {
+            return $configuredPath;
+        }
+
+        foreach ([
+            base_path('.keys/client.key'),
+            base_path('.keys/cert.key'),
+            base_path('.keys/private.key'),
+            base_path('.keys/client.pem'),
+        ] as $candidate) {
+            if ($this->hasReadableMtlsKey($candidate)) {
+                return $candidate;
+            }
+        }
+
+        foreach ($this->findKeysDirectoryFiles(['*.key', '*.pem']) as $candidate) {
+            if ($this->hasReadableMtlsKey($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return is_string($configuredPath) && $configuredPath !== '' ? $configuredPath : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function findKeysDirectoryFiles(array $patterns): array
+    {
+        $files = [];
+
+        foreach ($patterns as $pattern) {
+            foreach (glob(base_path('.keys'.DIRECTORY_SEPARATOR.$pattern)) ?: [] as $candidate) {
+                if (is_string($candidate)) {
+                    $files[] = $candidate;
+                }
+            }
+        }
+
+        return array_values(array_unique($files));
+    }
+
+    private function fileContainsCertificate(string $path): bool
+    {
+        $contents = @file_get_contents($path);
+
+        if (! is_string($contents) || trim($contents) === '') {
+            return false;
+        }
+
+        return str_contains($contents, 'BEGIN CERTIFICATE') && ! str_contains($contents, 'BEGIN CERTIFICATE REQUEST');
+    }
+
+    private function fileContainsPrivateKey(string $path): bool
+    {
+        $contents = @file_get_contents($path);
+
+        if (! is_string($contents) || trim($contents) === '') {
+            return false;
+        }
+
+        return str_contains($contents, 'BEGIN PRIVATE KEY')
+            || str_contains($contents, 'BEGIN RSA PRIVATE KEY')
+            || str_contains($contents, 'BEGIN ENCRYPTED PRIVATE KEY');
+    }
+
+    private function isCertificateRequestFile(string $path): bool
+    {
+        $contents = @file_get_contents($path);
+
+        return is_string($contents) && str_contains($contents, 'BEGIN CERTIFICATE REQUEST');
+    }
+
+    private function normalizeDigits(string $value): string
+    {
+        return preg_replace('/\D+/', '', $value) ?? '';
     }
 
     private function extractAmount(array $response, array $paths): int

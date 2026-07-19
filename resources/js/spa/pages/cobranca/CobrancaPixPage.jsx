@@ -1,4 +1,4 @@
-import {
+﻿import {
     ArrowLeftOutlined,
     DeleteOutlined,
     EyeOutlined,
@@ -146,7 +146,6 @@ export default function CobrancaPixPage() {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
-    const [recentLinksState, setRecentLinksState] = useState([]);
     const [overview, setOverview] = useState(defaultOverview);
 
     useEffect(() => {
@@ -193,7 +192,6 @@ export default function CobrancaPixPage() {
         }
 
         loadOverview();
-        refreshRecentLinks();
 
         return () => controller.abort();
     }, [selectedPeriod]);
@@ -242,19 +240,6 @@ export default function CobrancaPixPage() {
 
     const activePixLinksCount = pixLinkRows.filter((row) => row.raw_status === 'ATIVO' || row.status === 'Ativo').length;
 
-    const pixSummary = useMemo(() => ({
-        total_transactions: pixTransactionRows.length,
-        paid_transactions: pixTransactionRows.filter((row) => row.raw_status === 'PAID' || row.status === 'Pago').length,
-        pending_transactions: pixTransactionRows.filter((row) => (
-            ['PENDING', 'APPROVED', 'PROCESSING'].includes(row.raw_status)
-            || ['Pendente', 'Aprovado', 'Processando'].includes(row.status)
-        )).length + activePixLinksCount,
-        active_links: activePixLinksCount,
-    }), [activePixLinksCount, pixTransactionRows]);
-
-    const recentLinks = useMemo(() => {
-        return recentLinksState;
-    }, [recentLinksState]);
     const linkCustomerEnabled = Form.useWatch('dados_cliente_preenchidos_habilitado', linkForm);
 
     function getStatusColor(status) {
@@ -542,31 +527,6 @@ export default function CobrancaPixPage() {
         }));
     }
 
-    async function refreshRecentLinks() {
-        try {
-            const response = await fetch('/api/spa/links-pagamento', {
-                headers: {
-                    Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                return;
-            }
-
-            const data = await response.json();
-
-            setRecentLinksState(
-                (data.recent_links ?? [])
-                    .filter((item) => item.raw_type === 'PIX' || item.type === 'PIX')
-                    .slice(0, 2),
-            );
-        } catch {
-            // Mantém o snapshot atual se a recarga falhar.
-        }
-    }
-
     async function copyPixCode() {
         const pixCode = pixResult?.pix_code || pixResult?.qr_code?.emv || '';
 
@@ -704,7 +664,6 @@ export default function CobrancaPixPage() {
 
             message.success(result.message ?? 'Link de pagamento PIX criado com sucesso.');
             closeLinkModal();
-            await refreshRecentLinks();
             await refreshOverview();
         } catch (submitError) {
             message.error(submitError.message || 'Falha ao salvar o link.');
@@ -735,7 +694,7 @@ export default function CobrancaPixPage() {
 
     return (
         <Row gutter={[20, 20]} className="spa-board spa-pix-board">
-            <Col xs={24} xl={16}>
+            <Col xs={24} xl={24}>
                 <Card className="spa-table-card spa-pix-card">
                     <Space direction="vertical" size={18} className="spa-pix-stack">
                         {feedback ? (
@@ -921,90 +880,6 @@ export default function CobrancaPixPage() {
                         </Card>
                     </Space>
                 </Card>
-            </Col>
-
-            <Col xs={24} xl={8}>
-                <Space direction="vertical" size={20} style={{ width: '100%' }}>
-                    <Card
-                        className="spa-quick-view-card spa-pix-sidebar-card"
-                        title={(
-                            <Space align="center" size={10} className="spa-pix-sidebar-title">
-                                <QrcodeOutlined className="spa-pix-sidebar-title-icon" />
-                                <span>Visão rápida</span>
-                            </Space>
-                        )}
-                        bordered={false}
-                    >
-                        <Space direction="vertical" size={16} style={{ width: '100%' }}>
-
-                            <Row gutter={[12, 12]}>
-                                {[
-                                    ['Transações', pixSummary.total_transactions],
-                                    ['Pagas', pixSummary.paid_transactions],
-                                    ['Pendentes', pixSummary.pending_transactions],
-                                    ['Links ativos', pixSummary.active_links],
-                                ].map(([label, value]) => (
-                                    <Col xs={12} sm={12} key={label}>
-                                        <Card size="small" bordered={false} className="spa-pix-mini-stat-card">
-                                            <Typography.Text type="secondary">{label}</Typography.Text>
-                                            <div>
-                                                <Typography.Title level={3} style={{ marginBottom: 0 }}>
-                                                    {value}
-                                                </Typography.Title>
-                                            </div>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
-
-                            <Card size="small" title="Atalhos" bordered={false}>
-                                <Space direction="vertical" size={10} style={{ width: '100%' }}>
-                                    <Button type="primary" block onClick={openLinkModal} className="spa-primary-button">
-                                        Criar link PIX
-                                    </Button>
-                                    <Button block onClick={() => navigate('/links-pagamento')}>
-                                        Ver links de pagamento
-                                    </Button>
-                                </Space>
-                            </Card>
-
-                            <Card size="small" title="Últimos links" bordered={false}>
-                                {recentLinks.length === 0 ? (
-                                    <Empty description="Nenhum link recente encontrado." />
-                                ) : (
-                                    <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                        {recentLinks.slice(0, 2).map((item) => (
-                                            <div
-                                                key={item.id}
-                                                className="spa-pix-side-link-item"
-                                                role="button"
-                                                tabIndex={0}
-                                                onClick={() => navigate(`/links-pagamento-pix/${item.id}`)}
-                                                onKeyDown={(event) => {
-                                                    if (event.key === 'Enter' || event.key === ' ') {
-                                                        event.preventDefault();
-                                                        navigate(`/links-pagamento-pix/${item.id}`);
-                                                    }
-                                                }}
-                                            >
-                                                <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                                                    <Typography.Text strong>{item.title}</Typography.Text>
-                                                    <Typography.Text type="secondary">{item.code}</Typography.Text>
-                                                </Space>
-                                                <Space wrap>
-                                                    <Tag color="green">{item.amount}</Tag>
-                                                    <Tag color={getStatusColor(item.status)}>{item.status}</Tag>
-                                                </Space>
-                                                <Typography.Text type="secondary">{item.expires_at}</Typography.Text>
-                                            </div>
-                                        ))}
-                                    </Space>
-                                )}
-                            </Card>
-
-                        </Space>
-                    </Card>
-                </Space>
             </Col>
 
             <Modal

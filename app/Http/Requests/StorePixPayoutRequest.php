@@ -32,7 +32,7 @@ class StorePixPayoutRequest extends FormRequest
                     }
                 },
             ],
-            'pix_key_type' => ['required', 'in:PHONE,CPF,EMAIL,CNPJ'],
+            'pix_key_type' => ['required', 'in:PHONE,CPF,EMAIL,CNPJ,RANDOM'],
             'pix_key' => [
                 'nullable',
                 'string',

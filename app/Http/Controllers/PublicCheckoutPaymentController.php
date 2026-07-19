@@ -17,10 +17,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PublicCheckoutPaymentController extends Controller
 {
     private const MINIMUM_BOLETO_AMOUNT = 10.00;
+
+    private const MINIMUM_CREDIT_CARD_INSTALLMENT_AMOUNT_CENTS = 500;
 
     public function __construct(
         private readonly CheckoutPricingService $pricingService,
@@ -103,6 +106,12 @@ class PublicCheckoutPaymentController extends Controller
             $paymentMethod,
             $checkoutSession->quantity,
             (float) $checkoutSession->shipping_total
+        );
+
+        $this->validateCreditCardInstallmentAmount(
+            $paymentMethod,
+            (float) $pricing['total'],
+            $request->integer('installments')
         );
 
         if (
@@ -698,5 +707,23 @@ class PublicCheckoutPaymentController extends Controller
         }
 
         return true;
+    }
+
+    private function validateCreditCardInstallmentAmount(string $paymentMethod, float $totalAmount, int $installments): void
+    {
+        if ($paymentMethod !== 'credit_card' || $installments <= 1) {
+            return;
+        }
+
+        $totalInCents = (int) round($totalAmount * 100);
+        $minimumTotalInCents = $installments * self::MINIMUM_CREDIT_CARD_INSTALLMENT_AMOUNT_CENTS;
+
+        if ($totalInCents >= $minimumTotalInCents) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'installments' => 'Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.',
+        ]);
     }
 }

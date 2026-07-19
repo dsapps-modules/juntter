@@ -1530,6 +1530,131 @@ class RedirectedCheckoutTest extends TestCase
             ->assertJsonValidationErrors(['installments']);
     }
 
+    public function test_credit_card_payment_allows_a_single_installment_with_a_small_total(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+            'unit_price' => 4.00,
+            'total_price' => 4.00,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->once())
+            ->method('createCreditCardPayment')
+            ->with(
+                $this->callback(function (Order $order) use ($session): bool {
+                    return $order->checkout_session_id === $session->id
+                        && $order->payment_method === 'credit_card'
+                        && (float) $order->total === 4.0;
+                }),
+                $this->callback(function (array $cardData): bool {
+                    return $cardData['payment_method'] === 'credit_card'
+                        && (int) $cardData['installments'] === 1;
+                }),
+            )
+            ->willReturn([
+                'gateway_transaction_id' => 'card-checkout-123',
+                'gateway_status' => 'authorized',
+                'internal_status' => 'authorized',
+                'card_last_four' => '4242',
+                'card_brand' => 'visa',
+            ]);
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
+            'payment_method' => 'credit_card',
+            'installments' => 1,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('payment_transaction.payment_method', 'credit_card');
+        $response->assertJsonPath('payment_transaction.installments', 1);
+    }
+
+    public function test_credit_card_payment_rejects_multiple_installments_when_each_parcel_is_below_five_reais(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+            'unit_price' => 4.00,
+            'total_price' => 4.00,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'SÃ£o Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->never())
+            ->method('createCreditCardPayment');
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
+            'payment_method' => 'credit_card',
+            'installments' => 2,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['installments']);
+
+        $errors = $response->json('errors');
+
+        $this->assertSame(
+            'Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.',
+            $errors['installments'][0] ?? null
+        );
+    }
+
     public function test_credit_card_payment_rejects_invalid_holder_document(): void
     {
         $seller = $this->makeVendorUser();

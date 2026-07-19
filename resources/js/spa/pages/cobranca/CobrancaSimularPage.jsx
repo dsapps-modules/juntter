@@ -68,6 +68,9 @@ const payerOptions = [
     { label: 'Vendedor', value: 'ESTABLISHMENT' },
 ];
 
+const minimumCardInstallmentAmount = 5;
+const minimumCardInstallmentCount = 2;
+
 function ResultMetric({ label, value, hint }) {
     return (
         <div className="spa-sim-result-metric">
@@ -176,16 +179,41 @@ export default function CobrancaSimularPage() {
             ? parsedAmount
             : parsedAmount - taxAmount;
     const installmentAmount = !isPixMode && installmentCount > 0 ? chargeAmount / installmentCount : 0;
+    const filteredInstallmentOptions = useMemo(() => {
+        if (isPixMode) {
+            return [];
+        }
+
+        const validInstallments = installmentOptions.filter((option) => {
+            const optionInstallments = Number.parseInt(option.value, 10);
+
+            if (optionInstallments === 1) {
+                return false;
+            }
+
+            return (
+                optionInstallments >= minimumCardInstallmentCount
+                && chargeAmount / optionInstallments >= minimumCardInstallmentAmount
+            );
+        });
+
+        const oneInstallmentOption = installmentOptions.find((option) => option.value === '1x') ?? {
+            label: '1x',
+            value: '1x',
+        };
+
+        return [oneInstallmentOption, ...validInstallments];
+    }, [chargeAmount, installmentOptions, isPixMode]);
 
     useEffect(() => {
-        if (installmentOptions.length === 0) {
+        if (filteredInstallmentOptions.length === 0) {
             return;
         }
 
-        if (!installmentOptions.some((option) => option.value === installments)) {
-            setInstallments(installmentOptions[0].value);
+        if (!filteredInstallmentOptions.some((option) => option.value === installments)) {
+            setInstallments(filteredInstallmentOptions[0].value);
         }
-    }, [installmentOptions, installments]);
+    }, [filteredInstallmentOptions, installments]);
 
     useEffect(() => {
         if (!selectedFlagId && selectedFlag) {
@@ -264,7 +292,7 @@ export default function CobrancaSimularPage() {
                                         value={installments}
                                         onChange={setInstallments}
                                         align="right"
-                                        options={installmentOptions}
+                                        options={filteredInstallmentOptions}
                                     />
                                 ) : null}
                             </>

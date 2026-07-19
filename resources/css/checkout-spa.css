@@ -671,7 +671,7 @@
 }
 
 .checkout-spa-payment-strip {
-    padding: 20px 0 2px;
+    padding: 12px 0 0;
 }
 
 .checkout-spa-payment-strip-title {
@@ -891,8 +891,8 @@
 .checkout-spa-payment-method-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 16px;
+    gap: 22px;
+    margin-top: 28px;
 }
 
 .checkout-spa-shipping-section {
@@ -1104,8 +1104,7 @@
 
 .checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-head,
 .checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-stack,
-.checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-footer,
-.checkout-spa-theme--essential .checkout-spa-payment-strip {
+.checkout-spa-theme--essential .checkout-spa-summary > .checkout-spa-summary-footer {
     display: none;
 }
 
@@ -1299,6 +1298,10 @@
 .checkout-spa-theme--essential .checkout-spa-actions {
     justify-content: center;
     margin-top: clamp(48px, 10vh, 110px);
+}
+
+.checkout-spa-theme--essential .checkout-spa-step-card--payment-details .checkout-spa-actions {
+    margin-top: 12px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-step-card--intro .checkout-spa-actions {

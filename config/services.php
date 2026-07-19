@@ -31,6 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    /**
+     * Paytime mTLS can be configured explicitly via env vars or discovered
+     * automatically from `base_path('.keys')` when the expected client cert
+     * and private key are present.
+     */
     'paytime' => [
         'base_url' => env('PAYTIME_BASE_URL'),
         'integration_key' => env('PAYTIME_INTEGRATION_KEY'),

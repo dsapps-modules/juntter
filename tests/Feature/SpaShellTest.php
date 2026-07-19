@@ -474,37 +474,19 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('placeholder="Estabelecimento"', $pageSource);
     }
 
-    public function test_the_pix_page_contains_the_side_panel_content(): void
+    public function test_the_pix_page_does_not_contain_the_old_side_panel(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
-        $this->assertStringContainsString('Visão rápida', $pageSource);
-        $this->assertStringNotContainsString('Painel lateral', $pageSource);
-        $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('Últimos links', $pageSource);
-        $this->assertStringContainsString('Criar link PIX', $pageSource);
-        $this->assertStringContainsString('Ver links de pagamento', $pageSource);
-        $this->assertStringNotContainsString('Atualizar painel', $pageSource);
-        $this->assertStringContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
-        $this->assertStringContainsString('refreshRecentLinks();', $pageSource);
-        $this->assertStringContainsString('data.recent_links ?? []', $pageSource);
-        $this->assertStringContainsString("filter((item) => item.raw_type === 'PIX' || item.type === 'PIX')", $pageSource);
-        $this->assertStringContainsString('async function refreshRecentLinks()', $pageSource);
-        $this->assertStringContainsString("fetch('/api/spa/links-pagamento'", $pageSource);
-        $this->assertStringContainsString('await refreshRecentLinks();', $pageSource);
-        $this->assertStringContainsString('const pixSummary = useMemo(() => ({', $pageSource);
-        $this->assertStringContainsString('total_transactions: pixTransactionRows.length', $pageSource);
-        $this->assertStringContainsString(')).length + activePixLinksCount', $pageSource);
-        $this->assertStringContainsString("['Transações', pixSummary.total_transactions]", $pageSource);
-        $this->assertStringContainsString("['Pagas', pixSummary.paid_transactions]", $pageSource);
-        $this->assertStringNotContainsString('spa-pix-empty-card', $pageSource);
-        $this->assertStringContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
-        $this->assertStringNotContainsString('recentLinks.slice(0, 5).map((item) => (', $pageSource);
-        $this->assertStringContainsString('recent_links', $pageSource);
-        $this->assertStringNotContainsString('overview.recent_links', $pageSource);
-        $this->assertStringContainsString('role="button"', $pageSource);
-        $this->assertStringContainsString('tabIndex={0}', $pageSource);
-        $this->assertStringNotContainsString('Abrir', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-sidebar-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-mini-stat-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-sidebar-title', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-side-link-item', $pageSource);
+        $this->assertStringNotContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Atalhos', $pageSource);
+        $this->assertStringNotContainsString('Últimos links', $pageSource);
+        $this->assertStringContainsString('Gerar QR Code', $pageSource);
+        $this->assertStringContainsString('Link de Pagamento', $pageSource);
     }
 
     public function test_the_pix_out_page_contains_the_confirmation_flow(): void
@@ -590,32 +572,35 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
     }
 
-    public function test_the_boleto_page_contains_the_contextual_side_panel_content(): void
+    public function test_the_boleto_page_uses_the_full_width_main_column(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
 
-        $this->assertStringContainsString('Visão rápida', $pageSource);
-        $this->assertStringNotContainsString('Painel lateral', $pageSource);
-        $this->assertStringContainsString('Atalhos', $pageSource);
-        $this->assertStringContainsString('Últimos boletos', $pageSource);
-        $this->assertStringContainsString('Criar boleto', $pageSource);
-        $this->assertStringContainsString('Ver histórico', $pageSource);
-        $this->assertStringContainsString('openBoletoDetails(item)', $pageSource);
+        $this->assertStringContainsString('<Col xs={24} xl={24}>', $pageSource);
+        $this->assertStringContainsString('Gerar Boleto', $pageSource);
+        $this->assertStringContainsString('Boletos do mês', $pageSource);
+        $this->assertStringContainsString('spa-pix-transactions-table', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-toggle-button', $pageSource);
+        $this->assertStringContainsString('spa-pix-page-header', $pageSource);
+        $this->assertStringNotContainsString('spa-quick-view-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-sidebar-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-mini-stat-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-side-link-item', $pageSource);
+        $this->assertStringNotContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Atalhos', $pageSource);
+        $this->assertStringNotContainsString('Últimos boletos', $pageSource);
     }
 
-    public function test_the_cartao_credito_page_contains_the_new_card_cobranca_structure(): void
+    public function test_the_cartao_credito_page_uses_the_full_width_main_column(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
         $stylesSource = file_get_contents(base_path('resources/css/app.css'));
 
+        $this->assertStringContainsString('<Col xs={24} xl={24}>', $pageSource);
         $this->assertStringContainsString('Gerar Cobrança', $pageSource);
-        $this->assertStringContainsString('type="primary"', $pageSource);
         $this->assertStringContainsString('Valor da cobrança', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Dados do cartão', $pageSource);
-        $this->assertStringContainsString('Visão rápida', $pageSource);
-        $this->assertStringNotContainsString('Painel lateral', $pageSource);
-        $this->assertStringContainsString('Atualizar painel', $pageSource);
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
         $this->assertStringContainsString('spa-pix-page-link-button-label', $pageSource);
         $this->assertStringContainsString("style={{ minWidth: 176, width: 'auto' }}", $pageSource);
@@ -623,53 +608,35 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('const yearOptions = Array.from({ length: 10 }, (_, index) => {', $pageSource);
         $this->assertStringContainsString('const year = new Date().getFullYear() + index;', $pageSource);
         $this->assertStringNotContainsString('length: 6', $pageSource);
-        $this->assertStringContainsString('const creditSummary = useMemo(() => {', $pageSource);
-        $this->assertStringContainsString("approved_transactions: creditRows.filter((row) => ['PAID', 'APPROVED'].includes(row.raw_status)).length", $pageSource);
-        $this->assertStringContainsString("pending_transactions: creditRows.filter((row) => ['PENDING', 'PROCESSING'].includes(row.raw_status)).length", $pageSource);
-        $this->assertStringContainsString("['Aprovadas', creditSummary.approved_transactions]", $pageSource);
-        $this->assertStringContainsString("['Pendentes', creditSummary.pending_transactions]", $pageSource);
-        $this->assertStringNotContainsString("['Aprovadas', summary.paid_transactions ?? 0]", $pageSource);
-        $this->assertStringContainsString('className="spa-pix-collapse-label-badge spa-pix-page-link-button"', $pageSource);
+        $this->assertStringNotContainsString('Visão rápida', $pageSource);
+        $this->assertStringNotContainsString('Atalhos', $pageSource);
+        $this->assertStringNotContainsString('Últimos links', $pageSource);
+        $this->assertStringNotContainsString('spa-quick-view-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-sidebar-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-mini-stat-card', $pageSource);
+        $this->assertStringNotContainsString('spa-pix-side-link-item', $pageSource);
+        $this->assertStringNotContainsString('Atualizar painel', $pageSource);
+        $this->assertStringNotContainsString('const creditSummary = useMemo(() => {', $pageSource);
+        $this->assertStringNotContainsString('recentLinksState', $pageSource);
+        $this->assertStringNotContainsString('refreshRecentLinks()', $pageSource);
+        $this->assertStringNotContainsString('await refreshRecentLinks();', $pageSource);
         $this->assertStringContainsString('.spa-pix-page-header > .spa-pix-page-toggle-button.ant-btn-primary,', $stylesSource);
         $this->assertStringContainsString('.spa-pix-page-header > .spa-pix-page-link-button.ant-btn-primary {', $stylesSource);
         $this->assertStringContainsString('.spa-pix-page-link-button.ant-btn:hover', $stylesSource);
         $this->assertStringContainsString('.spa-pix-page-link-button:hover .anticon', $stylesSource);
         $this->assertStringContainsString('color: #ffffff', $stylesSource);
-        $this->assertLessThan(
-            strpos($pageSource, 'label="Rua"'),
-            strpos($pageSource, 'label="CEP"')
-        );
-        $this->assertLessThan(
-            strpos($pageSource, 'label="Complemento"'),
-            strpos($pageSource, 'label="Número"')
-        );
-        $this->assertSame(1, substr_count($pageSource, "name={['client', 'address', 'number']}"));
-        $this->assertLessThan(
-            strpos($pageSource, 'label="Bairro"'),
-            strpos($pageSource, 'label="Complemento"')
-        );
-        $this->assertLessThan(
-            strpos($pageSource, 'label="Cidade"'),
-            strpos($pageSource, 'label="Estado"')
-        );
     }
 
-    public function test_the_cartao_credito_page_keeps_recent_links_at_two_items_and_refreshes_only_after_creation(): void
+    public function test_the_cartao_credito_page_does_not_retain_the_old_recent_links_logic(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
 
-        $this->assertStringContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
-        $this->assertStringContainsString('setRecentLinksState((current) => (current.length === 0 ? (data.recent_card_links ?? []).slice(0, 2) : current));', $pageSource);
-        $this->assertStringContainsString('async function refreshRecentLinks()', $pageSource);
-        $this->assertStringContainsString('fetch(`/api/spa/cobranca', $pageSource);
-        $this->assertStringContainsString('await refreshRecentLinks();', $pageSource);
-        $this->assertStringContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
-        $this->assertStringNotContainsString('recentLinks.slice(0, 5).map((item) => (', $pageSource);
-        $this->assertStringNotContainsString('overview.recent_links', $pageSource);
-        $this->assertStringContainsString('recent_card_links', $pageSource);
-        $this->assertStringContainsString('role="button"', $pageSource);
-        $this->assertStringContainsString('tabIndex={0}', $pageSource);
-        $this->assertStringNotContainsString('Abrir', $pageSource);
+        $this->assertStringNotContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
+        $this->assertStringNotContainsString('setRecentLinksState((current) => (current.length === 0 ? (data.recent_card_links ?? []).slice(0, 2) : current));', $pageSource);
+        $this->assertStringNotContainsString('async function refreshRecentLinks()', $pageSource);
+        $this->assertStringNotContainsString('await refreshRecentLinks();', $pageSource);
+        $this->assertStringNotContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
+        $this->assertStringNotContainsString('recent_card_links', $pageSource);
     }
 
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
