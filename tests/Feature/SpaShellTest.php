@@ -518,6 +518,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Alterar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Cadastrar/atualizar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Valor disponível', $pageSource);
+        $this->assertStringContainsString('Disponível para saque', $pageSource);
+        $this->assertStringContainsString('Taxa de Transferência:', $pageSource);
         $this->assertStringContainsString('Valor a transferir', $pageSource);
         $this->assertStringContainsString('Dados do recebedor', $pageSource);
         $this->assertStringContainsString('Dados do devedor', $pageSource);
@@ -534,6 +536,7 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Solicitação atual', $pageSource);
         $this->assertStringNotContainsString('Não cadastrada', $pageSource);
         $this->assertStringNotContainsString('Senha de confirmação', $pageSource);
+        $this->assertStringNotContainsString('<Typography.Text className="spa-brand-kicker">Taxa</Typography.Text>', $pageSource);
         $this->assertStringNotContainsString('pinModalOpen', $pageSource);
         $this->assertStringNotContainsString('handleConfirmPin', $pageSource);
         $this->assertStringNotContainsString('Últimas solicitações', $pageSource);

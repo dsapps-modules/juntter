@@ -361,13 +361,7 @@ export default function CobrancaPixOutPage() {
                                 </Typography.Title>
                             </Col>
                             <Col xs={24} md={8}>
-                                <Typography.Text className="spa-brand-kicker">Taxa</Typography.Text>
-                                <Typography.Title level={2} style={{ marginBottom: 0, color: '#d14343' }}>
-                                    {overview.fee.label}
-                                </Typography.Title>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Typography.Text className="spa-brand-kicker">Valor disponível</Typography.Text>
+                                <Typography.Text className="spa-brand-kicker">Disponível para saque</Typography.Text>
                                 <Typography.Title level={2} style={{ marginBottom: 0, color: '#1f2a88' }}>
                                     {overview.available_after_fee.label}
                                 </Typography.Title>
@@ -446,22 +440,42 @@ export default function CobrancaPixOutPage() {
                                 </Col>
                             </Row>
 
-                            <Space wrap>
-                                <Button
-                                    type="primary"
-                                    htmlType="submit"
-                                    icon={<SendOutlined />}
-                                    loading={submitting}
-                                >
-                                    Iniciar transação
-                                </Button>
-                                <Button
-                                    onClick={() => form.resetFields()}
-                                    disabled={submitting}
-                                >
-                                    Limpar
-                                </Button>
-                            </Space>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    gap: 16,
+                                    flexWrap: 'wrap',
+                                    marginTop: 24,
+                                }}
+                            >
+                                <Space wrap>
+                                    <Button
+                                        type="primary"
+                                        htmlType="submit"
+                                        icon={<SendOutlined />}
+                                        loading={submitting}
+                                    >
+                                        Iniciar transação
+                                    </Button>
+                                    <Button
+                                        onClick={() => form.resetFields()}
+                                        disabled={submitting}
+                                    >
+                                        Limpar
+                                    </Button>
+                                </Space>
+
+                                <Space size={6} align="center" wrap>
+                                    <Typography.Text className="spa-brand-kicker">
+                                        Taxa de Transferência:
+                                    </Typography.Text>
+                                    <Typography.Text className="spa-brand-kicker" style={{ color: '#d14343' }}>
+                                        {overview.fee.label}
+                                    </Typography.Text>
+                                </Space>
+                            </div>
                         </Form>
                     </Card>
                 </>
