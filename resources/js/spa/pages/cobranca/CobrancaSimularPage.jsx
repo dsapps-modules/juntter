@@ -1,5 +1,5 @@
 import { CreditCardOutlined, DollarOutlined } from '@ant-design/icons';
-import { Alert, Card, Col, Divider, Row, Space, Spin, Tag, Typography } from 'antd';
+import { Alert, Button, Card, Col, Radio, Row, Space, Spin, Tag, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import PaymentAmountField from '../../components/payment-simulator/PaymentAmountField';
 import PaymentInstallmentSelector from '../../components/payment-simulator/PaymentInstallmentSelector';
@@ -41,16 +41,32 @@ function parseAmountInput(value) {
     return value.replace(/\s?R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
 }
 
-function buildInstallmentBreakdown(amount, installments) {
-    const totalCents = Math.round(amount * 100);
-    const baseCents = Math.floor(totalCents / installments);
-    const remainder = totalCents % installments;
+function resolvePixRate(flag) {
+    const pixFees = flag?.fees?.pix;
 
-    return Array.from({ length: installments }, (_, index) => ({
-        number: index + 1,
-        amount: (baseCents + (index < remainder ? 1 : 0)) / 100,
-    }));
+    if (typeof pixFees === 'number' || typeof pixFees === 'string') {
+        const parsedRate = Number(pixFees);
+
+        return Number.isFinite(parsedRate) ? parsedRate : 0;
+    }
+
+    if (pixFees && typeof pixFees === 'object') {
+        for (const value of Object.values(pixFees)) {
+            const parsedRate = Number(value);
+
+            if (Number.isFinite(parsedRate)) {
+                return parsedRate;
+            }
+        }
+    }
+
+    return 0;
 }
+
+const payerOptions = [
+    { label: 'Cliente', value: 'CLIENT' },
+    { label: 'Vendedor', value: 'ESTABLISHMENT' },
+];
 
 function ResultMetric({ label, value, hint }) {
     return (
@@ -73,10 +89,12 @@ function ResultMetric({ label, value, hint }) {
 export default function CobrancaSimularPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [sellerName, setSellerName] = useState('Vendedor');
     const [planName, setPlanName] = useState('Plano contratado');
+    const [planFlags, setPlanFlags] = useState([]);
     const [flags, setFlags] = useState([]);
     const [selectedFlagId, setSelectedFlagId] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState('credit_card');
+    const [interest, setInterest] = useState('ESTABLISHMENT');
     const [amount, setAmount] = useState(1000);
     const [installments, setInstallments] = useState('6x');
 
@@ -101,12 +119,13 @@ export default function CobrancaSimularPage() {
                 }
 
                 const data = await response.json();
-                const contractedFlags = normalizeFlags(data.plan?.flags ?? []);
-                const selectedFlag = contractedFlags.find((flag) => flag.active) ?? contractedFlags[0] ?? null;
+                const contractedFlags = data.plan?.flags ?? [];
+                const creditFlags = normalizeFlags(contractedFlags);
+                const selectedFlag = creditFlags.find((flag) => flag.active) ?? creditFlags[0] ?? null;
 
-                setSellerName(data.seller_name ?? 'Vendedor');
                 setPlanName(data.plan?.name ?? 'Plano contratado');
-                setFlags(contractedFlags);
+                setPlanFlags(contractedFlags);
+                setFlags(creditFlags);
                 setSelectedFlagId(selectedFlag ? String(selectedFlag.id ?? selectedFlag.name ?? '') : null);
 
                 const initialInstallments = buildInstallmentOptions(selectedFlag);
@@ -117,6 +136,7 @@ export default function CobrancaSimularPage() {
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
                     setError(fetchError.message || 'Falha ao carregar o plano contratado.');
+                    setPlanFlags([]);
                     setFlags([]);
                 }
             } finally {
@@ -136,19 +156,26 @@ export default function CobrancaSimularPage() {
 
         return availableInstallments.length > 0 ? availableInstallments : [{ label: '1x', value: '1x' }];
     }, [selectedFlag]);
-    const selectedRate = resolveRate(selectedFlag, installments);
+    const bacenFlag = useMemo(
+        () => planFlags.find((flag) => String(flag?.name ?? '').toUpperCase() === 'BACEN') ?? null,
+        [planFlags],
+    );
+    const isPixMode = paymentMethod === 'pix';
+    const selectedRate = isPixMode ? resolvePixRate(bacenFlag) : resolveRate(selectedFlag, installments);
     const parsedAmount = Number.isFinite(amount) ? amount : 0;
-    const totalAmount = parsedAmount + parsedAmount * (selectedRate / 100);
-    const installmentAmount = Number.parseInt(installments, 10) > 0 ? totalAmount / Number.parseInt(installments, 10) : 0;
-    const installmentBreakdown = useMemo(() => {
-        const installmentCount = Number.parseInt(installments, 10);
-
-        if (totalAmount <= 0 || !Number.isFinite(installmentCount) || installmentCount <= 0) {
-            return [];
-        }
-
-        return buildInstallmentBreakdown(totalAmount, installmentCount);
-    }, [installments, totalAmount]);
+    const installmentCount = Number.parseInt(installments, 10);
+    const taxAmount = parsedAmount * (selectedRate / 100);
+    const chargeAmount = isPixMode
+        ? parsedAmount
+        : interest === 'CLIENT'
+            ? parsedAmount + taxAmount
+            : parsedAmount;
+    const sellerNetAmount = isPixMode
+        ? parsedAmount - taxAmount
+        : interest === 'CLIENT'
+            ? parsedAmount
+            : parsedAmount - taxAmount;
+    const installmentAmount = !isPixMode && installmentCount > 0 ? chargeAmount / installmentCount : 0;
 
     useEffect(() => {
         if (installmentOptions.length === 0) {
@@ -167,11 +194,45 @@ export default function CobrancaSimularPage() {
     }, [selectedFlag, selectedFlagId]);
 
     const selectedFlagLabel = selectedFlag ? formatFlagLabel(selectedFlag) : 'Bandeira';
+    const modeTags = isPixMode
+        ? [
+            { color: 'blue', label: 'PIX' },
+            { color: 'gold', label: `${selectedRate.toFixed(2).replace('.', ',')}%` },
+        ]
+        : [
+            { color: 'blue', label: selectedFlagLabel },
+            { color: 'gold', label: installments },
+        ];
+
+    const hasAvailableData = isPixMode ? bacenFlag !== null : flagOptions.length > 0;
 
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col xs={24} lg={10}>
-                <Card className="spa-table-card" title="Dados da simulação" extra={<CreditCardOutlined />}>
+                <Card
+                    className="spa-table-card"
+                    title="Dados da simulação"
+                    extra={
+                        <Space size={6}>
+                            <Button
+                                type="text"
+                                aria-label="Simular recebimento por PIX"
+                                className={`spa-sim-method-toggle ${isPixMode ? 'spa-sim-method-toggle-active' : ''}`}
+                                onClick={() => setPaymentMethod('pix')}
+                            >
+                                <img src="/img/payment/logo-pix.png" alt="" aria-hidden="true" className="spa-sim-header-pix-icon" />
+                            </Button>
+                            <Button
+                                type="text"
+                                aria-label="Simular recebimento por cartão"
+                                className={`spa-sim-method-toggle ${!isPixMode ? 'spa-sim-method-toggle-active' : ''}`}
+                                onClick={() => setPaymentMethod('credit_card')}
+                            >
+                                <CreditCardOutlined aria-hidden="true" />
+                            </Button>
+                        </Space>
+                    }
+                >
                     <Space direction="vertical" size={18} style={{ width: '100%' }}>
                         {loading ? (
                             <Spin tip="Carregando plano contratado" />
@@ -179,21 +240,16 @@ export default function CobrancaSimularPage() {
                             <Alert type="error" showIcon message="Falha ao carregar dados" description={error} />
                         ) : (
                             <>
-                                <div className="spa-sim-summary">
-                                    <Typography.Text type="secondary">Vendedor</Typography.Text>
-                                    <Typography.Title level={5} style={{ margin: 0 }}>
-                                        {sellerName}
-                                    </Typography.Title>
-                                </div>
-
-                                <PaymentPlanSelector
-                                    value={selectedFlagId}
-                                    onChange={setSelectedFlagId}
-                                    align="right"
-                                    label="Bandeira"
-                                    options={flagOptions}
-                                    ariaLabel="Selecionar bandeira do cartão"
-                                />
+                                {!isPixMode ? (
+                                    <PaymentPlanSelector
+                                        value={selectedFlagId}
+                                        onChange={setSelectedFlagId}
+                                        align="right"
+                                        label="Bandeira"
+                                        options={flagOptions}
+                                        ariaLabel="Selecionar bandeira do cartão"
+                                    />
+                                ) : null}
 
                                 <PaymentAmountField
                                     value={amount}
@@ -203,12 +259,14 @@ export default function CobrancaSimularPage() {
                                     align="right"
                                 />
 
-                                <PaymentInstallmentSelector
-                                    value={installments}
-                                    onChange={setInstallments}
-                                    align="right"
-                                    options={installmentOptions}
-                                />
+                                {!isPixMode ? (
+                                    <PaymentInstallmentSelector
+                                        value={installments}
+                                        onChange={setInstallments}
+                                        align="right"
+                                        options={installmentOptions}
+                                    />
+                                ) : null}
                             </>
                         )}
                     </Space>
@@ -216,91 +274,82 @@ export default function CobrancaSimularPage() {
             </Col>
 
             <Col xs={24} lg={14}>
-                <Card className="spa-table-card" title="Resultado da simulação" extra={<DollarOutlined />}>
+                <Card className="spa-table-card" title={planName} extra={<DollarOutlined />}>
                     <Space direction="vertical" size={18} style={{ width: '100%' }}>
                         {loading ? (
                             <Spin tip="Carregando resultado" />
                         ) : error ? (
                             <Alert type="error" showIcon message="Falha ao carregar dados" description={error} />
-                        ) : flagOptions.length === 0 ? (
+                        ) : !hasAvailableData ? (
                             <Alert
                                 type="warning"
                                 showIcon
-                                message="Nenhuma bandeira disponível"
-                                description="O plano contratado não trouxe taxas de crédito para simulação."
+                                message={isPixMode ? 'Nenhuma taxa PIX disponível' : 'Nenhuma bandeira disponível'}
+                                description={
+                                    isPixMode
+                                        ? 'O plano contratado não trouxe taxa PIX para simulação.'
+                                        : 'O plano contratado não trouxe taxas de crédito para simulação.'
+                                }
                             />
                         ) : (
                             <>
                                 <div className="spa-sim-result-header">
                                     <div className="spa-sim-result-title">
-                                        <Typography.Text type="secondary">Plano contratado</Typography.Text>
-                                        <Typography.Title level={4} style={{ margin: 0 }}>
-                                            {planName}
-                                        </Typography.Title>
+                                        {!isPixMode ? (
+                                            <Space align="center" size={12} wrap>
+                                                <Typography.Text type="secondary">Quem paga a taxa:</Typography.Text>
+                                                <Radio.Group
+                                                    value={interest}
+                                                    onChange={(event) => setInterest(event.target.value)}
+                                                    optionType="button"
+                                                    buttonStyle="solid"
+                                                    size="small"
+                                                >
+                                                    {payerOptions.map((option) => (
+                                                        <Radio.Button key={option.value} value={option.value}>
+                                                            {option.label}
+                                                        </Radio.Button>
+                                                    ))}
+                                                </Radio.Group>
+                                            </Space>
+                                        ) : (
+                                            <Typography.Text type="secondary">Simulação de recebimento por PIX</Typography.Text>
+                                        )}
                                     </div>
 
                                     <Space wrap className="spa-sim-result-tags">
-                                        <Tag color="blue" className="spa-sim-result-tag">
-                                            {selectedFlagLabel}
-                                        </Tag>
-                                        <Tag color="gold" className="spa-sim-result-tag">
-                                            {installments}
-                                        </Tag>
+                                        {modeTags.map((tag) => (
+                                            <Tag key={tag.label} color={tag.color} className="spa-sim-result-tag">
+                                                {tag.label}
+                                            </Tag>
+                                        ))}
                                     </Space>
                                 </div>
 
                                 <Row gutter={[12, 12]} className="spa-sim-result-metrics">
-                                    <Col xs={24} sm={12} xl={6}>
+                                    <Col xs={24} sm={12} xl={isPixMode ? 8 : 6}>
                                         <Card size="small" className="spa-sim-result-metric-card">
                                             <ResultMetric label="Valor da compra" value={formatCurrency(parsedAmount)} />
                                         </Card>
                                     </Col>
-                                    <Col xs={24} sm={12} xl={6}>
+                                    <Col xs={24} sm={12} xl={isPixMode ? 8 : 6}>
                                         <Card size="small" className="spa-sim-result-metric-card">
                                             <ResultMetric label="Taxa aplicada" value={`${selectedRate.toFixed(2).replace('.', ',')}%`} />
                                         </Card>
                                     </Col>
-                                    <Col xs={24} sm={12} xl={6}>
+                                    {!isPixMode ? (
+                                        <Col xs={24} sm={12} xl={6}>
+                                            <Card size="small" className="spa-sim-result-metric-card">
+                                                <ResultMetric label="Parcela" value={formatCurrency(installmentAmount)} hint={installments} />
+                                            </Card>
+                                        </Col>
+                                    ) : null}
+                                    <Col xs={24} sm={12} xl={isPixMode ? 8 : 6}>
                                         <Card size="small" className="spa-sim-result-metric-card">
-                                            <ResultMetric label="Parcela" value={formatCurrency(installmentAmount)} hint={installments} />
-                                        </Card>
-                                    </Col>
-                                    <Col xs={24} sm={12} xl={6}>
-                                        <Card size="small" className="spa-sim-result-metric-card">
-                                            <ResultMetric label="Total com taxa" value={formatCurrency(totalAmount)} />
+                                            <ResultMetric label="Valor a receber" value={formatCurrency(sellerNetAmount)} />
                                         </Card>
                                     </Col>
                                 </Row>
-
-                                <Divider orientation="left">Valor de cada parcela</Divider>
-
-                                {installmentBreakdown.length === 0 ? (
-                                    <Alert
-                                        type="warning"
-                                        showIcon
-                                        message="Informe um valor maior que zero para visualizar a divisão das parcelas."
-                                    />
-                                ) : (
-                                    <Row gutter={[12, 12]} className="spa-sim-installment-grid">
-                                        {installmentBreakdown.map((item) => (
-                                            <Col xs={24} sm={12} md={8} lg={6} key={item.number}>
-                                                <Card size="small" className="spa-sim-installment-card">
-                                                    <Space direction="vertical" size={6} style={{ width: '100%' }}>
-                                                        <Tag color="gold" className="spa-sim-installment-tag">
-                                                            {`${item.number}x`}
-                                                        </Tag>
-                                                        <Typography.Text className="spa-sim-installment-label">
-                                                            Parcela {item.number}
-                                                        </Typography.Text>
-                                                        <Typography.Title level={4} className="spa-sim-installment-value">
-                                                            {formatCurrency(item.amount)}
-                                                        </Typography.Title>
-                                                    </Space>
-                                                </Card>
-                                            </Col>
-                                        ))}
-                                    </Row>
-                                )}
                             </>
                         )}
                     </Space>

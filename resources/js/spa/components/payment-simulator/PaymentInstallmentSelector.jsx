@@ -6,7 +6,7 @@ export default function PaymentInstallmentSelector({
     onChange,
     align = 'left',
     options = installmentOptions,
-    label = 'Quantidade de parcelas',
+    label = 'Parcelas',
     ariaLabel = 'Selecionar quantidade de parcelas',
 }) {
     const isRightAligned = align === 'right';

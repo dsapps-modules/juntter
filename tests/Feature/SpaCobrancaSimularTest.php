@@ -30,15 +30,23 @@ class SpaCobrancaSimularTest extends TestCase
         $installmentSelectorSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/PaymentInstallmentSelector.jsx'));
 
         $this->assertStringContainsString("fetch('/api/spa/cobranca/planos'", $pageSource);
-        $this->assertStringContainsString('normalizeFlags(data.plan?.flags ?? [])', $pageSource);
+        $this->assertStringContainsString('contractedFlags = data.plan?.flags ?? []', $pageSource);
         $this->assertStringContainsString('formatFlagLabel(selectedFlag)', $pageSource);
+        $this->assertStringContainsString('resolvePixRate(bacenFlag)', $pageSource);
+        $this->assertStringContainsString('paymentMethod', $pageSource);
+        $this->assertStringContainsString('flag?.fees?.pix', $pageSource);
+        $this->assertStringContainsString("String(flag?.name ?? '').toUpperCase() === 'BACEN'", $pageSource);
+        $this->assertStringContainsString('spa-sim-method-toggle', $pageSource);
+        $this->assertStringContainsString('Simular recebimento por PIX', $pageSource);
         $this->assertStringContainsString('Bandeira', $pageSource);
-        $this->assertStringContainsString('Plano contratado', $pageSource);
-        $this->assertStringContainsString('Resultado da simulação', $pageSource);
-        $this->assertStringContainsString('Valor de cada parcela', $pageSource);
+        $this->assertStringContainsString('title={planName}', $pageSource);
+        $this->assertStringContainsString('Quem paga a taxa:', $pageSource);
+        $this->assertStringContainsString('Radio.Group', $pageSource);
+        $this->assertStringContainsString('Cliente', $pageSource);
+        $this->assertStringContainsString('Vendedor', $pageSource);
         $this->assertStringContainsString('spa-sim-result-header', $pageSource);
         $this->assertStringContainsString('spa-sim-result-metrics', $pageSource);
-        $this->assertStringContainsString('spa-sim-installment-grid', $pageSource);
+        $this->assertStringContainsString('/img/payment/logo-pix.png', $pageSource);
         $this->assertStringContainsString('resolveRate(selectedFlag, installments)', $pageSource);
         $this->assertStringContainsString('buildInstallmentOptions(selectedFlag)', $pageSource);
         $this->assertStringContainsString('selectedFlagLabel', $pageSource);
@@ -49,7 +57,7 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringNotContainsString('Ativa', $planSelectorSource);
         $this->assertStringContainsString('options = []', $planSelectorSource);
         $this->assertStringContainsString('ariaLabel =', $planSelectorSource);
-        $this->assertStringContainsString('Quantidade de parcelas', $installmentSelectorSource);
+        $this->assertStringContainsString('Parcelas', $installmentSelectorSource);
         $this->assertStringContainsString('options = installmentOptions', $installmentSelectorSource);
         $this->assertStringContainsString('ariaLabel =', $installmentSelectorSource);
     }
@@ -65,6 +73,6 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('Array.from({ length: 17 }', $configSource);
         $this->assertStringNotContainsString('Plano Acelerar', $configSource);
         $this->assertStringNotContainsString('Plano Turbo', $configSource);
-        $this->assertStringNotContainsString('Plano Econômico', $configSource);
+        $this->assertStringNotContainsString('Plano Economico', $configSource);
     }
 }
