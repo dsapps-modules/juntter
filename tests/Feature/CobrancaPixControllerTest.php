@@ -10,6 +10,7 @@ use App\Models\Vendedor;
 use App\Services\BoletoService;
 use App\Services\CreditoService;
 use App\Services\EstabelecimentoService;
+use App\Services\PaytimePricingCacheService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -235,6 +236,7 @@ class CobrancaPixControllerTest extends TestCase
             $this->createMock(PixService::class),
             $this->createMock(BoletoService::class),
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->estornarTransacao($request, 'pix-789');
@@ -257,6 +259,7 @@ class CobrancaPixControllerTest extends TestCase
             $pixService,
             $this->createMock(BoletoService::class),
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
     }
 

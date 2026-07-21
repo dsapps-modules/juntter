@@ -538,7 +538,7 @@ class SpaShellTest extends TestCase
 
     public function test_the_pix_page_shows_status_below_the_transaction_date(): void
     {
-        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
+        $pageSource = str_replace("\r\n", "\n", file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx')));
 
         $this->assertStringContainsString("title: 'Data'", $pageSource);
         $this->assertStringContainsString('dataIndex: \'created_at\'', $pageSource);

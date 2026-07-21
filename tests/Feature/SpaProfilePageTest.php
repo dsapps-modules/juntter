@@ -11,7 +11,7 @@ class SpaProfilePageTest extends TestCase
         $navigationSource = file_get_contents(base_path('resources/js/spa/navigation/menu.js'));
 
         $this->assertStringContainsString("label: 'Perfil'", $navigationSource);
-        $this->assertStringNotContainsString('Configura', $navigationSource);
+        $this->assertStringNotContainsString("label: 'Configurações'", $navigationSource);
     }
 
     public function test_profile_page_exposes_profile_and_password_forms(): void

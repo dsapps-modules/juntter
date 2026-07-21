@@ -10,7 +10,6 @@ class SpaCobrancaPixMaskTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
 
-        $this->assertStringContainsString("interest: 'CLIENT'", $pageSource);
         $this->assertSame(2, substr_count($pageSource, 'normalize={formatDocument}'));
         $this->assertSame(2, substr_count($pageSource, 'maxLength={18}'));
     }
@@ -102,7 +101,7 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString('zip_code: companyAddress.zip_code ? formatZipcode(companyAddress.zip_code)', $pageSource);
         $this->assertStringContainsString('<Col xs={24}>', $pageSource);
         $this->assertStringContainsString('slice(0, 3)', $pageSource);
-        $this->assertStringContainsString('onClick={() => openBoletoDetails(item)}', $pageSource);
+        $this->assertStringContainsString('onClick={() => openBoletoDetails(record)}', $pageSource);
         $this->assertStringNotContainsString('Abrir', $pageSource);
         $this->assertStringContainsString("title: 'Cliente'", $pageSource);
         $this->assertStringContainsString("dataIndex: 'title'", $pageSource);

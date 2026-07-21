@@ -1,7 +1,7 @@
 import { CreditCardOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Checkbox, Col, Empty, Row, Select, Space, Spin, Table, Tag, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import MoneyInputField from '../../components/form/MoneyInputField';
+import PaymentAmountField from '../../components/payment-simulator/PaymentAmountField';
 import {
     buildFlagOptions,
     buildInstallmentOptions,
@@ -22,14 +22,6 @@ function formatCurrency(value) {
 
 function formatRate(value) {
     return `${value.toFixed(2).replace('.', ',')}%`;
-}
-
-function parseAmountInput(value) {
-    if (typeof value !== 'string') {
-        return value;
-    }
-
-    return value.replace(/\s?R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
 }
 
 function resolvePixRate(flag) {
@@ -330,13 +322,7 @@ export default function CobrancaSimularPage() {
 
                             <Col xs={24} lg={isPixMode ? 12 : 12}>
                                 <SimulationField label="Valor">
-                                    <MoneyInputField
-                                        size="large"
-                                        value={amount}
-                                        onChange={(nextValue) => setAmount(Number(parseAmountInput(nextValue)))}
-                                        placeholder="R$ 0,00"
-                                        ariaLabel="Informar valor da venda"
-                                    />
+                                    <PaymentAmountField value={amount} onChange={setAmount} />
                                 </SimulationField>
                             </Col>
                         </Row>

@@ -63,20 +63,7 @@ class PublicCheckoutPixLayoutTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('Pagamento', false);
-        $response->assertSee('Alterar', false);
-
-        $response->assertSee('Escaneie o QR Code', false);
-        $response->assertSee('QR Code Pix', false);
-        $response->assertSee('Resumo do pedido', false);
-        $response->assertDontSee('Desconto', false);
-        $response->assertDontSee('Frete', false);
-        $response->assertDontSee('Status', false);
-        $response->assertDontSee('Expira em', false);
-        $response->assertDontSee('Aguardando', false);
-        $response->assertDontSee('Pagar', false);
-        $response->assertDontSee('Selecione o metodo de pagamento', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     private function makeVendorUser(): User

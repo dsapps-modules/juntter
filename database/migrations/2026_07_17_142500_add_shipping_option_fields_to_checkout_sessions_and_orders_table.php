@@ -37,6 +37,13 @@ return new class extends Migration
     {
         if (Schema::hasTable('checkout_sessions')) {
             Schema::table('checkout_sessions', function (Blueprint $table): void {
+                if (Schema::hasColumn('checkout_sessions', 'shipping_option_id')) {
+                    try {
+                        $table->dropIndex(['shipping_option_id']);
+                    } catch (\Throwable) {
+                    }
+                }
+
                 if (Schema::hasColumn('checkout_sessions', 'shipping_option_name')) {
                     $table->dropColumn('shipping_option_name');
                 }
@@ -49,6 +56,13 @@ return new class extends Migration
 
         if (Schema::hasTable('orders')) {
             Schema::table('orders', function (Blueprint $table): void {
+                if (Schema::hasColumn('orders', 'shipping_option_id')) {
+                    try {
+                        $table->dropIndex(['shipping_option_id']);
+                    } catch (\Throwable) {
+                    }
+                }
+
                 if (Schema::hasColumn('orders', 'shipping_option_name')) {
                     $table->dropColumn('shipping_option_name');
                 }

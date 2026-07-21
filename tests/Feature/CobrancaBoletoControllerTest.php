@@ -9,6 +9,7 @@ use App\Models\Vendedor;
 use App\Services\BoletoService;
 use App\Services\CreditoService;
 use App\Services\EstabelecimentoService;
+use App\Services\PaytimePricingCacheService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
 use Illuminate\Http\JsonResponse;
@@ -103,6 +104,7 @@ class CobrancaBoletoControllerTest extends TestCase
             $this->createMock(PixService::class),
             $boletoService,
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->criarBoleto($request);
@@ -208,6 +210,7 @@ class CobrancaBoletoControllerTest extends TestCase
             $this->createMock(PixService::class),
             $boletoService,
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->criarBoleto($request);
@@ -301,6 +304,7 @@ class CobrancaBoletoControllerTest extends TestCase
             $this->createMock(PixService::class),
             $boletoService,
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->criarBoleto($request);
@@ -389,6 +393,7 @@ class CobrancaBoletoControllerTest extends TestCase
             $this->createMock(PixService::class),
             $boletoService,
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->criarBoleto($request);
@@ -558,6 +563,7 @@ class CobrancaBoletoControllerTest extends TestCase
             $this->createMock(PixService::class),
             $boletoService,
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->criarBoleto($request);
@@ -651,6 +657,7 @@ class CobrancaBoletoControllerTest extends TestCase
             $this->createMock(PixService::class),
             $boletoService,
             $this->createMock(EstabelecimentoService::class),
+            $this->createMock(PaytimePricingCacheService::class),
         );
 
         $response = $controller->criarBoleto($request);
