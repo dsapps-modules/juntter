@@ -18,6 +18,8 @@ class SyncPaytimeBillets extends Command
 
     protected int $perPage = 1000;
 
+    protected int $maxConsecutivePageErrors = 3;
+
     protected $boletoService;
 
     protected PaytimeTransactionSyncService $paytimeTransactionSyncService;
@@ -31,7 +33,7 @@ class SyncPaytimeBillets extends Command
         $this->paytimeTransactionSyncService = $paytimeTransactionSyncService;
     }
 
-    public function handle()
+    public function handle(): int
     {
         $currentMonth = now()->month;
         $currentYear = now()->year;
@@ -93,6 +95,8 @@ class SyncPaytimeBillets extends Command
             }
         }
 
+        $totalErrors = 0;
+
         $establishments = PaytimeEstablishment::select('id')->get();
         $this->info('Found '.$establishments->count().' establishments to sync billets.');
 
@@ -105,20 +109,29 @@ class SyncPaytimeBillets extends Command
             $bar->start();
 
             foreach ($establishments as $establishment) {
-                $this->syncBillets($startDate, $endDate, $establishment->id);
+                $totalErrors += $this->syncBillets($startDate, $endDate, $establishment->id);
                 $bar->advance();
             }
             $bar->finish();
             $this->newLine();
         }
 
-        $this->info('Billets sync completed successfully in '.date('d/m/y h:i:s'));
+        if ($totalErrors > 0) {
+            $this->warn("Billets sync completed with {$totalErrors} error(s) in ".date('d/m/y h:i:s'));
+        } else {
+            $this->info('Billets sync completed successfully in '.date('d/m/y h:i:s'));
+        }
+
+        return self::SUCCESS;
     }
 
-    private function syncBillets($startDate = null, $endDate = null, $establishmentId = null)
+    private function syncBillets(?string $startDate = null, ?string $endDate = null, ?int $establishmentId = null): int
     {
         $page = 1;
-        do {
+        $errors = 0;
+        $consecutivePageErrors = 0;
+
+        while (true) {
             $queryFilter = [];
             if ($startDate && $endDate) {
                 $queryFilter['created_at'] = ['min' => $startDate, 'max' => $endDate];
@@ -134,24 +147,68 @@ class SyncPaytimeBillets extends Command
                 $filters['extra_headers'] = ['establishment_id' => $establishmentId];
             }
 
+            $items = [];
+
             try {
                 $response = $this->boletoService->listarBoletos($filters);
-                $items = $response['data'] ?? [];
+                $items = is_array($response['data'] ?? null) ? $response['data'] : [];
+                $consecutivePageErrors = 0;
+            } catch (\Throwable $e) {
+                $errors++;
+                $consecutivePageErrors++;
 
-                foreach ($items as $item) {
+                Log::error("Error syncing billets for establishment $establishmentId", [
+                    'page' => $page,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'message' => $e->getMessage(),
+                    'exception' => $e::class,
+                ]);
+
+                $this->error("Error syncing billets for establishment $establishmentId (Page $page): ".$e->getMessage());
+
+                if ($consecutivePageErrors >= $this->maxConsecutivePageErrors) {
+                    $this->error("Stopping billet sync for establishment $establishmentId after {$this->maxConsecutivePageErrors} consecutive page errors.");
+                    break;
+                }
+
+                $page++;
+
+                continue;
+            }
+
+            if (empty($items)) {
+                break;
+            }
+
+            foreach ($items as $item) {
+                try {
                     $this->paytimeTransactionSyncService->sync($item, [
                         'default_type' => 'BILLET',
                         'default_establishment_id' => $establishmentId,
                         'created_at' => $item['created_at'] ?? null,
                         'metadata' => $item,
                     ]);
-                }
+                } catch (\Throwable $e) {
+                    $errors++;
 
-                $page++;
-            } catch (\Exception $e) {
-                Log::error("Error syncing billets for establishment $establishmentId: ".$e->getMessage());
-                break;
+                    Log::warning("Error syncing billet item for establishment $establishmentId", [
+                        'page' => $page,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'item_id' => $item['_id'] ?? $item['id'] ?? null,
+                        'message' => $e->getMessage(),
+                        'exception' => $e::class,
+                    ]);
+
+                    $this->error("Error syncing billet item on page $page for establishment $establishmentId: ".$e->getMessage());
+                }
             }
-        } while (! empty($items));
+
+            $this->info('Synced '.count($items)." billets for establishment $establishmentId (Page $page) - ".date('d/m/y h:i:s'));
+            $page++;
+        }
+
+        return $errors;
     }
 }

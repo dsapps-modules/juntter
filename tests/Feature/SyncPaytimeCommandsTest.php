@@ -53,6 +53,73 @@ class SyncPaytimeCommandsTest extends TestCase
         ]);
     }
 
+    public function test_transactions_command_continues_when_one_page_fails(): void
+    {
+        $transacaoService = $this->createMock(TransacaoService::class);
+        $syncService = $this->createMock(PaytimeTransactionSyncService::class);
+
+        $firstItem = [
+            '_id' => 'transaction-123',
+            'status' => 'PAID',
+            'amount' => 15750,
+            'created_at' => '2026-04-14T12:05:00.000Z',
+        ];
+
+        $thirdItem = [
+            '_id' => 'transaction-456',
+            'status' => 'PAID',
+            'amount' => 23000,
+            'created_at' => '2026-04-15T12:05:00.000Z',
+        ];
+
+        $callCount = 0;
+
+        $transacaoService->expects($this->exactly(4))
+            ->method('listarTransacoes')
+            ->willReturnCallback(function () use (&$callCount, $firstItem, $thirdItem): array {
+                $callCount++;
+
+                return match ($callCount) {
+                    1 => ['data' => [$firstItem]],
+                    2 => throw new \TypeError('Return value must be of type array, null returned'),
+                    3 => ['data' => [$thirdItem]],
+                    default => ['data' => []],
+                };
+            });
+
+        $syncCallCount = 0;
+
+        $syncService->expects($this->exactly(2))
+            ->method('sync')
+            ->willReturnCallback(function (array $item, array $context) use (&$syncCallCount, $firstItem, $thirdItem): void {
+                $syncCallCount++;
+
+                if ($syncCallCount === 1) {
+                    $this->assertSame($firstItem, $item);
+                    $this->assertSame('UNKNOWN', $context['default_type'] ?? null);
+                    $this->assertSame($firstItem['created_at'], $context['created_at'] ?? null);
+                    $this->assertSame($firstItem, $context['metadata'] ?? null);
+
+                    return;
+                }
+
+                $this->assertSame($thirdItem, $item);
+                $this->assertSame('UNKNOWN', $context['default_type'] ?? null);
+                $this->assertSame($thirdItem['created_at'], $context['created_at'] ?? null);
+                $this->assertSame($thirdItem, $context['metadata'] ?? null);
+            });
+
+        $this->app->instance(TransacaoService::class, $transacaoService);
+        $this->app->instance(PaytimeTransactionSyncService::class, $syncService);
+
+        $exitCode = Artisan::call('paytime:sync-transactions', [
+            '--months' => '4',
+            '--year' => '2026',
+        ]);
+
+        $this->assertSame(0, $exitCode);
+    }
+
     public function test_billets_command_forwards_api_items_to_the_shared_sync_service(): void
     {
         PaytimeEstablishment::query()->create([
@@ -96,5 +163,79 @@ class SyncPaytimeCommandsTest extends TestCase
             '--months' => '4',
             '--year' => '2026',
         ]);
+    }
+
+    public function test_billets_command_continues_when_one_page_fails(): void
+    {
+        PaytimeEstablishment::query()->create([
+            'id' => 155463,
+            'active' => true,
+        ]);
+
+        $boletoService = $this->createMock(BoletoService::class);
+        $syncService = $this->createMock(PaytimeTransactionSyncService::class);
+
+        $firstItem = [
+            '_id' => 'billet-123',
+            'status' => 'PAID',
+            'amount' => 9900,
+            'created_at' => '2026-04-14T12:05:00.000Z',
+        ];
+
+        $thirdItem = [
+            '_id' => 'billet-456',
+            'status' => 'PAID',
+            'amount' => 14500,
+            'created_at' => '2026-04-15T12:05:00.000Z',
+        ];
+
+        $callCount = 0;
+
+        $boletoService->expects($this->exactly(4))
+            ->method('listarBoletos')
+            ->willReturnCallback(function () use (&$callCount, $firstItem, $thirdItem): array {
+                $callCount++;
+
+                return match ($callCount) {
+                    1 => ['data' => [$firstItem]],
+                    2 => throw new \TypeError('Return value must be of type array, null returned'),
+                    3 => ['data' => [$thirdItem]],
+                    default => ['data' => []],
+                };
+            });
+
+        $syncCallCount = 0;
+
+        $syncService->expects($this->exactly(2))
+            ->method('sync')
+            ->willReturnCallback(function (array $item, array $context) use (&$syncCallCount, $firstItem, $thirdItem): void {
+                $syncCallCount++;
+
+                if ($syncCallCount === 1) {
+                    $this->assertSame($firstItem, $item);
+                    $this->assertSame('BILLET', $context['default_type'] ?? null);
+                    $this->assertSame(155463, $context['default_establishment_id'] ?? null);
+                    $this->assertSame($firstItem['created_at'], $context['created_at'] ?? null);
+                    $this->assertSame($firstItem, $context['metadata'] ?? null);
+
+                    return;
+                }
+
+                $this->assertSame($thirdItem, $item);
+                $this->assertSame('BILLET', $context['default_type'] ?? null);
+                $this->assertSame(155463, $context['default_establishment_id'] ?? null);
+                $this->assertSame($thirdItem['created_at'], $context['created_at'] ?? null);
+                $this->assertSame($thirdItem, $context['metadata'] ?? null);
+            });
+
+        $this->app->instance(BoletoService::class, $boletoService);
+        $this->app->instance(PaytimeTransactionSyncService::class, $syncService);
+
+        $exitCode = Artisan::call('paytime:sync-billets', [
+            '--months' => '4',
+            '--year' => '2026',
+        ]);
+
+        $this->assertSame(0, $exitCode);
     }
 }

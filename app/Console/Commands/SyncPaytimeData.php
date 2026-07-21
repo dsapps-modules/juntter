@@ -2,20 +2,19 @@
 
 namespace App\Console\Commands;
 
-use App\Models\PaytimeTransaction;
-use App\Models\PaytimeEstablishment;
 use App\Services\BoletoService;
 use App\Services\TransacaoService;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class SyncPaytimeData extends Command
 {
     protected $signature = 'paytime:sync {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
+
     protected $description = 'Sync transactions and billets from Paytime to local database';
 
     protected $transacaoService;
+
     protected $boletoService;
 
     public function __construct(
@@ -27,7 +26,7 @@ class SyncPaytimeData extends Command
         $this->boletoService = $boletoService;
     }
 
-    public function handle()
+    public function handle(): int
     {
         $this->info('Starting full Paytime sync (Transactions and Billets) in '.date('d/m/y h:i:s'));
 
@@ -39,13 +38,38 @@ class SyncPaytimeData extends Command
             $options['--year'] = $this->option('year');
         }
 
+        $totalErrors = 0;
+
         $this->info('Step 1/2: Syncing Transactions...');
-        $this->call('paytime:sync-transactions', $options);
+        try {
+            $totalErrors += (int) $this->call('paytime:sync-transactions', $options);
+        } catch (\Throwable $e) {
+            $totalErrors++;
+            Log::error('Error running paytime:sync-transactions from paytime:sync', [
+                'message' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+            $this->error('Error running paytime:sync-transactions: '.$e->getMessage());
+        }
 
         $this->info('Step 2/2: Syncing Billets...');
-        $this->call('paytime:sync-billets', $options);
+        try {
+            $totalErrors += (int) $this->call('paytime:sync-billets', $options);
+        } catch (\Throwable $e) {
+            $totalErrors++;
+            Log::error('Error running paytime:sync-billets from paytime:sync', [
+                'message' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+            $this->error('Error running paytime:sync-billets: '.$e->getMessage());
+        }
 
-        $this->info('Full sync completed successfully in '.date('d/m/y h:i:s'));
+        if ($totalErrors > 0) {
+            $this->warn("Full sync completed with {$totalErrors} error(s) in ".date('d/m/y h:i:s'));
+        } else {
+            $this->info('Full sync completed successfully in '.date('d/m/y h:i:s'));
+        }
+
+        return self::SUCCESS;
     }
 }
-

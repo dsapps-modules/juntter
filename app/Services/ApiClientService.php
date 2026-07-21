@@ -89,7 +89,19 @@ class ApiClientService
             ]);
 
             if ($response->status() !== 401) {
-                return $response->json();
+                $json = $response->json();
+
+                if (! is_array($json)) {
+                    Log::warning('Paytime API returned a non-array payload', [
+                        'method' => $method,
+                        'endpoint' => "{$resolvedBaseUrl}/{$endpoint}",
+                        'status' => $response->status(),
+                    ]);
+
+                    return [];
+                }
+
+                return $json;
             }
 
             $this->refreshToken();

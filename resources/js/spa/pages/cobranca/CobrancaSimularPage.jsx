@@ -372,11 +372,11 @@ export default function CobrancaSimularPage() {
                     />
                 ) : (
                     <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                        <Typography.Text type="secondary" className="spa-sim-table-note">
-                            {isPixMode
-                                ? 'Recebimento via PIX com base na taxa BACEN do plano.'
-                                : 'A tabela abaixo mostra o valor que o cliente pagará em cada quantidade de parcelas disponível.'}
-                        </Typography.Text>
+                        {isPixMode ? (
+                            <Typography.Text type="secondary" className="spa-sim-table-note">
+                                Recebimento via PIX com base na taxa BACEN do plano.
+                            </Typography.Text>
+                        ) : null}
 
                         <Table
                             rowKey="key"

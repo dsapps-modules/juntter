@@ -17,6 +17,8 @@ class SyncPaytimeTransactions extends Command
 
     protected int $perPage = 1000;
 
+    protected int $maxConsecutivePageErrors = 3;
+
     protected $transacaoService;
 
     protected PaytimeTransactionSyncService $paytimeTransactionSyncService;
@@ -30,7 +32,7 @@ class SyncPaytimeTransactions extends Command
         $this->paytimeTransactionSyncService = $paytimeTransactionSyncService;
     }
 
-    public function handle()
+    public function handle(): int
     {
         $currentMonth = now()->month;
         $currentYear = now()->year;
@@ -92,20 +94,31 @@ class SyncPaytimeTransactions extends Command
             }
         }
 
+        $totalErrors = 0;
+
         foreach ($periods as $period) {
             $startDate = $period['start'];
             $endDate = $period['end'];
             $this->info("Syncing transactions for period: $startDate to $endDate");
-            $this->syncTransactions($startDate, $endDate);
+            $totalErrors += $this->syncTransactions($startDate, $endDate);
         }
 
-        $this->info('Transactions sync completed successfully!');
+        if ($totalErrors > 0) {
+            $this->warn("Transactions sync completed with {$totalErrors} error(s).");
+        } else {
+            $this->info('Transactions sync completed successfully!');
+        }
+
+        return self::SUCCESS;
     }
 
-    private function syncTransactions($startDate, $endDate)
+    private function syncTransactions(string $startDate, string $endDate): int
     {
         $page = 1;
-        do {
+        $errors = 0;
+        $consecutivePageErrors = 0;
+
+        while (true) {
             $filters = [
                 'perPage' => $this->perPage,
                 'page' => $page,
@@ -118,25 +131,70 @@ class SyncPaytimeTransactions extends Command
                 ]),
             ];
 
+            $items = [];
+
             try {
                 $response = $this->transacaoService->listarTransacoes($filters);
-                $items = $response['data'] ?? [];
+                $items = is_array($response['data'] ?? null) ? $response['data'] : [];
+                $consecutivePageErrors = 0;
+            } catch (\Throwable $e) {
+                $errors++;
+                $consecutivePageErrors++;
 
-                foreach ($items as $item) {
+                Log::error('Error syncing transactions page', [
+                    'page' => $page,
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'message' => $e->getMessage(),
+                    'exception' => $e::class,
+                ]);
+
+                $this->error("Error syncing transactions (Page $page): ".$e->getMessage());
+
+                if ($consecutivePageErrors >= $this->maxConsecutivePageErrors) {
+                    $this->error("Stopping transaction sync for period $startDate to $endDate after {$this->maxConsecutivePageErrors} consecutive page errors.");
+                    break;
+                }
+
+                $page++;
+
+                continue;
+            }
+
+            if (empty($items)) {
+                break;
+            }
+
+            $syncedItems = 0;
+
+            foreach ($items as $item) {
+                try {
                     $this->paytimeTransactionSyncService->sync($item, [
                         'default_type' => 'UNKNOWN',
                         'created_at' => $item['created_at'] ?? null,
                         'metadata' => $item,
                     ]);
-                }
+                    $syncedItems++;
+                } catch (\Throwable $e) {
+                    $errors++;
 
-                $this->info('Synced '.count($items)." transactions (Page $page) - ".date('d/m/y h:i:s'));
-                $page++;
-            } catch (\Exception $e) {
-                Log::error('Error syncing transactions: '.$e->getMessage());
-                $this->error('Error syncing transactions: '.$e->getMessage());
-                break;
+                    Log::warning('Error syncing transaction item', [
+                        'page' => $page,
+                        'start_date' => $startDate,
+                        'end_date' => $endDate,
+                        'item_id' => $item['_id'] ?? $item['id'] ?? null,
+                        'message' => $e->getMessage(),
+                        'exception' => $e::class,
+                    ]);
+
+                    $this->error('Error syncing transaction item on page '.$page.': '.$e->getMessage());
+                }
             }
-        } while (! empty($items));
+
+            $this->info('Synced '.$syncedItems." transactions (Page $page) - ".date('d/m/y h:i:s'));
+            $page++;
+        }
+
+        return $errors;
     }
 }
