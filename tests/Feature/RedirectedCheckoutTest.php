@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CheckoutRecoveryMail;
 use App\Models\CheckoutEvent;
 use App\Models\CheckoutLink;
 use App\Models\CheckoutSession;
@@ -15,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -413,7 +415,7 @@ class RedirectedCheckoutTest extends TestCase
         $user = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
         $response->assertSee($link->product->name);
@@ -541,7 +543,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
         $response->assertSee('/company-logo?path=company-logos%2Fcustom-logo.png', false);
@@ -559,11 +561,49 @@ class RedirectedCheckoutTest extends TestCase
 
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertDontSee('/company-logo?path=company-logos%2Fmissing-logo.png', false);
+    }
+
+    public function test_active_public_checkout_uses_the_seller_trade_name_when_no_logo_is_available(): void
+    {
+        $user = $this->makeVendorUser();
+        $user->forceFill([
+            'trade_name' => 'Empresa Exemplo',
+            'company_logo_path' => null,
+        ])->save();
+
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('"sellerBrand"', false);
+        $response->assertSee('"mode":"text"', false);
+        $response->assertSee('"label":"Empresa Exemplo"', false);
+    }
+
+    public function test_active_public_checkout_uses_the_juntter_logo_when_no_brand_data_is_available(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $user->forceFill([
+            'trade_name' => null,
+            'company_logo_path' => null,
+        ])->save();
+
+        $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
+
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee('"sellerBrand"', false);
+        $response->assertSee('"mode":"logo"', false);
+        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
     }
 
     public function test_public_checkout_details_page_shows_personal_data_and_address_before_payment(): void
@@ -1408,36 +1448,21 @@ class RedirectedCheckoutTest extends TestCase
 
     public function test_the_checkout_public_views_use_the_login_background_pattern(): void
     {
-        $publicView = file_get_contents(base_path('resources/views/checkout/public.blade.php'));
+        $spaView = file_get_contents(base_path('resources/views/checkout/spa.blade.php'));
+        $spaScript = file_get_contents(base_path('resources/js/checkout-spa.jsx'));
         $thankYouView = file_get_contents(base_path('resources/views/checkout/thank-you.blade.php'));
         $unavailableView = file_get_contents(base_path('resources/views/checkout/unavailable.blade.php'));
 
-        $this->assertStringContainsString('--checkout-bg: #f7f7f9;', $publicView);
-        $this->assertStringContainsString('--checkout-navbar-bg:', $publicView);
-        $this->assertStringContainsString('checkout-navbar', $publicView);
-        $this->assertStringContainsString('checkout-navbar__brand-image', $publicView);
-        $this->assertStringContainsString('checkout-navbar__title', $publicView);
-        $this->assertStringContainsString('src="{{ $sellerLogoUrl }}"', $publicView);
-        $this->assertStringContainsString('checkout-page-header', $publicView);
-        $this->assertStringContainsString('checkout-page-title', $publicView);
-        $this->assertStringContainsString('.panel,', $publicView);
-        $this->assertStringContainsString('.summary-card {', $publicView);
-        $this->assertStringContainsString('.pix-card,', $publicView);
-        $this->assertStringContainsString('.boleto-card', $publicView);
-        $this->assertStringContainsString('.feedback {', $publicView);
-        $this->assertStringNotContainsString('radial-gradient(circle at top left', $publicView);
-        $this->assertStringNotContainsString('linear-gradient(180deg, #ffffff 0%, var(--checkout-bg) 100%)', $publicView);
-        $this->assertStringNotContainsString('filter: blur(80px);', $publicView);
-        $this->assertStringContainsString('sellerLogoUrl', $thankYouView);
-        $this->assertStringContainsString('sellerLogoUrl', $unavailableView);
+        $this->assertStringContainsString('sellerBrand', $spaView);
+        $this->assertStringContainsString('sellerBrand', $thankYouView);
+        $this->assertStringContainsString('sellerBrand', $unavailableView);
+        $this->assertStringContainsString('checkout-spa-brand-text', $spaScript);
         $this->assertStringContainsString('checkout-card-shell', $thankYouView);
         $this->assertStringContainsString('checkout-auth-page', $thankYouView);
         $this->assertStringContainsString('checkout-card-shell', $unavailableView);
         $this->assertStringContainsString('checkout-auth-page', $unavailableView);
-        $this->assertStringNotContainsString('radial-gradient(circle at top left', $thankYouView);
-        $this->assertStringNotContainsString('radial-gradient(circle at top left', $unavailableView);
-        $this->assertStringNotContainsString('filter: blur(80px);', $thankYouView);
-        $this->assertStringNotContainsString('filter: blur(80px);', $unavailableView);
+        $this->assertStringContainsString('checkout-auth-logo-text', $thankYouView);
+        $this->assertStringContainsString('checkout-auth-logo-text', $unavailableView);
     }
 
     public function test_frontend_price_is_ignored_when_starting_pix_payment(): void
@@ -3236,8 +3261,70 @@ class RedirectedCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_checkout_recovery_messages_are_seeded_and_sent_for_due_sessions(): void
+    {
+        Mail::fake();
+
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'status' => 'abandoned',
+            'current_step' => 'payment',
+            'last_activity_at' => now()->subHours(5),
+        ]);
+
+        $this->artisan('checkout:send-recovery-messages')->assertExitCode(0);
+
+        Mail::assertSent(CheckoutRecoveryMail::class, function (CheckoutRecoveryMail $mail) use ($session): bool {
+            $this->assertSame(1, $mail->sequenceStep);
+            $this->assertSame(route('checkout.public.recover', $session->session_token), $mail->recoveryUrl);
+            $this->assertSame($session->id, $mail->checkoutSession->id);
+            $this->assertTrue($mail->hasTo($session->customer_email));
+
+            return true;
+        });
+
+        $this->assertDatabaseCount('abandoned_checkout_recoveries', 3);
+        $this->assertDatabaseHas('abandoned_checkout_recoveries', [
+            'checkout_session_id' => $session->id,
+            'sequence_step' => 1,
+            'status' => 'sent',
+        ]);
+        $this->assertDatabaseHas('abandoned_checkout_recoveries', [
+            'checkout_session_id' => $session->id,
+            'sequence_step' => 2,
+            'status' => 'pending',
+        ]);
+        $this->assertDatabaseHas('abandoned_checkout_recoveries', [
+            'checkout_session_id' => $session->id,
+            'sequence_step' => 3,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_checkout_recovery_link_restores_the_checkout_session(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
+        $session = $this->makeCheckoutSession($link, [
+            'customer_email' => 'maria@example.com',
+            'status' => 'abandoned',
+            'current_step' => 'payment',
+            'last_activity_at' => now()->subHours(5),
+        ]);
+
+        $response = $this->get(route('checkout.public.recover', $session->session_token));
+
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
+        $response->assertSessionHas('checkout_session_token.'.$link->public_token, $session->session_token);
+    }
+
     public function test_recovery_is_not_sent_for_paid_order(): void
     {
+        Mail::fake();
+
         $seller = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
         $session = $this->makeCheckoutSession($link, [
@@ -3278,6 +3365,8 @@ class RedirectedCheckoutTest extends TestCase
             'checkout_session_id' => $session->id,
             'status' => 'sent',
         ]);
+
+        Mail::assertNothingSent();
     }
 
     private function mockPixPaymentService(): void

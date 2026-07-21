@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 const defaultProfile = {
     name: '',
+    trade_name: '',
     email: '',
     avatar_url: '',
     company_logo_url: '',
@@ -40,6 +41,7 @@ export default function ProfilePage() {
     const companyLogoInputRef = useRef(null);
     const [profileForm, setProfileForm] = useState({
         name: '',
+        trade_name: '',
         email: '',
     });
     const [passwordForm, setPasswordForm] = useState({
@@ -74,6 +76,7 @@ export default function ProfilePage() {
                 setProfile(nextProfile);
                 setProfileForm({
                     name: nextProfile.name ?? '',
+                    trade_name: nextProfile.trade_name ?? '',
                     email: nextProfile.email ?? '',
                 });
                 setCompanyLogoFile(null);
@@ -135,6 +138,7 @@ export default function ProfilePage() {
 
         formData.append('_method', 'PATCH');
         formData.append('name', body.name ?? '');
+        formData.append('trade_name', body.trade_name ?? '');
         formData.append('email', body.email ?? '');
 
         if (body.companyLogoFile) {
@@ -172,6 +176,7 @@ export default function ProfilePage() {
             ...profileForm,
             avatar_url: payload.profile?.avatar_url ?? current.avatar_url,
             company_logo_url: payload.profile?.company_logo_url ?? payload.profile?.avatar_url ?? current.company_logo_url,
+            trade_name: payload.profile?.trade_name ?? current.trade_name,
         }));
         setCompanyLogoFile(null);
         setCompanyLogoPreviewUrl(payload.profile?.avatar_url ?? payload.profile?.company_logo_url ?? '');
@@ -205,6 +210,23 @@ export default function ProfilePage() {
 
     async function handleProfileSubmit(event) {
         event.preventDefault();
+        setSavingProfile(true);
+        setError('');
+        setSuccess('');
+
+        try {
+            const payload = await submitProfileForm(profileForm);
+            setSuccess(payload.message ?? 'Perfil atualizado com sucesso.');
+            syncProfileFromPayload(payload);
+            setLogoUploadStatus(companyLogoFile ? 'Logotipo atualizado com sucesso' : '');
+        } catch (submitError) {
+            setError(submitError.message || 'Falha ao atualizar o perfil.');
+        } finally {
+            setSavingProfile(false);
+        }
+    }
+
+    async function handleTradeNameSubmit() {
         setSavingProfile(true);
         setError('');
         setSuccess('');
@@ -453,6 +475,33 @@ export default function ProfilePage() {
                         <Divider />
 
                         <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                            <div>
+                                <Typography.Text strong>Nome fantasia</Typography.Text>
+                                <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4 }}>
+                                    Usado no checkout quando não houver logotipo.
+                                </Typography.Text>
+                                <Input
+                                    value={profileForm.trade_name}
+                                    onChange={(event) =>
+                                        setProfileForm((current) => ({ ...current, trade_name: event.target.value }))
+                                    }
+                                    placeholder="Nome fantasia da empresa"
+                                    size="large"
+                                    className="spa-auth-input"
+                                    style={{ marginTop: 8 }}
+                                />
+                                <div className="spa-profile-actions" style={{ marginTop: 12 }}>
+                                    <Button
+                                        type="primary"
+                                        onClick={() => void handleTradeNameSubmit()}
+                                        loading={savingProfile}
+                                        icon={<SaveOutlined />}
+                                    >
+                                        Salvar nome fantasia
+                                    </Button>
+                                </div>
+                            </div>
+
                             <div>
                                 <Typography.Text strong>Logotipo da empresa</Typography.Text>
                                 <Typography.Text type="secondary" style={{ display: 'block', marginTop: 4 }}>

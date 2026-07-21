@@ -24,6 +24,37 @@ class PublicCheckoutController extends Controller
         return $this->renderCheckoutSpaPage($request, $publicToken);
     }
 
+    public function recover(Request $request, string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
+    {
+        $checkoutSession = CheckoutSession::query()
+            ->with(['checkoutLink.product', 'checkoutLink.seller', 'orders.paymentTransaction'])
+            ->where('session_token', $sessionToken)
+            ->firstOrFail();
+
+        $checkoutLink = $checkoutSession->checkoutLink;
+
+        if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
+            return response()->view('checkout.unavailable', [
+                'message' => 'Este checkout nÃ£o estÃ¡ disponÃ­vel no momento.',
+                'sellerBrand' => $checkoutLink ? $this->resolveSellerBrand($checkoutLink) : $this->resolveFallbackSellerBrand(),
+            ], 410);
+        }
+
+        [$order, $paymentTransaction] = $this->resolvePaymentContext($checkoutSession);
+
+        if (
+            in_array($order?->status, ['paid', 'authorized'], true)
+            || in_array(strtolower((string) ($paymentTransaction?->internal_status ?? '')), ['authorized', 'paid'], true)
+        ) {
+            return redirect()->route('checkout.public.thank-you', $checkoutSession->session_token);
+        }
+
+        $request->session()->put('checkout_session_token.'.$checkoutLink->public_token, $checkoutSession->session_token);
+        $checkoutSession->touchActivity();
+
+        return redirect()->route('checkout.public.spa.show', $checkoutLink->public_token);
+    }
+
     public function deliveryPage(string $sessionToken): View|\Illuminate\Http\Response|RedirectResponse
     {
         $checkoutSession = CheckoutSession::query()
@@ -36,7 +67,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
-                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+                'sellerBrand' => $checkoutLink ? $this->resolveSellerBrand($checkoutLink) : $this->resolveFallbackSellerBrand(),
             ], 410);
         }
 
@@ -68,7 +99,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
-                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+                'sellerBrand' => $checkoutLink ? $this->resolveSellerBrand($checkoutLink) : $this->resolveFallbackSellerBrand(),
             ], 410);
         }
 
@@ -104,7 +135,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
-                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+                'sellerBrand' => $checkoutLink ? $this->resolveSellerBrand($checkoutLink) : $this->resolveFallbackSellerBrand(),
             ], 410);
         }
 
@@ -134,7 +165,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
-                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+                'sellerBrand' => $checkoutLink ? $this->resolveSellerBrand($checkoutLink) : $this->resolveFallbackSellerBrand(),
             ], 410);
         }
 
@@ -167,7 +198,7 @@ class PublicCheckoutController extends Controller
             checkoutSession: $checkoutSession,
             order: $order,
             paymentTransaction: $order?->paymentTransaction,
-            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            sellerBrand: $this->resolveSellerBrand($checkoutLink),
             checkoutPageMode: $checkoutPageMode,
         ));
     }
@@ -182,7 +213,7 @@ class PublicCheckoutController extends Controller
         if (! $checkoutLink || ! $checkoutLink->isActive() || ! $checkoutLink->product?->isActive()) {
             return response()->view('checkout.unavailable', [
                 'message' => 'Este checkout não está disponível no momento.',
-                'sellerLogoUrl' => $checkoutLink ? $this->resolveSellerLogoUrl($checkoutLink) : '/img/logo/juntter_webp_640_174.webp',
+                'sellerBrand' => $checkoutLink ? $this->resolveSellerBrand($checkoutLink) : $this->resolveFallbackSellerBrand(),
             ], 410);
         }
 
@@ -205,7 +236,7 @@ class PublicCheckoutController extends Controller
             checkoutSession: $checkoutSession,
             order: $order,
             paymentTransaction: $order?->paymentTransaction,
-            sellerLogoUrl: $this->resolveSellerLogoUrl($checkoutLink),
+            sellerBrand: $this->resolveSellerBrand($checkoutLink),
             checkoutPageMode: 'spa',
             extraData: [
                 'checkoutSpaAssets' => $this->resolveCheckoutSpaAssets(),
@@ -251,7 +282,7 @@ class PublicCheckoutController extends Controller
         return view('checkout.thank-you', [
             'checkoutSession' => $checkoutSession,
             'order' => $order,
-            'sellerLogoUrl' => $this->resolveSellerLogoUrl($checkoutSession->checkoutLink),
+            'sellerBrand' => $this->resolveSellerBrand($checkoutSession->checkoutLink),
         ]);
     }
 
@@ -334,15 +365,44 @@ class PublicCheckoutController extends Controller
         return $checkoutSession->fresh();
     }
 
-    private function resolveSellerLogoUrl(CheckoutLink $checkoutLink): string
+    /**
+     * @return array{mode: 'logo'|'text', label: string, logoUrl: ?string}
+     */
+    private function resolveSellerBrand(CheckoutLink $checkoutLink): array
     {
-        $companyLogoPath = $checkoutLink->seller?->company_logo_path;
+        $seller = $checkoutLink->seller;
+        $tradeName = filled($seller?->trade_name) ? trim((string) $seller->trade_name) : '';
+        $companyLogoPath = $seller?->company_logo_path;
 
         if (filled($companyLogoPath) && Storage::disk('public')->exists($companyLogoPath)) {
-            return '/company-logo?path='.rawurlencode($companyLogoPath);
+            return [
+                'mode' => 'logo',
+                'label' => $tradeName !== '' ? $tradeName : ($seller?->name ?: 'Juntter'),
+                'logoUrl' => '/company-logo?path='.rawurlencode($companyLogoPath),
+            ];
         }
 
-        return '/img/logo/juntter_webp_640_174.webp';
+        if ($tradeName !== '') {
+            return [
+                'mode' => 'text',
+                'label' => $tradeName,
+                'logoUrl' => null,
+            ];
+        }
+
+        return $this->resolveFallbackSellerBrand();
+    }
+
+    /**
+     * @return array{mode: 'logo', label: string, logoUrl: string}
+     */
+    private function resolveFallbackSellerBrand(): array
+    {
+        return [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
     }
 
     /**
@@ -353,7 +413,7 @@ class PublicCheckoutController extends Controller
         CheckoutSession $checkoutSession,
         ?Order $order,
         ?\App\Models\PaymentTransaction $paymentTransaction,
-        string $sellerLogoUrl,
+        array $sellerBrand,
         string $checkoutPageMode,
         array $extraData = [],
     ): array {
@@ -362,7 +422,7 @@ class PublicCheckoutController extends Controller
             'checkoutSession' => $checkoutSession,
             'order' => $order,
             'paymentTransaction' => $paymentTransaction,
-            'sellerLogoUrl' => $sellerLogoUrl,
+            'sellerBrand' => $sellerBrand,
             'checkoutPageMode' => $checkoutPageMode,
             'shippingOptions' => $this->resolveShippingOptions($checkoutLink->seller_id),
         ], $extraData);

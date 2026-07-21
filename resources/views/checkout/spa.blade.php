@@ -19,7 +19,7 @@
             'checkoutSession' => $checkoutSession,
             'order' => $order,
             'paymentTransaction' => $paymentTransaction,
-            'sellerLogoUrl' => $sellerLogoUrl,
+            'sellerBrand' => $sellerBrand,
             'checkoutPageMode' => $checkoutPageMode ?? 'spa',
             'threeDsEnv' => app()->environment('local') ? 'SANDBOX' : 'PROD',
             'currentStep' => $checkoutSession->current_step,

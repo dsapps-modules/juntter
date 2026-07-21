@@ -22,17 +22,31 @@
 </head>
 
 <body>
+    @php
+        $sellerBrand = $sellerBrand ?? [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
+    @endphp
+
     <!-- Checkout Header -->
     <header class="checkout-header">
         <div class="container">
             <div class="row align-items-center justify-content-between gap-3">
                 <div class="col-auto">
-                    <img
-                        src="{{ $sellerLogoUrl }}"
-                        alt="{{ $link->estabelecimento_id ? 'Logotipo da empresa' : 'Juntter' }}"
-                        class="checkout-logo"
-                        onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
-                    >
+                    @if (($sellerBrand['mode'] ?? 'logo') === 'text')
+                        <div class="checkout-logo-text" aria-label="{{ $sellerBrand['label'] }}">
+                            {{ $sellerBrand['label'] }}
+                        </div>
+                    @else
+                        <img
+                            src="{{ $sellerBrand['logoUrl'] ?? '/img/logo/juntter_webp_640_174.webp' }}"
+                            alt="{{ $sellerBrand['label'] ?? ($link->estabelecimento_id ? 'Logotipo da empresa' : 'Juntter') }}"
+                            class="checkout-logo"
+                            onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
+                        >
+                    @endif
                 </div>
                 <div class="col-auto">
                     <div class="checkout-steps">

@@ -11,6 +11,7 @@ use App\Services\PixService;
 use App\Services\TransacaoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -54,7 +55,7 @@ class PagamentoClienteController extends Controller
 
             return view('pagamento.cliente', [
                 'link' => $link,
-                'sellerLogoUrl' => $this->resolveSellerLogoUrl($link),
+                'sellerBrand' => $this->resolveSellerBrand($link),
             ]);
 
         } catch (\Exception $e) {
@@ -574,22 +575,46 @@ class PagamentoClienteController extends Controller
         }
     }
 
-    private function resolveSellerLogoUrl(LinkPagamento $link): string
+    /**
+     * @return array{mode: 'logo'|'text', label: string, logoUrl: ?string}
+     */
+    private function resolveSellerBrand(LinkPagamento $link): array
     {
-        $vendorWithLogo = Vendedor::query()
+        $vendors = Vendedor::query()
             ->with('user')
             ->where('estabelecimento_id', $link->estabelecimento_id)
             ->orderByRaw("CASE WHEN sub_nivel = 'admin_loja' THEN 0 ELSE 1 END")
-            ->get()
-            ->first(function (Vendedor $vendor): bool {
-                return filled($vendor->user?->company_logo_path);
-            });
+            ->get();
+
+        $vendorWithLogo = $vendors->first(function (Vendedor $vendor): bool {
+            return filled($vendor->user?->company_logo_path) && Storage::disk('public')->exists($vendor->user->company_logo_path);
+        });
 
         if ($vendorWithLogo?->user?->company_logo_path) {
-            return '/company-logo?path='.rawurlencode($vendorWithLogo->user->company_logo_path);
+            return [
+                'mode' => 'logo',
+                'label' => $vendorWithLogo->user->trade_name ?: $vendorWithLogo->user->name ?: 'Juntter',
+                'logoUrl' => '/company-logo?path='.rawurlencode($vendorWithLogo->user->company_logo_path),
+            ];
         }
 
-        return '/img/logo/juntter_webp_640_174.webp';
+        $vendorWithTradeName = $vendors->first(function (Vendedor $vendor): bool {
+            return filled($vendor->user?->trade_name);
+        });
+
+        if ($vendorWithTradeName?->user?->trade_name) {
+            return [
+                'mode' => 'text',
+                'label' => trim((string) $vendorWithTradeName->user->trade_name),
+                'logoUrl' => null,
+            ];
+        }
+
+        return [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
     }
 
     private function resolveReturnUrl(?string $returnUrl): string

@@ -14,6 +14,7 @@ class AbandonedCheckoutRecovery extends Model
         'checkout_session_id',
         'seller_id',
         'channel',
+        'sequence_step',
         'status',
         'scheduled_at',
         'sent_at',
@@ -21,6 +22,7 @@ class AbandonedCheckoutRecovery extends Model
     ];
 
     protected $casts = [
+        'sequence_step' => 'integer',
         'scheduled_at' => 'datetime',
         'sent_at' => 'datetime',
     ];

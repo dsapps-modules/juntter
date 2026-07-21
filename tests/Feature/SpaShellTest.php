@@ -368,7 +368,7 @@ class SpaShellTest extends TestCase
         $appSource = file_get_contents(base_path('resources/js/spa/App.jsx'));
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinksPagamentoPage.jsx'));
 
-        $this->assertStringContainsString("label: 'Links de Pagamento'", $navigationSource);
+        $this->assertStringContainsString("label: 'Links gerados'", $navigationSource);
         $this->assertStringContainsString("path: '/links-pagamento'", $navigationSource);
         $this->assertStringContainsString("import LinksPagamentoPage from './pages/LinksPagamentoPage';", $appSource);
         $this->assertStringContainsString('<Route path="links-pagamento" element={<LinksPagamentoPage />} />', $appSource);

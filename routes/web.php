@@ -12,6 +12,7 @@ use App\Http\Controllers\PublicCheckoutController;
 use App\Http\Controllers\PublicCheckoutPaymentController;
 use App\Http\Controllers\PublicCheckoutSessionController;
 use App\Http\Controllers\PublicCompanyLogoController;
+use App\Http\Controllers\SellerAbandonedCheckoutController;
 use App\Http\Controllers\SellerCheckoutLinkController;
 use App\Http\Controllers\SellerCheckoutShippingController;
 use App\Http\Controllers\SellerClientExportController;
@@ -72,6 +73,7 @@ Route::post('/checkout/{publicToken}/session', [PublicCheckoutSessionController:
 Route::get('/checkout/cnpj/{cnpj}', [PublicCheckoutSessionController::class, 'lookupCompanyByCnpj'])
     ->where('cnpj', '[0-9]{14}')
     ->name('checkout.public.cnpj.lookup');
+Route::get('/checkout/recover/{sessionToken}', [PublicCheckoutController::class, 'recover'])->name('checkout.public.recover');
 Route::post('/checkout/session/{sessionToken}/identification', [PublicCheckoutSessionController::class, 'saveIdentification'])->name('checkout.public.identification');
 Route::post('/checkout/session/{sessionToken}/quantity', [PublicCheckoutSessionController::class, 'updateQuantity'])->name('checkout.public.quantity');
 Route::get('/checkout/session/{sessionToken}/delivery', [PublicCheckoutController::class, 'deliveryPage'])->name('checkout.public.delivery.page');
@@ -171,6 +173,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/seller/checkout-links', [SellerCheckoutLinkController::class, 'index'])->name('seller.checkout-links.index');
         Route::post('/seller/checkout-links', [SellerCheckoutLinkController::class, 'store'])->name('seller.checkout-links.store');
+        Route::get('/seller/checkout-links/abandonados', [SellerAbandonedCheckoutController::class, 'index'])->name('seller.checkout-links.abandoned.index');
         Route::get('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'show'])->name('seller.checkout-links.show');
         Route::put('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'update'])->name('seller.checkout-links.update');
         Route::delete('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'destroy'])->name('seller.checkout-links.destroy');

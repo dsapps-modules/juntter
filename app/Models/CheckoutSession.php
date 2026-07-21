@@ -102,6 +102,11 @@ class CheckoutSession extends Model
         return $this->hasMany(CheckoutEvent::class);
     }
 
+    public function abandonedRecoveries(): HasMany
+    {
+        return $this->hasMany(AbandonedCheckoutRecovery::class);
+    }
+
     public function isAbandoned(): bool
     {
         return $this->status === 'abandoned';

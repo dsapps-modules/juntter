@@ -710,6 +710,7 @@ async function confirmCreditCard3DS(state, paymentForm, transaction) {
 function CheckoutSpaApp() {
     const [config] = useState(() => readCheckoutSpaData());
     const checkoutLink = config?.checkoutLink || {};
+    const sellerBrand = config?.sellerBrand || {};
     const shippingOptions = config?.shippingOptions || [];
     const allowedMethods = resolvePaymentMethods(checkoutLink);
     const defaultPaymentMethod = config?.checkoutSession?.payment_method || resolveDefaultPaymentMethod(checkoutLink);
@@ -2589,15 +2590,21 @@ function CheckoutSpaApp() {
             <main className="checkout-spa-shell">
                 <header className="checkout-spa-header">
                     <div className="checkout-spa-brand">
-                        <img
-                            className="checkout-spa-brand-logo"
-                            src={config.sellerLogoUrl || '/img/logo/juntter_webp_640_174.webp'}
-                            alt={checkoutLink.seller?.name || 'Juntter'}
-                            onError={(event) => {
-                                event.currentTarget.onerror = null;
-                                event.currentTarget.src = '/img/logo/juntter_webp_640_174.webp';
-                            }}
-                        />
+                        {(sellerBrand.mode || 'logo') === 'text' ? (
+                            <span className="checkout-spa-brand-text" aria-label={sellerBrand.label || 'Juntter'}>
+                                {sellerBrand.label || 'Juntter'}
+                            </span>
+                        ) : (
+                            <img
+                                className="checkout-spa-brand-logo"
+                                src={sellerBrand.logoUrl || '/img/logo/juntter_webp_640_174.webp'}
+                                alt={sellerBrand.label || checkoutLink.seller?.name || 'Juntter'}
+                                onError={(event) => {
+                                    event.currentTarget.onerror = null;
+                                    event.currentTarget.src = '/img/logo/juntter_webp_640_174.webp';
+                                }}
+                            />
+                        )}
                     </div>
 
                     <nav className="checkout-spa-stepper" aria-label="Etapas do checkout">

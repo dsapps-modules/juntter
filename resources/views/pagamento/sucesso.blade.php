@@ -52,16 +52,52 @@
             color: #fff;
             opacity: 0.96;
         }
+
+        .checkout-brand-text {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 52px;
+            max-width: min(280px, calc(100vw - 40px));
+            padding: 0.5rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid rgba(31, 26, 23, 0.1);
+            background: rgba(255, 255, 255, 0.96);
+            color: #1f1a17;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            text-align: left;
+            white-space: normal;
+        }
     </style>
 </head>
 
 <body class="payment-success-page">
+    @php
+        $sellerBrand = $sellerBrand ?? [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
+    @endphp
+
     <header class="checkout-header">
         <div class="container">
             <div class="row align-items-center justify-content-between gap-3">
                 <div class="col-auto">
-                    <img src="{{ $sellerLogoUrl }}" alt="Juntter" class="checkout-logo"
-                        onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';">
+                    @if (($sellerBrand['mode'] ?? 'logo') === 'text')
+                        <div class="checkout-brand-text" aria-label="{{ $sellerBrand['label'] }}">
+                            {{ $sellerBrand['label'] }}
+                        </div>
+                    @else
+                        <img
+                            src="{{ $sellerBrand['logoUrl'] ?? '/img/logo/juntter_webp_640_174.webp' }}"
+                            alt="{{ $sellerBrand['label'] ?? 'Juntter' }}"
+                            class="checkout-logo"
+                            onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';">
+                    @endif
                 </div>
 
                 <div class="col-auto">

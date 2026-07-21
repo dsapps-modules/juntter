@@ -19,6 +19,7 @@ import CobrancaPixOutPage from './pages/cobranca/CobrancaPixOutPage';
 import CobrancaSimularPage from './pages/cobranca/CobrancaSimularPage';
 import CobrancaPixPage from './pages/cobranca/CobrancaPixPage';
 import CheckoutLinksPage from './pages/checkout/CheckoutLinksPage';
+import CheckoutAbandonedPage from './pages/checkout/CheckoutAbandonedPage';
 import CheckoutLinkFormPage from './pages/checkout/CheckoutLinkFormPage';
 import CheckoutLinkSaleDetailPage from './pages/checkout/CheckoutLinkSaleDetailPage';
 import CheckoutLinkSalesPage from './pages/checkout/CheckoutLinkSalesPage';
@@ -116,6 +117,7 @@ export default function App() {
                         <Route path="seller/products/novo" element={<CheckoutProductFormPage />} />
                         <Route path="seller/products/:productId/editar" element={<CheckoutProductFormPage />} />
                         <Route path="seller/checkout-links" element={<CheckoutLinksPage />} />
+                        <Route path="seller/checkout-links/abandonados" element={<CheckoutAbandonedPage />} />
                         <Route path="seller/checkout-links/frete" element={<CheckoutShippingPage />} />
                         <Route path="seller/checkout-links/novo" element={<CheckoutLinkFormPage />} />
                         <Route path="seller/checkout-links/:checkoutLinkId/editar" element={<CheckoutLinkFormPage />} />

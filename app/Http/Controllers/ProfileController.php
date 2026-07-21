@@ -36,6 +36,14 @@ class ProfileController extends Controller
         $previousLogoPath = $user->company_logo_path;
         $removeCompanyLogo = $request->boolean('remove_company_logo');
 
+        if ($request->has('trade_name')) {
+            $validated['trade_name'] = filled($validated['trade_name'] ?? null)
+                ? trim((string) $validated['trade_name'])
+                : null;
+        } else {
+            unset($validated['trade_name']);
+        }
+
         $user->fill($validated);
 
         if ($request->hasFile('company_logo')) {
@@ -61,6 +69,7 @@ class ProfileController extends Controller
                 'profile' => [
                     'avatar_url' => $user->avatar_url,
                     'company_logo_url' => $user->avatar_url,
+                    'trade_name' => $user->trade_name,
                 ],
             ]);
         }

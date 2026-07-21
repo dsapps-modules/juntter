@@ -358,6 +358,40 @@ a {
     backdrop-filter: blur(10px);
 }
 
+.spa-sim-page {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.spa-sim-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.spa-sim-hero-copy {
+    min-width: 0;
+    flex: 1 1 480px;
+}
+
+.spa-sim-hero-title {
+    margin-bottom: 6px !important;
+}
+
+.spa-sim-hero-subtitle {
+    display: block;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.spa-sim-method-group {
+    flex: 0 0 auto;
+    justify-content: flex-start;
+}
+
 .spa-sim-header-pix-icon {
     display: block;
     width: 16px;
@@ -369,10 +403,10 @@ a {
 .spa-sim-method-toggle {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     width: 32px;
     height: 32px;
-    padding: 0;
+    padding: 0 0 0 7px;
     border-radius: 999px;
     color: var(--spa-muted);
 }
@@ -381,6 +415,63 @@ a {
     background: var(--spa-accent-soft);
     color: var(--spa-text);
     box-shadow: inset 0 0 0 1px rgba(244, 196, 0, 0.3);
+}
+
+.spa-sim-toolbar-card,
+.spa-sim-table-card {
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow: var(--spa-shadow);
+}
+
+.spa-sim-toolbar-card .ant-card-body,
+.spa-sim-table-card .ant-card-body {
+    padding: 24px;
+}
+
+.spa-sim-toolbar-grid {
+    width: 100%;
+}
+
+.spa-sim-control {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.spa-sim-control-label {
+    color: #6f8092;
+    font-size: 15px;
+}
+
+.spa-sim-control-input {
+    width: 100%;
+}
+
+.spa-sim-control-input .ant-select,
+.spa-sim-control-input .ant-input {
+    width: 100%;
+}
+
+.spa-sim-control-note {
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.spa-sim-interest-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.spa-sim-table-card .ant-card-head {
+    border-bottom-color: rgba(32, 25, 10, 0.08);
+}
+
+.spa-sim-table-note {
+    display: block;
 }
 
 .spa-sim-result-header {
@@ -534,6 +625,20 @@ a {
 
 .spa-table .ant-table-tbody > tr > td {
     border-bottom: 1px solid rgba(34, 26, 11, 0.06);
+}
+
+.spa-sim-table .ant-table-thead > tr > th {
+    background: transparent !important;
+    color: #5f7387;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(32, 25, 10, 0.08);
+}
+
+.spa-sim-table .ant-table-tbody > tr > td {
+    color: #597086;
 }
 
 .spa-table-row-selected > td {

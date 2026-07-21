@@ -19,6 +19,7 @@ class SpaProfileOverviewTest extends TestCase
 
         $user = User::factory()->create([
             'name' => 'Maria Silva',
+            'trade_name' => 'Empresa Exemplo',
             'email' => 'maria@example.com',
             'nivel_acesso' => 'vendedor',
             'email_verified_at' => now(),
@@ -30,6 +31,7 @@ class SpaProfileOverviewTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('profile.name', 'Maria Silva')
+            ->assertJsonPath('profile.trade_name', 'Empresa Exemplo')
             ->assertJsonPath('profile.email', 'maria@example.com')
             ->assertJsonPath('profile.nivel_acesso', 'vendedor')
             ->assertJsonPath('profile.avatar_url', '/company-logo?path=company-logos%2Flogo.png')
@@ -41,6 +43,7 @@ class SpaProfileOverviewTest extends TestCase
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/ProfilePage.jsx'));
 
         $this->assertStringContainsString('<Typography.Text strong>Nome</Typography.Text>', $pageSource);
+        $this->assertStringContainsString('Salvar nome fantasia', $pageSource);
         $this->assertStringContainsString('value={profileForm.name}', $pageSource);
         $this->assertStringContainsString('readOnly', $pageSource);
         $this->assertStringNotContainsString('setProfileForm((current) => ({ ...current, name: event.target.value }))', $pageSource);

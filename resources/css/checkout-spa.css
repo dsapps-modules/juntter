@@ -57,6 +57,21 @@
     filter: saturate(0.92) contrast(1.02);
 }
 
+.checkout-spa-brand-text {
+    display: inline-flex;
+    align-items: center;
+    min-height: 52px;
+    max-width: min(360px, calc(100vw - 220px));
+    color: var(--checkout-spa-navbar-ink, #17120d);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(1.2rem, 2vw, 2rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    white-space: normal;
+    word-break: break-word;
+}
+
 .checkout-spa-brand-copy {
     display: flex;
     flex-direction: column;

@@ -46,6 +46,25 @@
             height: auto;
         }
 
+        .checkout-auth-logo-text {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 52px;
+            max-width: min(280px, calc(100vw - 40px));
+            padding: 0.5rem 0.9rem;
+            border-radius: 999px;
+            border: 1px solid var(--checkout-border);
+            background: var(--checkout-surface);
+            color: var(--checkout-ink);
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+            text-align: left;
+            white-space: normal;
+        }
+
         .checkout-auth-backdrop {
             display: none;
         }
@@ -127,14 +146,28 @@
     </style>
 </head>
 <body>
+    @php
+        $sellerBrand = $sellerBrand ?? [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
+    @endphp
+
     <div class="checkout-auth-page">
         <div class="checkout-auth-logo">
-            <img
-                src="{{ $sellerLogoUrl ?? '/img/logo/juntter_webp_640_174.webp' }}"
-                alt="Checkout"
-                class="checkout-auth-logo-image"
-                onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
-            >
+            @if (($sellerBrand['mode'] ?? 'logo') === 'text')
+                <div class="checkout-auth-logo-text" aria-label="{{ $sellerBrand['label'] }}">
+                    {{ $sellerBrand['label'] }}
+                </div>
+            @else
+                <img
+                    src="{{ $sellerBrand['logoUrl'] ?? '/img/logo/juntter_webp_640_174.webp' }}"
+                    alt="{{ $sellerBrand['label'] ?? 'Checkout' }}"
+                    class="checkout-auth-logo-image"
+                    onerror="this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';"
+                >
+            @endif
         </div>
         <div class="checkout-auth-backdrop checkout-auth-backdrop-left" aria-hidden="true"></div>
         <div class="checkout-auth-backdrop checkout-auth-backdrop-right" aria-hidden="true"></div>

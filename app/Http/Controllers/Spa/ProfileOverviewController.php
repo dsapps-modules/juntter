@@ -21,6 +21,7 @@ class ProfileOverviewController extends Controller
         return response()->json([
             'profile' => [
                 'name' => $user->name,
+                'trade_name' => $user->trade_name,
                 'email' => $user->email,
                 'avatar_url' => $user->avatar_url ?? null,
                 'company_logo_url' => $user->avatar_url ?? null,
