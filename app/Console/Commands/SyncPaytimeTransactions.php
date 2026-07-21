@@ -130,7 +130,7 @@ class SyncPaytimeTransactions extends Command
                     ]);
                 }
 
-                $this->info('Synced '.count($items)." transactions (Page $page)");
+                $this->info('Synced '.count($items)." transactions (Page $page) - ".date('d/m/y h:i:s'));
                 $page++;
             } catch (\Exception $e) {
                 Log::error('Error syncing transactions: '.$e->getMessage());

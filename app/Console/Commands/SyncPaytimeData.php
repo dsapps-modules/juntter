@@ -29,7 +29,7 @@ class SyncPaytimeData extends Command
 
     public function handle()
     {
-        $this->info('Starting full Paytime sync (Transactions and Billets)...');
+        $this->info('Starting full Paytime sync (Transactions and Billets) in '.date('d/m/y h:i:s'));
 
         $options = [];
         if ($this->option('months')) {
@@ -45,7 +45,7 @@ class SyncPaytimeData extends Command
         $this->info('Step 2/2: Syncing Billets...');
         $this->call('paytime:sync-billets', $options);
 
-        $this->info('Full sync completed successfully!');
+        $this->info('Full sync completed successfully in '.date('d/m/y h:i:s'));
     }
 }
 

@@ -28,7 +28,7 @@ class SyncPaytimeEstablishments extends Command
      */
     public function handle(EstabelecimentoService $service)
     {
-        $this->info('Iniciando sincronização de estabelecimentos...');
+        $this->info('Iniciando sincronização de estabelecimentos em '.date('d/m/y h:i:s'));
 
         try {
             // A API de listarEstabelecimentos pode ou não ser paginada.
@@ -114,7 +114,7 @@ class SyncPaytimeEstablishments extends Command
 
             } while (true);
 
-            $this->info("Sincronização concluída! Total: {$totalSynced} estabelecimentos.");
+            $this->info("Sincronização concluída! Total: {$totalSynced} estabelecimentos em ".date('d/m/y h:i:s'));
 
         } catch (\Exception $e) {
             Log::error("Erro na sync de estabelecimentos: " . $e->getMessage());

@@ -47,7 +47,7 @@ class SyncPaytimeBillets extends Command
             $year = $this->option('year') ?? $currentYear;
             sort($months);
 
-            $this->info('Starting manual sync for billets... Months: '.implode(', ', $months)." of $year");
+            $this->info('Starting manual sync for billets... Months: '.implode(', ', $months)." of $year in ".date('d/m/y h:i:s'));
             $periods = [];
             foreach ($months as $m) {
                 $periods[] = [
@@ -112,7 +112,7 @@ class SyncPaytimeBillets extends Command
             $this->newLine();
         }
 
-        $this->info('Billets sync completed successfully!');
+        $this->info('Billets sync completed successfully in '.date('d/m/y h:i:s'));
     }
 
     private function syncBillets($startDate = null, $endDate = null, $establishmentId = null)
