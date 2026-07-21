@@ -239,22 +239,16 @@ export default function CheckoutProductFormPage() {
                                             style={{
                                                 width: '100%',
                                                 flex: '0 0 auto',
+                                                backgroundImage: imagePreviewUrl ? `url(${imagePreviewUrl})` : 'none',
                                             }}
                                         >
                                             {imagePreviewUrl ? (
-                                                <img
-                                                    src={imagePreviewUrl}
-                                                    alt="Pré-visualização da imagem do produto"
-                                                    className="spa-product-image-preview-image"
-                                                />
+                                                <span className="sr-only">Pré-visualização da imagem do produto</span>
                                             ) : (
                                                 <div className="px-6 text-center">
                                                     <Typography.Title level={5} style={{ marginBottom: 8 }}>
-                                                        Nenhuma imagem enviada
+                                                        Envie uma imagem quadrada
                                                     </Typography.Title>
-                                                    <Typography.Text type="secondary">
-                                                        O preview aparecerá aqui após selecionar um arquivo.
-                                                    </Typography.Text>
                                                 </div>
                                             )}
                                         </div>

@@ -651,6 +651,19 @@ a {
     font-weight: 800;
 }
 
+.spa-link-product-thumb {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 auto;
+    border-radius: 10px;
+    border: 1px solid rgba(34, 26, 11, 0.08);
+    background-color: #fff;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    box-shadow: 0 8px 20px rgba(32, 25, 10, 0.06);
+}
+
 .spa-quick-view-card .ant-card-head {
     padding-bottom: 0;
 }
@@ -1256,13 +1269,9 @@ a {
     border-radius: 0.5rem;
     border: 1px solid rgb(226 232 240);
     background: rgb(255 255 255);
-}
-
-.spa-product-image-preview-image {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
 }
 
 .spa-placeholder-description {

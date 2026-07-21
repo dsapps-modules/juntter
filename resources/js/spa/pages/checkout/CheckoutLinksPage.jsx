@@ -25,6 +25,10 @@ const availabilityStatusColors = {
     seller_inactive: 'red',
 };
 
+function getCheckoutLinkThumbnailUrl(record) {
+    return record.product_image_url || record.product?.image_url || '';
+}
+
 function resolveAvailabilityStatus(record) {
     if (record.status !== 'active') {
         return record.status;
@@ -192,10 +196,21 @@ export default function CheckoutLinksPage() {
                                     title: 'Link',
                                     dataIndex: 'name',
                                     render: (value, record) => (
-                                        <Space direction="vertical" size={0}>
-                                            <Typography.Text strong>{value}</Typography.Text>
-                                            <Typography.Text type="secondary">{record.product?.name}</Typography.Text>
-                                            <Typography.Text type="secondary">{record.public_spa_url || `${window.location.origin}/checkout/spa/${record.public_token}`}</Typography.Text>
+                                        <Space align="start" size={12}>
+                                            {getCheckoutLinkThumbnailUrl(record) ? (
+                                                <div
+                                                    aria-hidden="true"
+                                                    className="spa-link-product-thumb"
+                                                    style={{
+                                                        backgroundImage: `url(${getCheckoutLinkThumbnailUrl(record)})`,
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <Space direction="vertical" size={0}>
+                                                <Typography.Text strong>{value}</Typography.Text>
+                                                <Typography.Text type="secondary">{record.product?.name}</Typography.Text>
+                                                <Typography.Text type="secondary">{record.public_spa_url || `${window.location.origin}/checkout/spa/${record.public_token}`}</Typography.Text>
+                                            </Space>
                                         </Space>
                                     ),
                                 },

@@ -44,6 +44,7 @@
                 'name' => $checkoutLink->product->name,
                 'description' => $checkoutLink->product->description,
                 'short_description' => $checkoutLink->product->short_description,
+                'image_url' => $checkoutLink->product->image_url,
             ],
         ];
     @endphp

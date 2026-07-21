@@ -579,10 +579,15 @@ export default function CheckoutLinkFormPage() {
                                         >
                                             {selectedProduct?.image_url ? (
                                                 <div className="flex items-center gap-4">
-                                                    <img
-                                                        alt={`Imagem original de ${selectedProduct.name}`}
-                                                        src={selectedProduct.image_url}
-                                                        style={{ borderRadius: 12, display: 'block', height: 112, objectFit: 'cover', width: 112 }}
+                                                    <div
+                                                        aria-label={`Imagem original de ${selectedProduct.name}`}
+                                                        className="spa-product-image-preview"
+                                                        style={{
+                                                            backgroundImage: `url(${selectedProduct.image_url})`,
+                                                            height: 112,
+                                                            minHeight: 112,
+                                                            width: 112,
+                                                        }}
                                                     />
                                                     <div>
                                                         <Typography.Text strong>{selectedProduct.name}</Typography.Text>
@@ -615,10 +620,15 @@ export default function CheckoutLinkFormPage() {
                                                     onChange={handleProductImageChange}
                                                 />
                                                 {productImagePreviewUrl ? (
-                                                    <img
-                                                        alt="Pré-visualização da imagem alternativa do produto"
-                                                        src={productImagePreviewUrl}
-                                                        style={{ borderRadius: 12, display: 'block', height: 112, objectFit: 'cover', width: 112 }}
+                                                    <div
+                                                        aria-label="Pré-visualização da imagem alternativa do produto"
+                                                        className="spa-product-image-preview"
+                                                        style={{
+                                                            backgroundImage: `url(${productImagePreviewUrl})`,
+                                                            height: 112,
+                                                            minHeight: 112,
+                                                            width: 112,
+                                                        }}
                                                     />
                                                 ) : null}
                                             </div>

@@ -209,7 +209,8 @@ class SellerProductImageUploadTest extends TestCase
         $this->assertIsString($componentSource);
         $this->assertIsString($stylesSource);
         $this->assertStringContainsString('className="spa-product-image-preview mx-auto mt-4"', $componentSource);
-        $this->assertStringContainsString('className="spa-product-image-preview-image"', $componentSource);
+        $this->assertStringContainsString('backgroundImage: imagePreviewUrl ? `url(${imagePreviewUrl})` : \'none\'', $componentSource);
+        $this->assertStringContainsString('Envie uma imagem quadrada', $componentSource);
         $this->assertStringContainsString('function getProductImageUrl(productId, imagePath) {', $componentSource);
         $this->assertStringContainsString('return `/seller/products/${productId}/image`;', $componentSource);
         $this->assertStringContainsString('setCurrentImageUrl(getProductImageUrl(params.productId, data.product.image_path ?? data.product.image_url ?? \'\'));', $componentSource);
@@ -218,6 +219,6 @@ class SellerProductImageUploadTest extends TestCase
         $this->assertStringContainsString('.spa-product-image-preview {', $stylesSource);
         $this->assertStringContainsString('height: 320px;', $stylesSource);
         $this->assertStringContainsString('min-height: 320px;', $stylesSource);
-        $this->assertStringContainsString('object-fit: contain;', $stylesSource);
+        $this->assertStringContainsString('background-size: 100% 100%;', $stylesSource);
     }
 }

@@ -20,11 +20,31 @@ class SpaCheckoutLinksPageTest extends TestCase
         $this->assertStringContainsString("name: 'Atlântico'", $componentSource);
     }
 
+    public function test_the_checkout_link_form_uses_a_square_alternative_image_preview(): void
+    {
+        $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
+
+        $this->assertIsString($componentSource);
+        $this->assertStringContainsString('label="Imagem alternativa do produto"', $componentSource);
+        $this->assertStringContainsString('extra="Envie uma imagem quadrada de 250x250 px, preferencialmente."', $componentSource);
+        $this->assertStringContainsString('className="spa-product-image-preview"', $componentSource);
+        $this->assertStringContainsString('aria-label={`Imagem original de ${selectedProduct.name}`}', $componentSource);
+        $this->assertStringContainsString('backgroundImage: `url(${selectedProduct.image_url})`', $componentSource);
+        $this->assertStringContainsString('backgroundImage: `url(${productImagePreviewUrl})`', $componentSource);
+        $this->assertStringContainsString('height: 112,', $componentSource);
+        $this->assertStringContainsString('minHeight: 112,', $componentSource);
+        $this->assertStringContainsString('width: 112,', $componentSource);
+    }
+
     public function test_the_checkout_links_page_uses_icon_only_action_buttons(): void
     {
         $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinksPage.jsx'));
 
         $this->assertIsString($componentSource);
+        $this->assertStringContainsString('function getCheckoutLinkThumbnailUrl(record) {', $componentSource);
+        $this->assertStringContainsString('className="spa-link-product-thumb"', $componentSource);
+        $this->assertStringContainsString('backgroundImage: `url(${getCheckoutLinkThumbnailUrl(record)})`', $componentSource);
+        $this->assertStringContainsString('Space align="start" size={12}', $componentSource);
         $this->assertStringContainsString('function toggleLinkStatus(linkId, currentStatus)', $componentSource);
         $this->assertStringContainsString('const [statusLoadingLinkId, setStatusLoadingLinkId] = useState(null);', $componentSource);
         $this->assertStringContainsString("<div style={{ alignItems: 'center', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>", $componentSource);

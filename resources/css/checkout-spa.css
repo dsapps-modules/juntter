@@ -1347,18 +1347,24 @@
     line-height: 1.2;
 }
 
+.checkout-spa-theme--essential .checkout-spa-essential-items {
+    display: grid;
+    gap: 18px;
+}
+
 .checkout-spa-theme--essential .checkout-spa-essential-item {
     display: grid;
-    grid-template-columns: 70px minmax(0, 1fr) auto;
-    gap: 19px;
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: 18px;
     align-items: start;
-    padding-bottom: 23px;
+    padding-bottom: 20px;
     border-bottom: 1px solid #d0d4da;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-image {
-    width: 70px;
-    height: 70px;
+    width: 80px;
+    height: 80px;
+    padding: 4px;
     overflow: hidden;
     border: 1px solid #cbd0d7;
     border-radius: 5px;
@@ -1369,13 +1375,13 @@
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy {
     display: grid;
-    gap: 6px;
-    padding-top: 4px;
+    gap: 8px;
+    padding-top: 2px;
     min-width: 0;
 }
 
@@ -1389,7 +1395,7 @@
 .checkout-spa-theme--essential .checkout-spa-essential-item-copy strong,
 .checkout-spa-theme--essential .checkout-spa-essential-item-price {
     color: #050505;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.35;
 }
 
@@ -1399,21 +1405,38 @@
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-description {
-    grid-column: 1 / -1;
     display: block;
     width: 100%;
     color: #667085;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.45;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-quantity {
-    grid-column: 1 / -1;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    color: #050505;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-quantity-label {
+    color: #050505;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+.checkout-spa-theme--essential .checkout-spa-essential-item-quantity-value {
+    color: #050505;
+    font-size: 14px;
+    font-weight: 400;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-item-price {
-    padding-top: 4px;
     white-space: nowrap;
+    padding-top: 2px;
 }
 
 .checkout-spa-theme--essential .checkout-spa-essential-totals {

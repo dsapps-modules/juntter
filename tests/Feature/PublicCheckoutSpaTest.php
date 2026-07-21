@@ -6,6 +6,8 @@ use App\Models\CheckoutLink;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class PublicCheckoutSpaTest extends TestCase
@@ -49,8 +51,13 @@ class PublicCheckoutSpaTest extends TestCase
 
     public function test_public_checkout_spa_page_renders_the_initial_payload(): void
     {
+        Storage::fake('public');
+
         $user = $this->makeVendorUser();
-        $link = $this->makeCheckoutLink($user, $this->makeProduct($user), [
+        $product = $this->makeProduct($user, [
+            'image_path' => UploadedFile::fake()->image('produto.jpg', 320, 240)->store('products', 'public'),
+        ]);
+        $link = $this->makeCheckoutLink($user, $product, [
             'allow_pix' => true,
             'allow_boleto' => true,
             'allow_credit_card' => true,
@@ -84,6 +91,7 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee('threeDsEnv', false);
         $response->assertSee('paymentDetails', false);
         $response->assertSee('Descrição do produto', false);
+        $response->assertSee(route('seller.products.image', $product, false), false);
         $response->assertDontSee(':5173', false);
         $response->assertSee(route('checkout.public.spa.show', $link->public_token), false);
     }
@@ -179,7 +187,10 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('function renderDeliveryStep()', $source);
         $this->assertStringContainsString('checkout-spa-essential-delivery-section', $source);
         $this->assertStringContainsString('checkout-spa-essential-summary', $source);
+        $this->assertStringContainsString('checkout-spa-essential-items', $source);
         $this->assertStringContainsString('checkout-spa-essential-item-description', $source);
+        $this->assertStringContainsString('checkout-spa-essential-item-quantity-label', $source);
+        $this->assertStringContainsString('summaryItems.map((item) => (', $source);
         $this->assertStringContainsString('body: new FormData(form),', $source);
         $this->assertStringContainsString('font-family: Arial, Helvetica, sans-serif;', $styles);
         $this->assertMatchesRegularExpression('/name="customer_name"[\s\S]*name="customer_document"[\s\S]*name="customer_email"[\s\S]*name="customer_birth_date"[\s\S]*name="customer_phone"/', $source);
@@ -228,8 +239,13 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-essential-summary h2', $styles);
         $this->assertStringContainsString('margin: 0 0 21px;', $styles);
         $this->assertStringContainsString('font-size: 19px;', $styles);
-        $this->assertStringContainsString('font-size: 13px;', $styles);
-        $this->assertStringContainsString('font-size: 9px;', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-essential-items {', $styles);
+        $this->assertStringContainsString('grid-template-columns: 80px minmax(0, 1fr);', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-essential-item-quantity-label {', $styles);
+        $this->assertStringContainsString('font-size: 11px;', $styles);
+        $this->assertStringContainsString('font-size: 14px;', $styles);
+        $this->assertStringContainsString('padding: 4px;', $styles);
+        $this->assertStringContainsString('object-fit: contain;', $styles);
     }
 
     private function makeVendorUser(): User
@@ -252,9 +268,9 @@ class PublicCheckoutSpaTest extends TestCase
         return $user;
     }
 
-    private function makeProduct(User $seller): Product
+    private function makeProduct(User $seller, array $overrides = []): Product
     {
-        return Product::query()->create([
+        return Product::query()->create(array_merge([
             'seller_id' => $seller->id,
             'name' => 'Produto '.random_int(1, 9999),
             'slug' => 'produto-'.random_int(1, 9999),
@@ -263,7 +279,7 @@ class PublicCheckoutSpaTest extends TestCase
             'sku' => 'SKU-'.random_int(1, 9999),
             'price' => 100.00,
             'status' => 'active',
-        ]);
+        ], $overrides));
     }
 
     private function makeCheckoutLink(User $seller, Product $product, array $overrides = []): CheckoutLink

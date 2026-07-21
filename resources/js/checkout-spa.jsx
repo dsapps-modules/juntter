@@ -880,10 +880,21 @@ function CheckoutSpaApp() {
         '--checkout-spa-button': visualConfig.primary_color || '#1f1a17',
         '--checkout-spa-button-ink': visualConfig.button_text_color || visualConfig.navbar_text_color || '#ffffff',
     };
+    const productImageUrl = checkoutLink.product_image_url || checkoutLink.product?.image_url || '';
     const summaryDescription = checkoutLink.product?.description
         || checkoutLink.product?.short_description
         || checkoutLink.seller?.name
         || 'Juntter';
+    const summaryItems = [
+        {
+            description: summaryDescription,
+            imageUrl: productImageUrl,
+            key: checkoutLink.id || checkoutLink.public_token || 'primary',
+            name: checkoutLink.product?.name || 'Produto',
+            price: formatCurrency(summaryPricing.subtotal),
+            quantity: String(summaryPricing.quantity).padStart(2, '0'),
+        },
+    ];
     const paymentLogos = [
         { label: 'Mastercard', variant: 'mastercard' },
         { label: 'Elo', variant: 'elo' },
@@ -2642,22 +2653,31 @@ function CheckoutSpaApp() {
                                 <div className="checkout-spa-essential-summary">
                                     <h2>Itens ({quantity})</h2>
 
-                                    <div className="checkout-spa-essential-item">
-                                        {checkoutLink.product_image_url ? (
-                                            <div className="checkout-spa-essential-item-image" aria-hidden="true">
-                                                <img src={checkoutLink.product_image_url} alt="" />
+                                    <div className="checkout-spa-essential-items">
+                                        {summaryItems.map((item) => (
+                                            <div className="checkout-spa-essential-item" key={item.key}>
+                                                {item.imageUrl ? (
+                                                    <div className="checkout-spa-essential-item-image" aria-hidden="true">
+                                                        <img src={item.imageUrl} alt="" />
+                                                    </div>
+                                                ) : null}
+                                                <div className="checkout-spa-essential-item-copy">
+                                                    <div className="checkout-spa-essential-item-head">
+                                                        <strong>{item.name}</strong>
+                                                        <strong className="checkout-spa-essential-item-price">{item.price}</strong>
+                                                    </div>
+
+                                                    {item.description ? (
+                                                        <div className="checkout-spa-essential-item-description">{item.description}</div>
+                                                    ) : null}
+
+                                                    <div className="checkout-spa-essential-item-quantity">
+                                                        <span className="checkout-spa-essential-item-quantity-label">Quantidade:</span>
+                                                        <span className="checkout-spa-essential-item-quantity-value">{item.quantity}</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        ) : null}
-                                        <div className="checkout-spa-essential-item-copy">
-                                            <div className="checkout-spa-essential-item-head">
-                                                <strong>{checkoutLink.product?.name || 'Produto'}</strong>
-                                                <strong className="checkout-spa-essential-item-price">{formatCurrency(summaryPricing.subtotal)}</strong>
-                                            </div>
-                                        </div>
-                                        {summaryDescription ? (
-                                            <div className="checkout-spa-essential-item-description">{summaryDescription}</div>
-                                        ) : null}
-                                        <span className="checkout-spa-essential-item-quantity">Quantidade: {String(quantity).padStart(2, '0')}</span>
+                                        ))}
                                     </div>
 
                                     <div className="checkout-spa-essential-totals">
@@ -2689,9 +2709,9 @@ function CheckoutSpaApp() {
                                     <h2 className="checkout-spa-summary-title">{checkoutLink.name || 'Checkout'}</h2>
                                 </div>
 
-                                {checkoutLink.product_image_url ? (
+                                {productImageUrl ? (
                                     <div className="checkout-spa-summary-image" aria-hidden="true">
-                                        <img src={checkoutLink.product_image_url} alt="" />
+                                        <img src={productImageUrl} alt="" />
                                     </div>
                                 ) : null}
                             </div>
