@@ -19,29 +19,30 @@ class ApiClientService
         $this->baseUrl = rtrim(config('services.paytime.base_url'), '/');
     }
 
-    public function get(string $endpoint, array $params = []): array
+    public function get(string $endpoint, array $params = [], ?string $baseUrl = null): array
     {
-        return $this->request('GET', $endpoint, ['query' => $params]);
+        return $this->request('GET', $endpoint, ['query' => $params], $baseUrl);
     }
 
-    public function post(string $endpoint, array $payload = []): array
+    public function post(string $endpoint, array $payload = [], ?string $baseUrl = null): array
     {
-        return $this->request('POST', $endpoint, ['json' => $payload]);
+        return $this->request('POST', $endpoint, ['json' => $payload], $baseUrl);
     }
 
-    public function put(string $endpoint, array $payload = []): array
+    public function put(string $endpoint, array $payload = [], ?string $baseUrl = null): array
     {
-        return $this->request('PUT', $endpoint, ['json' => $payload]);
+        return $this->request('PUT', $endpoint, ['json' => $payload], $baseUrl);
     }
 
-    public function delete(string $endpoint): array
+    public function delete(string $endpoint, ?string $baseUrl = null): array
     {
-        return $this->request('DELETE', $endpoint, []);
+        return $this->request('DELETE', $endpoint, [], $baseUrl);
     }
 
-    private function request(string $method, string $endpoint, array $options): array
+    private function request(string $method, string $endpoint, array $options, ?string $baseUrl = null): array
     {
         $attempts = 0;
+        $resolvedBaseUrl = rtrim($baseUrl ?: $this->baseUrl, '/');
 
         do {
             $token = $this->getToken();
@@ -62,7 +63,7 @@ class ApiClientService
 
             Log::info('Paytime API Request', [
                 'method' => $method,
-                'endpoint' => "{$this->baseUrl}/{$endpoint}",
+                'endpoint' => "{$resolvedBaseUrl}/{$endpoint}",
                 'payload' => $this->sanitizeSensitiveData($options[$method === 'GET' ? 'query' : 'json'] ?? []),
             ]);
 
@@ -80,7 +81,7 @@ class ApiClientService
                     // Log::info('Headers enviados', ['headers' => $request->headers()]);
                     // Log::info('Query enviada',    ['query'   => $request->getUri()]);
                 })
-                ->{$method}("{$this->baseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
+                ->{$method}("{$resolvedBaseUrl}/{$endpoint}", $options[$method === 'GET' ? 'query' : 'json'] ?? []);
 
             Log::info('Paytime API Response', [
                 'status' => $response->status(),

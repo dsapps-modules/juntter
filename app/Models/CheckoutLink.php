@@ -98,11 +98,15 @@ class CheckoutLink extends Model
 
     public function getProductImageUrlAttribute(): ?string
     {
-        if (! filled($this->product_image_path)) {
+        $imagePath = filled($this->product_image_path)
+            ? $this->product_image_path
+            : $this->product?->image_path;
+
+        if (! filled($imagePath)) {
             return null;
         }
 
-        if (! Storage::disk('public')->exists($this->product_image_path)) {
+        if (! Storage::disk('public')->exists($imagePath)) {
             return null;
         }
 

@@ -91,9 +91,25 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee('threeDsEnv', false);
         $response->assertSee('paymentDetails', false);
         $response->assertSee('Descrição do produto', false);
-        $response->assertSee(route('seller.products.image', $product, false), false);
+        $response->assertSee(route('checkout.public.product-image', $link->public_token), false);
         $response->assertDontSee(':5173', false);
         $response->assertSee(route('checkout.public.spa.show', $link->public_token), false);
+    }
+
+    public function test_public_checkout_spa_uses_the_public_image_route_when_the_checkout_link_has_no_custom_image(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $product = $this->makeProduct($user, [
+            'image_path' => UploadedFile::fake()->image('produto.jpg', 320, 240)->store('products', 'public'),
+        ]);
+        $link = $this->makeCheckoutLink($user, $product);
+
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee(route('checkout.public.product-image', $link->public_token), false);
     }
 
     public function test_checkout_spa_source_includes_the_3ds_flow(): void
@@ -124,12 +140,23 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('applyCompanyLookupToForm', $source);
         $this->assertStringContainsString('cnpjCompanyLookupCache', $source);
         $this->assertStringContainsString('cnpjLookupTemplate', $source);
+        $this->assertStringContainsString('buildIdentificationDrafts', $source);
+        $this->assertStringContainsString('mergeIdentificationDrafts', $source);
+        $this->assertStringContainsString('handlePersonTypeChange', $source);
+        $this->assertStringContainsString('handleIdentificationFieldChange', $source);
+        $this->assertStringContainsString('data-person-form={personIsCompany ? \'pj\' : \'pf\'}', $source);
+        $this->assertStringContainsString('key="pj"', $source);
+        $this->assertStringContainsString('key="pf"', $source);
+        $this->assertStringContainsString("defaultValue={identificationDraft.customer_responsible_document || ''}", $source);
+        $this->assertStringContainsString('fillFormFieldIfEmpty', $source);
+        $this->assertStringContainsString('normalizeIdentificationFormData', $source);
+        $this->assertStringContainsString('onChange={handleIdentificationFieldChange}', $source);
         $this->assertStringContainsString('Digite um CPF válido.', $source);
         $this->assertStringContainsString('Digite um CNPJ válido.', $source);
         $this->assertStringContainsString('function validateIdentificationDocument(form, personType, updateFieldErrors)', $source);
         $this->assertStringContainsString('validateIdentificationDocument(form, personType, setFieldErrors)', $source);
-        $this->assertStringContainsString('function validateResponsibleDocument(form, updateFieldErrors)', $source);
-        $this->assertStringContainsString('validateResponsibleDocument(form, setFieldErrors)', $source);
+        $this->assertStringContainsString('function validateResponsibleDocument(form, personType, updateFieldErrors)', $source);
+        $this->assertStringContainsString('validateResponsibleDocument(form, personType, setFieldErrors)', $source);
         $this->assertStringContainsString('Não foi possível ler o formulário.', $source);
         $this->assertStringContainsString('viacep.com.br/ws/${normalizeDigits(zipcode)}/json/', $source);
         $this->assertStringContainsString('Consultando CEP...', $source);
@@ -191,9 +218,19 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('checkout-spa-essential-item-description', $source);
         $this->assertStringContainsString('checkout-spa-essential-item-quantity-label', $source);
         $this->assertStringContainsString('summaryItems.map((item) => (', $source);
-        $this->assertStringContainsString('body: new FormData(form),', $source);
+        $this->assertStringContainsString('body: payloadFormData,', $source);
         $this->assertStringContainsString('font-family: Arial, Helvetica, sans-serif;', $styles);
-        $this->assertMatchesRegularExpression('/name="customer_name"[\s\S]*name="customer_document"[\s\S]*name="customer_email"[\s\S]*name="customer_birth_date"[\s\S]*name="customer_phone"/', $source);
+        $this->assertStringContainsString('name="pj_customer_name"', $source);
+        $this->assertStringContainsString('name="pj_customer_document"', $source);
+        $this->assertStringContainsString('name="pj_customer_email"', $source);
+        $this->assertStringContainsString('name="pj_customer_responsible_document"', $source);
+        $this->assertStringContainsString('name="pj_customer_responsible_birth_date"', $source);
+        $this->assertStringContainsString('name="pj_customer_phone"', $source);
+        $this->assertStringContainsString('name="pf_customer_name"', $source);
+        $this->assertStringContainsString('name="pf_customer_document"', $source);
+        $this->assertStringContainsString('name="pf_customer_email"', $source);
+        $this->assertStringContainsString('name="pf_customer_birth_date"', $source);
+        $this->assertStringContainsString('name="pf_customer_phone"', $source);
         $this->assertStringContainsString('grid-template-columns: minmax(0, 56%) minmax(0, 44%);', $styles);
         $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-input,[\s\S]*?height: 45px;[\s\S]*?padding: 16px 14px 4px;[\s\S]*?font-size: 13px;/', $styles);
         $this->assertMatchesRegularExpression('/\.checkout-spa-theme--essential \.checkout-spa-header \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?gap: 24px;/', $styles);

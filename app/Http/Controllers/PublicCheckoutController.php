@@ -289,10 +289,13 @@ class PublicCheckoutController extends Controller
     public function productImage(string $publicToken): BinaryFileResponse
     {
         $checkoutLink = CheckoutLink::query()
+            ->with('product')
             ->where('public_token', $publicToken)
             ->firstOrFail();
 
-        $productImagePath = $checkoutLink->product_image_path;
+        $productImagePath = filled($checkoutLink->product_image_path)
+            ? $checkoutLink->product_image_path
+            : $checkoutLink->product?->image_path;
 
         abort_unless(filled($productImagePath) && Storage::disk('public')->exists($productImagePath), 404);
 

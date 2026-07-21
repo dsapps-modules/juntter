@@ -38,6 +38,7 @@ return [
      */
     'paytime' => [
         'base_url' => env('PAYTIME_BASE_URL'),
+        'payout_base_url' => env('PAYTIME_PAYOUT_BASE_URL', 'https://banking.paytime.com.br/v1'),
         'integration_key' => env('PAYTIME_INTEGRATION_KEY'),
         'authentication_key' => env('PAYTIME_AUTHENTICATION_KEY'),
         'x_token' => env('PAYTIME_X_TOKEN'),

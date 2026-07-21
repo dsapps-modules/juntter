@@ -165,6 +165,54 @@ function formatDocument(value, personType) {
     return personType === 'pj' ? formatCnpj(value) : formatCpf(value);
 }
 
+function buildIdentificationDrafts(session) {
+    const documentType = String(session?.customer_document_type || '').toLowerCase();
+    const isCompany = documentType === 'cnpj';
+
+    return {
+        pf: {
+            customer_name: String(session?.customer_name || ''),
+            customer_document: isCompany ? '' : String(session?.customer_document || ''),
+            customer_email: String(session?.customer_email || ''),
+            customer_birth_date: isCompany ? '' : String(session?.customer_birth_date || ''),
+            customer_phone: String(session?.customer_phone || ''),
+        },
+        pj: {
+            customer_document: isCompany ? String(session?.customer_document || '') : '',
+            customer_email: String(session?.customer_email || ''),
+            customer_company_name: isCompany ? String(session?.customer_company_name || '') : '',
+            customer_name: String(session?.customer_name || ''),
+            customer_responsible_document: isCompany ? String(session?.customer_responsible_document || '') : '',
+            customer_responsible_birth_date: isCompany ? String(session?.customer_responsible_birth_date || '') : '',
+            customer_phone: String(session?.customer_phone || ''),
+        },
+    };
+}
+
+function mergeIdentificationDrafts(currentDrafts, nextPersonType) {
+    if (nextPersonType === 'pj') {
+        return {
+            ...currentDrafts,
+            pj: {
+                ...currentDrafts.pj,
+                customer_name: currentDrafts.pj.customer_name || currentDrafts.pf.customer_name || '',
+                customer_email: currentDrafts.pj.customer_email || currentDrafts.pf.customer_email || '',
+                customer_phone: currentDrafts.pj.customer_phone || currentDrafts.pf.customer_phone || '',
+            },
+        };
+    }
+
+    return {
+        ...currentDrafts,
+        pf: {
+            ...currentDrafts.pf,
+            customer_name: currentDrafts.pf.customer_name || currentDrafts.pj.customer_name || '',
+            customer_email: currentDrafts.pf.customer_email || currentDrafts.pj.customer_email || '',
+            customer_phone: currentDrafts.pf.customer_phone || currentDrafts.pj.customer_phone || '',
+        },
+    };
+}
+
 function fillFormField(form, name, value) {
     const element = form?.querySelector(`[name="${name}"]`);
 
@@ -242,11 +290,89 @@ async function lookupCompanyByCnpj(cnpj, lookupTemplate) {
 }
 
 function applyCompanyLookupToForm(form, payload) {
-    fillFormField(form, 'customer_company_name', payload?.company_name || '');
-    fillFormField(form, 'customer_email', payload?.email || '');
-    fillFormField(form, 'customer_phone', payload?.phone || '');
-    fillFormField(form, 'customer_name', payload?.responsible_name || '');
-    fillFormField(form, 'customer_responsible_document', payload?.responsible_document || '');
+    if (!form || form.dataset.personForm !== 'pj') {
+        return;
+    }
+
+    fillFormFieldIfEmpty(form, resolveIdentificationFieldName('pj', 'customer_company_name'), payload?.company_name || '');
+    fillFormFieldIfEmpty(form, resolveIdentificationFieldName('pj', 'customer_email'), payload?.email || '');
+    fillFormFieldIfEmpty(form, resolveIdentificationFieldName('pj', 'customer_phone'), payload?.phone || '');
+    fillFormFieldIfEmpty(form, resolveIdentificationFieldName('pj', 'customer_name'), payload?.responsible_name || '');
+    fillFormFieldIfEmpty(form, resolveIdentificationFieldName('pj', 'customer_responsible_document'), payload?.responsible_document || '');
+}
+
+function resolveIdentificationFieldName(personType, fieldName) {
+    return `${personType}_${fieldName}`;
+}
+
+function resolveIdentificationFormValue(form, personType, fieldName) {
+    const field = form?.querySelector(`[name="${resolveIdentificationFieldName(personType, fieldName)}"]`);
+
+    return field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement
+        ? field.value
+        : '';
+}
+
+function fillFormFieldIfEmpty(form, name, value) {
+    const element = form?.querySelector(`[name="${name}"]`);
+
+    if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)) {
+        return;
+    }
+
+    if (element.value.trim() === '' && value !== '') {
+        element.value = value;
+    }
+}
+
+function normalizeIdentificationFormData(formData, personType) {
+    const normalizedFormData = formData instanceof FormData ? formData : new FormData();
+    const fieldNames = personType === 'pj'
+        ? [
+            'customer_name',
+            'customer_email',
+            'customer_document',
+            'customer_phone',
+            'customer_company_name',
+            'customer_responsible_document',
+            'customer_responsible_birth_date',
+        ]
+        : [
+            'customer_name',
+            'customer_email',
+            'customer_document',
+            'customer_birth_date',
+            'customer_phone',
+        ];
+
+    fieldNames.forEach((fieldName) => {
+        const sourceFieldName = resolveIdentificationFieldName(personType, fieldName);
+        const value = normalizedFormData.get(sourceFieldName);
+
+        if (value !== null) {
+            normalizedFormData.set(fieldName, value);
+        }
+
+        normalizedFormData.delete(sourceFieldName);
+    });
+
+    return normalizedFormData;
+}
+
+function formDataToEntries(formData) {
+    if (!(formData instanceof FormData)) {
+        return {};
+    }
+
+    return Object.fromEntries(Array.from(formData.entries()).map(([key, value]) => [key, value instanceof File ? value.name : value]));
+}
+
+function logCheckoutIdentificationDebug(message, payload) {
+    if (typeof window === 'undefined' || !window.location.hostname.includes('localhost')) {
+        return;
+    }
+
+    console.info(`[checkout-spa] ${message}`, payload);
 }
 
 function isPaidState(order, paymentTransaction) {
@@ -506,11 +632,15 @@ function isValidCnpj(value) {
 }
 
 function validateIdentificationDocument(form, personType, updateFieldErrors) {
-    const documentField = form?.querySelector('[name="customer_document"]');
-    const documentValue = documentField instanceof HTMLInputElement ? documentField.value : '';
+    const documentValue = resolveIdentificationFormValue(form, personType, 'customer_document');
 
     if (personType === 'pj') {
         if (!isValidCnpj(documentValue)) {
+            logCheckoutIdentificationDebug('validateIdentificationDocument failed', {
+                personType,
+                documentValue,
+                fieldErrors: { customer_document: 'Digite um CNPJ válido.' },
+            });
             updateFieldErrors({
                 customer_document: ['Digite um CNPJ válido.'],
             });
@@ -526,6 +656,11 @@ function validateIdentificationDocument(form, personType, updateFieldErrors) {
     }
 
     if (!isValidCpf(documentValue)) {
+        logCheckoutIdentificationDebug('validateIdentificationDocument failed', {
+            personType,
+            documentValue,
+            fieldErrors: { customer_document: 'Digite um CPF válido.' },
+        });
         updateFieldErrors({
             customer_document: ['Digite um CPF válido.'],
         });
@@ -540,11 +675,14 @@ function validateIdentificationDocument(form, personType, updateFieldErrors) {
     return true;
 }
 
-function validateResponsibleDocument(form, updateFieldErrors) {
-    const documentField = form?.querySelector('[name="customer_responsible_document"]');
-    const documentValue = documentField instanceof HTMLInputElement ? documentField.value : '';
+function validateResponsibleDocument(form, personType, updateFieldErrors) {
+    const documentValue = resolveIdentificationFormValue(form, personType, 'customer_responsible_document');
 
     if (!isValidCpf(documentValue)) {
+        logCheckoutIdentificationDebug('validateResponsibleDocument failed', {
+            documentValue,
+            fieldErrors: { customer_responsible_document: 'Digite um CPF válido para o responsável.' },
+        });
         updateFieldErrors({
             customer_responsible_document: ['Digite um CPF válido para o responsável.'],
         });
@@ -720,6 +858,7 @@ function CheckoutSpaApp() {
     const [paymentTransaction, setPaymentTransaction] = useState(config?.paymentTransaction || null);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(defaultPaymentMethod);
     const [personType, setPersonType] = useState(String(config?.checkoutSession?.customer_document_type || 'cpf').toLowerCase() === 'cnpj' ? 'pj' : 'pf');
+    const [identificationDrafts, setIdentificationDrafts] = useState(() => buildIdentificationDrafts(config?.checkoutSession));
     const [quantity, setQuantity] = useState(initialQuantity);
     const [step, setStep] = useState(() => resolveInitialStep(config || {}, defaultPaymentMethod, allowedMethods.length));
     const [selectedShippingOptionId, setSelectedShippingOptionId] = useState(
@@ -880,7 +1019,7 @@ function CheckoutSpaApp() {
         '--checkout-spa-button': visualConfig.primary_color || '#1f1a17',
         '--checkout-spa-button-ink': visualConfig.button_text_color || visualConfig.navbar_text_color || '#ffffff',
     };
-    const productImageUrl = checkoutLink.product_image_url || checkoutLink.product?.image_url || '';
+    const productImageUrl = checkoutLink.product_image_url || '';
     const summaryDescription = checkoutLink.product?.description
         || checkoutLink.product?.short_description
         || checkoutLink.seller?.name
@@ -1115,6 +1254,22 @@ function CheckoutSpaApp() {
                 return;
             }
 
+            const rawFormData = new FormData(form);
+            logCheckoutIdentificationDebug('identification submit start', {
+                personType,
+                rawEntries: formDataToEntries(rawFormData),
+                rawFieldValues: {
+                    customer_name: resolveIdentificationFormValue(form, personType, 'customer_name'),
+                    customer_email: resolveIdentificationFormValue(form, personType, 'customer_email'),
+                    customer_document: resolveIdentificationFormValue(form, personType, 'customer_document'),
+                    customer_phone: resolveIdentificationFormValue(form, personType, 'customer_phone'),
+                    customer_company_name: resolveIdentificationFormValue(form, personType, 'customer_company_name'),
+                    customer_responsible_document: resolveIdentificationFormValue(form, personType, 'customer_responsible_document'),
+                    customer_responsible_birth_date: resolveIdentificationFormValue(form, personType, 'customer_responsible_birth_date'),
+                    customer_birth_date: resolveIdentificationFormValue(form, personType, 'customer_birth_date'),
+                },
+            });
+
             if (!validateIdentificationDocument(form, personType, setFieldErrors)) {
                 setFeedback({
                     type: 'error',
@@ -1125,7 +1280,7 @@ function CheckoutSpaApp() {
                 return;
             }
 
-            if (personType === 'pj' && !validateResponsibleDocument(form, setFieldErrors)) {
+            if (personType === 'pj' && !validateResponsibleDocument(form, personType, setFieldErrors)) {
                 setFeedback({
                     type: 'error',
                     message: 'Confira o CPF do responsável antes de continuar.',
@@ -1134,12 +1289,18 @@ function CheckoutSpaApp() {
             }
 
             if (personType === 'pj') {
-                await syncCompanyDataByCnpj(form, form.querySelector('[name="customer_document"]')?.value || '');
+                await syncCompanyDataByCnpj(form, resolveIdentificationFormValue(form, personType, 'customer_document'));
             }
+
+            const payloadFormData = normalizeIdentificationFormData(new FormData(form), personType);
+            logCheckoutIdentificationDebug('identification submit payload', {
+                personType,
+                normalizedEntries: formDataToEntries(payloadFormData),
+            });
 
             const response = await requestJson(config.urls.identify, {
                 method: 'POST',
-                body: new FormData(form),
+                body: payloadFormData,
             });
 
             setSession(response.checkout_session || session);
@@ -1403,11 +1564,13 @@ function CheckoutSpaApp() {
             return;
         }
 
-        if (target.name === 'customer_phone') {
+        const fieldKey = target.dataset.fieldKey || target.name;
+
+        if (fieldKey === 'customer_phone') {
             target.value = formatPhone(target.value);
         }
 
-        if (target.name === 'customer_document') {
+        if (fieldKey === 'customer_document') {
             target.value = formatDocument(target.value, personType);
 
             if (personType === 'pj') {
@@ -1415,25 +1578,69 @@ function CheckoutSpaApp() {
             }
         }
 
-        if (target.name === 'customer_responsible_document') {
+        if (fieldKey === 'customer_responsible_document') {
             target.value = formatCpf(target.value);
         }
 
-        if (target.name === 'zipcode') {
+        if (fieldKey === 'zipcode') {
             target.value = formatZipcode(target.value);
         }
 
-        if (target.name === 'state') {
+        if (fieldKey === 'state') {
             target.value = target.value.toUpperCase().slice(0, 2);
         }
 
-        if (target.name === 'card[holder_document]') {
+        if (fieldKey === 'card[holder_document]') {
             target.value = formatDocument(target.value, 'pf');
         }
 
-        if (target.name === 'card[card_number]') {
+        if (fieldKey === 'card[card_number]') {
             target.value = formatCardNumber(target.value);
         }
+    }
+
+    function handlePersonTypeChange(nextPersonType) {
+        if (nextPersonType === personType) {
+            return;
+        }
+
+        if (cnpjTimerRef.current) {
+            window.clearTimeout(cnpjTimerRef.current);
+            cnpjTimerRef.current = null;
+        }
+
+        cnpjLookupIdRef.current += 1;
+        setIdentificationDrafts((current) => mergeIdentificationDrafts(current, nextPersonType));
+        setFieldErrors({});
+        setFeedback({ type: 'info', message: '' });
+        setPersonType(nextPersonType);
+    }
+
+    function handleIdentificationFieldChange(event) {
+        const target = event.target;
+
+        if (!(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        const { name, value } = target;
+        const fieldKey = target.dataset.fieldKey || name;
+
+        if (!name || name === 'customer_document_type') {
+            return;
+        }
+
+        setIdentificationDrafts((current) => {
+            const draftKey = personType === 'pj' ? 'pj' : 'pf';
+
+            return {
+                ...current,
+                [draftKey]: {
+                    ...current[draftKey],
+                    [fieldKey]: value,
+                },
+            };
+        });
     }
 
     function clearCompanyLookupErrors() {
@@ -1468,7 +1675,23 @@ function CheckoutSpaApp() {
                 return null;
             }
 
+            logCheckoutIdentificationDebug('cnpj lookup result', {
+                cnpjDigits,
+                payload,
+            });
             applyCompanyLookupToForm(form, payload);
+            setIdentificationDrafts((current) => ({
+                ...current,
+                pj: {
+                    ...current.pj,
+                    customer_document: formatCnpj(cnpjDigits),
+                    customer_company_name: String(payload.company_name || current.pj.customer_company_name || ''),
+                    customer_email: String(payload.email || current.pj.customer_email || ''),
+                    customer_phone: String(payload.phone || current.pj.customer_phone || ''),
+                    customer_name: String(payload.responsible_name || current.pj.customer_name || ''),
+                    customer_responsible_document: String(payload.responsible_document || current.pj.customer_responsible_document || ''),
+                },
+            }));
             clearCompanyLookupErrors();
 
             return payload;
@@ -1975,6 +2198,7 @@ function CheckoutSpaApp() {
 
     function renderIdentificationStep() {
         const personIsCompany = personType === 'pj';
+        const identificationDraft = identificationDrafts[personType];
 
         return (
             <section className="checkout-spa-step-card checkout-spa-step-card--intro">
@@ -1992,14 +2216,14 @@ function CheckoutSpaApp() {
                         <button
                             type="button"
                             className={`checkout-spa-toggle-button ${personType === 'pf' ? 'is-active' : ''}`}
-                            onClick={() => setPersonType('pf')}
+                            onClick={() => handlePersonTypeChange('pf')}
                         >
                             Pessoa física
                         </button>
                         <button
                             type="button"
                             className={`checkout-spa-toggle-button ${personType === 'pj' ? 'is-active' : ''}`}
-                            onClick={() => setPersonType('pj')}
+                            onClick={() => handlePersonTypeChange('pj')}
                         >
                             Pessoa jurídica
                         </button>
@@ -2007,20 +2231,27 @@ function CheckoutSpaApp() {
                     ) : null}
                 </div>
 
-                <form className="checkout-spa-form" data-checkout-form="identification" onSubmit={handleIdentificationSubmit}>
+                <form
+                    className="checkout-spa-form"
+                    data-person-form={personIsCompany ? 'pj' : 'pf'}
+                    data-checkout-form="identification"
+                    onSubmit={handleIdentificationSubmit}
+                >
                     <input type="hidden" name="customer_document_type" value={personIsCompany ? 'cnpj' : 'cpf'} />
 
                     {personIsCompany ? (
-                        <div className="checkout-spa-field-grid checkout-spa-identification-fields checkout-spa-identification-fields--pj is-two-columns">
+                        <div key="pj" className="checkout-spa-field-grid checkout-spa-identification-fields checkout-spa-identification-fields--pj is-two-columns">
                             <label className="checkout-spa-field">
                                 <span className="checkout-spa-label">CNPJ</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_document"
-                                    defaultValue={session.customer_document || ''}
+                                    name="pj_customer_document"
+                                    data-field-key="customer_document"
+                                    defaultValue={identificationDraft.customer_document || ''}
                                     maxLength={18}
                                     placeholder="00.000.000/0000-00"
                                     inputMode="numeric"
+                                    onChange={handleIdentificationFieldChange}
                                     onInput={handleDocumentMask}
                                     onBlur={handleDocumentBlur}
                                 />
@@ -2032,9 +2263,11 @@ function CheckoutSpaApp() {
                                 <input
                                     className="checkout-spa-input"
                                     type="email"
-                                    name="customer_email"
-                                    defaultValue={session.customer_email || ''}
+                                    name="pj_customer_email"
+                                    data-field-key="customer_email"
+                                    defaultValue={identificationDraft.customer_email || ''}
                                     placeholder="voce@exemplo.com"
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_email || ''}</p>
                             </label>
@@ -2043,9 +2276,11 @@ function CheckoutSpaApp() {
                                 <span className="checkout-spa-label">Nome da empresa</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_company_name"
-                                    defaultValue={session.customer_company_name || ''}
+                                    name="pj_customer_company_name"
+                                    data-field-key="customer_company_name"
+                                    defaultValue={identificationDraft.customer_company_name || ''}
                                     placeholder="Razão social ou nome fantasia"
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_company_name || ''}</p>
                             </label>
@@ -2054,9 +2289,11 @@ function CheckoutSpaApp() {
                                 <span className="checkout-spa-label">Nome do responsável</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_name"
-                                    defaultValue={session.customer_name || ''}
+                                    name="pj_customer_name"
+                                    data-field-key="customer_name"
+                                    defaultValue={identificationDraft.customer_name || ''}
                                     placeholder="Nome do responsável"
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_name || ''}</p>
                             </label>
@@ -2065,11 +2302,13 @@ function CheckoutSpaApp() {
                                 <span className="checkout-spa-label">CPF do responsável</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_responsible_document"
-                                    defaultValue={session.customer_responsible_document || ''}
+                                    name="pj_customer_responsible_document"
+                                    data-field-key="customer_responsible_document"
+                                    defaultValue={identificationDraft.customer_responsible_document || ''}
                                     maxLength={14}
                                     placeholder="000.000.000-00"
                                     inputMode="numeric"
+                                    onChange={handleIdentificationFieldChange}
                                     onInput={handleDocumentMask}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_responsible_document || ''}</p>
@@ -2080,10 +2319,12 @@ function CheckoutSpaApp() {
                                 <input
                                     className="checkout-spa-input"
                                     type="date"
-                                    name="customer_responsible_birth_date"
-                                    defaultValue={session.customer_responsible_birth_date || ''}
+                                    name="pj_customer_responsible_birth_date"
+                                    data-field-key="customer_responsible_birth_date"
+                                    defaultValue={identificationDraft.customer_responsible_birth_date || ''}
                                     placeholder="Nascimento do responsável"
                                     required
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_responsible_birth_date || ''}</p>
                             </label>
@@ -2092,25 +2333,29 @@ function CheckoutSpaApp() {
                                 <span className="checkout-spa-label">Celular</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_phone"
-                                    defaultValue={session.customer_phone || ''}
+                                    name="pj_customer_phone"
+                                    data-field-key="customer_phone"
+                                    defaultValue={identificationDraft.customer_phone || ''}
                                     maxLength={15}
                                     placeholder="(11) 99999-9999"
                                     inputMode="numeric"
+                                    onChange={handleIdentificationFieldChange}
                                     onInput={handleDocumentMask}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_phone || ''}</p>
                             </label>
                         </div>
                     ) : (
-                        <div className="checkout-spa-field-grid checkout-spa-identification-fields checkout-spa-identification-fields--pf is-two-columns">
+                        <div key="pf" className="checkout-spa-field-grid checkout-spa-identification-fields checkout-spa-identification-fields--pf is-two-columns">
                             <label className="checkout-spa-field is-full">
                                 <span className="checkout-spa-label">Nome completo</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_name"
-                                    defaultValue={session.customer_name || ''}
+                                    name="pf_customer_name"
+                                    data-field-key="customer_name"
+                                    defaultValue={identificationDraft.customer_name || ''}
                                     placeholder="Nome completo"
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_name || ''}</p>
                             </label>
@@ -2119,11 +2364,13 @@ function CheckoutSpaApp() {
                                 <span className="checkout-spa-label">CPF</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_document"
-                                    defaultValue={session.customer_document || ''}
+                                    name="pf_customer_document"
+                                    data-field-key="customer_document"
+                                    defaultValue={identificationDraft.customer_document || ''}
                                     maxLength={14}
                                     placeholder="000.000.000-00"
                                     inputMode="numeric"
+                                    onChange={handleIdentificationFieldChange}
                                     onInput={handleDocumentMask}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_document || ''}</p>
@@ -2134,9 +2381,11 @@ function CheckoutSpaApp() {
                                 <input
                                     className="checkout-spa-input"
                                     type="email"
-                                    name="customer_email"
-                                    defaultValue={session.customer_email || ''}
+                                    name="pf_customer_email"
+                                    data-field-key="customer_email"
+                                    defaultValue={identificationDraft.customer_email || ''}
                                     placeholder="voce@exemplo.com"
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_email || ''}</p>
                             </label>
@@ -2146,10 +2395,12 @@ function CheckoutSpaApp() {
                                 <input
                                     className="checkout-spa-input"
                                     type="date"
-                                    name="customer_birth_date"
-                                    defaultValue={session.customer_birth_date || ''}
+                                    name="pf_customer_birth_date"
+                                    data-field-key="customer_birth_date"
+                                    defaultValue={identificationDraft.customer_birth_date || ''}
                                     placeholder="Data de nascimento"
                                     required
+                                    onChange={handleIdentificationFieldChange}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_birth_date || ''}</p>
                             </label>
@@ -2158,11 +2409,13 @@ function CheckoutSpaApp() {
                                 <span className="checkout-spa-label">Celular</span>
                                 <input
                                     className="checkout-spa-input"
-                                    name="customer_phone"
-                                    defaultValue={session.customer_phone || ''}
+                                    name="pf_customer_phone"
+                                    data-field-key="customer_phone"
+                                    defaultValue={identificationDraft.customer_phone || ''}
                                     maxLength={15}
                                     placeholder="(11) 99999-9999"
                                     inputMode="numeric"
+                                    onChange={handleIdentificationFieldChange}
                                     onInput={handleDocumentMask}
                                 />
                                 <p className="checkout-spa-error">{fieldErrors.customer_phone || ''}</p>
@@ -2174,7 +2427,7 @@ function CheckoutSpaApp() {
                         <button
                             type="button"
                             className="checkout-spa-essential-person-toggle"
-                            onClick={() => setPersonType(personIsCompany ? 'pf' : 'pj')}
+                            onClick={() => handlePersonTypeChange(personIsCompany ? 'pf' : 'pj')}
                         >
                             {personIsCompany ? 'Usar dados de pessoa física' : 'Incluir dados de pessoa jurídica'}
                         </button>
