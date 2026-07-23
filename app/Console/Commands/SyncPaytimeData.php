@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 class SyncPaytimeData extends Command
 {
-    protected $signature = 'paytime:sync {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
+    protected $signature = 'paytime:sync {--date= : Specific day to sync (YYYY-MM-DD or a Carbon-compatible date string)} {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
 
     protected $description = 'Sync transactions and billets from Paytime to local database';
 
@@ -31,6 +31,9 @@ class SyncPaytimeData extends Command
         $this->info('Starting full Paytime sync (Transactions and Billets) in '.date('d/m/y h:i:s'));
 
         $options = [];
+        if ($this->option('date')) {
+            $options['--date'] = $this->option('date');
+        }
         if ($this->option('months')) {
             $options['--months'] = $this->option('months');
         }

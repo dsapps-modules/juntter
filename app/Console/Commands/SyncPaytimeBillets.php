@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class SyncPaytimeBillets extends Command
 {
-    protected $signature = 'paytime:sync-billets {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
+    protected $signature = 'paytime:sync-billets {--date= : Specific day to sync (YYYY-MM-DD or a Carbon-compatible date string)} {--months= : Months to sync (comma separated, e.g. 11,12)} {--year= : Year to sync (e.g. 2024)}';
 
     protected $description = 'Sync billets from Paytime to local database';
 
@@ -35,16 +35,24 @@ class SyncPaytimeBillets extends Command
 
     public function handle(): int
     {
-        $currentMonth = now()->month;
-        $currentYear = now()->year;
-        $previousMonth = now()->subMonth()->month;
+        if ($this->option('date')) {
+            $periods = $this->resolveDailyPeriods((string) $this->option('date'));
 
-        $defaultMonths = (string) $currentMonth;
-        if ($currentMonth != $previousMonth) {
-            $defaultMonths = "$previousMonth,$currentMonth";
-        }
+            if ($periods === null) {
+                return self::FAILURE;
+            }
 
-        if ($this->option('months') || $this->option('year')) {
+            $this->info('Starting manual sync for billets on '.$periods[0]['date'].' in '.date('d/m/y h:i:s'));
+        } elseif ($this->option('months') || $this->option('year')) {
+            $currentMonth = now()->month;
+            $currentYear = now()->year;
+            $previousMonth = now()->subMonth()->month;
+
+            $defaultMonths = (string) $currentMonth;
+            if ($currentMonth != $previousMonth) {
+                $defaultMonths = "$previousMonth,$currentMonth";
+            }
+
             $months = explode(',', $this->option('months') ?? $currentMonth);
             $year = $this->option('year') ?? $currentYear;
             sort($months);
@@ -210,5 +218,31 @@ class SyncPaytimeBillets extends Command
         }
 
         return $errors;
+    }
+
+    /**
+     * @return array<int, array{date: string, start: string, end: string}>|null
+     */
+    private function resolveDailyPeriods(string $date): ?array
+    {
+        try {
+            $day = Carbon::parse($date);
+        } catch (\Throwable $exception) {
+            $this->error("Invalid --date value: {$date}");
+
+            Log::warning('Invalid date received for Paytime billet sync', [
+                'date' => $date,
+                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+            ]);
+
+            return null;
+        }
+
+        return [[
+            'date' => $day->toDateString(),
+            'start' => $day->copy()->startOfDay()->format('Y-m-d H:i:s'),
+            'end' => $day->copy()->endOfDay()->format('Y-m-d H:i:s'),
+        ]];
     }
 }

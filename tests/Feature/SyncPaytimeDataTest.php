@@ -49,4 +49,33 @@ class SyncPaytimeDataTest extends TestCase
         $this->assertSame(1, $command->transactionsCalls);
         $this->assertSame(1, $command->billetsCalls);
     }
+
+    public function test_it_forwards_the_date_option_to_both_steps(): void
+    {
+        $command = new class($this->createMock(\App\Services\TransacaoService::class), $this->createMock(\App\Services\BoletoService::class)) extends SyncPaytimeData
+        {
+            public array $forwardedCalls = [];
+
+            public function call($command, array $arguments = [])
+            {
+                $this->forwardedCalls[] = [$command, $arguments];
+
+                return 0;
+            }
+        };
+
+        $command->setLaravel($this->app);
+
+        $exitCode = $command->run(
+            new ArrayInput([
+                '--date' => '2026-04-14',
+            ]),
+            new BufferedOutput
+        );
+
+        $this->assertSame(0, $exitCode);
+        $this->assertCount(2, $command->forwardedCalls);
+        $this->assertSame(['paytime:sync-transactions', ['--date' => '2026-04-14']], $command->forwardedCalls[0]);
+        $this->assertSame(['paytime:sync-billets', ['--date' => '2026-04-14']], $command->forwardedCalls[1]);
+    }
 }
