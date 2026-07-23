@@ -26,6 +26,11 @@ class Kernel extends ConsoleKernel
             ->runInBackground()
             ->withoutOverlapping();
 
+        $schedule->command('paytime:sync-establishments')
+            ->dailyAt('01:00')
+            ->runInBackground()
+            ->withoutOverlapping();
+
         $schedule->command('paytime:sync-pricing')
             ->everySixHours()
             ->runInBackground()
