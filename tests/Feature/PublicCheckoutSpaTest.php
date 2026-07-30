@@ -96,6 +96,22 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee(route('checkout.public.spa.show', $link->public_token), false);
     }
 
+    public function test_public_checkout_spa_page_uses_the_juntter_favicon(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeVendorUser();
+        $product = $this->makeProduct($user);
+        $link = $this->makeCheckoutLink($user, $product);
+
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
+
+        $response->assertOk();
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
+        $response->assertSee('<link rel="icon"', false);
+        $response->assertSee('<link rel="shortcut icon"', false);
+    }
+
     public function test_public_checkout_spa_uses_the_public_image_route_when_the_checkout_link_has_no_custom_image(): void
     {
         Storage::fake('public');

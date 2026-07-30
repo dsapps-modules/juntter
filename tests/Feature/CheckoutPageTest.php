@@ -6,6 +6,16 @@ use Tests\TestCase;
 
 class CheckoutPageTest extends TestCase
 {
+    public function test_the_checkout_page_uses_the_juntter_favicon(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
+        $response->assertSee('<link rel="icon"', false);
+        $response->assertSee('<link rel="shortcut icon"', false);
+    }
+
     public function test_the_checkout_page_uses_the_updated_acelerar_rates(): void
     {
         $response = $this->get('/');

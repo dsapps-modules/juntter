@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" href="{{ asset('img/logo/juntter_png_256.png') }}?v={{ filemtime(public_path('img/logo/juntter_png_256.png')) }}" type="image/png">
+    <link rel="shortcut icon" href="{{ asset('img/logo/juntter_png_256.png') }}?v={{ filemtime(public_path('img/logo/juntter_png_256.png')) }}" type="image/png">
     <title>{{ $checkoutLink->name }} | Checkout Juntter</title>
     @foreach(($checkoutSpaAssets['css'] ?? []) as $checkoutSpaCss)
         <link rel="stylesheet" href="{{ $checkoutSpaCss }}">
