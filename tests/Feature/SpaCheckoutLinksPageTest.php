@@ -36,6 +36,18 @@ class SpaCheckoutLinksPageTest extends TestCase
         $this->assertStringContainsString('width: 112,', $componentSource);
     }
 
+    public function test_the_checkout_link_form_can_reuse_the_last_checkout_style(): void
+    {
+        $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
+
+        $this->assertIsString($componentSource);
+        $this->assertStringContainsString('Utilizar estilo do último checkout', $componentSource);
+        $this->assertStringContainsString('/seller/checkout-links/ultimo-estilo', $componentSource);
+        $this->assertStringContainsString('function handleUseLastCheckoutStyle(event) {', $componentSource);
+        $this->assertStringContainsString('async function setProductImageFromUrl(imageUrl) {', $componentSource);
+        $this->assertStringContainsString('loading={copyingLastStyle}', $componentSource);
+    }
+
     public function test_the_checkout_links_page_uses_icon_only_action_buttons(): void
     {
         $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinksPage.jsx'));

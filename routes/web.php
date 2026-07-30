@@ -172,6 +172,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/seller/checkout-links/frete/{shippingOption}', [SellerCheckoutShippingController::class, 'destroy'])->name('seller.checkout-links.shipping.destroy');
 
         Route::get('/seller/checkout-links', [SellerCheckoutLinkController::class, 'index'])->name('seller.checkout-links.index');
+        Route::get('/seller/checkout-links/ultimo-estilo', [SellerCheckoutLinkController::class, 'latestStyle'])->name('seller.checkout-links.latest-style');
         Route::post('/seller/checkout-links', [SellerCheckoutLinkController::class, 'store'])->name('seller.checkout-links.store');
         Route::get('/seller/checkout-links/abandonados', [SellerAbandonedCheckoutController::class, 'index'])->name('seller.checkout-links.abandoned.index');
         Route::get('/seller/checkout-links/{checkoutLink}', [SellerCheckoutLinkController::class, 'show'])->name('seller.checkout-links.show');

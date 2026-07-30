@@ -119,6 +119,7 @@ export default function CheckoutLinkFormPage() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo'));
     const [saving, setSaving] = useState(false);
+    const [copyingLastStyle, setCopyingLastStyle] = useState(false);
     const [productImagePreviewUrl, setProductImagePreviewUrl] = useState('');
     const [productImageFile, setProductImageFile] = useState(null);
     const isEditing = Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo');
@@ -126,6 +127,45 @@ export default function CheckoutLinkFormPage() {
     const pixDiscountType = Form.useWatch('pix_discount_type', form) ?? 'none';
     const boletoDiscountType = Form.useWatch('boleto_discount_type', form) ?? 'none';
     const selectedProduct = products.find((product) => product.id === selectedProductId);
+
+    function applyVisualConfig(checkoutLink) {
+        const visualConfig = checkoutLink.visual_config ?? {};
+
+        form.setFieldsValue({
+            theme: visualConfig.theme ?? visualDefaults.theme,
+            store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name,
+            primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
+            navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color,
+            navbar_text_color: visualConfig.navbar_text_color ?? visualDefaults.navbar_text_color,
+            button_text_color: visualConfig.button_text_color ?? visualConfig.navbar_text_color ?? visualDefaults.button_text_color,
+            offer_message: visualConfig.offer_message ?? visualDefaults.offer_message,
+            footer_text: visualConfig.footer_text ?? visualDefaults.footer_text,
+        });
+    }
+
+    async function setProductImageFromUrl(imageUrl) {
+        const imageResponse = await fetch(imageUrl, {
+            credentials: 'same-origin',
+        });
+
+        if (!imageResponse.ok) {
+            throw new Error('Não foi possível carregar a imagem do último checkout.');
+        }
+
+        const blob = await imageResponse.blob();
+        const fileName = imageUrl.split('/').pop() || 'checkout-image';
+        const file = new File([blob], fileName, {
+            type: blob.type || 'image/jpeg',
+        });
+        const nextPreviewUrl = URL.createObjectURL(file);
+
+        if (productImagePreviewUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(productImagePreviewUrl);
+        }
+
+        setProductImageFile(file);
+        setProductImagePreviewUrl(nextPreviewUrl);
+    }
 
     useEffect(() => {
         const controller = new AbortController();
@@ -165,24 +205,15 @@ export default function CheckoutLinkFormPage() {
 
                     const linkData = await linkResponse.json();
                     const checkoutLink = linkData.checkout_link;
-                    const visualConfig = checkoutLink.visual_config ?? {};
 
                     setProductImagePreviewUrl(checkoutLink.product_image_url ?? '');
-
+                    applyVisualConfig(checkoutLink);
                     form.setFieldsValue({
                         ...checkoutLink,
                         request_address: checkoutLink.request_address ?? true,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
                         pix_discount_value: formatDiscountInput(checkoutLink.pix_discount_type, checkoutLink.pix_discount_value),
                         boleto_discount_value: formatDiscountInput(checkoutLink.boleto_discount_type, checkoutLink.boleto_discount_value),
-                        theme: visualConfig.theme ?? visualDefaults.theme,
-                        store_name: visualConfig.store_name ?? checkoutLink.seller?.name ?? visualDefaults.store_name,
-                        primary_color: visualConfig.primary_color ?? visualDefaults.primary_color,
-                        navbar_background_color: visualConfig.navbar_background_color ?? visualDefaults.navbar_background_color,
-                        navbar_text_color: visualConfig.navbar_text_color ?? visualDefaults.navbar_text_color,
-                        button_text_color: visualConfig.button_text_color ?? visualConfig.navbar_text_color ?? visualDefaults.button_text_color,
-                        offer_message: visualConfig.offer_message ?? visualDefaults.offer_message,
-                        footer_text: visualConfig.footer_text ?? visualDefaults.footer_text,
                     });
                 } else {
                     form.setFieldsValue({
@@ -374,6 +405,48 @@ export default function CheckoutLinkFormPage() {
         form.setFieldsValue(selectedTheme.colors);
     }
 
+    async function handleUseLastCheckoutStyle(event) {
+        event.preventDefault();
+
+        setCopyingLastStyle(true);
+
+        try {
+            const response = await fetch('/seller/checkout-links/ultimo-estilo', {
+                headers: {
+                    Accept: 'application/json',
+                },
+                credentials: 'same-origin',
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Não foi possível carregar o último checkout.');
+            }
+
+            const checkoutLink = data.checkout_link;
+
+            applyVisualConfig(checkoutLink);
+
+            if (checkoutLink.product_image_url) {
+                await setProductImageFromUrl(checkoutLink.product_image_url);
+            } else {
+                if (productImagePreviewUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(productImagePreviewUrl);
+                }
+
+                setProductImageFile(null);
+                setProductImagePreviewUrl('');
+            }
+
+            message.success('Estilo do último checkout aplicado.');
+        } catch (error) {
+            message.error(error.message || 'Falha ao copiar o estilo do último checkout.');
+        } finally {
+            setCopyingLastStyle(false);
+        }
+    }
+
     function handleDiscountTypeChange(discountValueField) {
         return (discountType) => {
             if (discountType === 'none') {
@@ -411,7 +484,20 @@ export default function CheckoutLinkFormPage() {
                                 <Input />
                             </Form.Item>
                             <Form.Item
-                                label="Estilo do checkout"
+                                label={(
+                                    <Space size={8} wrap>
+                                        <span>Estilo do checkout</span>
+                                        <Button
+                                            type="link"
+                                            size="small"
+                                            className="p-0"
+                                            loading={copyingLastStyle}
+                                            onClick={handleUseLastCheckoutStyle}
+                                        >
+                                            Utilizar estilo do último checkout
+                                        </Button>
+                                    </Space>
+                                )}
                                 name="theme"
                                 extra="Escolha a experiência visual que seus clientes encontrarão ao pagar. Você pode ajustar as cores depois."
                                 rules={[{ required: true, message: 'Selecione um estilo para o checkout.' }]}

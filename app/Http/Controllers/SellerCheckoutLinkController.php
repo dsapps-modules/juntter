@@ -33,6 +33,25 @@ class SellerCheckoutLinkController extends Controller
         return view('seller.checkout-links.index', compact('links'));
     }
 
+    public function latestStyle(Request $request): JsonResponse
+    {
+        $checkoutLink = CheckoutLink::query()
+            ->where('seller_id', $request->user()->id)
+            ->with(['product', 'seller'])
+            ->latest('id')
+            ->first();
+
+        if (! $checkoutLink) {
+            return response()->json([
+                'message' => 'Nenhum checkout anterior foi encontrado.',
+            ], 404);
+        }
+
+        return response()->json([
+            'checkout_link' => $checkoutLink,
+        ]);
+    }
+
     public function store(StoreCheckoutLinkRequest $request): JsonResponse|RedirectResponse
     {
         $this->authorize('create', CheckoutLink::class);
