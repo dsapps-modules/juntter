@@ -151,6 +151,12 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('fillFormFieldIfEmpty', $source);
         $this->assertStringContainsString('normalizeIdentificationFormData', $source);
         $this->assertStringContainsString('onChange={handleIdentificationFieldChange}', $source);
+        $this->assertStringContainsString('const currentYear = new Date().getFullYear();', $source);
+        $this->assertStringContainsString('const expirationMonths = Array.from({ length: 12 }', $source);
+        $this->assertStringContainsString('const expirationYears = Array.from({ length: 11 }', $source);
+        $this->assertStringContainsString('<select className="checkout-spa-input" name="card[expiration_month]" defaultValue="">', $source);
+        $this->assertStringContainsString('<select className="checkout-spa-input" name="card[expiration_year]" defaultValue={String(currentYear)}>', $source);
+        $this->assertStringContainsString('<option value="">MM</option>', $source);
         $this->assertStringContainsString('Digite um CPF válido.', $source);
         $this->assertStringContainsString('Digite um CNPJ válido.', $source);
         $this->assertStringContainsString('function validateIdentificationDocument(form, personType, updateFieldErrors)', $source);

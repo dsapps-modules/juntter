@@ -1,5 +1,5 @@
 import { Input } from 'antd';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function formatNumericInput(value, prefix) {
     if (value === null || value === undefined || value === '') {
@@ -46,7 +46,7 @@ function extractDigits(value) {
 }
 
 function getNextFormattedValue(currentValue, nextDigits, formatter) {
-    return formatter(nextDigits || currentValue);
+    return formatter(nextDigits === '' ? '' : nextDigits || currentValue);
 }
 
 export default function MoneyInputField({
@@ -64,9 +64,19 @@ export default function MoneyInputField({
 }) {
     const inputRef = useRef(null);
     const formatter = showCurrencySymbol ? formatCurrencyInput : formatPercentageInput;
+    const [digitsValue, setDigitsValue] = useState(() => extractDigits(value));
+    const displayValue = formatter(digitsValue);
+
+    useEffect(() => {
+        setDigitsValue(extractDigits(value));
+    }, [value]);
 
     function emitValue(nextValue) {
-        onChange?.(formatter(nextValue));
+        const nextDigitsValue = extractDigits(nextValue);
+        const nextFormattedValue = formatter(nextDigitsValue);
+
+        setDigitsValue(nextDigitsValue);
+        onChange?.(nextFormattedValue);
     }
 
     function moveCaretToEnd(target) {
@@ -91,19 +101,19 @@ export default function MoneyInputField({
 
         if (event.key >= '0' && event.key <= '9') {
             event.preventDefault();
-            emitValue(getNextFormattedValue(value, extractDigits(value) + event.key, formatter));
+            emitValue(getNextFormattedValue(digitsValue, digitsValue + event.key, formatter));
             return;
         }
 
         if (event.key === 'Backspace') {
             event.preventDefault();
-            emitValue(getNextFormattedValue(value, extractDigits(value).slice(0, -1), formatter));
+            emitValue(getNextFormattedValue(digitsValue, digitsValue.slice(0, -1), formatter));
             return;
         }
 
         if (event.key === 'Delete') {
             event.preventDefault();
-            emitValue('0');
+            emitValue('');
         }
     }
 
@@ -135,6 +145,13 @@ export default function MoneyInputField({
         }
 
         const nextValue = event?.target?.value ?? '';
+        const nextDigitsValue = extractDigits(nextValue);
+
+        if (nextDigitsValue === digitsValue) {
+            moveCaretToEnd(event.target);
+            return;
+        }
+
         emitValue(nextValue);
         moveCaretToEnd(event.target);
     }
@@ -143,7 +160,7 @@ export default function MoneyInputField({
         <Input
             {...props}
             ref={inputRef}
-            value={formatter(value)}
+            value={displayValue}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}

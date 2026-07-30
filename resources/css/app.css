@@ -461,9 +461,14 @@ a {
 .spa-sim-interest-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 16px;
     flex-wrap: wrap;
+}
+
+.spa-sim-interest-tax-label {
+    white-space: nowrap;
+    margin-left: auto;
 }
 
 .spa-sim-table-card .ant-card-head {

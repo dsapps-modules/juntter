@@ -846,6 +846,10 @@ async function confirmCreditCard3DS(state, paymentForm, transaction) {
 }
 
 function CheckoutSpaApp() {
+    const currentYear = new Date().getFullYear();
+    const expirationMonths = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, '0'));
+    const expirationYears = Array.from({ length: 11 }, (_, index) => currentYear + index);
+
     const [config] = useState(() => readCheckoutSpaData());
     const checkoutLink = config?.checkoutLink || {};
     const sellerBrand = config?.sellerBrand || {};
@@ -2649,13 +2653,26 @@ function CheckoutSpaApp() {
 
                             <label className="checkout-spa-field">
                                 <span className="checkout-spa-label">Validade - mês</span>
-                                <input className="checkout-spa-input" name="card[expiration_month]" type="number" min="1" max="12" inputMode="numeric" placeholder="MM" />
+                                <select className="checkout-spa-input" name="card[expiration_month]" defaultValue="">
+                                    <option value="">MM</option>
+                                    {expirationMonths.map((month) => (
+                                        <option key={month} value={month}>
+                                            {month}
+                                        </option>
+                                    ))}
+                                </select>
                                 <p className="checkout-spa-error">{fieldErrors['card.expiration_month'] || ''}</p>
                             </label>
 
                             <label className="checkout-spa-field">
                                 <span className="checkout-spa-label">Validade - ano</span>
-                                <input className="checkout-spa-input" name="card[expiration_year]" type="number" min={new Date().getFullYear()} max="2099" inputMode="numeric" placeholder="AAAA" />
+                                <select className="checkout-spa-input" name="card[expiration_year]" defaultValue={String(currentYear)}>
+                                    {expirationYears.map((year) => (
+                                        <option key={year} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
                                 <p className="checkout-spa-error">{fieldErrors['card.expiration_year'] || ''}</p>
                             </label>
 

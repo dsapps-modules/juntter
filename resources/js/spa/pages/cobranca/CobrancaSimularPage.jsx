@@ -1,7 +1,7 @@
 import { CreditCardOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Checkbox, Col, Empty, Row, Select, Space, Spin, Table, Tag, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import PaymentAmountField from '../../components/payment-simulator/PaymentAmountField';
+import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../../components/form/MoneyInputField';
 import {
     buildFlagOptions,
     buildInstallmentOptions,
@@ -76,7 +76,7 @@ export default function CobrancaSimularPage() {
     const [selectedFlagId, setSelectedFlagId] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('credit_card');
     const [interest, setInterest] = useState('ESTABLISHMENT');
-    const [amount, setAmount] = useState(1000);
+    const [amount, setAmount] = useState(formatCurrencyInput(0));
     const [installments, setInstallments] = useState('6x');
 
     useEffect(() => {
@@ -143,7 +143,7 @@ export default function CobrancaSimularPage() {
     );
     const isPixMode = paymentMethod === 'pix';
     const selectedRate = isPixMode ? resolvePixRate(bacenFlag) : resolveRate(selectedFlag, installments);
-    const parsedAmount = Number.isFinite(amount) ? amount : 0;
+    const parsedAmount = parseCurrencyInput(amount);
     const installmentCount = Number.parseInt(installments, 10);
     const taxAmount = parsedAmount * (selectedRate / 100);
     const chargeAmount = isPixMode
@@ -322,7 +322,17 @@ export default function CobrancaSimularPage() {
 
                             <Col xs={24} lg={isPixMode ? 12 : 12}>
                                 <SimulationField label="Valor">
-                                    <PaymentAmountField value={amount} onChange={setAmount} />
+                                    <MoneyInputField
+                                        value={amount}
+                                        onChange={setAmount}
+                                        className="spa-sim-input"
+                                        style={{
+                                            width: '100%',
+                                            minWidth: '200px',
+                                        }}
+                                        placeholder="0,00"
+                                        ariaLabel="Informar valor da compra"
+                                    />
                                 </SimulationField>
                             </Col>
                         </Row>
@@ -335,6 +345,10 @@ export default function CobrancaSimularPage() {
                                 >
                                     Repassar os juros para o cliente
                                 </Checkbox>
+
+                                <Typography.Text strong className="spa-sim-interest-tax-label">
+                                    *Taxa de Antifraude: R$ 1,00
+                                </Typography.Text>
                             </div>
                         ) : null}
                     </Space>

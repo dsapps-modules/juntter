@@ -11,18 +11,17 @@ class CheckoutProductPriceMaskTest extends TestCase
         $value = $this->formatCurrencyInput(0);
         $sequence = [$value];
 
-        foreach (['2', '3', '4', '5', '6'] as $digit) {
+        foreach (['1', '2', '0', '0'] as $digit) {
             $value = $this->formatCurrencyInput($this->extractDigits($value).$digit);
             $sequence[] = $value;
         }
 
         $this->assertSame([
             'R$ 0,00',
-            'R$ 0,02',
-            'R$ 0,23',
-            'R$ 2,34',
-            'R$ 23,45',
-            'R$ 234,56',
+            'R$ 0,01',
+            'R$ 0,12',
+            'R$ 1,20',
+            'R$ 12,00',
         ], $sequence);
     }
 

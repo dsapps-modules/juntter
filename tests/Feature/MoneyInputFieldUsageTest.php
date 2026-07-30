@@ -9,12 +9,12 @@ class MoneyInputFieldUsageTest extends TestCase
     public function test_target_pages_reuse_the_shared_money_input_component(): void
     {
         $assertions = [
-            base_path('resources/js/spa/components/payment-simulator/PaymentAmountField.jsx') => [
-                'import MoneyInputField',
-                '<MoneyInputField',
-            ],
             base_path('resources/js/spa/pages/cobranca/CobrancaSimularPage.jsx') => [
-                'PaymentAmountField',
+                'import MoneyInputField, { formatCurrencyInput, parseCurrencyInput }',
+                '<MoneyInputField',
+                'const [amount, setAmount] = useState(formatCurrencyInput(0));',
+                'parseCurrencyInput(amount)',
+                'Taxa de Antifraude: R$ 1,00',
             ],
             base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx') => [
                 'MoneyInputField size="large" placeholder="0,00"',

@@ -40,6 +40,10 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('spa-sim-toolbar-card', $pageSource);
         $this->assertStringContainsString('spa-sim-table-card', $pageSource);
         $this->assertStringContainsString('Checkbox', $pageSource);
+        $this->assertStringContainsString('import MoneyInputField, { formatCurrencyInput, parseCurrencyInput }', $pageSource);
+        $this->assertStringContainsString('const [amount, setAmount] = useState(formatCurrencyInput(0));', $pageSource);
+        $this->assertStringContainsString('<MoneyInputField', $pageSource);
+        $this->assertStringContainsString('parseCurrencyInput(amount)', $pageSource);
         $this->assertStringContainsString('minimumCardInstallmentAmount', $pageSource);
         $this->assertStringContainsString('minimumCardInstallmentCount', $pageSource);
         $this->assertStringContainsString('filteredInstallmentOptions', $pageSource);
@@ -50,6 +54,8 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('Bandeira', $pageSource);
         $this->assertStringContainsString('title={planName}', $pageSource);
         $this->assertStringContainsString('Repassar os juros para o cliente', $pageSource);
+        $this->assertStringContainsString('Taxa de Antifraude: R$ 1,00', $pageSource);
+        $this->assertStringContainsString('spa-sim-interest-tax-label', $pageSource);
         $this->assertStringContainsString('Table', $pageSource);
         $this->assertStringContainsString('/img/payment/logo-pix.png', $pageSource);
         $this->assertStringContainsString('resolveRate(selectedFlag, installments)', $pageSource);

@@ -1,4 +1,4 @@
-import { Typography } from 'antd';
+import { useEffect, useState } from 'react';
 import MoneyInputField, { formatCurrencyInput, parseCurrencyInput } from '../form/MoneyInputField';
 
 export default function PaymentAmountField({
@@ -9,44 +9,28 @@ export default function PaymentAmountField({
     align = 'left',
 }) {
     const isRightAligned = align === 'right';
+    const [displayValue, setDisplayValue] = useState(() => formatter ? formatter(value) : formatCurrencyInput(value));
+
+    useEffect(() => {
+        setDisplayValue(formatter ? formatter(value) : formatCurrencyInput(value));
+    }, [formatter, value]);
 
     return (
-        <div
-            className="spa-sim-field"
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '16px',
-                width: '100%',
+        <MoneyInputField
+            value={displayValue}
+            onChange={(nextValue) => {
+                setDisplayValue(nextValue);
+                const parsedValue = parser ? parser(nextValue) : parseCurrencyInput(nextValue);
+                onChange?.(typeof parsedValue === 'number' ? parsedValue : Number(parsedValue));
             }}
-        >
-            <Typography.Text
-                strong
-                className="spa-sim-label"
-                style={{
-                    flex: '0 0 auto',
-                    textAlign: 'left',
-                    whiteSpace: 'nowrap',
-                }}
-            >
-                Valor
-            </Typography.Text>
-            <MoneyInputField
-                value={formatter ? formatter(value) : formatCurrencyInput(value)}
-                onChange={(nextValue) => {
-                    const parsedValue = parser ? parser(nextValue) : parseCurrencyInput(nextValue);
-                    onChange?.(typeof parsedValue === 'number' ? parsedValue : Number(parsedValue));
-                }}
-                className="spa-sim-input"
-                style={{
-                    flex: isRightAligned ? '0 0 260px' : '1 1 auto',
-                    maxWidth: isRightAligned ? '260px' : '100%',
-                    minWidth: '200px',
-                }}
-                placeholder="0,00"
-                ariaLabel="Informar valor da compra"
-            />
-        </div>
+            className="spa-sim-input"
+            style={{
+                width: '100%',
+                maxWidth: isRightAligned ? '260px' : '100%',
+                minWidth: '200px',
+            }}
+            placeholder="0,00"
+            ariaLabel="Informar valor da compra"
+        />
     );
 }
