@@ -3043,7 +3043,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
 
         $response->assertOk();
-        $response->assertJsonPath('message', 'Boleto gerado com sucesso');
+        $response->assertJsonPath('message', 'Operação realizada com sucesso');
         $response->assertJsonPath('payment_transaction.boleto_url', 'https://example.test/boleto.pdf');
         $response->assertJsonPath('payment_transaction.gateway_transaction_id', null);
 
