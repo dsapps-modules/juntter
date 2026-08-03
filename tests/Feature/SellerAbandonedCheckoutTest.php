@@ -28,6 +28,7 @@ class SellerAbandonedCheckoutTest extends TestCase
         $this->assertStringContainsString("icon: 'checkout-abandoned'", $navigationSource);
         $this->assertStringContainsString("import CheckoutAbandonedPage from './pages/checkout/CheckoutAbandonedPage';", $appSource);
         $this->assertStringContainsString('<Route path="seller/checkout-links/abandonados" element={<CheckoutAbandonedPage />} />', $appSource);
+        $this->assertStringContainsString('/img/payment/logo-pix.svg', file_get_contents(base_path('resources/js/checkout-spa.jsx')));
         $this->assertStringContainsString('ShoppingCartOutlined', $shellSource);
 
         $checkoutLinksPosition = strpos($navigationSource, "key: 'checkout.links'");

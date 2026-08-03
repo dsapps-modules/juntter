@@ -3247,17 +3247,27 @@ class RedirectedCheckoutTest extends TestCase
     {
         $seller = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller));
-        $session = $this->makeCheckoutSession($link, [
+        $abandonedSession = $this->makeCheckoutSession($link, [
             'status' => 'payment_started',
             'current_step' => 'payment',
-            'last_activity_at' => now()->subMinutes(31),
+            'last_activity_at' => now()->subMinutes(11),
+        ]);
+        $activeSession = $this->makeCheckoutSession($link, [
+            'status' => 'payment_started',
+            'current_step' => 'payment',
+            'last_activity_at' => now()->subMinutes(9),
         ]);
 
         $this->artisan('checkout:mark-abandoned')->assertExitCode(0);
 
         $this->assertDatabaseHas('checkout_sessions', [
-            'id' => $session->id,
+            'id' => $abandonedSession->id,
             'status' => 'abandoned',
+        ]);
+
+        $this->assertDatabaseHas('checkout_sessions', [
+            'id' => $activeSession->id,
+            'status' => 'payment_started',
         ]);
     }
 

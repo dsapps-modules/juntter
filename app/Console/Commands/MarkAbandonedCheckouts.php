@@ -14,7 +14,7 @@ class MarkAbandonedCheckouts extends Command
 
     public function handle(): int
     {
-        $cutoff = now()->subMinutes(30);
+        $cutoff = now()->subMinutes(10);
 
         CheckoutSession::query()
             ->whereNotIn('status', ['paid', 'cancelled', 'failed', 'abandoned'])
