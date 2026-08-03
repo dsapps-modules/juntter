@@ -126,7 +126,22 @@ function redirectToPaymentSuccess() {
         return;
     }
 
-    location.href = successUrl;
+    const url = new URL(successUrl, window.location.origin);
+    const sellerBrand = window.JuntterRoutes?.seller_brand || {};
+
+    if (sellerBrand.mode) {
+        url.searchParams.set('seller_brand_mode', sellerBrand.mode);
+    }
+
+    if (sellerBrand.label) {
+        url.searchParams.set('seller_brand_label', sellerBrand.label);
+    }
+
+    if (sellerBrand.logoUrl) {
+        url.searchParams.set('seller_brand_logo_url', sellerBrand.logoUrl);
+    }
+
+    location.href = url.toString();
 }
 
 function redirectToPaymentError(message) {
@@ -138,6 +153,20 @@ function redirectToPaymentError(message) {
     }
 
     const url = new URL(errorUrl, window.location.origin);
+    const sellerBrand = window.JuntterRoutes?.seller_brand || {};
+
+    if (sellerBrand.mode) {
+        url.searchParams.set('seller_brand_mode', sellerBrand.mode);
+    }
+
+    if (sellerBrand.label) {
+        url.searchParams.set('seller_brand_label', sellerBrand.label);
+    }
+
+    if (sellerBrand.logoUrl) {
+        url.searchParams.set('seller_brand_logo_url', sellerBrand.logoUrl);
+    }
+
     url.searchParams.set('message', message || 'Não foi possível concluir o pagamento.');
     url.searchParams.set('return_url', window.location.href);
 

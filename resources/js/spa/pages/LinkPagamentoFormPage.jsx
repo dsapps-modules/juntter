@@ -335,7 +335,11 @@ export default function LinkPagamentoFormPage() {
             }
 
             setSuccess(result.message ?? 'Link salvo com sucesso.');
-            navigate(result.redirect ?? '/links-pagamento');
+            if (isEdit) {
+                navigate(result.redirect ?? '/links-pagamento');
+            } else {
+                navigate('/links-pagamento');
+            }
         } catch (submitError) {
             setError(submitError.message || 'Falha ao salvar o link.');
         } finally {

@@ -64,9 +64,10 @@ class PagamentoClienteController extends Controller
         }
     }
 
-    public function pagamentoSucesso()
+    public function pagamentoSucesso(Request $request)
     {
         return view('pagamento.sucesso', [
+            'sellerBrand' => $this->resolveLegacySellerBrand($request),
             'sellerLogoUrl' => '/img/logo/juntter_webp_640_174.webp',
             'homeUrl' => route('checkout'),
         ]);
@@ -75,6 +76,7 @@ class PagamentoClienteController extends Controller
     public function pagamentoErro(Request $request)
     {
         return view('pagamento.erro', [
+            'sellerBrand' => $this->resolveLegacySellerBrand($request),
             'sellerLogoUrl' => '/img/logo/juntter_webp_640_174.webp',
             'homeUrl' => route('checkout'),
             'retryUrl' => $this->resolveReturnUrl($request->query('return_url')),
@@ -606,6 +608,38 @@ class PagamentoClienteController extends Controller
             return [
                 'mode' => 'text',
                 'label' => trim((string) $vendorWithTradeName->user->trade_name),
+                'logoUrl' => null,
+            ];
+        }
+
+        return [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
+    }
+
+    /**
+     * @return array{mode: 'logo'|'text', label: string, logoUrl: ?string}
+     */
+    private function resolveLegacySellerBrand(Request $request): array
+    {
+        $mode = $request->query('seller_brand_mode', 'logo');
+        $label = trim((string) $request->query('seller_brand_label', 'Juntter'));
+        $logoUrl = $request->query('seller_brand_logo_url');
+
+        if ($mode === 'logo' && filled($logoUrl)) {
+            return [
+                'mode' => 'logo',
+                'label' => $label !== '' ? $label : 'Juntter',
+                'logoUrl' => (string) $logoUrl,
+            ];
+        }
+
+        if ($mode === 'text' && $label !== '') {
+            return [
+                'mode' => 'text',
+                'label' => $label,
                 'logoUrl' => null,
             ];
         }

@@ -23,6 +23,8 @@ class PagamentoClienteControllerTest extends TestCase
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
+        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
+        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
         $response->assertSee('/company-logo?path=company-logos%2Flogo-publico.png', false);
         $response->assertSee("onerror=\"this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';\"", false);
     }
@@ -35,6 +37,8 @@ class PagamentoClienteControllerTest extends TestCase
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
+        $response->assertSee('<link rel="icon" href="/img/logo/juntter_webp_640_174.webp"', false);
+        $response->assertSee('<link rel="shortcut icon" href="/img/logo/juntter_webp_640_174.webp"', false);
         $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
         $response->assertSee('Checkout', false);
         $response->assertDontSee('<span>Pagamento</span>', false);
@@ -49,9 +53,15 @@ class PagamentoClienteControllerTest extends TestCase
 
     public function test_payment_success_page_is_a_full_confirmation_screen(): void
     {
-        $response = $this->get(route('pagamento.sucesso'));
+        $response = $this->get(route('pagamento.sucesso', [
+            'seller_brand_mode' => 'logo',
+            'seller_brand_label' => 'Empresa Exemplo',
+            'seller_brand_logo_url' => '/company-logo?path=company-logos%2Flogo-publico.png',
+        ]));
 
         $response->assertOk();
+        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
+        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
         $response->assertSee('Pagamento confirmado', false);
         $response->assertSee('Obrigado pela compra', false);
         $response->assertSee('Voltar para o início', false);
@@ -61,6 +71,9 @@ class PagamentoClienteControllerTest extends TestCase
     public function test_payment_error_page_is_a_failure_screen(): void
     {
         $response = $this->get(route('pagamento.erro', [
+            'seller_brand_mode' => 'logo',
+            'seller_brand_label' => 'Empresa Exemplo',
+            'seller_brand_logo_url' => '/company-logo?path=company-logos%2Flogo-publico.png',
             'message' => 'Erro ao processar pagamento.',
         ]));
 
@@ -69,6 +82,20 @@ class PagamentoClienteControllerTest extends TestCase
         $response->assertSee('Não foi possível concluir o pagamento', false);
         $response->assertSee('Erro ao processar pagamento.', false);
         $response->assertSee('Tentar novamente', false);
+    }
+
+    public function test_payment_error_page_uses_the_seller_logo_for_the_favicon_when_available(): void
+    {
+        $response = $this->get(route('pagamento.erro', [
+            'seller_brand_mode' => 'logo',
+            'seller_brand_label' => 'Empresa Exemplo',
+            'seller_brand_logo_url' => '/company-logo?path=company-logos%2Flogo-publico.png',
+            'message' => 'Erro ao processar pagamento.',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
+        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
     }
 
     private function makeVendorUser(string $establishmentId, ?string $companyLogoPath = null): User

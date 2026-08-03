@@ -800,6 +800,7 @@ export default function CobrancaCartaoCreditoPage() {
                                 icon={<CreditCardOutlined />}
                                 className="spa-pix-collapse-label-badge spa-pix-page-toggle-button"
                                 onClick={handleToggleForm}
+                                style={{ display: 'none' }}
                             >
                                 Gerar Cobrança
                             </Button>
