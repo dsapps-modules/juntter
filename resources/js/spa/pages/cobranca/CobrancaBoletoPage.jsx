@@ -577,7 +577,7 @@ export default function CobrancaBoletoPage() {
                     amount: values.amount,
                     expiration: values.expiration ? values.expiration.format('YYYY-MM-DD') : null,
                     payment_limit_date: values.payment_limit_date ? values.payment_limit_date.format('YYYY-MM-DD') : null,
-                    recharge: Boolean(values.recharge),
+                    recharge: false,
                     client: {
                         first_name: values.client?.first_name ?? '',
                         last_name: values.client?.last_name ?? '',
@@ -595,7 +595,7 @@ export default function CobrancaBoletoPage() {
                         },
                     },
                     instruction: {
-                        booklet: Boolean(values.instruction?.booklet),
+                        booklet: false,
                         description: values.instruction?.description ?? '',
                         late_fee: {
                             amount: values.instruction?.late_fee?.amount ?? '',
@@ -982,28 +982,12 @@ export default function CobrancaBoletoPage() {
                                         </Typography.Text>
 
                                         <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={12}>
+                                            <Col xs={24}>
                                                 <Form.Item
                                                     label="Descrição"
                                                     name={['instruction', 'description']}
                                                 >
                                                     <Input size="large" placeholder="Descrição do boleto" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label="Recarga"
-                                                    name="recharge"
-                                                    valuePropName="checked"
-                                                >
-                                                    <Select
-                                                        size="large"
-                                                        options={[
-                                                            { label: 'Não', value: false },
-                                                            { label: 'Sim', value: true },
-                                                        ]}
-                                                        placeholder="Não"
-                                                    />
                                                 </Form.Item>
                                             </Col>
                                         </Row>
@@ -1039,29 +1023,13 @@ export default function CobrancaBoletoPage() {
                                         </Row>
 
                                         <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={12}>
+                                            <Col xs={24}>
                                                 <Form.Item
                                                     label="Limite do desconto"
                                                     name={['instruction', 'discount', 'limit_date']}
                                                     rules={[{ required: true, message: 'Informe o limite do desconto.' }]}
                                                 >
                                                     <DatePicker size="large" style={{ width: '100%' }} format="DD/MM/YYYY" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label="Boletim"
-                                                    name={['instruction', 'booklet']}
-                                                    valuePropName="checked"
-                                                >
-                                                    <Select
-                                                        size="large"
-                                                        options={[
-                                                            { label: 'Não', value: false },
-                                                            { label: 'Sim', value: true },
-                                                        ]}
-                                                        placeholder="Não"
-                                                    />
                                                 </Form.Item>
                                             </Col>
                                         </Row>

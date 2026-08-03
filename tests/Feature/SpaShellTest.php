@@ -564,6 +564,10 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Data limite para pagamento', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Instruções do boleto', $pageSource);
+        $this->assertStringNotContainsString('Recarga', $pageSource);
+        $this->assertStringNotContainsString('Boletim', $pageSource);
+        $this->assertStringContainsString('recharge: false,', $pageSource);
+        $this->assertStringContainsString('booklet: false,', $pageSource);
         $this->assertStringContainsString('Fechar', $pageSource);
         $this->assertStringContainsString('Criar boleto', $pageSource);
         $this->assertStringContainsString('Boletos do mês', $pageSource);
