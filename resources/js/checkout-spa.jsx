@@ -2557,7 +2557,7 @@ function CheckoutSpaApp() {
                 }
 
                 if (method.value === 'pix') {
-                    return { ...method, imageSrc: '/img/payment/logo-pix.png', label: 'pix' };
+                    return { ...method, imageSrc: '/img/payment/logo-pix.svg', label: 'pix' };
                 }
 
                 if (method.value === 'boleto') {
