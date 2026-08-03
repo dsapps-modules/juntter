@@ -51,6 +51,8 @@ class SpaCobrancaPlanosTest extends TestCase
         $this->assertStringContainsString('Resumo do plano', $pageSource);
         $this->assertStringContainsString('Informações do plano', $pageSource);
         $this->assertStringNotContainsString('Resumo do plano comercial ativo da empresa na interface SPA.', $pageSource);
+        $this->assertStringContainsString('Taxas do checkout', $pageSource);
+        $this->assertStringContainsString("normalizedName !== 'BACEN' && normalizedName !== 'ANTIFRAUD'", $pageSource);
         $this->assertStringContainsString("navigate('/home')", $pageSource);
         $this->assertStringContainsString('HomeOutlined', $pageSource);
         $this->assertStringNotContainsString('Ver detalhes', $pageSource);
@@ -59,6 +61,12 @@ class SpaCobrancaPlanosTest extends TestCase
         $this->assertStringNotContainsString('Pontos de atenção', $pageSource);
         $this->assertStringContainsString('Nenhum plano localizado', $pageSource);
         $this->assertStringNotContainsString('ComingSoonPage', $pageSource);
+        $this->assertStringContainsString('formatFeePercentage', $pageSource);
+        $this->assertStringContainsString('planFeeTable', $pageSource);
+        $this->assertStringContainsString('creditFees', $pageSource);
+        $this->assertStringNotContainsString('Bacen', $pageSource);
+        $this->assertStringNotContainsString('Antifraud', $pageSource);
+        $this->assertStringNotContainsString('Ativa', $pageSource);
     }
 
     public function test_the_plan_overview_api_returns_the_contracted_plan(): void
@@ -255,6 +263,7 @@ class SpaCobrancaPlanosTest extends TestCase
             ->assertJsonPath('plan.id', 77)
             ->assertJsonPath('plan.name', 'Plano Cache')
             ->assertJsonPath('plan.flags.0.name', 'MASTERCARD')
+            ->assertJsonPath('plan.flags.0.fees.credit.1x', 3.49)
             ->assertJsonPath('actions.1.href', '/cobranca/planos/77');
     }
 

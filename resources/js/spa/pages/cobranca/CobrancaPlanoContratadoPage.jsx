@@ -1,5 +1,5 @@
 import { CheckCircleFilled, ClockCircleOutlined, CrownOutlined, GlobalOutlined, HomeOutlined } from '@ant-design/icons';
-import { Alert, Breadcrumb, Button, Card, Col, Descriptions, Empty, Row, Skeleton, Space, Tag, Typography } from 'antd';
+import { Alert, Breadcrumb, Button, Card, Col, Descriptions, Empty, Row, Skeleton, Space, Table, Tag, Typography } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -20,6 +20,22 @@ function formatPlanTagColor(plan) {
     }
 
     return plan.active ? 'green' : 'gold';
+}
+
+function formatFeePercentage(value) {
+    const numericValue = Number(value);
+
+    if (!Number.isFinite(numericValue)) {
+        return formatText(value);
+    }
+
+    return `${numericValue.toFixed(2).replace('.', ',')}%`;
+}
+
+function getInstallmentValue(installment) {
+    const parsedValue = Number.parseInt(String(installment).replace(/\D+/g, ''), 10);
+
+    return Number.isNaN(parsedValue) ? Number.MAX_SAFE_INTEGER : parsedValue;
 }
 
 function SummaryTile({ label, value, icon, color }) {
@@ -120,6 +136,28 @@ export default function CobrancaPlanoContratadoPage() {
         ];
     }, [plan]);
 
+    const planFeeTable = useMemo(() => {
+        const flags = Array.isArray(plan?.flags) ? plan.flags : [];
+        const visibleFlags = flags.filter((flag) => {
+            const normalizedName = String(flag?.name ?? '').trim().toUpperCase();
+
+            return normalizedName !== 'BACEN' && normalizedName !== 'ANTIFRAUD';
+        });
+
+        const installmentKeys = [...new Set(visibleFlags.flatMap((flag) => Object.keys(flag?.fees?.credit ?? {})))].sort(
+            (left, right) => getInstallmentValue(left) - getInstallmentValue(right),
+        );
+
+        const rows = visibleFlags.map((flag, index) => ({
+            key: flag?.id ?? flag?.name ?? `flag-${index}`,
+            name: flag?.name ?? 'Bandeira',
+            active: Boolean(flag?.active),
+            creditFees: flag?.fees?.credit ?? {},
+        }));
+
+        return { installmentKeys, rows };
+    }, [plan]);
+
     return (
         <Row gutter={[20, 20]} className="spa-board">
             <Col span={24}>
@@ -201,6 +239,34 @@ export default function CobrancaPlanoContratadoPage() {
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Contratado em">{formatText(plan.contracted_at, 'Data indisponível')}</Descriptions.Item>
                             </Descriptions>
+                        </Card>
+
+                        <Card className="spa-table-card" title="Taxas do checkout" extra={<GlobalOutlined />}>
+                            {planFeeTable.rows.length === 0 ? (
+                                <Empty description="Nenhuma taxa comercial foi localizada para este plano." />
+                            ) : (
+                                <Table
+                                    rowKey="key"
+                                    dataSource={planFeeTable.rows}
+                                    pagination={false}
+                                    size="small"
+                                    scroll={{ x: 'max-content' }}
+                                    columns={[
+                                        {
+                                            title: 'Bandeira',
+                                            dataIndex: 'name',
+                                            fixed: 'left',
+                                            render: (value) => <Typography.Text strong>{value}</Typography.Text>,
+                                        },
+                                        ...planFeeTable.installmentKeys.map((installment) => ({
+                                            title: installment,
+                                            dataIndex: ['creditFees', installment],
+                                            align: 'center',
+                                            render: (value) => formatFeePercentage(value),
+                                        })),
+                                    ]}
+                                />
+                            )}
                         </Card>
                     </Space>
                 )}
