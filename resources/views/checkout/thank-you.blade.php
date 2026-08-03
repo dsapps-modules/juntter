@@ -3,6 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @php
+        $sellerBrand = $sellerBrand ?? [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
+
+        $defaultCheckoutFavicon = asset('img/logo/juntter_webp_640_174.webp');
+        $checkoutFaviconUrl = filled($sellerBrand['logoUrl'] ?? null) && ($sellerBrand['mode'] ?? 'logo') === 'logo'
+            ? $sellerBrand['logoUrl']
+            : $defaultCheckoutFavicon;
+    @endphp
+    <link rel="icon" href="{{ $checkoutFaviconUrl }}" type="image/png">
+    <link rel="shortcut icon" href="{{ $checkoutFaviconUrl }}" type="image/png">
     <title>Obrigado pela compra</title>
     <style>
         :root {
@@ -155,14 +169,6 @@
     </style>
 </head>
 <body>
-    @php
-        $sellerBrand = $sellerBrand ?? [
-            'mode' => 'logo',
-            'label' => 'Juntter',
-            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
-        ];
-    @endphp
-
     <div class="checkout-auth-page">
         <div class="checkout-auth-logo">
             @if (($sellerBrand['mode'] ?? 'logo') === 'text')

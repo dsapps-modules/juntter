@@ -883,6 +883,15 @@ class SpaShellTest extends TestCase
         $response->assertSee('id="app"', false);
     }
 
+    public function test_the_link_form_page_redirects_created_links_to_the_list(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoFormPage.jsx'));
+
+        $this->assertStringContainsString("navigate('/links-pagamento');", $pageSource);
+        $this->assertStringContainsString('if (isEdit) {', $pageSource);
+        $this->assertStringContainsString("navigate(result.redirect ?? '/links-pagamento');", $pageSource);
+    }
+
     public function test_the_link_form_page_uses_a_non_stretching_hero_card_layout(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoFormPage.jsx'));

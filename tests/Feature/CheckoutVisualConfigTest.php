@@ -20,11 +20,15 @@ class CheckoutVisualConfigTest extends TestCase
         $this->assertStringContainsString('checkout-spa-root', $publicView);
         $this->assertStringContainsString('threeDsEnv', $publicView);
         $this->assertStringContainsString('paymentDetails', $publicView);
+        $this->assertStringContainsString('checkoutFaviconUrl', $publicView);
+        $this->assertStringContainsString('juntter_webp_640_174.webp', $publicView);
         $this->assertStringContainsString('$checkoutSpaAssets[\'css\']', $publicView);
         $this->assertStringContainsString('$checkoutSpaAssets[\'js\']', $publicView);
         $this->assertStringNotContainsString('checkout-public', $publicView);
         $this->assertStringNotContainsString('@vite([\'resources/js/checkout-public.js\'])', $publicView);
 
+        $this->assertStringContainsString('checkoutFaviconUrl', $thankYouView);
+        $this->assertStringContainsString('checkoutFaviconUrl', $unavailableView);
         $this->assertStringContainsString('--checkout-bg: #f7f7f9;', $thankYouView);
         $this->assertStringContainsString('--checkout-bg: #f7f7f9;', $unavailableView);
         $this->assertStringNotContainsString('radial-gradient(circle at top left', $thankYouView);

@@ -5,6 +5,19 @@
     <meta charset="UTF-8">
     <meta name="_token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @php
+        $sellerBrand = $sellerBrand ?? [
+            'mode' => 'logo',
+            'label' => 'Juntter',
+            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
+        ];
+
+        $legacyCheckoutFavicon = filled($sellerBrand['logoUrl'] ?? null) && ($sellerBrand['mode'] ?? 'logo') === 'logo'
+            ? $sellerBrand['logoUrl']
+            : '/img/logo/juntter_webp_640_174.webp';
+    @endphp
+    <link rel="icon" href="{{ $legacyCheckoutFavicon }}" type="image/png">
+    <link rel="shortcut icon" href="{{ $legacyCheckoutFavicon }}" type="image/png">
     <title>Checkout Seguro - Juntter</title>
 
     <!-- Bootstrap CSS -->
@@ -332,11 +345,12 @@
         <!-- PagSeguro 3DS SDK -->
         <script src="https://assets.pagseguro.com.br/checkout-sdk-js/rc/dist/browser/pagseguro.min.js"></script>
         <script>
-            window.JuntterRoutes = {
-                pagamento_sucesso: "{{ route('pagamento.sucesso') }}",
-                pagamento_erro: "{{ route('pagamento.erro') }}",
-            };
-        </script>
+        window.JuntterRoutes = {
+            pagamento_sucesso: "{{ route('pagamento.sucesso') }}",
+            pagamento_erro: "{{ route('pagamento.erro') }}",
+            seller_brand: @json($sellerBrand, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        };
+    </script>
         <!-- Checkout Scripts -->
         <script src="{{ asset('js/checkout-scripts.js') }}"></script>
 </body>
