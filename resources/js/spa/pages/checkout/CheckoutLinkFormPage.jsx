@@ -122,6 +122,7 @@ export default function CheckoutLinkFormPage() {
     const [copyingLastStyle, setCopyingLastStyle] = useState(false);
     const [productImagePreviewUrl, setProductImagePreviewUrl] = useState('');
     const [productImageFile, setProductImageFile] = useState(null);
+    const showCheckoutVisualControls = false;
     const isEditing = Boolean(params.checkoutLinkId && params.checkoutLinkId !== 'novo');
     const selectedProductId = Form.useWatch('product_id', form);
     const pixDiscountType = Form.useWatch('pix_discount_type', form) ?? 'none';
@@ -483,45 +484,47 @@ export default function CheckoutLinkFormPage() {
                             <Form.Item label="Nome do link" name="name" rules={[{ required: true, message: 'Informe o nome.' }]}>
                                 <Input />
                             </Form.Item>
-                            <Form.Item
-                                label={(
-                                    <Space size={8} wrap>
-                                        <span>Estilo do checkout</span>
-                                        <Button
-                                            type="link"
-                                            size="small"
-                                            className="p-0"
-                                            loading={copyingLastStyle}
-                                            onClick={handleUseLastCheckoutStyle}
-                                        >
-                                            Utilizar estilo do último checkout
-                                        </Button>
-                                    </Space>
-                                )}
-                                name="theme"
-                                extra="Escolha a experiência visual que seus clientes encontrarão ao pagar. Você pode ajustar as cores depois."
-                                rules={[{ required: true, message: 'Selecione um estilo para o checkout.' }]}
-                            >
-                                <Radio.Group className="checkout-theme-selector" onChange={handleThemeChange}>
-                                    {checkoutThemes.map((theme) => (
-                                        <Radio.Button className="checkout-theme-option" key={theme.value} value={theme.value}>
-                                            <span className="checkout-theme-option__preview" aria-hidden="true">
-                                                <span className="checkout-theme-option__top" style={{ background: theme.palette[0] }} />
-                                                <span className="checkout-theme-option__content" style={{ background: theme.palette[1] }}>
-                                                    <span style={{ background: theme.palette[2] }} />
-                                                    <span style={{ background: theme.palette[2] }} />
-                                                    <span style={{ background: theme.palette[2] }} />
+                            <div hidden={!showCheckoutVisualControls}>
+                                <Form.Item
+                                    label={(
+                                        <Space size={8} wrap>
+                                            <span>Estilo do checkout</span>
+                                            <Button
+                                                type="link"
+                                                size="small"
+                                                className="p-0"
+                                                loading={copyingLastStyle}
+                                                onClick={handleUseLastCheckoutStyle}
+                                            >
+                                                Utilizar estilo do último checkout
+                                            </Button>
+                                        </Space>
+                                    )}
+                                    name="theme"
+                                    extra="Escolha a experiência visual que seus clientes encontrarão ao pagar. Você pode ajustar as cores depois."
+                                    rules={[{ required: true, message: 'Selecione um estilo para o checkout.' }]}
+                                >
+                                    <Radio.Group className="checkout-theme-selector" onChange={handleThemeChange}>
+                                        {checkoutThemes.map((theme) => (
+                                            <Radio.Button className="checkout-theme-option" key={theme.value} value={theme.value}>
+                                                <span className="checkout-theme-option__preview" aria-hidden="true">
+                                                    <span className="checkout-theme-option__top" style={{ background: theme.palette[0] }} />
+                                                    <span className="checkout-theme-option__content" style={{ background: theme.palette[1] }}>
+                                                        <span style={{ background: theme.palette[2] }} />
+                                                        <span style={{ background: theme.palette[2] }} />
+                                                        <span style={{ background: theme.palette[2] }} />
+                                                    </span>
+                                                    <span className="checkout-theme-option__aside" style={{ background: theme.palette[2] }} />
                                                 </span>
-                                                <span className="checkout-theme-option__aside" style={{ background: theme.palette[2] }} />
-                                            </span>
-                                            <span className="checkout-theme-option__copy">
-                                                <strong>{theme.name}</strong>
-                                                <span>{theme.description}</span>
-                                            </span>
-                                        </Radio.Button>
-                                    ))}
-                                </Radio.Group>
-                            </Form.Item>
+                                                <span className="checkout-theme-option__copy">
+                                                    <strong>{theme.name}</strong>
+                                                    <span>{theme.description}</span>
+                                                </span>
+                                            </Radio.Button>
+                                        ))}
+                                    </Radio.Group>
+                                </Form.Item>
+                            </div>
 
                             <Row gutter={16}>
                                 <Col xs={24} md={16}>
@@ -629,28 +632,30 @@ export default function CheckoutLinkFormPage() {
                                 </Col>
                             </Row>
 
-                            <Row gutter={16}>
-                                <Col xs={24} md={6}>
-                                    <Form.Item label="Cor do topo" name="navbar_background_color">
-                                        <Input type="color" style={{ width: 120, padding: 4 }} onChange={handleNavbarBackgroundColorChange} />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={6}>
-                                    <Form.Item label="Cor do botão" name="primary_color">
-                                        <Input type="color" style={{ width: 120, padding: 4 }} />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={6}>
-                                    <Form.Item label="Letra do topo" name="navbar_text_color">
-                                        <Input type="color" style={{ width: 120, padding: 4 }} onChange={handleNavbarTextColorChange} />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} md={6}>
-                                    <Form.Item label="Letra do botão" name="button_text_color">
-                                        <Input type="color" style={{ width: 120, padding: 4 }} />
-                                    </Form.Item>
-                                </Col>
-                            </Row>
+                            <div hidden={!showCheckoutVisualControls}>
+                                <Row gutter={16}>
+                                    <Col xs={24} md={6}>
+                                        <Form.Item label="Cor do topo" name="navbar_background_color">
+                                            <Input type="color" style={{ width: 120, padding: 4 }} onChange={handleNavbarBackgroundColorChange} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} md={6}>
+                                        <Form.Item label="Cor do botão" name="primary_color">
+                                            <Input type="color" style={{ width: 120, padding: 4 }} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} md={6}>
+                                        <Form.Item label="Letra do topo" name="navbar_text_color">
+                                            <Input type="color" style={{ width: 120, padding: 4 }} onChange={handleNavbarTextColorChange} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} md={6}>
+                                        <Form.Item label="Letra do botão" name="button_text_color">
+                                            <Input type="color" style={{ width: 120, padding: 4 }} />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+                            </div>
 
                             <Row gutter={16} align="stretch">
                                 <Col xs={24} lg={8}>

@@ -47,6 +47,8 @@ class CheckoutVisualConfigTest extends TestCase
         $this->assertStringContainsString('button_text_color', $formSource);
         $this->assertStringContainsString('handleNavbarBackgroundColorChange', $formSource);
         $this->assertStringContainsString('handleNavbarTextColorChange', $formSource);
+        $this->assertStringContainsString('const showCheckoutVisualControls = false;', $formSource);
+        $this->assertStringContainsString('hidden={!showCheckoutVisualControls}', $formSource);
         $this->assertStringContainsString('button_text_color: button_text_color || navbar_text_color || visualDefaults.button_text_color,', $formSource);
     }
 }
