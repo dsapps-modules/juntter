@@ -76,6 +76,7 @@ class SpaCobrancaSimularTest extends TestCase
         $configSource = file_get_contents(base_path('resources/js/spa/components/payment-simulator/paymentSimulationConfig.js'));
 
         $this->assertStringContainsString('normalizeFlags(flags)', $configSource);
+        $this->assertStringContainsString("normalizedName !== 'BACEN' && normalizedName !== 'ANTIFRAUD'", $configSource);
         $this->assertStringContainsString('formatFlagLabel(flag)', $configSource);
         $this->assertStringContainsString('buildInstallmentOptions(flag)', $configSource);
         $this->assertStringContainsString('resolveRate(flag, installmentValue)', $configSource);

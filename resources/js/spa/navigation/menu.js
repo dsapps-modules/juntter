@@ -54,7 +54,7 @@ export const navigationByRole = {
             children: [
                 { key: 'home.dashboard', path: '/home', label: 'Dashboard', icon: 'dashboard' },
                 { key: 'cobranca.saldo', path: '/cobranca/saldoextrato', label: 'Saldo e Extrato', icon: 'saldo' },
-                { key: 'cobranca.enviar-pix', path: '/cobranca/pix-out', label: 'Enviar Pix', icon: 'pix' },
+                { key: 'cobranca.enviar-pix', path: '/cobranca/pix-out', label: 'Enviar Pix', icon: 'pix', hidden: true },
                 { key: 'cobranca.simular', path: '/cobranca/simular', label: 'Simular Transação', icon: 'simular' },
             ],
         },
@@ -91,6 +91,10 @@ export function buildNavigationSections(role) {
     return navigationByRole[role] ?? [];
 }
 
+function isVisibleNavigationItem(item) {
+    return !item.hidden;
+}
+
 export function findNavigationItem(sections, path) {
     const normalizedPath = path ?? '';
     let bestMatch = null;
@@ -107,6 +111,10 @@ export function findNavigationItem(sections, path) {
 
     const walk = (items) => {
         items.forEach((item) => {
+            if (!isVisibleNavigationItem(item)) {
+                return;
+            }
+
             if (item.type === 'submenu' || item.type === 'group') {
                 considerItem(item);
                 walk(item.children);
@@ -127,6 +135,10 @@ export function buildKeyPathMap(sections) {
 
     const walk = (items) => {
         items.forEach((item) => {
+            if (!isVisibleNavigationItem(item)) {
+                return;
+            }
+
             if (item.type === 'submenu' || item.type === 'group') {
                 walk(item.children);
                 return;
@@ -139,4 +151,38 @@ export function buildKeyPathMap(sections) {
     sections.forEach((section) => walk(section.children));
 
     return map;
+}
+
+export function getFirstVisibleNavigationItem(sections) {
+    const walk = (items) => {
+        for (const item of items) {
+            if (!isVisibleNavigationItem(item)) {
+                continue;
+            }
+
+            if (item.type === 'submenu' || item.type === 'group') {
+                const nestedItem = walk(item.children);
+
+                if (nestedItem) {
+                    return nestedItem;
+                }
+
+                continue;
+            }
+
+            return item;
+        }
+
+        return null;
+    };
+
+    for (const section of sections) {
+        const item = walk(section.children);
+
+        if (item) {
+            return item;
+        }
+    }
+
+    return null;
 }

@@ -31,6 +31,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
     buildKeyPathMap,
     buildNavigationSections,
+    getFirstVisibleNavigationItem,
     findNavigationItem,
     getSharedNavigationItems,
 } from '../navigation/menu';
@@ -63,13 +64,25 @@ const iconByName = {
 };
 
 function mapNavigationItem(item) {
+    if (item.hidden) {
+        return null;
+    }
+
     if (item.type === 'submenu' || item.type === 'group') {
         if (item.type === 'group') {
+            if (item.children.length === 0) {
+                return null;
+            }
+
             return {
                 type: 'group',
                 label: item.label,
-                children: item.children.map(mapNavigationItem),
+                children: item.children.map(mapNavigationItem).filter(Boolean),
             };
+        }
+
+        if (item.children.length === 0) {
+            return null;
         }
 
         return {
@@ -77,7 +90,7 @@ function mapNavigationItem(item) {
             key: item.key,
             label: item.label,
             icon: iconByName[item.icon] ?? null,
-            children: item.children.map(mapNavigationItem),
+            children: item.children.map(mapNavigationItem).filter(Boolean),
         };
     }
 
@@ -171,8 +184,8 @@ export default function AppShell() {
             ...menuSections.map((section) => ({
                 type: 'group',
                 label: section.label,
-                children: section.children.map(mapNavigationItem),
-            })),
+                children: section.children.map(mapNavigationItem).filter(Boolean),
+            })).filter((section) => section.children.length > 0),
             ...(menuSections.length > 0
                 ? [
                     {
@@ -180,7 +193,7 @@ export default function AppShell() {
                     },
                 ]
                 : []),
-            ...sharedNavigationItems.map(mapNavigationItem),
+            ...sharedNavigationItems.map(mapNavigationItem).filter(Boolean),
         ],
         [menuSections, sharedNavigationItems],
     );
@@ -194,7 +207,10 @@ export default function AppShell() {
             },
         ];
 
-        return findNavigationItem(sectionsWithShared, path) ?? menuSections[0]?.children[0] ?? sharedNavigationItems[0] ?? null;
+        return findNavigationItem(sectionsWithShared, path)
+            ?? getFirstVisibleNavigationItem(menuSections)
+            ?? sharedNavigationItems[0]
+            ?? null;
     }, [location.pathname, location.search, menuSections, sharedNavigationItems]);
 
     const selectedKey = currentItem?.key ?? 'home.dashboard';

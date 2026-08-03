@@ -234,9 +234,12 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("icon: 'checkout-produtos'", $navigationSource);
         $this->assertStringContainsString("icon: 'checkout-links'", $navigationSource);
         $this->assertStringContainsString("label: 'Enviar Pix'", $navigationSource);
+        $this->assertStringContainsString('hidden: true', $navigationSource);
         $this->assertStringNotContainsString("icon: 'estabelecimentos'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'unica'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'checkout'", $navigationSource);
+        $this->assertStringContainsString('getFirstVisibleNavigationItem', $shellSource);
+        $this->assertStringContainsString('if (item.hidden) {', $shellSource);
         $this->assertStringContainsString('style="height: 32.4px;"', $dashboardTemplateSource);
         $this->assertStringContainsString('/app/cobranca/cartao-credito', $dashboardTemplateSource);
         $this->assertStringContainsString('Hist', $navigationSource);

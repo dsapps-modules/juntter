@@ -17,7 +17,9 @@ export function normalizeFlags(flags) {
             return false;
         }
 
-        return String(flag.name ?? '').toUpperCase() !== 'BACEN';
+        const normalizedName = String(flag.name ?? '').toUpperCase();
+
+        return normalizedName !== 'BACEN' && normalizedName !== 'ANTIFRAUD';
     });
 }
 
