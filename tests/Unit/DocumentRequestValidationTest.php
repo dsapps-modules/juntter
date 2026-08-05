@@ -39,6 +39,7 @@ class DocumentRequestValidationTest extends TestCase
                     'payment_type' => 'PIX',
                     'amount' => '10,00',
                     'interest' => 'CLIENT',
+                    'descricao' => 'Cobrança PIX',
                     'client' => [
                         'document' => '123.456.789-09',
                     ],

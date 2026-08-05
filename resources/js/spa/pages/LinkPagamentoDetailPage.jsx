@@ -12,6 +12,7 @@ import { Alert, Button, Card, Col, Descriptions, Empty, Input, Row, Skeleton, Sp
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import LinkPagamentoResumoCard from '../components/link-pagamento/LinkPagamentoResumoCard';
 
 const defaultLink = {
     id: null,
@@ -33,6 +34,7 @@ const defaultLink = {
     url_webhook: '',
     dados_cliente_preenchidos: {},
     instrucoes_boleto: {},
+    payment_summary: {},
 };
 
 function formatCurrency(value) {
@@ -172,6 +174,7 @@ export default function LinkPagamentoDetailPage() {
                 setLink({
                     ...defaultLink,
                     ...(data.link ?? {}),
+                    payment_summary: data.payment_summary ?? {},
                 });
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
@@ -489,38 +492,15 @@ export default function LinkPagamentoDetailPage() {
                                 </Typography.Title>
                             </div>
 
-                            <Card size="small" title="Resumo do link" bordered={false}>
-                                <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                    <div>
-                                        <Typography.Text type="secondary">Código único</Typography.Text>
-                                        <div>
-                                            <Typography.Text code>{link.codigo_unico}</Typography.Text>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Typography.Text type="secondary">Valor e status</Typography.Text>
-                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                            <Tag color="green">{formatCurrency(link.valor)}</Tag>
-                                            <Tag color={statusColor}>{statusLabel}</Tag>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Typography.Text type="secondary">Prazo</Typography.Text>
-                                        <div>
-                                            <Typography.Text>{expirationLabel}</Typography.Text>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Typography.Text type="secondary">Criado em</Typography.Text>
-                                        <div>
-                                            <Typography.Text>{createdAtLabel}</Typography.Text>
-                                        </div>
-                                    </div>
-                                </Space>
-                            </Card>
+                            <LinkPagamentoResumoCard
+                                link={link}
+                                paymentSummary={link.payment_summary ?? {}}
+                                title="Resumo do link"
+                                expirationLabel={expirationLabel}
+                                createdAtLabel={createdAtLabel}
+                                statusLabel={statusLabel}
+                                statusColor={statusColor}
+                            />
 
                             <Card size="small" title="Ações rápidas" bordered={false}>
                                 <Space direction="vertical" size={10} style={{ width: '100%' }}>
@@ -556,3 +536,6 @@ export default function LinkPagamentoDetailPage() {
         </Row>
     );
 }
+
+
+

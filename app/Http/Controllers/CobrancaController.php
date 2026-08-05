@@ -336,7 +336,17 @@ class CobrancaController extends Controller
             $dados = $request->validated();
 
             // Converter valor para centavos usando função helper
-            $dados['amount'] = $this->converterValorParaCentavosSeguro($dados['amount']);
+            $baseAmountCents = $this->converterValorParaCentavosSeguro($dados['amount']);
+            $interest = (string) ($dados['interest'] ?? 'ESTABLISHMENT');
+            $dados['amount'] = $this->resolvePixChargeAmountCents($baseAmountCents, $interest);
+
+            Log::info('Pix charge request prepared', [
+                'user_id' => auth()->id(),
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
+                'base_amount_cents' => $baseAmountCents,
+                'final_amount_cents' => $dados['amount'],
+                'interest' => $interest,
+            ]);
 
             // Processar info_additional como string simples
             if (isset($dados['info_additional']) && ! empty($dados['info_additional'])) {
@@ -443,6 +453,21 @@ class CobrancaController extends Controller
         return $request->expectsJson() || $request->ajax();
     }
 
+    private function resolvePixChargeAmountCents(int $baseAmountCents, string $interest): int
+    {
+        if (strtoupper(trim($interest)) !== 'CLIENT') {
+            return $baseAmountCents;
+        }
+
+        $establishmentId = (string) auth()->user()?->vendedor?->estabelecimento_id;
+
+        if ($establishmentId === '') {
+            return $baseAmountCents;
+        }
+
+        return $baseAmountCents + $this->pricingCacheService->resolvePixOutFeeCents($establishmentId);
+    }
+
     /**
      * Persiste a cobrança PIX localmente para que ela fique disponível na listagem.
      *
@@ -460,6 +485,12 @@ class CobrancaController extends Controller
 
         $validated = method_exists($request, 'validated') ? $request->validated() : [];
         $client = is_array(data_get($validated, 'client')) ? data_get($validated, 'client') : [];
+        $description = trim((string) data_get($validated, 'descricao', ''));
+        $baseAmountCents = $this->converterValorParaCentavosSeguro((string) data_get($validated, 'amount', '0'));
+        $interest = strtoupper(trim((string) data_get($validated, 'interest', 'ESTABLISHMENT')));
+        $customerFeeCents = $interest === 'CLIENT'
+            ? max(0, (int) $transacao['amount'] - $baseAmountCents)
+            : 0;
         $customerName = trim(implode(' ', array_filter([
             is_string(data_get($client, 'first_name')) ? data_get($client, 'first_name') : null,
             is_string(data_get($client, 'last_name')) ? data_get($client, 'last_name') : null,
@@ -477,6 +508,7 @@ class CobrancaController extends Controller
                 'amount' => $amount,
                 'original_amount' => $amount,
                 'fees' => (int) ($transacao['fees'] ?? 0),
+                'pix_customer_fee_cents' => $customerFeeCents,
                 'installments' => 1,
                 'customer_name' => $customerName !== '' ? $customerName : null,
                 'customer_document' => is_string($customerDocument) && trim($customerDocument) !== '' ? $customerDocument : null,
@@ -487,6 +519,10 @@ class CobrancaController extends Controller
                         'qr_code' => $qrCode,
                     ],
                     'request' => [
+                        'descricao' => $description !== '' ? $description : null,
+                        'interest' => data_get($validated, 'interest'),
+                        'base_amount_cents' => $baseAmountCents,
+                        'customer_fee_cents' => $customerFeeCents,
                         'info_additional' => data_get($validated, 'info_additional'),
                     ],
                 ],

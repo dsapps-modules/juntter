@@ -548,10 +548,14 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('render: (value, record) =>', $pageSource);
         $this->assertStringContainsString('<Typography.Text>{value}</Typography.Text>', $pageSource);
         $this->assertStringContainsString('function getPaymentStatus(record)', $pageSource);
-        $this->assertStringContainsString("return record.raw_status === 'PAID' || record.status === 'Pago' ? 'Pago' : 'Pendente';", $pageSource);
-        $this->assertStringContainsString('<Tag color={getStatusColor(getPaymentStatus(record))}>{getPaymentStatus(record)}</Tag>', $pageSource);
-        $this->assertStringContainsString("case 'Ativo':\n                return 'gold';", $pageSource);
-        $this->assertStringContainsString("case 'Inativo':\n                return 'red';", $pageSource);
+        $this->assertStringContainsString("case 'PAID':", $pageSource);
+        $this->assertStringContainsString("return 'Pago';", $pageSource);
+        $this->assertStringContainsString("case 'PENDING':", $pageSource);
+        $this->assertStringContainsString("return 'Pendente';", $pageSource);
+        $this->assertStringContainsString('<Tag color={getPaymentStatusColor(record)}>{getPaymentStatus(record)}</Tag>', $pageSource);
+        $this->assertStringContainsString('function getRowIndicatorColor(record)', $pageSource);
+        $this->assertStringContainsString("return '#9ca3af';", $pageSource);
+        $this->assertStringContainsString("return '#22c55e';", $pageSource);
     }
 
     public function test_the_boleto_page_contains_the_form_sections(): void
@@ -649,12 +653,14 @@ class SpaShellTest extends TestCase
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoPixDetailPage.jsx'));
+        $componentSource = file_get_contents(base_path('resources/js/spa/components/link-pagamento/LinkPagamentoResumoCard.jsx'));
 
         $this->assertStringContainsString('Voltar', $pageSource);
         $this->assertStringContainsString('Copiar link', $pageSource);
         $this->assertStringContainsString('Testar link', $pageSource);
         $this->assertStringContainsString('/cobranca/pix', $pageSource);
-        $this->assertStringContainsString('Resumo do link', $pageSource);
+        $this->assertStringContainsString('LinkPagamentoResumoCard', $pageSource);
+        $this->assertStringContainsString('payment_summary: data.payment_summary ?? {},', $pageSource);
         $this->assertStringContainsString('Acoes recomendadas', $pageSource);
         $this->assertStringContainsString('Dica rapida', $pageSource);
         $this->assertStringContainsString('Copie a URL completa', $pageSource);
@@ -664,6 +670,9 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('HomeOutlined', $pageSource);
         $this->assertStringNotContainsString("onClick={() => navigate('/links-pagamento')}", $pageSource);
         $this->assertStringNotContainsString('Pre-preenchido:', $pageSource);
+        $this->assertStringContainsString('Resumo do link', $componentSource);
+        $this->assertStringContainsString('Valor, taxa e total', $componentSource);
+        $this->assertStringContainsString('Valor e status', $componentSource);
     }
 
     public function test_the_links_pagamento_detail_page_contains_the_action_sections(): void
@@ -683,6 +692,8 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("navigate('/links-pagamento')", $pageSource);
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}/status`', $pageSource);
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}`', $pageSource);
+        $this->assertStringContainsString('LinkPagamentoResumoCard', $pageSource);
+        $this->assertStringContainsString('payment_summary: data.payment_summary ?? {},', $pageSource);
     }
 
     public function test_the_links_pagamento_overview_page_is_present(): void

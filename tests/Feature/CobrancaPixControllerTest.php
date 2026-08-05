@@ -36,6 +36,7 @@ class CobrancaPixControllerTest extends TestCase
             'payment_type' => 'PIX',
             'amount' => '125,50',
             'interest' => 'CLIENT',
+            'descricao' => 'Mensalidade do plano',
             'client' => [
                 'first_name' => 'Maria',
                 'last_name' => 'Silva',
@@ -47,19 +48,25 @@ class CobrancaPixControllerTest extends TestCase
         ]);
 
         $user = $this->makeVendorUser('127700');
+        $pricingCacheService = $this->createMock(PaytimePricingCacheService::class);
+        $pricingCacheService->expects($this->once())
+            ->method('resolvePixOutFeeCents')
+            ->with('127700')
+            ->willReturn(608);
 
         $pixService = $this->createMock(PixService::class);
         $pixService->expects($this->once())
             ->method('criarTransacaoPix')
             ->with($this->callback(function (array $dados): bool {
-                return $dados['amount'] === 12550
+                return $dados['amount'] === 13158
                     && $dados['extra_headers']['establishment_id'] === '127700'
+                    && $dados['descricao'] === 'Mensalidade do plano'
                     && $dados['info_additional'][0]['value'] === 'Cobrança de teste';
             }))
             ->willReturn([
                 '_id' => 'pix-123',
                 'emv' => '00020126580014br.gov.bcb.pix...',
-                'amount' => 12550,
+                'amount' => 13158,
                 'status' => 'PENDING',
             ]);
         $pixService->expects($this->once())
@@ -70,7 +77,7 @@ class CobrancaPixControllerTest extends TestCase
                 'emv' => '00020126580014br.gov.bcb.pix...',
             ]);
 
-        $controller = $this->makeController($pixService);
+        $controller = $this->makeController($pixService, $pricingCacheService);
 
         $this->be($user);
         $this->app['session']->start();
@@ -88,7 +95,7 @@ class CobrancaPixControllerTest extends TestCase
                     'emv' => '00020126580014br.gov.bcb.pix...',
                 ],
                 'pix_code' => '00020126580014br.gov.bcb.pix...',
-                'amount' => 12550,
+                'amount' => 13158,
                 'status' => 'PENDING',
             ],
         ], $response->getData(true));
@@ -98,9 +105,14 @@ class CobrancaPixControllerTest extends TestCase
         $this->assertNotNull($transaction);
         $this->assertSame('PIX', $transaction->type);
         $this->assertSame('PENDING', $transaction->status);
-        $this->assertSame(12550, $transaction->amount);
+        $this->assertSame(13158, $transaction->amount);
         $this->assertSame('Maria Silva', $transaction->customer_name);
         $this->assertSame('123.456.789-09', $transaction->customer_document);
+        $this->assertSame('Mensalidade do plano', data_get($transaction->metadata, 'request.descricao'));
+        $this->assertSame('CLIENT', data_get($transaction->metadata, 'request.interest'));
+        $this->assertSame(12550, data_get($transaction->metadata, 'request.base_amount_cents'));
+        $this->assertSame(608, data_get($transaction->metadata, 'request.customer_fee_cents'));
+        $this->assertSame(608, $transaction->pix_customer_fee_cents);
         $this->assertSame('00020126580014br.gov.bcb.pix...', data_get($transaction->metadata, 'pix.pix_code'));
         $this->assertSame('data:image/png;base64,ZmFrZQ==', data_get($transaction->metadata, 'pix.qr_code.qrcode'));
     }
@@ -111,6 +123,7 @@ class CobrancaPixControllerTest extends TestCase
             'payment_type' => 'PIX',
             'amount' => '20,00',
             'interest' => 'ESTABLISHMENT',
+            'descricao' => 'Recarga PIX',
             'client' => [
                 'first_name' => null,
                 'last_name' => null,
@@ -159,6 +172,14 @@ class CobrancaPixControllerTest extends TestCase
             'amount' => 2000,
             'status' => 'PENDING',
         ], session('pix_data'));
+
+        $transaction = PaytimeTransaction::query()->where('external_id', 'pix-456')->first();
+
+        $this->assertNotNull($transaction);
+        $this->assertSame('ESTABLISHMENT', data_get($transaction->metadata, 'request.interest'));
+        $this->assertSame(2000, data_get($transaction->metadata, 'request.base_amount_cents'));
+        $this->assertSame(0, data_get($transaction->metadata, 'request.customer_fee_cents'));
+        $this->assertSame(0, $transaction->pix_customer_fee_cents);
     }
 
     public function test_criar_transacao_pix_retorna_erro_json_quando_api_nao_entrega_id(): void
@@ -167,6 +188,7 @@ class CobrancaPixControllerTest extends TestCase
             'payment_type' => 'PIX',
             'amount' => '15,00',
             'interest' => 'CLIENT',
+            'descricao' => 'Cobrança avulsa',
             'client' => [
                 'first_name' => 'Ana',
                 'last_name' => 'Costa',
@@ -251,15 +273,17 @@ class CobrancaPixControllerTest extends TestCase
         ], $response->getData(true));
     }
 
-    private function makeController(PixService $pixService): CobrancaController
-    {
+    private function makeController(
+        PixService $pixService,
+        ?PaytimePricingCacheService $pricingCacheService = null
+    ): CobrancaController {
         return new CobrancaController(
             $this->createMock(TransacaoService::class),
             $this->createMock(CreditoService::class),
             $pixService,
             $this->createMock(BoletoService::class),
             $this->createMock(EstabelecimentoService::class),
-            $this->createMock(PaytimePricingCacheService::class),
+            $pricingCacheService ?? $this->createMock(PaytimePricingCacheService::class),
         );
     }
 

@@ -30,6 +30,11 @@ class SpaCobrancaOverviewTest extends TestCase
             'original_amount' => 12500,
             'fees' => 500,
             'customer_name' => 'Cliente Teste',
+            'metadata' => [
+                'request' => [
+                    'descricao' => 'Cobrança do mês',
+                ],
+            ],
         ]);
 
         LinkPagamento::create([
@@ -64,9 +69,49 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonPath('summary.total_transactions', 1)
             ->assertJsonPath('summary.paid_transactions', 1)
             ->assertJsonPath('summary.active_links', 1)
-            ->assertJsonPath('rows.0.customer', 'Cliente Teste')
-            ->assertJsonPath('link_rows.0.title', 'Link Pix de teste')
+            ->assertJsonPath('rows.0.display_title', 'Cobrança do mês')
+            ->assertJsonPath('rows.0.display_subtitle', '1')
+            ->assertJsonPath('rows.0.pix_customer_fee_cents', 0)
+            ->assertJsonPath('rows.0.pix_customer_fee', 'R$ 0,00')
+            ->assertJsonPath('link_rows.0.display_title', 'Link Pix de teste')
+            ->assertJsonPath('link_rows.0.display_subtitle', 'link_pix_01')
             ->assertJsonCount(1, 'link_rows');
+    }
+
+    public function test_cobranca_overview_uses_qr_code_label_when_pix_transaction_has_no_description(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Test User',
+            'nivel_acesso' => 'admin',
+            'email_verified_at' => now(),
+        ]);
+
+        PaytimeTransaction::create([
+            'external_id' => 'trx-no-description',
+            'establishment_id' => '5001',
+            'type' => 'PIX',
+            'status' => 'PENDING',
+            'amount' => 1800,
+            'original_amount' => 1800,
+            'fees' => 0,
+            'pix_customer_fee_cents' => 180,
+            'customer_name' => 'Cliente Sem Descrição',
+            'metadata' => [
+                'pix' => [
+                    'transaction_id' => 'trx-no-description',
+                    'pix_code' => '00020126580014br.gov.bcb.pix...',
+                ],
+            ],
+        ]);
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('rows.0.display_title', 'QR Code')
+            ->assertJsonPath('rows.0.display_subtitle', '1')
+            ->assertJsonPath('rows.0.pix_customer_fee_cents', 180)
+            ->assertJsonPath('rows.0.pix_customer_fee', 'R$ 1,80');
     }
 
     public function test_cobranca_overview_returns_the_two_most_recent_card_links(): void
@@ -336,6 +381,9 @@ class SpaCobrancaOverviewTest extends TestCase
                         'emv' => '00020126580014br.gov.bcb.pix...',
                     ],
                 ],
+                'request' => [
+                    'descricao' => 'QR Code do mês',
+                ],
             ],
             'created_at' => Carbon::now()->startOfMonth()->addDays(2)->setTime(14, 30),
             'updated_at' => now(),
@@ -345,6 +393,8 @@ class SpaCobrancaOverviewTest extends TestCase
 
         $response
             ->assertOk()
+            ->assertJsonPath('rows.0.display_title', 'QR Code do mês')
+            ->assertJsonPath('rows.0.display_subtitle', '1')
             ->assertJsonPath('rows.0.status', 'Pendente')
             ->assertJsonPath('rows.0.pix_code', '00020126580014br.gov.bcb.pix...')
             ->assertJsonPath('rows.0.qr_code.qrcode', 'data:image/png;base64,ZmFrZQ==');

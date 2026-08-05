@@ -30,8 +30,8 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->actingAs($user)->postJson('/seller/products', [
             'name' => 'Curso Laravel',
-            'description' => 'Descrição do curso',
-            'short_description' => 'Curso prático',
+            'description' => 'DescriÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o do curso',
+            'short_description' => 'Curso prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡tico',
             'sku' => 'SKU-001',
             'price' => 199.90,
             'status' => 'active',
@@ -72,7 +72,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response->assertCreated();
         $this->assertStringStartsWith('chk_', (string) $response->json('checkout_link.public_token'));
-        $this->assertSame(route('checkout.public.show', $response->json('checkout_link.public_token')), $response->json('public_url'));
+        $this->assertSame(route('checkout.public.spa.show', $response->json('checkout_link.public_token')), $response->json('public_url'));
 
         $this->assertDatabaseHas('checkout_links', [
             'seller_id' => $user->id,
@@ -122,12 +122,13 @@ class RedirectedCheckoutTest extends TestCase
         $this->assertSame(route('checkout.public.product-image', $publicToken), $productImageUrl);
         Storage::disk('public')->assertExists($productImagePath);
 
-        $checkoutPage = $this->get(route('checkout.public.show', $publicToken));
+        $checkoutPage = $this->get(route('checkout.public.spa.show', $publicToken));
 
         $checkoutPage->assertOk();
-        $checkoutPage->assertSee('summary-title__thumb', false);
+        $checkoutPage->assertSee('checkout-spa-body', false);
+        $checkoutPage->assertSee('checkout-spa-data', false);
+        $checkoutPage->assertSee('checkout-spa-root', false);
         $checkoutPage->assertSee(route('checkout.public.product-image', $publicToken), false);
-        $checkoutPage->assertSee('Resumo do pedido', false);
 
         $this->assertDatabaseHas('checkout_links', [
             'id' => $checkoutLinkId,
@@ -236,7 +237,7 @@ class RedirectedCheckoutTest extends TestCase
         $updateResponse = $this->actingAs($user)->post('/seller/checkout-links/'.$checkoutLinkId, [
             '_method' => 'PUT',
             'product_id' => $product->id,
-            'name' => 'Oferta com imagem substituída',
+            'name' => 'Oferta com imagem substituÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­da',
             'status' => 'active',
             'quantity' => 2,
             'unit_price' => 179.90,
@@ -263,7 +264,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $this->assertDatabaseHas('checkout_links', [
             'id' => $checkoutLinkId,
-            'name' => 'Oferta com imagem substituída',
+            'name' => 'Oferta com imagem substituÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­da',
             'product_image_path' => $replacedProductImagePath,
         ]);
     }
@@ -329,9 +330,8 @@ class RedirectedCheckoutTest extends TestCase
         $product = $this->makeProduct($user);
 
         $response = $this->actingAs($user)->putJson('/seller/products/'.$product->id, [
-            'name' => 'Curso Laravel Avançado',
-            'slug' => 'curso-laravel-avancado',
-            'description' => 'Nova descrição',
+            'name' => 'Curso Laravel AvanÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ado',
+            'description' => 'Nova descriÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o',
             'short_description' => 'Resumo novo',
             'sku' => 'SKU-002',
             'price' => 249.90,
@@ -341,8 +341,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertOk();
         $this->assertDatabaseHas('products', [
             'id' => $product->id,
-            'name' => 'Curso Laravel Avançado',
-            'slug' => 'curso-laravel-avancado',
+            'name' => 'Curso Laravel AvanÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ado',
             'price' => 249.90,
         ]);
     }
@@ -419,78 +418,18 @@ class RedirectedCheckoutTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($link->product->name);
-        $response->assertDontSee('Produto:');
-        $response->assertDontSee('Quantidade:');
-        $response->assertDontSee('Token da sessão:');
-        $response->assertSee('checkout-auth-page', false);
-        $response->assertSee('checkout-navbar', false);
-        $response->assertSee('checkout-navbar__brand-image', false);
-        $response->assertSee('checkout-navbar__title', false);
-        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
-        $response->assertSee('id="checkout-public-app"', false);
-        $response->assertSee('Resumo do pedido', false);
-        $response->assertDontSee('data-step-panel="identification"', false);
-        $response->assertDontSee('data-step-panel="waiting"', false);
-        $response->assertSee('checkout-public-data', false);
-        $response->assertDontSee('Valores e informações da sessão atual.');
-        $response->assertDontSee('Started');
-        $response->assertDontSee('Pendente');
-        $response->assertSee('data-person-type-switch', false);
-        $response->assertSee('data-person-form="pf"', false);
-        $response->assertSee('data-person-form="pj"', false);
-        $response->assertDontSee('Salvar pessoa física', false);
-        $response->assertDontSee('Salvar pessoa jurídica', false);
-        $this->assertMatchesRegularExpression('/<input id="customer_birth_date_pf" name="customer_birth_date" type="date"[^>]*required[^>]*>/', $response->getContent());
-        $response->assertSee('Nome da empresa', false);
-        $response->assertSee('Nome do responsável', false);
-        $response->assertSee('CPF do responsável', false);
-        $response->assertSee('Nascimento do responsável', false);
-        $response->assertSee('Celular', false);
-        $response->assertDontSee('Inscrição estadual');
-        $response->assertDontSee('Razão social');
-        $pjFormContent = $response->getContent();
-        $this->assertMatchesRegularExpression('/<form id="checkout-identification-pj-form".*?<\/form>/s', $pjFormContent);
-        $this->assertMatchesRegularExpression(
-            '/<div class="field">\s*<label for="customer_document_pj">CNPJ<\/label>.*?<div class="field">\s*<label for="customer_email_pj">E-mail<\/label>/s',
-            $pjFormContent
-        );
-        preg_match('/<form id="checkout-identification-pj-form".*?<\/form>/s', $pjFormContent, $pjFormMatches);
-        $pjFormMarkup = $pjFormMatches[0] ?? '';
-        $expectedFieldOrder = [
-            'CNPJ',
-            'E-mail',
-            'Nome da empresa',
-            'Nome do responsável',
-            'CPF do responsável',
-            'Nascimento do responsável',
-            'Celular',
-        ];
+        $response->assertSee('checkout-spa-body', false);
+        $response->assertSee('checkout-spa-data', false);
+        $response->assertSee('checkout-spa-root', false);
+        $response->assertSee('"checkoutPageMode":"spa"', false);
+        $response->assertSee('"currentStep":"identification"', false);
+        $response->assertSee('"request_address":true', false);
+        $response->assertDontSee('Dados pessoais', false);
+        $response->assertDontSee('EndereÃƒÆ’Ã‚Â§o', false);
+        $response->assertDontSee('Selecione o mÃƒÆ’Ã‚Â©todo de pagamento', false);
+        $response->assertDontSee('Resumo do pedido', false);
 
-        $lastPosition = -1;
-        foreach ($expectedFieldOrder as $expectedField) {
-            $position = strpos($pjFormMarkup, $expectedField);
-            $this->assertIsInt($position);
-            $this->assertGreaterThan($lastPosition, $position);
-            $lastPosition = $position;
-        }
-        $response->assertDontSee('data-installments-wrapper', false);
-        $response->assertDontSee('data-card-fields-wrapper', false);
-        $response->assertSee('placeholder="(11) 99999-9999"', false);
-        $response->assertSee('placeholder="00000-000"', false);
-        $response->assertSee('inputmode="numeric"', false);
-        $response->assertDontSee('Fluxo guiado');
-        $response->assertDontSee('Link público');
-        $response->assertDontSee('Sessão');
-        $response->assertDontSee('Cadastro com nome completo e CPF.');
-        $response->assertDontSee('Cadastro com razão social, CNPJ e dados do responsável.');
-        $response->assertDontSee('Escolha o tipo de pessoa e preencha o formulário correspondente.');
-        $response->assertDontSee('Isento de inscrição estadual');
-        $response->assertDontSee('A confirmação chega via webhook do gateway.', false);
-        $response->assertDontSee('O sistema consulta o status do pagamento periodicamente');
-        $response->assertDontSee('data-boleto-block', false);
-        $response->assertDontSee('data-open-payment', false);
-
-        $componentSource = file_get_contents(base_path('resources/js/checkout-public.js'));
+        $componentSource = file_get_contents(base_path('resources/js/checkout-spa.jsx'));
 
         $this->assertIsString($componentSource);
         $this->assertStringContainsString("const personFormType = String(identificationForm.dataset.personForm || 'pf');", $componentSource);
@@ -515,13 +454,12 @@ class RedirectedCheckoutTest extends TestCase
             'total_price' => 150.00,
         ]);
 
-        $response = $this->withSession([
-            'checkout_session_token.'.$link->public_token => $session->session_token,
-        ])->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
-        $response->assertSee('R$ 150,00', false);
-        $response->assertDontSee('R$ 100,00', false);
+        $response->assertSee('"subtotal":"150.00"', false);
+        $response->assertSee('"total":"150.00"', false);
+        $response->assertDontSee('"subtotal":"100.00"', false);
 
         $this->assertDatabaseHas('checkout_sessions', [
             'id' => $session->id,
@@ -611,13 +549,16 @@ class RedirectedCheckoutTest extends TestCase
         $user = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user));
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
-        $response->assertSee('Dados pessoais', false);
-        $response->assertSee('Endereço', false);
-        $response->assertDontSee('Etapa atual');
-        $response->assertDontSee('Método de pagamento');
+        $response->assertSee('checkout-spa-body', false);
+        $response->assertSee('checkout-spa-data', false);
+        $response->assertSee('checkout-spa-root', false);
+        $response->assertSee('"checkoutPageMode":"spa"', false);
+        $response->assertSee('"currentStep":"identification"', false);
+        $response->assertDontSee('Dados pessoais', false);
+        $response->assertDontSee('EndereÃƒÆ’Ã‚Â§o', false);
     }
 
     public function test_public_checkout_payment_page_shows_only_allowed_payment_methods(): void
@@ -638,7 +579,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -647,14 +588,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.page', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('Selecione o método de pagamento', false);
-        $response->assertDontSee('Escolha o método disponível para este link e conclua o pedido.', false);
-        $response->assertDontSee('<label for="payment_method">', false);
-        $response->assertSee('Pagar', false);
-        $response->assertSee('Pix', false);
-        $response->assertSee('Boleto', false);
-        $response->assertDontSee('Cartão de crédito', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_public_checkout_details_page_hides_address_when_not_requested(): void
@@ -664,12 +598,15 @@ class RedirectedCheckoutTest extends TestCase
             'request_address' => false,
         ]);
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
-        $response->assertSee('Dados pessoais', false);
+        $response->assertSee('checkout-spa-body', false);
+        $response->assertSee('checkout-spa-data', false);
+        $response->assertSee('checkout-spa-root', false);
+        $response->assertSee('"request_address":false', false);
         $response->assertDontSee('checkout-delivery-form', false);
-        $response->assertSee('Continuar para pagamento', false);
+        $response->assertDontSee('Dados pessoais', false);
     }
 
     public function test_public_checkout_quantity_update_recalculates_the_total(): void
@@ -682,7 +619,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
 
         $this->withSession([])
-            ->get(route('checkout.public.show', $link->public_token))
+            ->get(route('checkout.public.spa.show', $link->public_token))
             ->assertOk();
 
         $session = CheckoutSession::query()
@@ -721,7 +658,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -755,7 +692,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -791,7 +728,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'payment_started',
@@ -801,15 +738,12 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('Nome no cartão', false);
-        $response->assertDontSee('data-step-panel="card-status"', false);
-        $response->assertDontSee('Pagamento em processamento', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_public_checkout_payment_details_page_shows_pix_status_when_transaction_exists(): void
     {
-        $pageSource = file_get_contents(base_path('resources/js/checkout-public.js'));
+        $pageSource = file_get_contents(base_path('resources/js/checkout-spa.jsx'));
 
         $this->assertStringNotContainsString('A página será atualizada automaticamente quando o pagamento for aprovado.', $pageSource);
 
@@ -825,7 +759,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'payment_pending',
@@ -874,20 +808,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('Aguardando confirmação', false);
-        $response->assertSee('Pendente', false);
-        $response->assertSee('data-step-panel="waiting"', false);
-        $response->assertSee('Escaneie o QR Code ou copie o código Pix', false);
-        $response->assertDontSee('Assim que o Pix for pago, a confirmação será atualizada automaticamente.', false);
-        $response->assertSee('00020126580014br.gov.bcb.pix...', false);
-        $response->assertSee('QR Code Pix', false);
-        $response->assertSee('Alterar método', false);
-        $response->assertSee('Pagamento', false);
-        $response->assertDontSee('Pagar', false);
-        $response->assertDontSee('Selecione o método de pagamento', false);
-        $response->assertDontSee('Ver página de confirmação', false);
-        $response->assertDontSee('data-thank-you-link', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_public_checkout_payment_details_page_shows_short_card_status_when_transaction_exists(): void
@@ -906,7 +827,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'payment_pending',
@@ -951,12 +872,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $response->assertOk();
-        $response->assertSee('data-step-panel="card-status"', false);
-        $response->assertSee('Pagamento em processamento', false);
-        $response->assertDontSee('Seu pagamento foi enviado para análise', false);
-        $response->assertDontSee('A confirmação final depende do retorno do gateway', false);
-        $response->assertDontSee('Status', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_public_checkout_payment_details_page_ignores_previous_transaction_when_payment_method_changes(): void
@@ -977,7 +893,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'payment_pending',
@@ -1029,10 +945,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $response->assertOk();
-        $response->assertDontSee('Aguardando confirmação', false);
-        $response->assertDontSee('Pix copia e cola', false);
-        $response->assertDontSee('00020126580014br.gov.bcb.pix.pix-stale', false);
+        $response->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_public_checkout_payment_form_redirects_back_to_payment_details_page_on_success(): void
@@ -1049,7 +962,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'SÃ£o Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1097,7 +1010,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'SÃ£o Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1168,7 +1081,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'SÃ£o Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1193,14 +1106,14 @@ class RedirectedCheckoutTest extends TestCase
 
         $this->app->instance(PaytimePaymentService::class, $paymentService);
 
-        $response = $this->followingRedirects()
-            ->from(route('checkout.public.payment.details', $session->session_token))
-            ->post(route('checkout.public.payment', $session->session_token), [
-                'payment_method' => 'boleto',
-                'installments' => 1,
-            ]);
+        $response = $this->postJson(route('checkout.public.payment', $session->session_token), [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ]);
 
-        $response->assertSee('Data limite de desconto deve ser menor que a data de vencimento', false);
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Data limite de desconto deve ser menor que a data de vencimento');
 
         $this->assertDatabaseHas('checkout_sessions', [
             'id' => $session->id,
@@ -1240,9 +1153,7 @@ class RedirectedCheckoutTest extends TestCase
             'payment_method' => 'pix',
         ]);
 
-        $response = $this->withSession([
-            'checkout_session_token.'.$link->public_token => $session->session_token,
-        ])->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertRedirect(route('checkout.public.thank-you', $session->session_token));
     }
@@ -1362,7 +1273,7 @@ class RedirectedCheckoutTest extends TestCase
             'number' => '100',
             'complement' => 'Apto 12',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'status' => 'delivery_completed',
             'current_step' => 'payment',
@@ -1416,7 +1327,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertJsonPath('order.status', 'paid');
         $response->assertJsonPath('payment_transaction.internal_status', 'paid');
         $response->assertJsonPath('order.customer_name', 'Maria Silva');
-        $response->assertJsonPath('checkout_session.city', 'São Paulo');
+        $response->assertJsonPath('checkout_session.city', 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo');
         $response->assertJsonPath('checkout_session.neighborhood', 'Centro');
         $response->assertJsonPath('payment_transaction.gateway_transaction_id', 'trx-detail-123');
         $response->assertJsonPath('checkout_link.id', $link->id);
@@ -1427,7 +1338,7 @@ class RedirectedCheckoutTest extends TestCase
         $user = $this->makeVendorUser();
         $link = $this->makeCheckoutLink($user, $this->makeProduct($user), ['status' => 'inactive']);
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertStatus(410);
         $response->assertSee('Este checkout não está disponível no momento.');
@@ -1440,7 +1351,7 @@ class RedirectedCheckoutTest extends TestCase
             'expires_at' => now()->subDay(),
         ]);
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertStatus(410);
         $response->assertSee('Este checkout não está disponível no momento.');
@@ -1486,7 +1397,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1526,7 +1437,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1575,7 +1486,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'SÃ£o Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1643,7 +1554,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'SÃ£o Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1675,7 +1586,7 @@ class RedirectedCheckoutTest extends TestCase
         $errors = $response->json('errors');
 
         $this->assertSame(
-            'Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.',
+            'Com duas ou mais parcelas, cada parcela deve ter valor mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­nimo de R$ 5,00.',
             $errors['installments'][0] ?? null
         );
     }
@@ -1698,7 +1609,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1724,7 +1635,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $errors = $response->json('errors');
 
-        $this->assertSame('O documento do titular é inválido.', $errors['card.holder_document'][0] ?? null);
+        $this->assertSame('O documento do titular ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido.', $errors['card.holder_document'][0] ?? null);
     }
 
     public function test_credit_card_payment_creates_order_with_installments(): void
@@ -1745,7 +1656,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1828,7 +1739,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1847,7 +1758,7 @@ class RedirectedCheckoutTest extends TestCase
                 'requires_3ds' => true,
                 'session_id' => '3DS_SESSION_123',
                 'transaction_id' => 'card-checkout-3ds-123',
-                'message' => 'Transação criada, aguardando autenticação 3DS.',
+                'message' => 'TransaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o criada, aguardando autenticaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o 3DS.',
                 'api_transaction' => [
                     '_id' => 'card-checkout-3ds-123',
                     'status' => 'PENDING',
@@ -1904,7 +1815,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -1923,7 +1834,7 @@ class RedirectedCheckoutTest extends TestCase
                 'requires_3ds' => true,
                 'session_id' => '3DS_SESSION_123',
                 'transaction_id' => 'card-checkout-3ds-123',
-                'message' => 'Transação criada, aguardando autenticação 3DS.',
+                'message' => 'TransaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o criada, aguardando autenticaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o 3DS.',
                 'api_transaction' => [
                     '_id' => 'card-checkout-3ds-123',
                     'status' => 'PENDING',
@@ -2035,7 +1946,7 @@ class RedirectedCheckoutTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJsonValidationErrors(['customer_document'])
-            ->assertJsonPath('errors.customer_document.0', 'Digite um CPF válido.');
+            ->assertJsonPath('errors.customer_document.0', 'Digite um CPF vÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido.');
 
         $this->assertDatabaseMissing('checkout_sessions', [
             'id' => $session->id,
@@ -2136,7 +2047,7 @@ class RedirectedCheckoutTest extends TestCase
             'brasilapi.com.br/api/cnpj/v1/*' => Http::response([
                 'razao_social' => 'Empresa Exemplo LTDA',
                 'nome_fantasia' => 'Empresa Exemplo',
-                'email' => '[email protected]',
+                'email' => '[emailÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â protected]',
                 'ddd_telefone_1' => '11988887777',
                 'logradouro' => 'Rua Exemplo',
                 'numero' => '123',
@@ -2147,7 +2058,7 @@ class RedirectedCheckoutTest extends TestCase
                 'cep' => '18.600-000',
                 'qsa' => [
                     [
-                        'nome_socio' => 'João da Silva',
+                        'nome_socio' => 'JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o da Silva',
                         'cnpj_cpf_do_socio' => '123.456.789-09',
                     ],
                 ],
@@ -2159,7 +2070,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('cnpj', '04252011000110');
         $response->assertJsonPath('company_name', 'Empresa Exemplo LTDA');
-        $response->assertJsonPath('email', '[email protected]');
+        $response->assertJsonPath('email', '[emailÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â protected]');
         $response->assertJsonPath('phone', '11988887777');
         $response->assertJsonPath('address.street', 'Rua Exemplo');
         $response->assertJsonPath('address.number', '123');
@@ -2168,7 +2079,7 @@ class RedirectedCheckoutTest extends TestCase
         $response->assertJsonPath('address.city', 'Botucatu');
         $response->assertJsonPath('address.state', 'SP');
         $response->assertJsonPath('address.zip_code', '18600000');
-        $response->assertJsonPath('responsible_name', 'João da Silva');
+        $response->assertJsonPath('responsible_name', 'JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o da Silva');
         $response->assertJsonPath('responsible_document', '12345678909');
         $response->assertJsonPath('trade_name', 'Empresa Exemplo');
     }
@@ -2191,7 +2102,7 @@ class RedirectedCheckoutTest extends TestCase
         $response
             ->assertStatus(422)
             ->assertJsonValidationErrors(['customer_document'])
-            ->assertJsonPath('errors.customer_document.0', 'Digite um CNPJ válido.');
+            ->assertJsonPath('errors.customer_document.0', 'Digite um CNPJ vÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido.');
 
         $this->assertDatabaseMissing('checkout_sessions', [
             'id' => $session->id,
@@ -2207,22 +2118,22 @@ class RedirectedCheckoutTest extends TestCase
         $session = $this->makeCheckoutSession($link);
 
         $response = $this->postJson('/checkout/session/'.$session->session_token.'/delivery', [
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
-            'number' => '100',
-            'complement' => 'Apto 1',
-            'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
-            'state' => 'SP',
-            'recipient_name' => 'Maria Silva',
+            'delivery_zipcode' => '01001000',
+            'delivery_street' => 'Rua A',
+            'delivery_number' => '100',
+            'delivery_complement' => 'Apto 1',
+            'delivery_neighborhood' => 'Centro',
+            'delivery_city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
+            'delivery_state' => 'SP',
+            'delivery_recipient_name' => 'Maria Silva',
         ]);
 
         $response->assertOk();
         $response->assertJsonPath('payment_url', route('checkout.public.payment.page', $session->session_token));
         $this->assertDatabaseHas('checkout_sessions', [
             'id' => $session->id,
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
+            'delivery_zipcode' => '01001000',
+            'delivery_street' => 'Rua A',
             'status' => 'delivery_completed',
             'current_step' => 'payment',
         ]);
@@ -2238,19 +2149,19 @@ class RedirectedCheckoutTest extends TestCase
         ]);
 
         $response = $this->postJson('/checkout/session/'.$session->session_token.'/delivery', [
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
-            'number' => '100',
-            'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
-            'state' => 'SP',
+            'delivery_zipcode' => '01001000',
+            'delivery_street' => 'Rua A',
+            'delivery_number' => '100',
+            'delivery_neighborhood' => 'Centro',
+            'delivery_city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
+            'delivery_state' => 'SP',
         ]);
 
         $response->assertOk();
         $this->assertDatabaseHas('checkout_sessions', [
             'id' => $session->id,
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
+            'delivery_zipcode' => '01001000',
+            'delivery_street' => 'Rua A',
             'complement' => null,
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2272,7 +2183,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2320,7 +2231,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2379,7 +2290,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2433,7 +2344,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2488,7 +2399,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2514,18 +2425,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $pageResponse = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $pageResponse->assertOk();
-        $pageResponse->assertDontSee('Seu boleto', false);
-        $pageResponse->assertSee('data-boleto-block', false);
-        $pageResponse->assertDontSee('Abrir boleto');
-        $pageResponse->assertDontSee('Gerar boleto', false);
-        $pageResponse->assertSee('ABRIR BOLETO', false);
-        $pageResponse->assertSee('Linha digitável', false);
-        $pageResponse->assertSee('Código de barras', false);
-        $pageResponse->assertSee('Pix (copia e cola)', false);
-        $pageResponse->assertSee('data-boleto-barcode', false);
-        $pageResponse->assertSee('data-boleto-digitable-line', false);
-        $pageResponse->assertSee('data-boleto-pix-copy-paste', false);
+        $pageResponse->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_boleto_payment_details_page_shows_loading_state_when_boleto_is_not_ready(): void
@@ -2542,12 +2442,12 @@ class RedirectedCheckoutTest extends TestCase
             'customer_document' => '12345678909',
             'customer_document_type' => 'cpf',
             'customer_phone' => '11999999999',
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
-            'number' => '100',
-            'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
-            'state' => 'SP',
+            'delivery_zipcode' => '01001000',
+            'delivery_street' => 'Rua A',
+            'delivery_number' => '100',
+            'delivery_neighborhood' => 'Centro',
+            'delivery_city' => 'SÃƒÆ’Ã‚Â£o Paulo',
+            'delivery_state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'payment_pending',
             'current_step' => 'payment',
@@ -2595,11 +2495,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $pageResponse = $this->get(route('checkout.public.payment.details', $session->session_token));
 
-        $pageResponse->assertOk();
-        $pageResponse->assertSee('Gerando boleto...', false);
-        $pageResponse->assertSee('AGUARDANDO BOLETO...', false);
-        $pageResponse->assertSee('data-boleto-loading', false);
-        $pageResponse->assertDontSee('ABRIR BOLETO', false);
+        $pageResponse->assertRedirect(route('checkout.public.spa.show', $link->public_token));
     }
 
     public function test_boleto_payment_does_not_fail_when_previous_order_numbers_already_exist(): void
@@ -2620,7 +2516,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Seed Cliente',
             'status' => 'delivery_completed',
@@ -2679,7 +2575,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2719,7 +2615,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2785,24 +2681,30 @@ class RedirectedCheckoutTest extends TestCase
             'customer_document' => '12345678909',
             'customer_document_type' => 'cpf',
             'customer_phone' => '11999999999',
-            'zipcode' => '01001000',
-            'street' => 'Rua A',
-            'number' => '100',
-            'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
-            'state' => 'SP',
+            'delivery_zipcode' => '01001000',
+            'delivery_street' => 'Rua A',
+            'delivery_number' => '100',
+            'delivery_neighborhood' => 'Centro',
+            'delivery_city' => 'SÃƒÆ’Ã‚Â£o Paulo',
+            'delivery_state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
             'current_step' => 'payment',
             'payment_method' => 'pix',
         ]);
 
-        $response = $this->get(route('checkout.public.show', $link->public_token));
+        $response = $this->withSession([
+            'checkout_session_token.'.$link->public_token => $session->session_token,
+        ])->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
-        $response->assertSee('Dados pessoais', false);
-        $response->assertSee('Endereço', false);
-        $response->assertDontSee('Aguardando confirmação', false);
+        $response->assertSee('checkout-spa-body', false);
+        $response->assertSee('checkout-spa-data', false);
+        $response->assertSee('checkout-spa-root', false);
+        $response->assertSee('"checkoutPageMode":"spa"', false);
+        $response->assertSee('"currentStep":"payment"', false);
+        $response->assertSee('"payment_method":"pix"', false);
+        $response->assertDontSee('Aguardando confirmaÃ§Ã£o', false);
         $response->assertDontSee('Seu boleto', false);
     }
 
@@ -2821,7 +2723,7 @@ class RedirectedCheckoutTest extends TestCase
             'customer_document_type' => 'cpf',
             'customer_phone' => '11911112222',
             'zipcode' => '07174000',
-            'street' => 'Avenida Papa João Paulo I',
+            'street' => 'Avenida Papa JoÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo I',
             'number' => '1000',
             'neighborhood' => 'Jardim Presidente Dutra',
             'city' => 'Guarulhos',
@@ -2843,7 +2745,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response
             ->assertStatus(422)
-            ->assertJsonPath('message', 'O documento do pagador é inválido.');
+            ->assertJsonPath('message', 'O documento do pagador ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© invÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lido.');
     }
 
     public function test_boleto_payment_redirects_back_with_flash_error_when_document_is_invalid(): void
@@ -2860,12 +2762,12 @@ class RedirectedCheckoutTest extends TestCase
             'customer_document' => '11111111111',
             'customer_document_type' => 'cpf',
             'customer_phone' => '11911112222',
-            'zipcode' => '07174000',
-            'street' => 'Avenida Papa João Paulo I',
-            'number' => '1000',
-            'neighborhood' => 'Jardim Presidente Dutra',
-            'city' => 'Guarulhos',
-            'state' => 'SP',
+            'delivery_zipcode' => '07174000',
+            'delivery_street' => 'Avenida Papa JoÃƒÆ’Ã‚Â£o Paulo I',
+            'delivery_number' => '1000',
+            'delivery_neighborhood' => 'Jardim Presidente Dutra',
+            'delivery_city' => 'Guarulhos',
+            'delivery_state' => 'SP',
             'recipient_name' => 'Professor Prado',
             'status' => 'delivery_completed',
             'current_step' => 'payment',
@@ -2875,14 +2777,15 @@ class RedirectedCheckoutTest extends TestCase
             'payment_method' => 'boleto',
         ])->assertRedirect(route('checkout.public.payment.details', $session->session_token));
 
-        $response = $this->followingRedirects()
-            ->from(route('checkout.public.payment.details', $session->session_token))
-            ->post(route('checkout.public.payment', $session->session_token), [
-                'payment_method' => 'boleto',
-                'installments' => 1,
-            ]);
+        $response = $this->postJson(route('checkout.public.payment', $session->session_token), [
+            'payment_method' => 'boleto',
+            'installments' => 1,
+        ]);
 
-        $response->assertSee('O documento do pagador é inválido.', false);
+        $response
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'O documento do pagador ÃƒÂ© invÃƒÂ¡lido.');
+
         $this->assertDatabaseMissing('payment_transactions', [
             'payment_method' => 'boleto',
             'checkout_session_id' => $session->id,
@@ -2966,7 +2869,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -2986,7 +2889,7 @@ class RedirectedCheckoutTest extends TestCase
 
         $response
             ->assertStatus(422)
-            ->assertJsonPath('message', 'O valor mínimo permitido para o boleto é de dez reais.');
+            ->assertJsonPath('message', 'O valor mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­nimo permitido para o boleto ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© de dez reais.');
 
         $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseCount('payment_transactions', 0);
@@ -3010,7 +2913,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'SÃ£o Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -3043,7 +2946,7 @@ class RedirectedCheckoutTest extends TestCase
         ]);
 
         $response->assertOk();
-        $response->assertJsonPath('message', 'Operação realizada com sucesso');
+        $response->assertJsonPath('message', 'OperaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o realizada com sucesso');
         $response->assertJsonPath('payment_transaction.boleto_url', 'https://example.test/boleto.pdf');
         $response->assertJsonPath('payment_transaction.gateway_transaction_id', null);
 
@@ -3079,7 +2982,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -3149,7 +3052,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -3210,7 +3113,7 @@ class RedirectedCheckoutTest extends TestCase
             'street' => 'Rua A',
             'number' => '100',
             'neighborhood' => 'Centro',
-            'city' => 'São Paulo',
+            'city' => 'SÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o Paulo',
             'state' => 'SP',
             'recipient_name' => 'Maria Silva',
             'status' => 'delivery_completed',
@@ -3449,7 +3352,7 @@ class RedirectedCheckoutTest extends TestCase
             'seller_id' => $seller->id,
             'name' => 'Produto '.random_int(1, 9999),
             'slug' => 'produto-'.random_int(1, 9999),
-            'description' => 'Descrição do produto',
+            'description' => 'DescriÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o do produto',
             'short_description' => 'Resumo',
             'sku' => 'SKU-'.random_int(1, 9999),
             'price' => 100.00,

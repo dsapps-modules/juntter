@@ -66,7 +66,6 @@ class PaytimeClientTest extends TestCase
             ]);
 
         $boletoService = new BoletoService($apiClient);
-
         $service = new PaytimeClient($apiClient, $boletoService);
         $response = $service->createPixPayment($order);
 

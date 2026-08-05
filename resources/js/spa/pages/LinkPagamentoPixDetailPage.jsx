@@ -12,6 +12,7 @@ import { Alert, Button, Card, Col, Empty, Input, Row, Skeleton, Space, Tag, Typo
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import LinkPagamentoResumoCard from '../components/link-pagamento/LinkPagamentoResumoCard';
 
 const defaultLink = {
     id: null,
@@ -25,7 +26,14 @@ const defaultLink = {
     created_at: null,
     url_completa: '',
     dados_cliente_preenchidos: {},
+    payment_summary: {},
 };
+
+function formatMoneyFromCents(value) {
+    const cents = Number(value ?? 0);
+
+    return `R$ ${(Number.isNaN(cents) ? 0 : cents / 100).toFixed(2).replace('.', ',')}`;
+}
 
 export default function LinkPagamentoPixDetailPage() {
     const navigate = useNavigate();
@@ -58,6 +66,7 @@ export default function LinkPagamentoPixDetailPage() {
                 setLink({
                     ...defaultLink,
                     ...(data.link ?? {}),
+                    payment_summary: data.payment_summary ?? {},
                 });
             } catch (fetchError) {
                 if (fetchError.name !== 'AbortError') {
@@ -170,9 +179,6 @@ export default function LinkPagamentoPixDetailPage() {
                                         Link de Pagamento PIX
                                     </Typography.Title>
                                 </Space>
-                                <Typography.Paragraph className="spa-pix-detail-description">
-                                    {link.descricao || 'Detalhes do link PIX'}
-                                </Typography.Paragraph>
                             </div>
 
                             <Space wrap>
@@ -200,7 +206,7 @@ export default function LinkPagamentoPixDetailPage() {
                             </Space>
                         </div>
 
-                        <Card className="spa-pix-detail-info-card" title="Informacoes do Link" bordered={false}>
+                        <Card className="spa-pix-detail-info-card" title={link.descricao || 'Informações do link'} bordered={false}>
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 4 }} />
                             ) : (
@@ -251,21 +257,11 @@ export default function LinkPagamentoPixDetailPage() {
                             )}
                         </Card>
 
-                        <Card className="spa-pix-detail-link-card" title="Link de Pagamento PIX" bordered={false}>
+                        <Card className="spa-pix-detail-link-card" bordered={false}>
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 5 }} />
                             ) : (
                                 <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                                    <div className="spa-pix-detail-empty-code">
-                                        <QrcodeOutlined />
-                                        <Typography.Text type="secondary">
-                                            QR Code sera gerado quando o cliente acessar o link.
-                                        </Typography.Text>
-                                        <Typography.Text type="secondary">
-                                            Compartilhe este link com seus clientes para pagamentos PIX.
-                                        </Typography.Text>
-                                    </div>
-
                                     <div className="spa-pix-detail-url-box">
                                         <Input value={link.url_completa} readOnly size="large" />
                                         <Button
@@ -275,6 +271,10 @@ export default function LinkPagamentoPixDetailPage() {
                                             aria-label="Copiar link"
                                         />
                                     </div>
+
+                                    <Typography.Text type="secondary">
+                                        Compartilhe este link com seus clientes para pagamentos PIX.
+                                    </Typography.Text>
 
                                     <Space wrap>
                                         <Button type="primary" icon={<ThunderboltOutlined />} onClick={() => window.open(link.url_completa, '_blank', 'noopener,noreferrer')}>
@@ -357,38 +357,15 @@ export default function LinkPagamentoPixDetailPage() {
                                 </Typography.Title>
                             </div>
 
-                            <Card size="small" title="Resumo do link" bordered={false}>
-                                <Space direction="vertical" size={12} style={{ width: '100%' }}>
-                                    <div>
-                                        <Typography.Text type="secondary">Código único</Typography.Text>
-                                        <div>
-                                            <Typography.Text code>{link.codigo_unico}</Typography.Text>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Typography.Text type="secondary">Valor e status</Typography.Text>
-                                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                            <Tag color="green">{`R$ ${Number(link.valor).toFixed(2).replace('.', ',')}`}</Tag>
-                                            <Tag color={statusColor}>{link.status === 'ATIVO' ? 'Ativo' : link.status}</Tag>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Typography.Text type="secondary">Prazo</Typography.Text>
-                                        <div>
-                                            <Typography.Text>{expirationDate}</Typography.Text>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <Typography.Text type="secondary">Criado em</Typography.Text>
-                                        <div>
-                                            <Typography.Text>{createdAt}</Typography.Text>
-                                        </div>
-                                    </div>
-                                </Space>
-                            </Card>
+                            <LinkPagamentoResumoCard
+                                link={link}
+                                paymentSummary={link.payment_summary ?? {}}
+                                title="Resumo do link"
+                                expirationLabel={expirationDate}
+                                createdAtLabel={createdAtLabel}
+                                statusLabel={statusLabel}
+                                statusColor={statusColor}
+                            />
 
                             <Card size="small" title="Acoes recomendadas" bordered={false}>
                                 <Space direction="vertical" size={10} style={{ width: '100%' }}>
@@ -423,4 +400,7 @@ export default function LinkPagamentoPixDetailPage() {
         </Row>
     );
 }
+
+
+
 

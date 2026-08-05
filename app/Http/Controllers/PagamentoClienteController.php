@@ -7,6 +7,7 @@ use App\Models\LinkPagamento;
 use App\Models\Vendedor;
 use App\Services\BoletoService;
 use App\Services\CreditoService;
+use App\Services\PaytimePricingCacheService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
 use Illuminate\Http\Request;
@@ -25,16 +26,20 @@ class PagamentoClienteController extends Controller
 
     protected $boletoService;
 
+    protected $pricingCacheService;
+
     public function __construct(
         TransacaoService $transacaoService,
         CreditoService $creditoService,
         PixService $pixService,
-        BoletoService $boletoService
+        BoletoService $boletoService,
+        PaytimePricingCacheService $pricingCacheService
     ) {
         $this->transacaoService = $transacaoService;
         $this->creditoService = $creditoService;
         $this->pixService = $pixService;
         $this->boletoService = $boletoService;
+        $this->pricingCacheService = $pricingCacheService;
     }
 
     /**
@@ -56,6 +61,7 @@ class PagamentoClienteController extends Controller
             return view('pagamento.cliente', [
                 'link' => $link,
                 'sellerBrand' => $this->resolveSellerBrand($link),
+                'paymentSummary' => $this->resolvePaymentSummary($link),
             ]);
 
         } catch (\Exception $e) {
@@ -271,11 +277,12 @@ class PagamentoClienteController extends Controller
 
             // Pegar dados diretamente do link (sem validação de request)
             $dadosCliente = $link->dados_cliente['preenchidos'] ?? [];
+            $amountCents = $this->resolvePixAmountCents($link);
 
             // Preparar dados para a API PIX (igual à cobrança única)
             $dadosPix = [
                 'payment_type' => 'PIX',
-                'amount' => $link->valor_centavos,
+                'amount' => $amountCents,
                 'interest' => $link->juros,
                 'client' => [
                     'first_name' => $dadosCliente['nome'] ?? 'Cliente',
@@ -384,6 +391,69 @@ class PagamentoClienteController extends Controller
 
             return response()->json(['error' => 'Erro ao processar PIX: '.$e->getMessage()], 500);
         }
+    }
+
+    private function resolvePixAmountCents(LinkPagamento $link): int
+    {
+        return $this->resolvePixPaymentSummary($link)['total_amount_cents'];
+    }
+
+    /**
+     * @return array{
+     *     base_amount_cents: int,
+     *     fee_amount_cents: int,
+     *     total_amount_cents: int,
+     *     base_amount_formatted: string,
+     *     fee_amount_formatted: string,
+     *     total_amount_formatted: string
+     * }
+     */
+    private function resolvePixPaymentSummary(LinkPagamento $link): array
+    {
+        $baseAmountCents = (int) $link->valor_centavos;
+        $feeAmountCents = $this->resolvePixFeeCents($link);
+
+        $totalAmountCents = $baseAmountCents + max(0, $feeAmountCents);
+
+        return [
+            'base_amount_cents' => $baseAmountCents,
+            'fee_amount_cents' => max(0, $feeAmountCents),
+            'total_amount_cents' => $totalAmountCents,
+            'base_amount_formatted' => $this->formatMoney($baseAmountCents),
+            'fee_amount_formatted' => $this->formatMoney(max(0, $feeAmountCents)),
+            'total_amount_formatted' => $this->formatMoney($totalAmountCents),
+        ];
+    }
+
+    private function resolvePaymentSummary(LinkPagamento $link): array
+    {
+        $summary = $this->resolvePixPaymentSummary($link);
+
+        return [
+            'base_amount_cents' => $summary['base_amount_cents'],
+            'base_amount_formatted' => $summary['base_amount_formatted'],
+            'fee_amount_cents' => $summary['fee_amount_cents'],
+            'fee_amount_formatted' => $summary['fee_amount_formatted'],
+            'total_amount_cents' => $summary['total_amount_cents'],
+            'total_amount_formatted' => $summary['total_amount_formatted'],
+        ];
+    }
+
+    private function formatMoney(int $amountCents): string
+    {
+        return 'R$ '.number_format($amountCents / 100, 2, ',', '.');
+    }
+
+    private function resolvePixFeeCents(LinkPagamento $link): int
+    {
+        if ($link->juros !== 'CLIENT') {
+            return 0;
+        }
+
+        $establishmentId = (string) $link->estabelecimento_id;
+        $feeCents = $this->pricingCacheService->resolvePixOutFeeCents($establishmentId);
+
+        return max(0, $feeCents);
     }
 
     /**

@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\LinkPagamento;
+use App\Models\PaytimeEstablishment;
 use App\Models\User;
+use App\Services\PaytimePricingCacheService;
+use App\Services\PixService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -98,6 +101,130 @@ class PagamentoClienteControllerTest extends TestCase
         $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
     }
 
+    public function test_public_payment_page_shows_customer_fee_in_the_pix_total(): void
+    {
+        $this->makeVendorUser('155161');
+        $this->makePricingSnapshot('155161', 365);
+        $link = $this->makePixLink('155161', 'CLIENT', 6000);
+
+        $response = $this->get(route('pagamento.link', $link->codigo_unico));
+
+        $response->assertOk();
+        $response->assertSee('Valor', false);
+        $response->assertSee('Taxa do Pix', false);
+        $response->assertSee('R$ 3,65', false);
+        $response->assertSee('Total', false);
+        $response->assertSee('R$ 63,65', false);
+    }
+
+    public function test_public_payment_page_uses_the_pix_fee_from_the_pricing_cache(): void
+    {
+        $this->makeVendorUser('155163');
+        $link = $this->makePixLink('155163', 'CLIENT', 6000);
+
+        $this->mock(PaytimePricingCacheService::class, function ($mock): void {
+            $mock->shouldReceive('resolvePixOutFeeCents')
+                ->once()
+                ->with('155163')
+                ->andReturn(365);
+        });
+
+        $response = $this->get(route('pagamento.link', $link->codigo_unico));
+
+        $response->assertOk();
+        $response->assertSee('Taxa do Pix', false);
+        $response->assertSee('R$ 3,65', false);
+        $response->assertSee('R$ 63,65', false);
+    }
+
+    public function test_processar_pix_applies_customer_fee_when_link_charges_client(): void
+    {
+        $this->makeVendorUser('155161');
+        $this->makePricingSnapshot('155161', 365);
+        $link = $this->makePixLink('155161', 'CLIENT', 6000);
+
+        $capturedPayload = [];
+
+        $this->mock(PixService::class, function ($mock) use (&$capturedPayload): void {
+            $mock->shouldReceive('criarTransacaoPix')
+                ->once()
+                ->with(\Mockery::on(function (array $payload) use (&$capturedPayload): bool {
+                    $capturedPayload = $payload;
+
+                    return true;
+                }))
+                ->andReturn([
+                    '_id' => 'pix_123',
+                    'status' => 'PENDING',
+                    'amount' => 6365,
+                    'emv' => '000201010212',
+                ]);
+
+            $mock->shouldReceive('obterQrCodePix')
+                ->once()
+                ->with('pix_123')
+                ->andReturn([
+                    'qrcode' => 'base64-image',
+                    'emv' => '000201010212',
+                ]);
+        });
+
+        $response = $this->postJson('/pagamento/'.$link->codigo_unico.'/pix');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('pix_data.amount', 6365)
+            ->assertJsonPath('pix_data.status', 'PENDING');
+
+        $this->assertSame(6365, $capturedPayload['amount'] ?? null);
+        $this->assertSame('CLIENT', $capturedPayload['interest'] ?? null);
+    }
+
+    public function test_processar_pix_keeps_base_amount_when_establishment_pays_fees(): void
+    {
+        $this->makeVendorUser('155162');
+        $this->makePricingSnapshot('155162', 365);
+        $link = $this->makePixLink('155162', 'ESTABLISHMENT', 6000);
+
+        $capturedPayload = [];
+
+        $this->mock(PixService::class, function ($mock) use (&$capturedPayload): void {
+            $mock->shouldReceive('criarTransacaoPix')
+                ->once()
+                ->with(\Mockery::on(function (array $payload) use (&$capturedPayload): bool {
+                    $capturedPayload = $payload;
+
+                    return true;
+                }))
+                ->andReturn([
+                    '_id' => 'pix_456',
+                    'status' => 'PENDING',
+                    'amount' => 6000,
+                    'emv' => '000201010212',
+                ]);
+
+            $mock->shouldReceive('obterQrCodePix')
+                ->once()
+                ->with('pix_456')
+                ->andReturn([
+                    'qrcode' => 'base64-image',
+                    'emv' => '000201010212',
+                ]);
+        });
+
+        $response = $this->postJson('/pagamento/'.$link->codigo_unico.'/pix');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('pix_data.amount', 6000)
+            ->assertJsonPath('pix_data.status', 'PENDING');
+
+        $this->assertSame(6000, $capturedPayload['amount'] ?? null);
+        $this->assertSame('ESTABLISHMENT', $capturedPayload['interest'] ?? null);
+    }
+
     private function makeVendorUser(string $establishmentId, ?string $companyLogoPath = null): User
     {
         $user = User::factory()->create([
@@ -128,6 +255,48 @@ class PagamentoClienteControllerTest extends TestCase
             'juros' => 'CLIENT',
             'status' => 'ATIVO',
             'tipo_pagamento' => 'CARTAO',
+        ]);
+    }
+
+    private function makePricingSnapshot(string $establishmentId, int $pixFeeCents): PaytimeEstablishment
+    {
+        return PaytimeEstablishment::query()->create([
+            'id' => (int) $establishmentId,
+            'first_name' => 'Estabelecimento',
+            'active' => true,
+            'status' => 'APPROVED',
+            'fees_banking_json' => [
+                [
+                    'id' => 8,
+                    'fees' => [
+                        'pix' => $pixFeeCents,
+                        'dynamic_pix' => $pixFeeCents,
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    private function makePixLink(string $establishmentId, string $juros, int $valorCentavos = 4500): LinkPagamento
+    {
+        return LinkPagamento::query()->create([
+            'estabelecimento_id' => $establishmentId,
+            'codigo_unico' => LinkPagamento::gerarCodigoUnico(),
+            'descricao' => 'Pix Maluco',
+            'valor' => $valorCentavos / 100,
+            'valor_centavos' => $valorCentavos,
+            'parcelas' => [1],
+            'juros' => $juros,
+            'status' => 'ATIVO',
+            'tipo_pagamento' => 'PIX',
+            'dados_cliente' => [
+                'nome_obrigatorio' => false,
+                'email_obrigatorio' => false,
+                'telefone_obrigatorio' => false,
+                'documento_obrigatorio' => false,
+                'endereco_obrigatorio' => false,
+                'preenchidos' => [],
+            ],
         ]);
     }
 }

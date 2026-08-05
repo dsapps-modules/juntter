@@ -20,6 +20,7 @@ class PaytimeTransaction extends Model
         'amount',
         'original_amount',
         'fees',
+        'pix_customer_fee_cents',
         'installments',
         'gateway_key',
         'authorization_code',
@@ -41,6 +42,7 @@ class PaytimeTransaction extends Model
         'amount' => 'integer',
         'original_amount' => 'integer',
         'fees' => 'integer',
+        'pix_customer_fee_cents' => 'integer',
     ];
 
     /**

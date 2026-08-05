@@ -14,7 +14,7 @@ class CheckoutPublicDocumentMaskTest extends TestCase
         $this->assertStringContainsString('name="card[holder_document]"', $componentSource);
         $this->assertStringContainsString('placeholder="CPF/CNPJ"', $componentSource);
         $this->assertStringContainsString('onInput={handleDocumentMask}', $componentSource);
-        $this->assertStringContainsString("target.name === 'card[holder_document]'", $componentSource);
+        $this->assertStringContainsString("fieldKey === 'card[holder_document]'", $componentSource);
         $this->assertStringContainsString('formatDocument', $componentSource);
     }
 

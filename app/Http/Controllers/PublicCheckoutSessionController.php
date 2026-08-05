@@ -200,6 +200,8 @@ class PublicCheckoutSessionController extends Controller
             $recipientName = $request->input('customer_name');
         }
 
+        $nextStep = $checkoutSession->checkoutLink?->request_address ? 'delivery' : 'payment';
+
         $checkoutSession->update([
             'customer_name' => $request->input('customer_name'),
             'customer_email' => $request->input('customer_email'),
@@ -221,7 +223,7 @@ class PublicCheckoutSessionController extends Controller
             'customer_responsible_document' => $request->input('customer_responsible_document'),
             'customer_responsible_birth_date' => $request->input('customer_responsible_birth_date'),
             'status' => 'identification_completed',
-            'current_step' => 'delivery',
+            'current_step' => $nextStep,
             'last_activity_at' => now(),
         ]);
 
@@ -237,7 +239,9 @@ class PublicCheckoutSessionController extends Controller
         return response()->json([
             'message' => 'Identificação salva com sucesso.',
             'checkout_session' => $checkoutSession->fresh(),
-            'next_url' => route('checkout.public.delivery.page', $checkoutSession->session_token),
+            'next_url' => $nextStep === 'delivery'
+                ? route('checkout.public.delivery.page', $checkoutSession->session_token)
+                : route('checkout.public.payment.page', $checkoutSession->session_token),
         ]);
     }
 

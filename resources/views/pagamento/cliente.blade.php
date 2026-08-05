@@ -111,6 +111,16 @@
                             <!-- Formulário PIX -->
                             <form id="pixForm">
                                 @csrf
+                                @php
+                                    $pixPrefilledData = data_get($link->dados_cliente, 'preenchidos', []);
+                                    $pixHasPrefilledData = is_array($pixPrefilledData) && (
+                                        filled(data_get($pixPrefilledData, 'nome')) ||
+                                        filled(data_get($pixPrefilledData, 'sobrenome')) ||
+                                        filled(data_get($pixPrefilledData, 'email')) ||
+                                        filled(data_get($pixPrefilledData, 'telefone')) ||
+                                        filled(data_get($pixPrefilledData, 'documento'))
+                                    );
+                                @endphp
                                 <!-- QR Code PIX -->
                                 <div class="pix-qr-container" id="pixContainer">
                                     <div class="row">
@@ -151,12 +161,7 @@
                                 </div>
 
                                 <!-- Dados do Cliente (opcionais para PIX - só aparece se tiver dados preenchidos) -->
-                                @if (isset($link->dados_cliente['preenchidos']) &&
-                                        ($link->dados_cliente['preenchidos']['nome'] ||
-                                            $link->dados_cliente['preenchidos']['sobrenome'] ||
-                                            $link->dados_cliente['preenchidos']['email'] ||
-                                            $link->dados_cliente['preenchidos']['telefone'] ||
-                                            $link->dados_cliente['preenchidos']['documento']))
+                                @if ($pixHasPrefilledData)
                                     <div class="form-section">
                                         <h6 class="section-title">
                                             <i class="fas fa-user me-2"></i>
@@ -166,22 +171,22 @@
                                         <!-- Resumo dos dados preenchidos -->
                                         <div class="data-summary mb-3">
                                             <small><strong>Dados pré-preenchidos:</strong></small><br>
-                                            @if ($link->dados_cliente['preenchidos']['nome'] || $link->dados_cliente['preenchidos']['sobrenome'])
+                                            @if (filled(data_get($pixPrefilledData, 'nome')) || filled(data_get($pixPrefilledData, 'sobrenome')))
                                                 <small><strong>Nome:</strong>
-                                                    {{ $link->dados_cliente['preenchidos']['nome'] }}
-                                                    {{ $link->dados_cliente['preenchidos']['sobrenome'] }}</small><br>
+                                                    {{ data_get($pixPrefilledData, 'nome') }}
+                                                    {{ data_get($pixPrefilledData, 'sobrenome') }}</small><br>
                                             @endif
-                                            @if ($link->dados_cliente['preenchidos']['email'])
+                                            @if (filled(data_get($pixPrefilledData, 'email')))
                                                 <small><strong>Email:</strong>
-                                                    {{ $link->dados_cliente['preenchidos']['email'] }}</small><br>
+                                                    {{ data_get($pixPrefilledData, 'email') }}</small><br>
                                             @endif
-                                            @if ($link->dados_cliente['preenchidos']['telefone'])
+                                            @if (filled(data_get($pixPrefilledData, 'telefone')))
                                                 <small><strong>Telefone:</strong>
-                                                    {{ $link->dados_cliente['preenchidos']['telefone'] }}</small><br>
+                                                    {{ data_get($pixPrefilledData, 'telefone') }}</small><br>
                                             @endif
-                                            @if ($link->dados_cliente['preenchidos']['documento'])
+                                            @if (filled(data_get($pixPrefilledData, 'documento')))
                                                 <small><strong>Documento:</strong>
-                                                    {{ $link->dados_cliente['preenchidos']['documento'] }}</small><br>
+                                                    {{ data_get($pixPrefilledData, 'documento') }}</small><br>
                                             @endif
                                         </div>
                                     </div>
@@ -250,7 +255,10 @@
                                     </h6>
 
                                     <!-- Resumo dos dados preenchidos -->
-                                    @if (isset($link->dados_cliente['preenchidos']) && $link->dados_cliente['preenchidos'])
+                                    @php
+                                        $boletoPrefilledData = data_get($link->dados_cliente, 'preenchidos', []);
+                                    @endphp
+                                    @if (is_array($boletoPrefilledData) && $boletoPrefilledData !== [])
                                         <div class="prefilled-data-card">
                                             <div class="prefilled-header">
                                                 <div class="prefilled-icon">
@@ -261,30 +269,30 @@
                                                     <small>Informações já cadastradas</small>
                                                 </div>
                                             </div>
-                                            <div class="prefilled-content">
-                                                <div class="data-item">
-                                                    <i class="fas fa-user"></i>
-                                                    <span>{{ $link->dados_cliente['preenchidos']['nome'] ?? '' }}
-                                                        {{ $link->dados_cliente['preenchidos']['sobrenome'] ?? '' }}</span>
+                                                <div class="prefilled-content">
+                                                    <div class="data-item">
+                                                        <i class="fas fa-user"></i>
+                                                    <span>{{ data_get($boletoPrefilledData, 'nome', '') }}
+                                                        {{ data_get($boletoPrefilledData, 'sobrenome', '') }}</span>
                                                 </div>
                                                 <div class="data-item">
                                                     <i class="fas fa-envelope"></i>
-                                                    <span>{{ $link->dados_cliente['preenchidos']['email'] ?? '' }}</span>
+                                                    <span>{{ data_get($boletoPrefilledData, 'email', '') }}</span>
                                                 </div>
                                                 <div class="data-item">
                                                     <i class="fas fa-phone"></i>
-                                                    <span>{{ $link->dados_cliente['preenchidos']['telefone'] ?? '' }}</span>
+                                                    <span>{{ data_get($boletoPrefilledData, 'telefone', '') }}</span>
                                                 </div>
                                                 <div class="data-item">
                                                     <i class="fas fa-id-card"></i>
-                                                    <span>{{ $link->dados_cliente['preenchidos']['documento'] ?? '' }}</span>
+                                                    <span>{{ data_get($boletoPrefilledData, 'documento', '') }}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     @endif
 
                                     <!-- Endereço (obrigatório para Boleto) -->
-                                    @if (isset($link->dados_cliente['preenchidos']['endereco']) && $link->dados_cliente['preenchidos']['endereco'])
+                                    @if (filled(data_get($boletoPrefilledData, 'endereco')))
                                         <div class="prefilled-data-card">
                                             <div class="prefilled-header">
                                                 <div class="prefilled-icon">
@@ -298,19 +306,19 @@
                                             <div class="prefilled-content">
                                                 <div class="data-item">
                                                     <i class="fas fa-road"></i>
-                                                    <span>{{ $link->dados_cliente['preenchidos']['endereco']['rua'] ?? '' }},
-                                                        {{ $link->dados_cliente['preenchidos']['endereco']['numero'] ?? '' }}</span>
+                                                    <span>{{ data_get($boletoPrefilledData, 'endereco.rua', '') }},
+                                                        {{ data_get($boletoPrefilledData, 'endereco.numero', '') }}</span>
                                                 </div>
                                                 <div class="data-item">
                                                     <i class="fas fa-map-pin"></i>
-                                                    <span>{{ $link->dados_cliente['preenchidos']['endereco']['bairro'] ?? '' }}
+                                                    <span>{{ data_get($boletoPrefilledData, 'endereco.bairro', '') }}
                                                         -
-                                                        {{ $link->dados_cliente['preenchidos']['endereco']['cidade'] ?? '' }}/{{ $link->dados_cliente['preenchidos']['endereco']['estado'] ?? '' }}</span>
+                                                        {{ data_get($boletoPrefilledData, 'endereco.cidade', '') }}/{{ data_get($boletoPrefilledData, 'endereco.estado', '') }}</span>
                                                 </div>
                                                 <div class="data-item">
                                                     <i class="fas fa-mail-bulk"></i>
                                                     <span>CEP:
-                                                        {{ $link->dados_cliente['preenchidos']['endereco']['cep'] ?? '' }}</span>
+                                                        {{ data_get($boletoPrefilledData, 'endereco.cep', '') }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -334,7 +342,7 @@
             </div>
 
         <!-- Order Summary -->
-        <x-form.pagina-pagamento-resumo :link="$link" />
+        <x-form.pagina-pagamento-resumo :link="$link" :payment-summary="$paymentSummary ?? null" />
     </div>
 
         <!-- Loading -->

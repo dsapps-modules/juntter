@@ -24,6 +24,43 @@ class PaytimePricingCacheService
         return max(0, (int) config('services.paytime.payout_fee_cents', 100));
     }
 
+    public function resolvePixFeePercent(string $establishmentId): ?float
+    {
+        $contractedPlan = $this->resolveContractedPlan($establishmentId);
+
+        if ($contractedPlan === null) {
+            return null;
+        }
+
+        $flags = data_get($contractedPlan, 'flags', []);
+
+        if (! is_array($flags)) {
+            return null;
+        }
+
+        foreach ($flags as $flag) {
+            if (strtoupper((string) data_get($flag, 'name', '')) !== 'BACEN') {
+                continue;
+            }
+
+            $fee = data_get($flag, 'fees.pix');
+
+            if (is_numeric($fee)) {
+                return max(0.0, (float) $fee);
+            }
+
+            if (is_array($fee)) {
+                foreach ($fee as $value) {
+                    if (is_numeric($value)) {
+                        return max(0.0, (float) $value);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     /**
      * @return array<string, mixed>|null
      */

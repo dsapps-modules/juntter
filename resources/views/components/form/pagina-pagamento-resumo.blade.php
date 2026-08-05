@@ -1,4 +1,12 @@
-@props(['link'])
+@props(['link', 'paymentSummary' => null])
+
+@php
+    $paymentSummary = is_array($paymentSummary) ? $paymentSummary : [];
+    $totalAmountFormatted = $paymentSummary['total_amount_formatted'] ?? $link->valor_formatado;
+    $baseAmountFormatted = $paymentSummary['base_amount_formatted'] ?? $link->valor_formatado;
+    $feeAmountFormatted = $paymentSummary['fee_amount_formatted'] ?? 'R$ 0,00';
+    $feeAmountCents = (int) ($paymentSummary['fee_amount_cents'] ?? 0);
+@endphp
 
 <div class="col-lg-4">
     <div class="order-summary">
@@ -13,8 +21,14 @@
             </div>
             <div class="order-item">
                 <span class="order-item-label">Valor</span>
-                <span class="order-item-value">{{ $link->valor_formatado }}</span>
+                <span class="order-item-value">{{ $baseAmountFormatted }}</span>
             </div>
+            @if ($link->tipo_pagamento === 'PIX' && $link->juros === 'CLIENT' && $feeAmountCents > 0)
+                <div class="order-item">
+                    <span class="order-item-label">Taxa do Pix</span>
+                    <span class="order-item-value">{{ $feeAmountFormatted }}</span>
+                </div>
+            @endif
             @if ($link->tipo_pagamento === 'CARTAO' && $link->parcelas_maximas > 1)
                 <div class="order-item">
                     <span class="order-item-label">Parcelamento</span>
@@ -37,7 +51,7 @@
             <div class="order-total">
                 <div class="order-item">
                     <span class="order-item-label">Total</span>
-                    <span class="order-item-value">{{ $link->valor_formatado }}</span>
+                    <span class="order-item-value">{{ $totalAmountFormatted }}</span>
                 </div>
             </div>
 

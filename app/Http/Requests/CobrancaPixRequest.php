@@ -27,6 +27,7 @@ class CobrancaPixRequest extends FormRequest
             'payment_type' => 'required|in:PIX',
             'amount' => 'required|string',
             'interest' => 'required|in:CLIENT,ESTABLISHMENT',
+            'descricao' => 'nullable|string|max:1000',
             'client.first_name' => 'nullable|string|max:20',
             'client.last_name' => 'nullable|string|max:255',
             'client.document' => [
@@ -54,6 +55,7 @@ class CobrancaPixRequest extends FormRequest
         return [
             'amount' => 'Informe o valor do pix',
             'interest' => 'Informe quem paga as taxas: o cliente ou o estabelecimento',
+            'descricao.max' => 'A descrição pode ter até 1000 caracteres',
             'client.first_name' => 'O primeiro nome do cliente deve ter, no máximo, 20 caracteres',
             'client.last_name' => 'O sobrenome do cliente deve ter, no máximo, 128 caracteres',
             'client.document' => 'O número do documento informando deve ter, no máximo, 20 caracteres',

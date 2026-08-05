@@ -4,6 +4,7 @@ import {
     CreditCardOutlined,
     EyeOutlined,
     LinkOutlined,
+    QrcodeOutlined,
     ReloadOutlined,
     SendOutlined,
 } from '@ant-design/icons';
@@ -331,34 +332,31 @@ function statusTone(status) {
     switch (formatStatus(status)) {
         case 'Pago':
         case 'Aprovado':
-            return 'green';
+            return 'blue';
         case 'Pendente':
         case 'Processando':
             return 'gold';
         case 'Falha':
         case 'Cancelado':
         case 'Estornado':
-            return 'red';
+            return 'volcano';
         default:
-            return 'blue';
+            return 'default';
     }
 }
 
-function statusDotColor(status) {
-    switch (formatStatus(status)) {
-        case 'Pago':
-        case 'Aprovado':
-            return '#22c55e';
-        case 'Pendente':
-        case 'Processando':
-            return '#f59e0b';
-        case 'Falha':
-        case 'Cancelado':
-        case 'Estornado':
-            return '#ef4444';
-        default:
-            return '#d1d5db';
+function getRowIndicatorColor(record) {
+    const rawStatus = String(record?.raw_status ?? record?.status ?? '').toLowerCase();
+
+    if (rawStatus.includes('inativo') || rawStatus.includes('inactive') || rawStatus.includes('cancel') || rawStatus.includes('falh') || rawStatus.includes('estorn')) {
+        return '#9ca3af';
     }
+
+    return '#22c55e';
+}
+
+function getRowKindIcon(record) {
+    return record.kind === 'link' ? <LinkOutlined /> : <QrcodeOutlined />;
 }
 
 function copyTextToClipboard(text, successMessage, errorMessage) {
@@ -713,21 +711,21 @@ export default function CobrancaCartaoCreditoPage() {
                     <span
                         aria-hidden="true"
                         style={{
-                            display: 'inline-block',
-                            width: 8,
-                            height: 8,
-                            marginTop: 8,
-                            borderRadius: 999,
+                            color: getRowIndicatorColor(record),
+                            display: 'inline-flex',
                             flex: '0 0 auto',
-                            backgroundColor: statusDotColor(record.status),
+                            fontSize: 15,
+                            marginTop: 4,
                         }}
-                    />
+                    >
+                        {getRowKindIcon(record)}
+                    </span>
                     <Space direction="vertical" size={2}>
                         <Typography.Text strong className="spa-pix-row-title">
-                            {record.title}
+                            {record.display_title || record.title}
                         </Typography.Text>
                         <Typography.Text type="secondary" className="spa-pix-row-subtitle">
-                            {record.description}
+                            {record.display_subtitle || record.description}
                         </Typography.Text>
                     </Space>
                 </Space>

@@ -1,7 +1,9 @@
 import {
     CreditCardOutlined,
     EyeOutlined,
+    LinkOutlined,
     ReloadOutlined,
+    QrcodeOutlined,
 } from '@ant-design/icons';
 import {
     Alert,
@@ -66,6 +68,41 @@ const filterMatcher = {
     Pendentes: (item) => ['Pendente', 'Processando'].includes(item.status),
     Falhas: (item) => ['Falha', 'Cancelado', 'Estornado'].includes(item.status),
 };
+
+function getPaymentStatusColor(status) {
+    switch (status) {
+        case 'Pago':
+            return 'blue';
+        case 'Pendente':
+            return 'gold';
+        case 'Aprovado':
+            return 'green';
+        case 'Processando':
+            return 'cyan';
+        case 'Falha':
+            return 'volcano';
+        case 'Cancelado':
+            return 'red';
+        case 'Estornado':
+            return 'purple';
+        default:
+            return 'default';
+    }
+}
+
+function getRowIndicatorColor(record) {
+    const rawStatus = String(record?.raw_status ?? record?.status ?? '').toLowerCase();
+
+    if (rawStatus.includes('inativo') || rawStatus.includes('inactive') || rawStatus.includes('cancel') || rawStatus.includes('falh') || rawStatus.includes('estorn')) {
+        return '#9ca3af';
+    }
+
+    return '#22c55e';
+}
+
+function getRowKindIcon(record) {
+    return record.kind === 'link' ? <LinkOutlined /> : <QrcodeOutlined />;
+}
 
 export default function CobrancaPage() {
     const currentPeriod = getCurrentPeriod();
@@ -177,10 +214,24 @@ export default function CobrancaPage() {
             title: 'Cliente',
             dataIndex: 'customer',
             render: (_, record) => (
-                <div>
-                    <Typography.Text strong>{record.customer}</Typography.Text>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <span
+                        aria-hidden="true"
+                        style={{
+                            color: getRowIndicatorColor(record),
+                            display: 'inline-flex',
+                            flex: '0 0 auto',
+                            fontSize: 15,
+                            marginTop: 2,
+                        }}
+                    >
+                        {getRowKindIcon(record)}
+                    </span>
                     <div>
-                        <Typography.Text type="secondary">{record.establishment}</Typography.Text>
+                        <Typography.Text strong>{record.customer}</Typography.Text>
+                        <div>
+                            <Typography.Text type="secondary">{record.establishment}</Typography.Text>
+                        </div>
                     </div>
                 </div>
             ),
@@ -193,7 +244,7 @@ export default function CobrancaPage() {
         {
             title: 'Status',
             dataIndex: 'status',
-            render: (value) => <Tag color={value === 'Pago' ? 'green' : value === 'Falha' ? 'volcano' : 'gold'}>{value}</Tag>,
+            render: (value) => <Tag color={getPaymentStatusColor(value)}>{value}</Tag>,
         },
         {
             title: 'Valor',

@@ -78,6 +78,8 @@ class CobrancaOverviewController extends Controller
             $establishmentName = $transaction->establishment?->display_name;
             $metadata = is_array($transaction->metadata) ? $transaction->metadata : [];
             $pixData = data_get($metadata, 'pix', []);
+            $requestData = is_array(data_get($metadata, 'request')) ? data_get($metadata, 'request') : [];
+            $transactionDescription = trim((string) data_get($requestData, 'descricao', ''));
 
             if ($establishmentName === null && $user->vendedor && $user->vendedor->estabelecimento_id !== null) {
                 $establishmentName = $user->vendedor->estabelecimento_id;
@@ -90,9 +92,13 @@ class CobrancaOverviewController extends Controller
                 'type' => $this->formatType($transaction->type),
                 'title' => $transaction->customer_name ?? 'Cliente',
                 'description' => $establishmentName ?? 'Transação Pix',
+                'display_title' => $transactionDescription !== '' ? $transactionDescription : 'QR Code',
+                'display_subtitle' => (string) $transaction->id,
                 'status' => $this->formatStatus($transaction->status),
                 'amount' => $this->formatMoney((int) $transaction->amount),
                 'fee' => $this->formatMoney((int) $transaction->fees),
+                'pix_customer_fee_cents' => (int) ($transaction->pix_customer_fee_cents ?? 0),
+                'pix_customer_fee' => $this->formatMoney((int) ($transaction->pix_customer_fee_cents ?? 0)),
                 'customer' => $transaction->customer_name ?? 'Cliente',
                 'establishment' => $establishmentName ?? 'Estabelecimento',
                 'pix_code' => data_get($pixData, 'pix_code'),
@@ -110,6 +116,8 @@ class CobrancaOverviewController extends Controller
                 'code' => $link->codigo_unico,
                 'title' => $link->titulo ?? $link->descricao ?? 'Link de pagamento PIX',
                 'description' => $link->descricao ?? 'Link de pagamento PIX',
+                'display_title' => $link->descricao ?? $link->titulo ?? 'Link de pagamento PIX',
+                'display_subtitle' => $link->codigo_unico,
                 'status' => $this->formatLinkStatus($link->status),
                 'amount' => $link->valor_formatado,
                 'fee' => 'R$ 0,00',
@@ -131,6 +139,8 @@ class CobrancaOverviewController extends Controller
             'status' => 'Sem dados',
             'amount' => $this->formatMoney(0),
             'fee' => $this->formatMoney(0),
+            'pix_customer_fee_cents' => 0,
+            'pix_customer_fee' => $this->formatMoney(0),
             'customer' => 'Sem cliente',
             'establishment' => 'Sem estabelecimento',
             'created_at_sort' => 0,

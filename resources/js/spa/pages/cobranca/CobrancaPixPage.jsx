@@ -52,6 +52,7 @@ const defaultOverview = {
 const initialValues = {
     amount: '',
     interest: 'ESTABLISHMENT',
+    descricao: '',
     client: {
         first_name: '',
         last_name: '',
@@ -242,56 +243,65 @@ export default function CobrancaPixPage() {
 
     const linkCustomerEnabled = Form.useWatch('dados_cliente_preenchidos_habilitado', linkForm);
 
-    function getStatusColor(status) {
-        switch (status) {
-            case 'Ativo':
-                return 'gold';
-            case 'Pago':
-            case 'Aprovado':
-                return 'green';
-            case 'Inativo':
-                return 'red';
-            case 'Cancelado':
-            case 'Falha':
-            case 'Estornado':
-                return 'volcano';
-            default:
-                return 'gold';
-        }
-    }
-
     function getPaymentStatus(record) {
-        return record.raw_status === 'PAID' || record.status === 'Pago' ? 'Pago' : 'Pendente';
-    }
+        const rawStatus = String(record.raw_status ?? record.status ?? '').toUpperCase();
 
-    function getTransactionStatusTone(status) {
-        switch (status) {
-            case 'Ativo':
-            case 'Pago':
-            case 'Aprovado':
-                return 'green';
-            case 'Inativo':
-            case 'Cancelado':
-            case 'Falha':
-            case 'Estornado':
-                return 'red';
+        switch (rawStatus) {
+            case 'PAID':
+                return 'Pago';
+            case 'APPROVED':
+                return 'Aprovado';
+            case 'PROCESSING':
+            case 'PENDING':
+                return 'Pendente';
+            case 'FAILED':
+                return 'Falha';
+            case 'CANCELED':
+                return 'Cancelado';
+            case 'REFUNDED':
+                return 'Estornado';
             default:
-                return 'gray';
+                return record.status === 'Pago' ? 'Pago' : 'Pendente';
         }
     }
 
-    function getTransactionStatusColor(record) {
+    function getPaymentStatusColor(record) {
+        const status = getPaymentStatus(record);
+
+        switch (status) {
+            case 'Pago':
+                return 'blue';
+            case 'Pendente':
+                return 'gold';
+            case 'Aprovado':
+                return 'green';
+            case 'Falha':
+                return 'volcano';
+            case 'Cancelado':
+                return 'red';
+            case 'Estornado':
+                return 'purple';
+            default:
+                return 'default';
+        }
+    }
+
+    function getRowKindIcon(record) {
+        return record.kind === 'link' ? <LinkOutlined /> : <QrcodeOutlined />;
+    }
+
+    function getRowIndicatorColor(record) {
         const rawStatus = String(record?.raw_status ?? record?.status ?? '').toLowerCase();
 
-        if (rawStatus.includes('ativo') || rawStatus.includes('paid') || rawStatus.includes('aprov')) {
+        if (rawStatus.includes('inativo') || rawStatus.includes('inactive') || rawStatus.includes('cancel') || rawStatus.includes('falh') || rawStatus.includes('estorn')) {
+            return '#9ca3af';
+        }
+
+        if (rawStatus.includes('ativo') || rawStatus.includes('active') || rawStatus.includes('paid') || rawStatus.includes('pending') || rawStatus.includes('aprov')) {
             return '#22c55e';
         }
 
-        if (rawStatus.includes('inativo') || rawStatus.includes('cancel') || rawStatus.includes('falh') || rawStatus.includes('estorn')) {
-            return '#ef4444';
-        }
-
-        return '#d1d5db';
+        return '#22c55e';
     }
 
     function openTransactionDetails(record) {
@@ -350,21 +360,21 @@ export default function CobrancaPixPage() {
                     <span
                         aria-hidden="true"
                         style={{
-                            display: 'inline-block',
-                            width: 8,
-                            height: 8,
-                            marginTop: 8,
-                            borderRadius: 999,
+                            color: getRowIndicatorColor(record),
+                            display: 'inline-flex',
                             flex: '0 0 auto',
-                            backgroundColor: getTransactionStatusColor(record),
+                            fontSize: 15,
+                            marginTop: 4,
                         }}
-                    />
+                    >
+                        {getRowKindIcon(record)}
+                    </span>
                     <Space direction="vertical" size={2}>
                         <Typography.Text strong className="spa-pix-row-title">
-                            {record.title}
+                            {record.display_title || record.title}
                         </Typography.Text>
                         <Typography.Text type="secondary" className="spa-pix-row-subtitle">
-                            {record.kind === 'link' ? record.code : record.description}
+                            {record.display_subtitle || (record.kind === 'link' ? record.code : record.description)}
                         </Typography.Text>
                     </Space>
                 </Space>
@@ -380,8 +390,13 @@ export default function CobrancaPixPage() {
                         {value}
                     </Typography.Text>
                     <Typography.Text type="secondary" className="spa-pix-fee-value">
-                        {record.kind === 'link' ? 'Link de pagamento' : `Taxa: ${record.fee}`}
+                        {record.kind === 'link' ? 'Link de pagamento' : `Taxa operacional: ${record.fee}`}
                     </Typography.Text>
+                    {record.kind === 'link' ? null : (
+                        <Typography.Text type="secondary" className="spa-pix-fee-value">
+                            {`Taxa cobrada do cliente: ${record.pix_customer_fee ?? 'R$ 0,00'}`}
+                        </Typography.Text>
+                    )}
                 </Space>
             ),
             width: 160,
@@ -392,7 +407,7 @@ export default function CobrancaPixPage() {
             render: (value, record) => (
                 <Space direction="vertical" size={4}>
                     <Typography.Text>{value}</Typography.Text>
-                    <Tag color={getStatusColor(getPaymentStatus(record))}>{getPaymentStatus(record)}</Tag>
+                    <Tag color={getPaymentStatusColor(record)}>{getPaymentStatus(record)}</Tag>
                 </Space>
             ),
             width: 180,
@@ -738,6 +753,11 @@ export default function CobrancaPixPage() {
                                     className="spa-pix-form"
                                 >
                                     <Row gutter={[16, 16]}>
+                                        <Col xs={24} md={24}>
+                                            <Form.Item label="Descrição" name="descricao">
+                                                <Input size="large" placeholder="Descreva a cobrança PIX" />
+                                            </Form.Item>
+                                        </Col>
                                         <Col xs={24} md={12}>
                                             <Form.Item
                                                 label="Valor da transação"
@@ -1127,9 +1147,17 @@ export default function CobrancaPixPage() {
                             </div>
                         </Col>
                         <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Descrição</Typography.Text>
+                            <div>
+                                <Typography.Text strong>
+                                    {selectedTransaction.display_title || selectedTransaction.title || 'QR Code'}
+                                </Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
                             <Typography.Text type="secondary">Status</Typography.Text>
                             <div>
-                                <Tag color={getStatusColor(selectedTransaction.status)}>{selectedTransaction.status}</Tag>
+                                <Tag color={getPaymentStatusColor(selectedTransaction)}>{getPaymentStatus(selectedTransaction)}</Tag>
                             </div>
                         </Col>
                         <Col xs={24} md={12}>
@@ -1154,6 +1182,20 @@ export default function CobrancaPixPage() {
                             <Typography.Text type="secondary">Taxa</Typography.Text>
                             <div>
                                 <Typography.Text strong>{selectedTransaction.fee}</Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">Taxa cobrada do cliente</Typography.Text>
+                            <div>
+                                <Typography.Text strong>
+                                    {selectedTransaction.pix_customer_fee ?? 'R$ 0,00'}
+                                </Typography.Text>
+                            </div>
+                        </Col>
+                        <Col xs={24} md={12}>
+                            <Typography.Text type="secondary">ID do QR Code</Typography.Text>
+                            <div>
+                                <Typography.Text strong>{selectedTransaction.display_subtitle || selectedTransaction.id}</Typography.Text>
                             </div>
                         </Col>
                         {selectedTransaction.kind === 'transaction' ? (
