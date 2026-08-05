@@ -208,4 +208,56 @@ class PaytimeTransactionWebhookTest extends TestCase
 
         $this->assertTrue(true);
     }
+
+    public function test_it_preserves_existing_request_metadata_when_syncing_the_same_billet(): void
+    {
+        PaytimeTransaction::query()->create([
+            'external_id' => 'boleto-123',
+            'establishment_id' => 155463,
+            'type' => 'BILLET',
+            'status' => 'PENDING',
+            'amount' => 9850,
+            'original_amount' => 10100,
+            'fees' => 250,
+            'installments' => 1,
+            'metadata' => [
+                'request' => [
+                    'juros' => 'CLIENT',
+                    'base_amount_cents' => 10100,
+                    'charged_amount_cents' => 10350,
+                    'tax_amount_cents' => 250,
+                ],
+            ],
+        ]);
+
+        $payload = [
+            'event' => 'updated-billet-status',
+            'event_date' => '2026-04-14T13:00:00.000Z',
+            'data' => [
+                '_id' => 'boleto-123',
+                'status' => 'PAID',
+                'amount' => 9850,
+                'original_amount' => 10100,
+                'fees' => 250,
+                'type' => 'BILLET',
+                'installments' => 1,
+                'customer' => [
+                    'first_name' => 'Joao',
+                    'last_name' => 'Silva',
+                    'document' => '10068114004',
+                ],
+            ],
+        ];
+
+        $service = app(PaytimeTransactionSyncService::class);
+        $service->syncWebhookPayload($payload);
+
+        $transaction = PaytimeTransaction::query()->firstOrFail();
+
+        $this->assertSame('PAID', $transaction->status);
+        $this->assertSame('CLIENT', data_get($transaction->metadata, 'request.juros'));
+        $this->assertSame(10100, data_get($transaction->metadata, 'request.base_amount_cents'));
+        $this->assertSame(10350, data_get($transaction->metadata, 'request.charged_amount_cents'));
+        $this->assertSame(250, data_get($transaction->metadata, 'request.tax_amount_cents'));
+    }
 }

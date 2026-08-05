@@ -83,6 +83,7 @@ class DocumentRequestValidationTest extends TestCase
                     'amount' => '10,00',
                     'expiration' => now()->addDay()->format('Y-m-d'),
                     'recharge' => false,
+                    'juros' => 'ESTABLISHMENT',
                     'client' => [
                         'first_name' => 'Maria',
                         'last_name' => 'Silva',

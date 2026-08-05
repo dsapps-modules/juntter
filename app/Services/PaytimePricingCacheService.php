@@ -31,6 +31,11 @@ class PaytimePricingCacheService
         return max(0, (int) round($baseAmountCents * ($feePercent / 100), 0, PHP_ROUND_HALF_UP));
     }
 
+    public function resolveBoletoIncomingFeeCents(string $establishmentId): int
+    {
+        return max(0, (int) config('services.paytime.billet_fee_cents', 250));
+    }
+
     public function resolvePixFeePercent(string $establishmentId): ?float
     {
         $contractedPlan = $this->resolveContractedPlan($establishmentId);

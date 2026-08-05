@@ -66,6 +66,17 @@ function statusColor(status) {
     }
 }
 
+function formatTaxPayer(value) {
+    switch (String(value ?? '').toUpperCase()) {
+        case 'CLIENT':
+            return 'Cliente';
+        case 'ESTABLISHMENT':
+            return 'Estabelecimento';
+        default:
+            return formatText(value);
+    }
+}
+
 function normalizeInstructionLabel(name) {
     switch (name) {
         case 'late_fee':
@@ -306,6 +317,12 @@ export default function CobrancaBoletoDetailPage() {
                                                         {formatCurrency(boleto.fees)}
                                                     </Typography.Title>
                                                 </div>
+                                                <div>
+                                                    <Typography.Text type="secondary">Quem paga as taxas</Typography.Text>
+                                                    <Typography.Title level={5} style={{ marginTop: 4 }}>
+                                                        {formatTaxPayer(boleto.juros)}
+                                                    </Typography.Title>
+                                                </div>
                                             </div>
                                         </Col>
 
@@ -481,6 +498,9 @@ export default function CobrancaBoletoDetailPage() {
                                     </Typography.Text>
                                     <Typography.Text type="secondary">
                                         Taxas: {formatCurrency(boleto.fees)}
+                                    </Typography.Text>
+                                    <Typography.Text type="secondary">
+                                        Quem paga as taxas: {formatTaxPayer(boleto.juros)}
                                     </Typography.Text>
                                 </Space>
                             </Card>

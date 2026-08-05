@@ -28,6 +28,7 @@ class BoletoRequest extends FormRequest
             'expiration' => 'required|date_format:Y-m-d',
             'payment_limit_date' => 'nullable|date_format:Y-m-d|after:expiration',
             'recharge' => 'nullable|boolean',
+            'juros' => 'required|in:CLIENT,ESTABLISHMENT',
             'client.first_name' => 'required|string|max:25',
             'client.last_name' => 'required|string|max:128',
             'client.document' => [
@@ -55,6 +56,14 @@ class BoletoRequest extends FormRequest
             'instruction.interest.amount' => 'required|string',
             'instruction.discount.amount' => 'required|string',
             'instruction.discount.limit_date' => 'required|date_format:Y-m-d|before:expiration',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'juros.required' => 'Selecione quem paga as taxas.',
+            'juros.in' => 'A opção informada para quem paga as taxas é inválida.',
         ];
     }
 }

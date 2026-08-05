@@ -34,6 +34,11 @@ import { useNavigate } from 'react-router-dom';
 import MoneyInputField from '../../components/form/MoneyInputField';
 import { formatDocument, isValidCnpj, isValidDocument } from '../../documentValidation';
 
+const interestOptions = [
+    { label: 'Cliente', value: 'CLIENT' },
+    { label: 'Estabelecimento', value: 'ESTABLISHMENT' },
+];
+
 const stateOptions = [
     'AC',
     'AL',
@@ -128,6 +133,7 @@ const boletoInitialValues = {
     expiration: dayjs().add(1, 'day'),
     payment_limit_date: dayjs().add(2, 'day'),
     recharge: false,
+    juros: 'ESTABLISHMENT',
     client: {
         first_name: '',
         last_name: '',
@@ -578,6 +584,7 @@ export default function CobrancaBoletoPage() {
                     expiration: values.expiration ? values.expiration.format('YYYY-MM-DD') : null,
                     payment_limit_date: values.payment_limit_date ? values.payment_limit_date.format('YYYY-MM-DD') : null,
                     recharge: false,
+                    juros: values.juros ?? 'ESTABLISHMENT',
                     client: {
                         first_name: values.client?.first_name ?? '',
                         last_name: values.client?.last_name ?? '',
@@ -999,7 +1006,7 @@ export default function CobrancaBoletoPage() {
                                                     name={['instruction', 'late_fee', 'amount']}
                                                     rules={[{ required: true, message: 'Informe a multa.' }]}
                                                 >
-                                                    <Input size="large" placeholder="2,00" />
+                                                    <MoneyInputField size="large" placeholder="0,00" showCurrencySymbol={false} />
                                                 </Form.Item>
                                             </Col>
                                             <Col xs={24} md={8}>
@@ -1008,7 +1015,7 @@ export default function CobrancaBoletoPage() {
                                                     name={['instruction', 'interest', 'amount']}
                                                     rules={[{ required: true, message: 'Informe os juros.' }]}
                                                 >
-                                                    <Input size="large" placeholder="1,00" />
+                                                    <MoneyInputField size="large" placeholder="0,00" showCurrencySymbol={false} />
                                                 </Form.Item>
                                             </Col>
                                             <Col xs={24} md={8}>
@@ -1017,19 +1024,28 @@ export default function CobrancaBoletoPage() {
                                                     name={['instruction', 'discount', 'amount']}
                                                     rules={[{ required: true, message: 'Informe o desconto.' }]}
                                                 >
-                                                    <Input size="large" placeholder="5,00" />
+                                                    <MoneyInputField size="large" placeholder="0,00" showCurrencySymbol={false} />
                                                 </Form.Item>
                                             </Col>
                                         </Row>
 
                                         <Row gutter={[16, 16]}>
-                                            <Col xs={24}>
+                                            <Col xs={24} md={12}>
                                                 <Form.Item
                                                     label="Limite do desconto"
                                                     name={['instruction', 'discount', 'limit_date']}
                                                     rules={[{ required: true, message: 'Informe o limite do desconto.' }]}
                                                 >
                                                     <DatePicker size="large" style={{ width: '100%' }} format="DD/MM/YYYY" />
+                                                </Form.Item>
+                                            </Col>
+                                            <Col xs={24} md={12}>
+                                                <Form.Item
+                                                    label="Quem paga as taxas"
+                                                    name="juros"
+                                                    rules={[{ required: true, message: 'Selecione quem paga as taxas.' }]}
+                                                >
+                                                    <Select size="large" options={interestOptions} placeholder="Estabelecimento" />
                                                 </Form.Item>
                                             </Col>
                                         </Row>

@@ -638,16 +638,17 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('color: #ffffff', $stylesSource);
     }
 
-    public function test_the_cartao_credito_page_does_not_retain_the_old_recent_links_logic(): void
+    public function test_the_cartao_credito_page_renders_recent_card_links_section(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
 
         $this->assertStringNotContainsString('const [recentLinksState, setRecentLinksState] = useState([]);', $pageSource);
-        $this->assertStringNotContainsString('setRecentLinksState((current) => (current.length === 0 ? (data.recent_card_links ?? []).slice(0, 2) : current));', $pageSource);
         $this->assertStringNotContainsString('async function refreshRecentLinks()', $pageSource);
         $this->assertStringNotContainsString('await refreshRecentLinks();', $pageSource);
         $this->assertStringNotContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
-        $this->assertStringNotContainsString('recent_card_links', $pageSource);
+        $this->assertStringContainsString('recent_card_links', $pageSource);
+        $this->assertStringContainsString('Links de cartão recentes', $pageSource);
+        $this->assertStringContainsString('Nenhum link de cartão criado', $pageSource);
     }
 
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void

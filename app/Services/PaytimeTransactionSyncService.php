@@ -20,7 +20,13 @@ class PaytimeTransactionSyncService
             'external_id' => $externalId,
         ]);
 
-        $transaction->fill($this->mapAttributes($data, $context));
+        $attributes = $this->mapAttributes($data, $context);
+        $attributes['metadata'] = $this->mergeMetadata(
+            is_array($transaction->metadata) ? $transaction->metadata : [],
+            is_array($attributes['metadata'] ?? null) ? $attributes['metadata'] : [],
+        );
+
+        $transaction->fill($attributes);
 
         if (! $transaction->exists) {
             $transaction->created_at = $this->resolveDate(
@@ -102,6 +108,22 @@ class PaytimeTransactionSyncService
         $name = trim((string) ($customer['name'] ?? ''));
 
         return $name !== '' ? $name : null;
+    }
+
+    private function mergeMetadata(array $existingMetadata, array $newMetadata): array
+    {
+        $mergedMetadata = $newMetadata;
+
+        if (isset($existingMetadata['request']) && ! isset($mergedMetadata['request'])) {
+            $mergedMetadata['request'] = $existingMetadata['request'];
+        } elseif (isset($existingMetadata['request']) && is_array($mergedMetadata['request'] ?? null)) {
+            $mergedMetadata['request'] = array_replace(
+                is_array($existingMetadata['request']) ? $existingMetadata['request'] : [],
+                $mergedMetadata['request'],
+            );
+        }
+
+        return $mergedMetadata;
     }
 
     private function resolveDate(mixed $value): ?Carbon

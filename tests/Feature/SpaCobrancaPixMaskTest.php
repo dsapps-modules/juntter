@@ -21,6 +21,8 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertStringContainsString("import { formatDocument, isValidDocument } from '../../documentValidation';", $pageSource);
         $this->assertSame(3, substr_count($pageSource, 'normalize={formatDocument}'));
         $this->assertSame(3, substr_count($pageSource, 'maxLength={18}'));
+        $this->assertStringNotContainsString('Configure um link para pagamento com cartão de crédito.', $pageSource);
+        $this->assertStringNotContainsString('className="spa-pix-link-section-title"', $pageSource);
     }
 
     public function test_cobranca_cartao_credito_page_uses_phone_mask_in_both_phone_fields(): void
@@ -129,6 +131,18 @@ class SpaCobrancaPixMaskTest extends TestCase
         $this->assertSame(2, substr_count($pageSource, 'normalize={formatPhone}'));
         $this->assertSame(4, substr_count($pageSource, 'inputMode="numeric"'));
         $this->assertSame(2, substr_count($pageSource, 'maxLength={15}'));
+    }
+
+    public function test_cobranca_pix_page_hides_client_data_until_the_switch_is_enabled(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaPixPage.jsx'));
+
+        $this->assertStringContainsString("const customerDetailsEnabled = Form.useWatch('client_details_enabled', form);", $pageSource);
+        $this->assertStringContainsString('name="client_details_enabled"', $pageSource);
+        $this->assertStringContainsString('{customerDetailsEnabled ? (', $pageSource);
+        $this->assertStringContainsString('Dados do cliente (opcional)', $pageSource);
+        $this->assertStringContainsString('client: values.client_details_enabled', $pageSource);
+        $this->assertStringNotContainsString('Dados do cliente (opcionais)', $pageSource);
     }
 
     public function test_document_validation_helper_switches_to_cnpj_when_the_document_has_more_than_eleven_digits(): void

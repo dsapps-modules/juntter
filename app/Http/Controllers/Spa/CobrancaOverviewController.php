@@ -190,6 +190,7 @@ class CobrancaOverviewController extends Controller
                     'type' => $this->formatLinkType($link->tipo_pagamento ?? 'CARTAO'),
                     'expires_at' => $link->data_expiracao?->format('d/m/Y H:i') ?? 'Sem expiração',
                     'code' => $link->codigo_unico,
+                    'detail_href' => '/links-pagamento/'.$link->id,
                 ];
             })
             ->values();

@@ -468,6 +468,26 @@ class CobrancaController extends Controller
         return $baseAmountCents + $this->pricingCacheService->resolvePixIncomingFeeCents($establishmentId, $baseAmountCents);
     }
 
+    private function resolveBoletoFeeCents(): int
+    {
+        $establishmentId = (string) auth()->user()?->vendedor?->estabelecimento_id;
+
+        if ($establishmentId === '') {
+            return 0;
+        }
+
+        return $this->pricingCacheService->resolveBoletoIncomingFeeCents($establishmentId);
+    }
+
+    private function resolveBoletoChargeAmountCents(int $baseAmountCents, string $interest): int
+    {
+        if (strtoupper(trim($interest)) !== 'CLIENT') {
+            return $baseAmountCents;
+        }
+
+        return $baseAmountCents + $this->resolveBoletoFeeCents();
+    }
+
     /**
      * Persiste a cobrança PIX localmente para que ela fique disponível na listagem.
      *
@@ -475,6 +495,70 @@ class CobrancaController extends Controller
      * @param  array<string, mixed>|null  $qrCode
      * @param  array<string, mixed>  $pixData
      */
+    private function persistBoletoTransaction(Request $request, array $boleto, int $baseAmountCents, string $interest, int $taxAmountCents): void
+    {
+        $externalId = $boleto['_id'] ?? $boleto['id'] ?? null;
+
+        if (! is_string($externalId) || trim($externalId) === '') {
+            return;
+        }
+
+        $establishmentId = auth()->user()?->vendedor?->estabelecimento_id;
+        $chargedAmountCents = strtoupper(trim($interest)) === 'CLIENT'
+            ? $baseAmountCents + $taxAmountCents
+            : $baseAmountCents;
+        $customerFeeCents = strtoupper(trim($interest)) === 'CLIENT' ? $taxAmountCents : 0;
+        $validated = method_exists($request, 'validated') ? $request->validated() : [];
+        $client = is_array(data_get($validated, 'client')) ? data_get($validated, 'client') : [];
+        $customerName = trim(implode(' ', array_filter([
+            is_string(data_get($client, 'first_name')) ? data_get($client, 'first_name') : null,
+            is_string(data_get($client, 'last_name')) ? data_get($client, 'last_name') : null,
+        ])));
+        $customerDocument = data_get($client, 'document');
+        $status = strtoupper((string) ($boleto['status'] ?? 'PENDING'));
+
+        PaytimeTransaction::query()->updateOrCreate(
+            ['external_id' => $externalId],
+            [
+                'establishment_id' => $establishmentId,
+                'type' => 'BILLET',
+                'status' => $status !== '' ? $status : 'PENDING',
+                'amount' => $chargedAmountCents,
+                'original_amount' => $baseAmountCents,
+                'fees' => $taxAmountCents,
+                'installments' => 1,
+                'customer_name' => $customerName !== '' ? $customerName : null,
+                'customer_document' => is_string($customerDocument) && trim($customerDocument) !== '' ? $customerDocument : null,
+                'metadata' => [
+                    'boleto' => [
+                        'transaction_id' => $externalId,
+                        'boleto_url' => $boleto['boleto_url'] ?? null,
+                        'boleto_barcode' => $boleto['boleto_barcode'] ?? null,
+                        'boleto_digitable_line' => $boleto['boleto_digitable_line'] ?? null,
+                    ],
+                    'request' => [
+                        'descricao' => trim((string) data_get($validated, 'instruction.description', '')) ?: null,
+                        'juros' => $interest,
+                        'interest' => $interest,
+                        'base_amount_cents' => $baseAmountCents,
+                        'charged_amount_cents' => $chargedAmountCents,
+                        'tax_amount_cents' => $taxAmountCents,
+                        'customer_fee_cents' => $customerFeeCents,
+                        'payment_limit_date' => data_get($validated, 'payment_limit_date'),
+                        'expiration' => data_get($validated, 'expiration'),
+                        'client' => [
+                            'first_name' => data_get($client, 'first_name'),
+                            'last_name' => data_get($client, 'last_name'),
+                            'document' => data_get($client, 'document'),
+                            'email' => data_get($client, 'email'),
+                            'phone' => data_get($client, 'phone'),
+                        ],
+                    ],
+                ],
+            ],
+        );
+    }
+
     private function persistPixTransaction(Request $request, array $transacao, ?array $qrCode, array $pixData): void
     {
         $externalId = $transacao['_id'] ?? null;
@@ -539,7 +623,15 @@ class CobrancaController extends Controller
             $dados = $request->validated();
 
             // Converter valores para centavos usando função helper
-            $dados['amount'] = $this->converterValorParaCentavosSeguro($dados['amount']);
+            $baseAmountCents = $this->converterValorParaCentavosSeguro($dados['amount']);
+            $interest = strtoupper(trim((string) data_get($dados, 'juros', 'ESTABLISHMENT')));
+            $taxAmountCents = 0;
+
+            if ($interest === 'CLIENT') {
+                $taxAmountCents = $this->resolveBoletoFeeCents();
+            }
+
+            $dados['amount'] = $baseAmountCents + $taxAmountCents;
 
             $dados = $this->boletoService->organiza($dados);
 
@@ -547,6 +639,14 @@ class CobrancaController extends Controller
             $dados['instruction']['late_fee']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['late_fee']['amount'], 0.0) / 100.0;
             $dados['instruction']['interest']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['interest']['amount'], 0.0) / 100.0;
             $dados['instruction']['discount']['amount'] = $this->converterValorParaCentavosSeguro($dados['instruction']['discount']['amount'], 0.0) / 100.0;
+
+            Log::info('Boleto charge request prepared', [
+                'user_id' => auth()->id(),
+                'establishment_id' => auth()->user()?->vendedor?->estabelecimento_id,
+                'base_amount_cents' => $baseAmountCents,
+                'final_amount_cents' => $dados['amount'],
+                'interest' => $interest,
+            ]);
 
             // Garantir tipos booleanos corretos exigidos pela API (normalização simples)
             $dados['recharge'] = $request->boolean('recharge');
@@ -578,6 +678,8 @@ class CobrancaController extends Controller
                 'amount' => $boleto['amount'] ?? null,
                 'status' => $boleto['status'] ?? null,
             ];
+
+            $this->persistBoletoTransaction($request, $boleto, $baseAmountCents, $interest, $taxAmountCents);
 
             return $this->respondBoletoSuccess($request, 'Boleto criado com sucesso!', $filteredBoletoData);
         } catch (\Exception $e) {

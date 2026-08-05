@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\PaytimeEstablishment;
+use App\Models\PaytimeTransaction;
 use App\Models\User;
 use App\Services\BoletoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -142,9 +143,91 @@ class SpaCobrancaBoletoTest extends TestCase
             ->assertJsonPath('boleto.external_id', 'boleto-123')
             ->assertJsonPath('boleto.status_label', 'Pendente')
             ->assertJsonPath('boleto.boleto_url', 'https://example.test/boleto.pdf')
+            ->assertJsonPath('boleto.juros', 'CLIENT')
             ->assertJsonPath('boleto.customer.first_name', 'Reginaldo')
             ->assertJsonPath('boleto.establishment.name', 'CELCOIN')
             ->assertJsonPath('boleto.billing_instructions.0.name', 'late_fee');
+    }
+
+    public function test_cobranca_boleto_detail_prefers_local_request_fee_payer_when_available(): void
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->vendedor()->create([
+            'estabelecimento_id' => '5001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]);
+
+        PaytimeTransaction::query()->create([
+            'external_id' => 'boleto-456',
+            'establishment_id' => '5001',
+            'type' => 'BILLET',
+            'status' => 'PENDING',
+            'amount' => 9850,
+            'original_amount' => 10100,
+            'fees' => 250,
+            'installments' => 1,
+            'metadata' => [
+                'request' => [
+                    'juros' => 'CLIENT',
+                    'base_amount_cents' => 10000,
+                    'charged_amount_cents' => 10250,
+                    'tax_amount_cents' => 250,
+                    'customer_fee_cents' => 250,
+                ],
+            ],
+        ]);
+
+        $boletoService = $this->createMock(BoletoService::class);
+        $boletoService->expects($this->once())
+            ->method('consultarBoleto')
+            ->with('boleto-456')
+            ->willReturn([
+                '_id' => 'boleto-456',
+                'status' => 'PENDING',
+                'amount' => 9850,
+                'original_amount' => 10100,
+                'fees' => 250,
+                'gateway_key' => 'CELCOIN',
+                'authorization_code' => 'CELCOIN',
+                'created_at' => '2026-05-04 13:43:00',
+                'updated_at' => '2026-05-04 13:45:00',
+                'expiration_at' => '2026-05-08 12:00:00',
+                'payment_limit_date' => '2026-05-09',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '3419114400000001000109819643416091015649600',
+                'boleto_digitable_line' => '34191098189643416091501564960001114400000001000',
+                'client' => [
+                    'first_name' => 'Reginaldo',
+                    'last_name' => 'do Prado',
+                    'document' => '09409616875',
+                    'email' => 'reginaldo@example.test',
+                ],
+                'establishment' => [
+                    'id' => '5001',
+                    'name' => 'CELCOIN',
+                ],
+                'billing_instructions' => [],
+            ]);
+        $boletoService->expects($this->once())
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+
+        $this->app->instance(BoletoService::class, $boletoService);
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca/boleto/boleto-456');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('boleto.juros', 'CLIENT')
+            ->assertJsonPath('boleto.amount', 10000)
+            ->assertJsonPath('boleto.original_amount', 10250)
+            ->assertJsonPath('boleto.fees', 250);
     }
 
     public function test_cobranca_boleto_detail_uses_cached_fees_banking_when_available(): void
@@ -250,6 +333,64 @@ class SpaCobrancaBoletoTest extends TestCase
             ->assertJsonPath('boleto.establishment.name', 'CELCOIN');
     }
 
+    public function test_cobranca_boleto_detail_infers_establishment_when_amounts_do_not_indicate_client_payment(): void
+    {
+        $user = User::factory()->create([
+            'nivel_acesso' => 'vendedor',
+            'email_verified_at' => now(),
+        ]);
+
+        $user->vendedor()->create([
+            'estabelecimento_id' => '5001',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]);
+
+        $boletoService = $this->createMock(BoletoService::class);
+        $boletoService->expects($this->once())
+            ->method('consultarBoleto')
+            ->with('boleto-321')
+            ->willReturn([
+                '_id' => 'boleto-321',
+                'status' => 'PENDING',
+                'amount' => 1000,
+                'original_amount' => 1000,
+                'fees' => 0,
+                'gateway_key' => 'CELCOIN',
+                'authorization_code' => 'CELCOIN',
+                'created_at' => '2026-05-04 13:43:00',
+                'updated_at' => '2026-05-04 13:45:00',
+                'expiration_at' => '2026-05-08 12:00:00',
+                'payment_limit_date' => '2026-05-09',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '3419114400000001000109819643416091015649600',
+                'boleto_digitable_line' => '34191098189643416091501564960001114400000001000',
+                'client' => [
+                    'first_name' => 'Reginaldo',
+                    'last_name' => 'do Prado',
+                    'document' => '09409616875',
+                    'email' => 'reginaldo@example.test',
+                ],
+                'establishment' => [
+                    'id' => '5001',
+                    'name' => 'CELCOIN',
+                ],
+                'billing_instructions' => [],
+            ]);
+        $boletoService->expects($this->once())
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+
+        $this->app->instance(BoletoService::class, $boletoService);
+
+        $response = $this->actingAs($user)->getJson('/api/spa/cobranca/boleto/boleto-321');
+
+        $response
+            ->assertOk()
+            ->assertJsonPath('boleto.juros', 'ESTABLISHMENT');
+    }
+
     public function test_cobranca_boleto_detail_denies_access_for_other_establishment(): void
     {
         $user = User::factory()->create([
@@ -323,5 +464,30 @@ class SpaCobrancaBoletoTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Boleto cancelado com sucesso.');
+    }
+
+    public function test_cobranca_boleto_page_uses_the_shared_money_input_without_currency_symbol_for_fees_fields(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx'));
+
+        $this->assertSame(3, substr_count($pageSource, 'showCurrencySymbol={false}'));
+        $this->assertSame(3, substr_count($pageSource, 'MoneyInputField size="large" placeholder="0,00" showCurrencySymbol={false}'));
+        $this->assertStringContainsString('const interestOptions = [', $pageSource);
+        $this->assertStringContainsString('juros: \'ESTABLISHMENT\'', $pageSource);
+        $this->assertStringContainsString('juros: values.juros ?? \'ESTABLISHMENT\'', $pageSource);
+        $this->assertStringContainsString('label="Quem paga as taxas"', $pageSource);
+        $this->assertStringContainsString('name="juros"', $pageSource);
+        $this->assertStringContainsString('options={interestOptions}', $pageSource);
+    }
+
+    public function test_cobranca_boleto_detail_page_shows_who_pays_the_fees(): void
+    {
+        $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaBoletoDetailPage.jsx'));
+
+        $this->assertStringContainsString('function formatTaxPayer(value)', $pageSource);
+        $this->assertStringContainsString("case 'CLIENT':", $pageSource);
+        $this->assertStringContainsString("case 'ESTABLISHMENT':", $pageSource);
+        $this->assertStringContainsString('Quem paga as taxas', $pageSource);
+        $this->assertStringContainsString('formatTaxPayer(boleto.juros)', $pageSource);
     }
 }

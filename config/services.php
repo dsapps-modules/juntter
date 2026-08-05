@@ -43,6 +43,7 @@ return [
         'authentication_key' => env('PAYTIME_AUTHENTICATION_KEY'),
         'x_token' => env('PAYTIME_X_TOKEN'),
         'payout_fee_cents' => env('PAYTIME_PAYOUT_FEE_CENTS', 100),
+        'billet_fee_cents' => env('PAYTIME_BILLET_FEE_CENTS', 250),
         'mtls_cert_path' => env('PAYTIME_MTLS_CERT_PATH'),
         'mtls_key_path' => env('PAYTIME_MTLS_KEY_PATH'),
         'mtls_ca_path' => env('PAYTIME_MTLS_CA_PATH'),

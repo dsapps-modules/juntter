@@ -53,6 +53,7 @@ const initialValues = {
     amount: '',
     interest: 'ESTABLISHMENT',
     descricao: '',
+    client_details_enabled: false,
     client: {
         first_name: '',
         last_name: '',
@@ -148,6 +149,7 @@ export default function CobrancaPixPage() {
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [selectedPeriod, setSelectedPeriod] = useState(currentPeriod);
     const [overview, setOverview] = useState(defaultOverview);
+    const customerDetailsEnabled = Form.useWatch('client_details_enabled', form);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -196,6 +198,16 @@ export default function CobrancaPixPage() {
 
         return () => controller.abort();
     }, [selectedPeriod]);
+
+    useEffect(() => {
+        if (customerDetailsEnabled) {
+            return;
+        }
+
+        form.setFieldsValue({
+            client: initialValues.client,
+        });
+    }, [customerDetailsEnabled, form]);
 
     const periodOptions = useMemo(() => {
         const optionsByValue = new Map();
@@ -480,7 +492,19 @@ export default function CobrancaPixPage() {
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     payment_type: 'PIX',
-                    ...values,
+                    amount: values.amount,
+                    interest: values.interest,
+                    descricao: values.descricao,
+                    client: values.client_details_enabled
+                        ? {
+                              first_name: values.client?.first_name ?? '',
+                              last_name: values.client?.last_name ?? '',
+                              document: values.client?.document ?? '',
+                              phone: values.client?.phone ?? '',
+                              email: values.client?.email ?? '',
+                          }
+                        : null,
+                    info_additional: values.info_additional,
                 }),
             });
 
@@ -782,58 +806,74 @@ export default function CobrancaPixPage() {
                                         </Col>
                                     </Row>
 
-                                    <Card className="spa-pix-subcard" bordered={false}>
-                                        <Typography.Text className="spa-pix-section-label">
+                                    <div className="spa-pix-link-switch-row">
+                                        <Typography.Title level={4} className="spa-pix-link-section-title">
                                             Dados do cliente (opcional)
-                                        </Typography.Text>
+                                        </Typography.Title>
+                                        <Form.Item
+                                            name="client_details_enabled"
+                                            valuePropName="checked"
+                                            className="spa-pix-link-switch-item"
+                                        >
+                                            <Switch />
+                                        </Form.Item>
+                                        <Typography.Text strong>Preencher dados do cliente</Typography.Text>
+                                    </div>
 
-                                        <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item label="Nome do cliente" name={['client', 'first_name']}>
-                                                    <Input size="large" placeholder="Nome completo" />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item label="Sobrenome" name={['client', 'last_name']}>
-                                                    <Input size="large" placeholder="Sobrenome" />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
+                                    {customerDetailsEnabled ? (
+                                        <Card className="spa-pix-subcard" bordered={false}>
+                                            <Typography.Text className="spa-pix-section-label">
+                                                Dados do cliente (opcional)
+                                            </Typography.Text>
 
-                                        <Row gutter={[16, 16]}>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label="CPF/CNPJ"
-                                                    name={['client', 'document']}
-                                                    rules={[{ validator: documentValidator }]}
-                                                    normalize={formatDocument}
-                                                >
-                                                    <Input size="large" placeholder="CPF/CNPJ" inputMode="numeric" maxLength={18} />
-                                                </Form.Item>
-                                            </Col>
-                                            <Col xs={24} md={12}>
-                                                <Form.Item
-                                                    label="Telefone"
-                                                    name={['client', 'phone']}
-                                                    normalize={formatPhone}
-                                                >
-                                                    <Input size="large" placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
+                                            <Row gutter={[16, 16]}>
+                                                <Col xs={24} md={12}>
+                                                    <Form.Item label="Nome do cliente" name={['client', 'first_name']}>
+                                                        <Input size="large" placeholder="Nome completo" />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={12}>
+                                                    <Form.Item label="Sobrenome" name={['client', 'last_name']}>
+                                                        <Input size="large" placeholder="Sobrenome" />
+                                                    </Form.Item>
+                                                </Col>
+                                            </Row>
 
-                                        <Row gutter={[16, 0]}>
-                                            <Col span={24}>
-                                                <Form.Item
-                                                    label="Email"
-                                                    name={['client', 'email']}
-                                                    className="spa-pix-email-field"
-                                                >
-                                                    <Input size="large" placeholder="email@exemplo.com" />
-                                                </Form.Item>
-                                            </Col>
-                                        </Row>
-                                    </Card>
+                                            <Row gutter={[16, 16]}>
+                                                <Col xs={24} md={12}>
+                                                    <Form.Item
+                                                        label="CPF/CNPJ"
+                                                        name={['client', 'document']}
+                                                        rules={[{ validator: documentValidator }]}
+                                                        normalize={formatDocument}
+                                                    >
+                                                        <Input size="large" placeholder="CPF/CNPJ" inputMode="numeric" maxLength={18} />
+                                                    </Form.Item>
+                                                </Col>
+                                                <Col xs={24} md={12}>
+                                                    <Form.Item
+                                                        label="Telefone"
+                                                        name={['client', 'phone']}
+                                                        normalize={formatPhone}
+                                                    >
+                                                        <Input size="large" placeholder="(00) 00000-0000" inputMode="numeric" maxLength={15} />
+                                                    </Form.Item>
+                                                </Col>
+                                            </Row>
+
+                                            <Row gutter={[16, 0]}>
+                                                <Col span={24}>
+                                                    <Form.Item
+                                                        label="Email"
+                                                        name={['client', 'email']}
+                                                        className="spa-pix-email-field"
+                                                    >
+                                                        <Input size="large" placeholder="email@exemplo.com" />
+                                                    </Form.Item>
+                                                </Col>
+                                            </Row>
+                                        </Card>
+                                    ) : null}
 
                                     <Card className="spa-pix-subcard spa-pix-observations-card" bordered={false}>
                                         <Form.Item

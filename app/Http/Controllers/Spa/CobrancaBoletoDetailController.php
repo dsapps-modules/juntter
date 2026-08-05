@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Spa;
 
 use App\Http\Controllers\Controller;
+use App\Models\PaytimeTransaction;
 use App\Services\BoletoService;
 use App\Services\PaytimePricingCacheService;
 use Carbon\Carbon;
@@ -28,6 +29,13 @@ class CobrancaBoletoDetailController extends Controller
 
         $rawBoleto = $this->boletoService->consultarBoleto($boleto);
         $boletoData = $this->boletoService->normalizarResposta($this->extractBoleto($rawBoleto));
+        $localTransaction = PaytimeTransaction::query()
+            ->where('external_id', $this->resolveBoletoId($boletoData))
+            ->first();
+
+        if ($localTransaction !== null) {
+            $boletoData = $this->mergeLocalTransactionMetadata($boletoData, $localTransaction);
+        }
 
         if ($this->resolveBoletoId($boletoData) === '') {
             return response()->json(['message' => 'Boleto não encontrado.'], 404);
@@ -42,6 +50,8 @@ class CobrancaBoletoDetailController extends Controller
         $customerName = $this->resolveCustomerName($boletoData);
         [$firstName, $lastName] = $this->splitName($customerName);
 
+        $resolvedAmounts = $this->resolveDisplayedAmounts($boletoData);
+
         return response()->json([
             'boleto' => [
                 'id' => $this->resolveBoletoId($boletoData),
@@ -51,9 +61,9 @@ class CobrancaBoletoDetailController extends Controller
                     ?? data_get($boletoData, 'extra_headers.establishment_id'),
                 'status' => $this->normalizeStatus($boletoData['status'] ?? null),
                 'status_label' => $this->formatStatus($boletoData['status'] ?? null),
-                'amount' => (int) ($boletoData['amount'] ?? 0),
-                'original_amount' => (int) ($boletoData['original_amount'] ?? ($boletoData['amount'] ?? 0)),
-                'fees' => (int) ($boletoData['fees'] ?? 0),
+                'amount' => $resolvedAmounts['amount'],
+                'original_amount' => $resolvedAmounts['original_amount'],
+                'fees' => $resolvedAmounts['fees'],
                 'gateway_key' => $boletoData['gateway_key'] ?? null,
                 'authorization_code' => $boletoData['authorization_code'] ?? null,
                 'created_at' => $this->parseDate($boletoData['created_at'] ?? null)?->format('Y-m-d H:i:s'),
@@ -62,6 +72,7 @@ class CobrancaBoletoDetailController extends Controller
                 'expiration_at' => $this->parseDate($boletoData['expiration_at'] ?? null)?->format('Y-m-d H:i:s'),
                 'paid_at' => $this->parseDate($boletoData['paid_at'] ?? null)?->format('Y-m-d H:i:s'),
                 'payment_limit_date' => data_get($boletoData, 'payment_limit_date'),
+                'juros' => $this->resolveTaxPayer($boletoData),
                 'boleto_url' => data_get($boletoData, 'boleto_url'),
                 'boleto_barcode' => data_get($boletoData, 'boleto_barcode'),
                 'boleto_digitable_line' => data_get($boletoData, 'boleto_digitable_line'),
@@ -184,6 +195,101 @@ class CobrancaBoletoDetailController extends Controller
         $feesBanking = data_get($boletoData, 'fees_banking', []);
 
         return is_array($feesBanking) ? $feesBanking : [];
+    }
+
+    private function resolveTaxPayer(array $boleto): string
+    {
+        $explicitTaxPayer = strtoupper((string) (
+            data_get($boleto, 'juros')
+            ?? data_get($boleto, 'interest')
+            ?? data_get($boleto, 'metadata.juros')
+            ?? data_get($boleto, 'metadata.interest')
+            ?? data_get($boleto, 'metadata.request.juros')
+            ?? data_get($boleto, 'metadata.request.interest')
+        ));
+
+        if (in_array($explicitTaxPayer, ['CLIENT', 'ESTABLISHMENT'], true)) {
+            return $explicitTaxPayer;
+        }
+
+        $amount = (int) ($boleto['amount'] ?? 0);
+        $originalAmount = (int) ($boleto['original_amount'] ?? $amount);
+        $fees = (int) ($boleto['fees'] ?? 0);
+
+        if ($originalAmount > $amount && $fees > 0) {
+            return 'CLIENT';
+        }
+
+        return 'ESTABLISHMENT';
+    }
+
+    private function mergeLocalTransactionMetadata(array $boletoData, PaytimeTransaction $transaction): array
+    {
+        $metadata = is_array($transaction->metadata) ? $transaction->metadata : [];
+        $requestMetadata = is_array($metadata['request'] ?? null) ? $metadata['request'] : [];
+
+        if ($requestMetadata !== []) {
+            $boletoData['metadata']['request'] = array_replace(
+                is_array(data_get($boletoData, 'metadata.request')) ? data_get($boletoData, 'metadata.request') : [],
+                $requestMetadata,
+            );
+        }
+
+        $explicitTaxPayer = strtoupper((string) (
+            $requestMetadata['juros'] ?? $requestMetadata['interest'] ?? data_get($boletoData, 'juros')
+        ));
+
+        if (in_array($explicitTaxPayer, ['CLIENT', 'ESTABLISHMENT'], true)) {
+            $boletoData['juros'] = $explicitTaxPayer;
+        }
+
+        if (! isset($boletoData['amount']) && $transaction->amount !== null) {
+            $boletoData['amount'] = (int) $transaction->amount;
+        }
+
+        if (! isset($boletoData['original_amount']) && $transaction->original_amount !== null) {
+            $boletoData['original_amount'] = (int) $transaction->original_amount;
+        }
+
+        if (! isset($boletoData['fees']) && $transaction->fees !== null) {
+            $boletoData['fees'] = (int) $transaction->fees;
+        }
+
+        return $boletoData;
+    }
+
+    /**
+     * @return array{amount: int, original_amount: int, fees: int}
+     */
+    private function resolveDisplayedAmounts(array $boletoData): array
+    {
+        $requestMetadata = data_get($boletoData, 'metadata.request', []);
+        $baseAmountCents = (int) (
+            data_get($requestMetadata, 'base_amount_cents')
+            ?? data_get($boletoData, 'original_amount')
+            ?? data_get($boletoData, 'amount')
+            ?? 0
+        );
+        $taxAmountCents = (int) (
+            data_get($requestMetadata, 'tax_amount_cents')
+            ?? data_get($boletoData, 'fees')
+            ?? 0
+        );
+        $taxPayer = $this->resolveTaxPayer($boletoData);
+
+        if ($taxPayer === 'CLIENT') {
+            return [
+                'amount' => $baseAmountCents,
+                'original_amount' => $baseAmountCents + $taxAmountCents,
+                'fees' => $taxAmountCents,
+            ];
+        }
+
+        return [
+            'amount' => max(0, $baseAmountCents - $taxAmountCents),
+            'original_amount' => $baseAmountCents,
+            'fees' => $taxAmountCents,
+        ];
     }
 
     private function resolveBoletoId(array $boleto): string

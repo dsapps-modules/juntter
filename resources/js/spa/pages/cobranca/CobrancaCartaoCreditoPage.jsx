@@ -139,6 +139,7 @@ const defaultOverview = {
     periods: [],
     selected_period: 'all',
     recent_links: [],
+    recent_card_links: [],
 };
 
 const initialTransactionValues = {
@@ -328,6 +329,21 @@ function formatStatus(status) {
     }
 }
 
+function linkStatusTone(status) {
+    switch (status) {
+        case 'Ativo':
+            return 'green';
+        case 'Expirado':
+            return 'volcano';
+        case 'Inativo':
+            return 'default';
+        case 'Pago':
+            return 'blue';
+        default:
+            return 'default';
+    }
+}
+
 function statusTone(status) {
     switch (formatStatus(status)) {
         case 'Pago':
@@ -471,6 +487,10 @@ export default function CobrancaCartaoCreditoPage() {
             .filter((row) => row.type === 'CREDIT' || row.type === 'Credito')
             .sort((left, right) => (right.created_at_sort ?? 0) - (left.created_at_sort ?? 0));
     }, [overview.rows]);
+
+    const recentCardLinks = useMemo(() => {
+        return overview.recent_card_links ?? [];
+    }, [overview.recent_card_links]);
 
     const tableTitle = selectedPeriod === 'all'
         ? 'Transações de cartão de todos os meses'
@@ -772,6 +792,50 @@ export default function CobrancaCartaoCreditoPage() {
                         aria-label="Ver detalhes"
                     />
                 </Space>
+            ),
+            width: 84,
+        },
+    ];
+
+    const recentCardColumns = [
+        {
+            title: 'Link',
+            dataIndex: 'title',
+            render: (_, record) => (
+                <Space direction="vertical" size={2}>
+                    <Typography.Text strong>{record.title}</Typography.Text>
+                    <Typography.Text type="secondary">{record.code}</Typography.Text>
+                </Space>
+            ),
+        },
+        {
+            title: 'Valor',
+            dataIndex: 'amount',
+            width: 140,
+        },
+        {
+            title: 'Status',
+            dataIndex: 'status',
+            render: (value) => <Tag color={linkStatusTone(value)}>{value}</Tag>,
+            width: 130,
+        },
+        {
+            title: 'Criado em',
+            dataIndex: 'created_at',
+            width: 160,
+        },
+        {
+            title: '',
+            key: 'actions',
+            render: (_, record) => (
+                <Button
+                    size="middle"
+                    icon={<EyeOutlined />}
+                    className="spa-pix-action-button spa-pix-action-button-view"
+                    onClick={() => navigate(record.detail_href || `/links-pagamento/${record.id}`)}
+                    title="Ver detalhes"
+                    aria-label="Ver detalhes"
+                />
             ),
             width: 84,
         },
@@ -1079,6 +1143,30 @@ export default function CobrancaCartaoCreditoPage() {
 
                         <Card
                             className="spa-pix-table-card"
+                            title="Links de cartão recentes"
+                        >
+                            {loading ? (
+                                <Skeleton active paragraph={{ rows: 3 }} />
+                            ) : recentCardLinks.length === 0 ? (
+                                <Empty description="Nenhum link de cartão criado" />
+                            ) : (
+                                <Table
+                                    rowKey="id"
+                                    columns={recentCardColumns}
+                                    dataSource={recentCardLinks}
+                                    pagination={false}
+                                    className="spa-table spa-pix-transactions-table"
+                                    rowClassName={() => 'spa-pix-table-row'}
+                                    onRow={(record) => ({
+                                        onClick: () => navigate(record.detail_href || `/links-pagamento/${record.id}`),
+                                        style: { cursor: 'pointer' },
+                                    })}
+                                />
+                            )}
+                        </Card>
+
+                        <Card
+                            className="spa-pix-table-card"
                             title={tableTitle}
                             extra={
                                 <Select
@@ -1132,9 +1220,6 @@ export default function CobrancaCartaoCreditoPage() {
                             <Typography.Title level={3} className="spa-pix-link-modal-title">
                                 Link de Pagamento - Cartão de Crédito
                             </Typography.Title>
-                            <Typography.Text type="secondary">
-                                Configure um link para pagamento com cartão de crédito.
-                            </Typography.Text>
                         </div>
                     </div>
 
@@ -1202,9 +1287,6 @@ export default function CobrancaCartaoCreditoPage() {
                     </Row>
 
                     <div className="spa-pix-link-switch-row">
-                        <Typography.Title level={4} className="spa-pix-link-section-title">
-                            Dados do cliente
-                        </Typography.Title>
                         <Form.Item
                             name="dados_cliente_preenchidos_habilitado"
                             valuePropName="checked"

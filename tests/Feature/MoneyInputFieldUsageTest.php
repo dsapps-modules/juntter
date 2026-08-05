@@ -30,6 +30,7 @@ class MoneyInputFieldUsageTest extends TestCase
             ],
             base_path('resources/js/spa/pages/cobranca/CobrancaBoletoPage.jsx') => [
                 'MoneyInputField size="large" placeholder="0,00"',
+                'showCurrencySymbol={false}',
                 'pageSize: 10',
                 'hideOnSinglePage: true',
             ],

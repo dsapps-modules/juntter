@@ -122,7 +122,7 @@ class SpaCobrancaOverviewTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
-        LinkPagamento::create([
+        $linkCardOld = LinkPagamento::create([
             'estabelecimento_id' => '5001',
             'codigo_unico' => 'link_card_old',
             'descricao' => 'TV Antiga',
@@ -134,7 +134,7 @@ class SpaCobrancaOverviewTest extends TestCase
             'tipo_pagamento' => 'CARTAO',
         ]);
 
-        LinkPagamento::create([
+        $linkCardMid = LinkPagamento::create([
             'estabelecimento_id' => '5001',
             'codigo_unico' => 'link_card_mid',
             'descricao' => 'Teste: link de pagamento',
@@ -146,7 +146,7 @@ class SpaCobrancaOverviewTest extends TestCase
             'tipo_pagamento' => 'CARTAO',
         ]);
 
-        LinkPagamento::create([
+        $linkCardNew = LinkPagamento::create([
             'estabelecimento_id' => '5001',
             'codigo_unico' => 'link_card_new',
             'descricao' => 'TV 55 Polegadas',
@@ -192,6 +192,8 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonCount(2, 'recent_card_links')
             ->assertJsonPath('recent_card_links.0.title', 'TV 55 Polegadas')
             ->assertJsonPath('recent_card_links.1.title', 'Teste: link de pagamento')
+            ->assertJsonPath('recent_card_links.0.detail_href', '/links-pagamento/'.$linkCardNew->id)
+            ->assertJsonPath('recent_card_links.1.detail_href', '/links-pagamento/'.$linkCardMid->id)
             ->assertJsonPath('link_rows.0.title', 'Pix separado')
             ->assertJsonCount(1, 'link_rows');
     }

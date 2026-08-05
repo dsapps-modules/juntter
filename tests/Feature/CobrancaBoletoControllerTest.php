@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Controllers\CobrancaController;
 use App\Http\Requests\BoletoRequest;
+use App\Models\PaytimeTransaction;
 use App\Models\User;
 use App\Models\Vendedor;
 use App\Services\BoletoService;
@@ -12,12 +13,15 @@ use App\Services\EstabelecimentoService;
 use App\Services\PaytimePricingCacheService;
 use App\Services\PixService;
 use App\Services\TransacaoService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Tests\TestCase;
 
 class CobrancaBoletoControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,6 +36,7 @@ class CobrancaBoletoControllerTest extends TestCase
             'expiration' => '2026-04-20',
             'payment_limit_date' => '2026-04-21',
             'recharge' => '0',
+            'juros' => 'ESTABLISHMENT',
             'client' => [
                 'first_name' => 'Jhonny',
                 'last_name' => 'Quest',
@@ -121,6 +126,121 @@ class CobrancaBoletoControllerTest extends TestCase
             'amount' => 1810,
             'status' => 'PROCESSING',
         ], session('boleto_data'));
+    }
+
+    public function test_criar_boleto_quando_cliente_paga_taxas_acrescenta_a_tarifa_no_valor_da_transacao(): void
+    {
+        $dadosValidados = [
+            'amount' => '20,00',
+            'expiration' => '2026-04-20',
+            'payment_limit_date' => '2026-04-21',
+            'recharge' => '0',
+            'juros' => 'CLIENT',
+            'client' => [
+                'first_name' => 'Jhonny',
+                'last_name' => 'Quest',
+                'document' => '582.463.740-79',
+                'email' => 'projetojuntter@gmail.com',
+                'address' => [
+                    'street' => 'Rua Teste',
+                    'number' => '123',
+                    'complement' => 'Sala 1',
+                    'neighborhood' => 'Centro',
+                    'city' => 'Botucatu',
+                    'state' => 'SP',
+                    'zip_code' => '18600-000',
+                ],
+            ],
+            'instruction' => [
+                'booklet' => '0',
+                'description' => 'Boleto de teste 03',
+                'late_fee' => [
+                    'amount' => '3,00',
+                ],
+                'interest' => [
+                    'amount' => '4,00',
+                ],
+                'discount' => [
+                    'amount' => '6,00',
+                    'limit_date' => '2026-04-19',
+                ],
+            ],
+        ];
+
+        $user = User::factory()->make([
+            'nivel_acesso' => 'vendedor',
+        ]);
+
+        $user->setRelation('vendedor', new Vendedor([
+            'user_id' => $user->id,
+            'estabelecimento_id' => '127700',
+            'sub_nivel' => 'admin_loja',
+            'status' => 'ativo',
+            'must_change_password' => false,
+        ]));
+
+        $pricingCacheService = $this->createMock(PaytimePricingCacheService::class);
+        $pricingCacheService->expects($this->once())
+            ->method('resolveBoletoIncomingFeeCents')
+            ->with('127700')
+            ->willReturn(250);
+
+        $boletoService = $this->createMock(BoletoService::class);
+        $boletoService->expects($this->once())
+            ->method('organiza')
+            ->with($this->callback(function (array $dados): bool {
+                return $dados['amount'] === 2250
+                    && ($dados['juros'] ?? null) === 'CLIENT';
+            }))
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('normalizarResposta')
+            ->willReturnArgument(0);
+        $boletoService->expects($this->once())
+            ->method('gerarBoletoComConsulta')
+            ->with($this->callback(function (array $dados): bool {
+                return $dados['amount'] === 2250
+                    && ($dados['juros'] ?? null) === 'CLIENT';
+            }))
+            ->willReturn([
+                '_id' => 'boleto-123',
+                'status' => 'PROCESSING',
+                'boleto_url' => 'https://example.test/boleto.pdf',
+                'boleto_barcode' => '12345678901234567890123456789012345678901234',
+                'boleto_digitable_line' => '23793.38128 60000.000000 01000.000000 1 98760000002000',
+                'amount' => 2250,
+            ]);
+
+        $request = $this->makeRequest(true, $dadosValidados);
+
+        $this->be($user);
+        $this->app['session']->start();
+
+        $controller = new CobrancaController(
+            $this->createMock(TransacaoService::class),
+            $this->createMock(CreditoService::class),
+            $this->createMock(PixService::class),
+            $boletoService,
+            $this->createMock(EstabelecimentoService::class),
+            $pricingCacheService,
+        );
+
+        $response = $controller->criarBoleto($request);
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('Boleto criado com sucesso!', $response->getData(true)['message']);
+
+        $transaction = PaytimeTransaction::query()->where('external_id', 'boleto-123')->first();
+
+        $this->assertNotNull($transaction);
+        $this->assertSame('BILLET', $transaction->type);
+        $this->assertSame(2250, $transaction->amount);
+        $this->assertSame(2000, $transaction->original_amount);
+        $this->assertSame(250, $transaction->fees);
+        $this->assertSame('CLIENT', data_get($transaction->metadata, 'request.juros'));
+        $this->assertSame(2000, data_get($transaction->metadata, 'request.base_amount_cents'));
+        $this->assertSame(250, data_get($transaction->metadata, 'request.customer_fee_cents'));
     }
 
     public function test_criar_boleto_aceita_valor_formatado_com_espaco_invisivel(): void
