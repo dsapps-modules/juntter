@@ -157,6 +157,16 @@ export default function LinkPagamentoPixDetailPage() {
     }
 
     const statusColor = link.status === 'ATIVO' ? 'green' : link.status === 'EXPIRADO' ? 'volcano' : 'gold';
+    const statusLabel =
+        link.status === 'ATIVO'
+            ? 'Ativo'
+            : link.status === 'INATIVO'
+                ? 'Inativo'
+                : link.status === 'EXPIRADO'
+                    ? 'Expirado'
+                    : link.status === 'PAID'
+                        ? 'Pago'
+                        : link.status;
     const expirationDate = link.data_expiracao ? dayjs(link.data_expiracao).format('DD/MM/YYYY') : 'Sem expiracao';
     const createdAt = link.created_at ? dayjs(link.created_at).format('DD/MM/YYYY HH:mm') : 'Sem data';
     const clientData = link.dados_cliente_preenchidos ?? {};
@@ -362,7 +372,7 @@ export default function LinkPagamentoPixDetailPage() {
                                 paymentSummary={link.payment_summary ?? {}}
                                 title="Resumo do link"
                                 expirationLabel={expirationDate}
-                                createdAtLabel={createdAtLabel}
+                                createdAtLabel={createdAt}
                                 statusLabel={statusLabel}
                                 statusColor={statusColor}
                             />
