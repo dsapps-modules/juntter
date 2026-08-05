@@ -465,7 +465,7 @@ class CobrancaController extends Controller
             return $baseAmountCents;
         }
 
-        return $baseAmountCents + $this->pricingCacheService->resolvePixOutFeeCents($establishmentId);
+        return $baseAmountCents + $this->pricingCacheService->resolvePixIncomingFeeCents($establishmentId, $baseAmountCents);
     }
 
     /**

@@ -411,7 +411,7 @@ class PagamentoClienteController extends Controller
     private function resolvePixPaymentSummary(LinkPagamento $link): array
     {
         $baseAmountCents = (int) $link->valor_centavos;
-        $feeAmountCents = $this->resolvePixFeeCents($link);
+        $feeAmountCents = $this->resolvePixFeeCents($link, $baseAmountCents);
 
         $totalAmountCents = $baseAmountCents + max(0, $feeAmountCents);
 
@@ -444,16 +444,15 @@ class PagamentoClienteController extends Controller
         return 'R$ '.number_format($amountCents / 100, 2, ',', '.');
     }
 
-    private function resolvePixFeeCents(LinkPagamento $link): int
+    private function resolvePixFeeCents(LinkPagamento $link, int $baseAmountCents): int
     {
         if ($link->juros !== 'CLIENT') {
             return 0;
         }
 
         $establishmentId = (string) $link->estabelecimento_id;
-        $feeCents = $this->pricingCacheService->resolvePixOutFeeCents($establishmentId);
 
-        return max(0, $feeCents);
+        return $this->pricingCacheService->resolvePixIncomingFeeCents($establishmentId, $baseAmountCents);
     }
 
     /**

@@ -50,15 +50,15 @@ class CobrancaPixControllerTest extends TestCase
         $user = $this->makeVendorUser('127700');
         $pricingCacheService = $this->createMock(PaytimePricingCacheService::class);
         $pricingCacheService->expects($this->once())
-            ->method('resolvePixOutFeeCents')
-            ->with('127700')
-            ->willReturn(608);
+            ->method('resolvePixIncomingFeeCents')
+            ->with('127700', 12550)
+            ->willReturn(126);
 
         $pixService = $this->createMock(PixService::class);
         $pixService->expects($this->once())
             ->method('criarTransacaoPix')
             ->with($this->callback(function (array $dados): bool {
-                return $dados['amount'] === 13158
+                return $dados['amount'] === 12676
                     && $dados['extra_headers']['establishment_id'] === '127700'
                     && $dados['descricao'] === 'Mensalidade do plano'
                     && $dados['info_additional'][0]['value'] === 'Cobrança de teste';
@@ -66,7 +66,7 @@ class CobrancaPixControllerTest extends TestCase
             ->willReturn([
                 '_id' => 'pix-123',
                 'emv' => '00020126580014br.gov.bcb.pix...',
-                'amount' => 13158,
+                'amount' => 12676,
                 'status' => 'PENDING',
             ]);
         $pixService->expects($this->once())
@@ -95,7 +95,7 @@ class CobrancaPixControllerTest extends TestCase
                     'emv' => '00020126580014br.gov.bcb.pix...',
                 ],
                 'pix_code' => '00020126580014br.gov.bcb.pix...',
-                'amount' => 13158,
+                'amount' => 12676,
                 'status' => 'PENDING',
             ],
         ], $response->getData(true));
@@ -105,14 +105,14 @@ class CobrancaPixControllerTest extends TestCase
         $this->assertNotNull($transaction);
         $this->assertSame('PIX', $transaction->type);
         $this->assertSame('PENDING', $transaction->status);
-        $this->assertSame(13158, $transaction->amount);
+        $this->assertSame(12676, $transaction->amount);
         $this->assertSame('Maria Silva', $transaction->customer_name);
         $this->assertSame('123.456.789-09', $transaction->customer_document);
         $this->assertSame('Mensalidade do plano', data_get($transaction->metadata, 'request.descricao'));
         $this->assertSame('CLIENT', data_get($transaction->metadata, 'request.interest'));
         $this->assertSame(12550, data_get($transaction->metadata, 'request.base_amount_cents'));
-        $this->assertSame(608, data_get($transaction->metadata, 'request.customer_fee_cents'));
-        $this->assertSame(608, $transaction->pix_customer_fee_cents);
+        $this->assertSame(126, data_get($transaction->metadata, 'request.customer_fee_cents'));
+        $this->assertSame(126, $transaction->pix_customer_fee_cents);
         $this->assertSame('00020126580014br.gov.bcb.pix...', data_get($transaction->metadata, 'pix.pix_code'));
         $this->assertSame('data:image/png;base64,ZmFrZQ==', data_get($transaction->metadata, 'pix.qr_code.qrcode'));
     }

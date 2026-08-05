@@ -24,6 +24,13 @@ class PaytimePricingCacheService
         return max(0, (int) config('services.paytime.payout_fee_cents', 100));
     }
 
+    public function resolvePixIncomingFeeCents(string $establishmentId, int $baseAmountCents): int
+    {
+        $feePercent = $this->resolvePixIncomingFeePercent($establishmentId);
+
+        return max(0, (int) round($baseAmountCents * ($feePercent / 100), 0, PHP_ROUND_HALF_UP));
+    }
+
     public function resolvePixFeePercent(string $establishmentId): ?float
     {
         $contractedPlan = $this->resolveContractedPlan($establishmentId);
@@ -59,6 +66,11 @@ class PaytimePricingCacheService
         }
 
         return null;
+    }
+
+    public function resolvePixIncomingFeePercent(string $establishmentId): float
+    {
+        return max(0.0, $this->resolvePixFeePercent($establishmentId) ?? 1.0);
     }
 
     /**

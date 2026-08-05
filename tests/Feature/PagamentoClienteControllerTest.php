@@ -104,7 +104,7 @@ class PagamentoClienteControllerTest extends TestCase
     public function test_public_payment_page_shows_customer_fee_in_the_pix_total(): void
     {
         $this->makeVendorUser('155161');
-        $this->makePricingSnapshot('155161', 365);
+        $this->makePricingSnapshot('155161', 1.00);
         $link = $this->makePixLink('155161', 'CLIENT', 6000);
 
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
@@ -112,9 +112,9 @@ class PagamentoClienteControllerTest extends TestCase
         $response->assertOk();
         $response->assertSee('Valor', false);
         $response->assertSee('Taxa do Pix', false);
-        $response->assertSee('R$ 3,65', false);
+        $response->assertSee('R$ 0,60', false);
         $response->assertSee('Total', false);
-        $response->assertSee('R$ 63,65', false);
+        $response->assertSee('R$ 60,60', false);
     }
 
     public function test_public_payment_page_uses_the_pix_fee_from_the_pricing_cache(): void
@@ -123,24 +123,24 @@ class PagamentoClienteControllerTest extends TestCase
         $link = $this->makePixLink('155163', 'CLIENT', 6000);
 
         $this->mock(PaytimePricingCacheService::class, function ($mock): void {
-            $mock->shouldReceive('resolvePixOutFeeCents')
+            $mock->shouldReceive('resolvePixIncomingFeeCents')
                 ->once()
-                ->with('155163')
-                ->andReturn(365);
+                ->with('155163', 6000)
+                ->andReturn(60);
         });
 
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
         $response->assertSee('Taxa do Pix', false);
-        $response->assertSee('R$ 3,65', false);
-        $response->assertSee('R$ 63,65', false);
+        $response->assertSee('R$ 0,60', false);
+        $response->assertSee('R$ 60,60', false);
     }
 
     public function test_processar_pix_applies_customer_fee_when_link_charges_client(): void
     {
         $this->makeVendorUser('155161');
-        $this->makePricingSnapshot('155161', 365);
+        $this->makePricingSnapshot('155161', 1.00);
         $link = $this->makePixLink('155161', 'CLIENT', 6000);
 
         $capturedPayload = [];
@@ -156,7 +156,7 @@ class PagamentoClienteControllerTest extends TestCase
                 ->andReturn([
                     '_id' => 'pix_123',
                     'status' => 'PENDING',
-                    'amount' => 6365,
+                    'amount' => 6060,
                     'emv' => '000201010212',
                 ]);
 
@@ -174,17 +174,17 @@ class PagamentoClienteControllerTest extends TestCase
         $response
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('pix_data.amount', 6365)
+            ->assertJsonPath('pix_data.amount', 6060)
             ->assertJsonPath('pix_data.status', 'PENDING');
 
-        $this->assertSame(6365, $capturedPayload['amount'] ?? null);
+        $this->assertSame(6060, $capturedPayload['amount'] ?? null);
         $this->assertSame('CLIENT', $capturedPayload['interest'] ?? null);
     }
 
     public function test_processar_pix_keeps_base_amount_when_establishment_pays_fees(): void
     {
         $this->makeVendorUser('155162');
-        $this->makePricingSnapshot('155162', 365);
+        $this->makePricingSnapshot('155162', 1.00);
         $link = $this->makePixLink('155162', 'ESTABLISHMENT', 6000);
 
         $capturedPayload = [];
@@ -258,19 +258,36 @@ class PagamentoClienteControllerTest extends TestCase
         ]);
     }
 
-    private function makePricingSnapshot(string $establishmentId, int $pixFeeCents): PaytimeEstablishment
+    private function makePricingSnapshot(string $establishmentId, float $pixFeePercent): PaytimeEstablishment
     {
         return PaytimeEstablishment::query()->create([
             'id' => (int) $establishmentId,
             'first_name' => 'Estabelecimento',
             'active' => true,
             'status' => 'APPROVED',
+            'contracted_plan_json' => [
+                'id' => 23025,
+                'name' => 'Plano Economico D1 Online',
+                'active' => true,
+                'modality' => 'ONLINE',
+                'flags' => [
+                    [
+                        'id' => 1,
+                        'name' => 'BACEN',
+                        'active' => true,
+                        'fees' => [
+                            'pix' => $pixFeePercent,
+                            'dynamic_pix' => $pixFeePercent,
+                        ],
+                    ],
+                ],
+            ],
             'fees_banking_json' => [
                 [
                     'id' => 8,
                     'fees' => [
-                        'pix' => $pixFeeCents,
-                        'dynamic_pix' => $pixFeeCents,
+                        'pix' => 365,
+                        'dynamic_pix' => 365,
                     ],
                 ],
             ],

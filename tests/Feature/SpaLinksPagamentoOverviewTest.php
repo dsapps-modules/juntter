@@ -101,12 +101,20 @@ class SpaLinksPagamentoOverviewTest extends TestCase
             'first_name' => 'Estabelecimento',
             'active' => true,
             'status' => 'APPROVED',
-            'fees_banking_json' => [
-                [
-                    'id' => 8,
-                    'fees' => [
-                        'pix' => 365,
-                        'dynamic_pix' => 365,
+            'contracted_plan_json' => [
+                'id' => 23025,
+                'name' => 'Plano Economico D1 Online',
+                'active' => true,
+                'modality' => 'ONLINE',
+                'flags' => [
+                    [
+                        'id' => 1,
+                        'name' => 'BACEN',
+                        'active' => true,
+                        'fees' => [
+                            'pix' => 1.0,
+                            'dynamic_pix' => 1.0,
+                        ],
                     ],
                 ],
             ],
@@ -131,10 +139,10 @@ class SpaLinksPagamentoOverviewTest extends TestCase
             ->assertJsonPath('link.descricao', 'Pix Maluco')
             ->assertJsonPath('link.valor_centavos', 6000)
             ->assertJsonPath('payment_summary.base_amount_cents', 6000)
-            ->assertJsonPath('payment_summary.fee_amount_cents', 365)
-            ->assertJsonPath('payment_summary.total_amount_cents', 6365)
+            ->assertJsonPath('payment_summary.fee_amount_cents', 60)
+            ->assertJsonPath('payment_summary.total_amount_cents', 6060)
             ->assertJsonPath('payment_summary.base_amount_formatted', 'R$ 60,00')
-            ->assertJsonPath('payment_summary.fee_amount_formatted', 'R$ 3,65')
-            ->assertJsonPath('payment_summary.total_amount_formatted', 'R$ 63,65');
+            ->assertJsonPath('payment_summary.fee_amount_formatted', 'R$ 0,60')
+            ->assertJsonPath('payment_summary.total_amount_formatted', 'R$ 60,60');
     }
 }
