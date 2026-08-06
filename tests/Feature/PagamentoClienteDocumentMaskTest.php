@@ -34,5 +34,11 @@ class PagamentoClienteDocumentMaskTest extends TestCase
         $this->assertStringContainsString('function syncCreditCardBrand(cardType)', $scriptSource);
         $this->assertStringContainsString("$('input[name=\"card_brand\"]').val(cardType || '');", $scriptSource);
         $this->assertStringContainsString('return `${installmentCount}x ${formatCurrencyFromCents(installmentValueCents)}`;', $scriptSource);
+        $this->assertStringContainsString('const fallbackFlag =', $scriptSource);
+        $this->assertStringContainsString('const installmentSource = configuredInstallments.length > 0', $scriptSource);
+        $this->assertStringContainsString('? configuredInstallments', $scriptSource);
+        $this->assertStringContainsString(': allowedInstallments.map', $scriptSource);
+        $this->assertStringContainsString('elo: /^(?:4011|4312|4389|4514|4576|5041|506[67]|509\\d|6277|6362|6363|6504|6505|6506|6507|6508|6509|651\\d|6550)/', $scriptSource);
+        $this->assertStringContainsString('discover: /^6(?:011|5)/', $scriptSource);
     }
 }

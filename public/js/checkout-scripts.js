@@ -187,11 +187,13 @@ function renderInstallmentsForCardBrand(cardType) {
     const pricingConfig = getCreditCardPricingConfig();
     const flags = Array.isArray(pricingConfig.flags) ? pricingConfig.flags : [];
     const matchedFlag = resolvePricingFlagForCardBrand(flags, cardType);
+    const fallbackFlag = flags.find((flag) => Array.isArray(flag?.fees?.credit) && Object.keys(flag.fees.credit).length > 0) || null;
+    const pricingFlag = matchedFlag || fallbackFlag;
     const baseAmountCents = Number.parseInt(String(pricingConfig.base_amount_cents || 0), 10) || 0;
     const interestMode = String(pricingConfig.interest || 'ESTABLISHMENT').toUpperCase();
     const allowedInstallments = resolveCreditCardInstallmentNumbers();
 
-    if (!cardType) {
+    if (!cardType && !pricingFlag) {
         $select
             .prop('disabled', true)
             .empty()
@@ -202,7 +204,7 @@ function renderInstallmentsForCardBrand(cardType) {
         return;
     }
 
-    const creditFees = matchedFlag?.fees?.credit || {};
+    const creditFees = pricingFlag?.fees?.credit || {};
     const configuredInstallments = Object.entries(creditFees)
         .map(([key, value]) => {
             const installmentCount = Number.parseInt(String(key), 10);
@@ -217,32 +219,28 @@ function renderInstallmentsForCardBrand(cardType) {
         .sort((left, right) => left.installmentCount - right.installmentCount)
         .filter((item) => allowedInstallments.includes(item.installmentCount));
 
-    if (configuredInstallments.length === 0) {
-        $select
-            .prop('disabled', true)
-            .empty()
-            .append($('<option>', {
-                value: '',
-                text: 'Nenhuma parcela disponível para esta bandeira',
-            }));
-        return;
-    }
+    const installmentSource = configuredInstallments.length > 0
+        ? configuredInstallments
+        : allowedInstallments.map((installmentCount) => ({
+            installmentCount,
+            rate: 0,
+        }));
 
-    const options = configuredInstallments
-        .map(({ installmentCount, rate }) => {
-            const customerChargeCents = interestMode === 'CLIENT'
+    const options = installmentSource.map(({ installmentCount, rate }) => {
+        const customerChargeCents = creditFees && Object.keys(creditFees).length > 0
+            ? (interestMode === 'CLIENT'
                 ? baseAmountCents + Math.round(baseAmountCents * (rate / 100))
-                : baseAmountCents;
-            const installmentValueCents = installmentCount > 0
-                ? Math.round(customerChargeCents / installmentCount)
-                : 0;
+                : baseAmountCents)
+            : baseAmountCents;
+        const installmentValueCents = installmentCount > 0
+            ? Math.round(customerChargeCents / installmentCount)
+            : 0;
 
-            return {
-                label: buildInstallmentOptionLabel(installmentCount, installmentValueCents),
-                value: String(installmentCount),
-            };
-        })
-        .filter(Boolean);
+        return {
+            label: buildInstallmentOptionLabel(installmentCount, installmentValueCents),
+            value: String(installmentCount),
+        };
+    });
 
     const currentValue = String($select.val() || '');
 
@@ -262,6 +260,8 @@ function renderInstallmentsForCardBrand(cardType) {
     $select.append($('<option>', {
         value: '',
         text: 'Selecione...',
+        selected: !currentValue,
+        disabled: true,
     }));
 
     options.forEach((option) => {
@@ -842,9 +842,9 @@ function identifyCardType(cardNumber) {
         visa: /^4/,
         mastercard: /^5[1-5]/,
         amex: /^3[47]/,
-        discover: /^6(?:011|5)/,
         diners: /^3[0689]/,
-        elo: /^((((636368)|(438935)|(504175)|(451416)|(636297))[0-9]{0,10})|((5067)|(4576)|(4011))[0-9]{0,12})$/,
+        elo: /^(?:4011|4312|4389|4514|4576|5041|506[67]|509\d|6277|6362|6363|6504|6505|6506|6507|6508|6509|651\d|6550)/,
+        discover: /^6(?:011|5)/,
         hipercard: /^(606282|3841)/,
         jcb: /^35/
     };
