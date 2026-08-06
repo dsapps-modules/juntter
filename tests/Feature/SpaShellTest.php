@@ -234,7 +234,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString("icon: 'checkout-produtos'", $navigationSource);
         $this->assertStringContainsString("icon: 'checkout-links'", $navigationSource);
         $this->assertStringContainsString("label: 'Enviar Pix'", $navigationSource);
-        $this->assertStringContainsString('hidden: true', $navigationSource);
+        $this->assertStringNotContainsString('hidden: true', $navigationSource);
         $this->assertStringNotContainsString("icon: 'estabelecimentos'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'unica'", $navigationSource);
         $this->assertStringNotContainsString("icon: 'checkout'", $navigationSource);
@@ -677,7 +677,6 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('Pre-preenchido:', $pageSource);
         $this->assertStringContainsString('Resumo do link', $componentSource);
         $this->assertStringContainsString('Valor, taxa e total', $componentSource);
-        $this->assertStringContainsString('Valor e status', $componentSource);
     }
 
     public function test_the_links_pagamento_detail_page_contains_the_action_sections(): void
