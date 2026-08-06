@@ -357,6 +357,7 @@
             pagamento_sucesso: "{{ route('pagamento.sucesso') }}",
             pagamento_erro: "{{ route('pagamento.erro') }}",
             seller_brand: @json($sellerBrand, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            credit_card_pricing: @json($creditCardPricing ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         };
     </script>
         <!-- Checkout Scripts -->

@@ -8,7 +8,7 @@ import {
     PlayCircleOutlined,
     ThunderboltOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Card, Col, Descriptions, Empty, Input, Row, Skeleton, Space, Tag, Typography, message } from 'antd';
+import { Alert, Button, Card, Col, Empty, Input, Row, Skeleton, Space, Tag, Typography, message } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -200,6 +200,68 @@ export default function LinkPagamentoDetailPage() {
     const hasClientData = Object.values(clientData).some((value) => Boolean(value));
     const boletoInstructions = link.instrucoes_boleto ?? {};
     const isBoleto = link.tipo_pagamento === 'BOLETO';
+    const informationGroups = [
+        {
+            title: 'Identificação',
+            items: [
+                {
+                    label: 'Código',
+                    value: link.codigo_unico || '-',
+                },
+                {
+                    label: 'Tipo',
+                    value: paymentTypeLabel,
+                },
+                {
+                    label: 'Status',
+                    value: <Tag color={statusColor}>{statusLabel}</Tag>,
+                },
+            ],
+        },
+        {
+            title: 'Financeiro',
+            items: [
+                {
+                    label: 'Valor',
+                    value: formatCurrency(link.valor),
+                },
+                {
+                    label: 'Parcelas',
+                    value: installmentLabel,
+                },
+                {
+                    label: 'Quem paga as taxas',
+                    value: link.juros === 'ESTABLISHMENT' ? 'Estabelecimento' : 'Cliente',
+                },
+            ],
+        },
+        {
+            title: 'Operação',
+            items: [
+                {
+                    label: 'Criado em',
+                    value: createdAtLabel,
+                },
+                {
+                    label: 'Expira em',
+                    value: expirationLabel,
+                },
+            ],
+        },
+        {
+            title: 'Técnico',
+            items: [
+                {
+                    label: 'URL de retorno',
+                    value: link.url_retorno || 'N/A',
+                },
+                {
+                    label: 'Webhook',
+                    value: link.url_webhook || 'N/A',
+                },
+            ],
+        },
+    ];
 
     async function copyText(text) {
         if (!text) {
@@ -322,30 +384,12 @@ export default function LinkPagamentoDetailPage() {
                                 <Space align="center" size={12}>
                                     <LinkOutlined className="spa-pix-detail-header-icon" />
                                     <Typography.Title level={2} className="spa-pix-detail-title">
-                                        Detalhes do link de pagamento
+                                        {link.descricao || 'Link de pagamento'}
                                     </Typography.Title>
                                 </Space>
-                                <Typography.Paragraph className="spa-pix-detail-description">
-                                    {link.descricao || 'Detalhes do link'}
-                                </Typography.Paragraph>
                             </div>
 
                             <Space wrap>
-                                <Button
-                                    type="primary"
-                                    icon={<CopyOutlined />}
-                                    onClick={() => copyText(link.url_completa)}
-                                    disabled={!link.url_completa}
-                                >
-                                    Copiar link
-                                </Button>
-                                <Button
-                                    icon={<ThunderboltOutlined />}
-                                    onClick={() => window.open(link.url_completa, '_blank', 'noopener,noreferrer')}
-                                    disabled={!link.url_completa}
-                                >
-                                    Testar link
-                                </Button>
                                 <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/links-pagamento')}>
                                     Voltar
                                 </Button>
@@ -357,25 +401,24 @@ export default function LinkPagamentoDetailPage() {
 
                         <Card className="spa-pix-detail-info-card" title="Informações do link" bordered={false}>
                             {loading ? (
-                                <Skeleton active paragraph={{ rows: 4 }} />
+                                <Skeleton active paragraph={{ rows: 8 }} />
                             ) : (
-                                <Descriptions bordered column={{ xs: 1, md: 2 }} size="small">
-                                    <Descriptions.Item label="ID">{link.id ?? '-'}</Descriptions.Item>
-                                    <Descriptions.Item label="Código">{link.codigo_unico || '-'}</Descriptions.Item>
-                                    <Descriptions.Item label="Tipo">{paymentTypeLabel}</Descriptions.Item>
-                                    <Descriptions.Item label="Status">
-                                        <Tag color={statusColor}>{statusLabel}</Tag>
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Valor">{formatCurrency(link.valor)}</Descriptions.Item>
-                                    <Descriptions.Item label="Parcelas">{installmentLabel}</Descriptions.Item>
-                                    <Descriptions.Item label="Quem paga as taxas">
-                                        {link.juros === 'ESTABLISHMENT' ? 'Estabelecimento' : 'Cliente'}
-                                    </Descriptions.Item>
-                                    <Descriptions.Item label="Criado em">{createdAtLabel}</Descriptions.Item>
-                                    <Descriptions.Item label="Expira em">{expirationLabel}</Descriptions.Item>
-                                    <Descriptions.Item label="URL de retorno">{link.url_retorno || 'N/A'}</Descriptions.Item>
-                                    <Descriptions.Item label="Webhook">{link.url_webhook || 'N/A'}</Descriptions.Item>
-                                </Descriptions>
+                                <Row gutter={[16, 16]}>
+                                    {informationGroups.map((group) => (
+                                        <Col xs={24} lg={12} key={group.title}>
+                                            <Card size="small" title={group.title} bordered={false}>
+                                                <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                                                    {group.items.map((item) => (
+                                                        <div key={item.label}>
+                                                            <Typography.Text type="secondary">{item.label}</Typography.Text>
+                                                            <div style={{ marginTop: 4 }}>{item.value}</div>
+                                                        </div>
+                                                    ))}
+                                                </Space>
+                                            </Card>
+                                        </Col>
+                                    ))}
+                                </Row>
                             )}
                         </Card>
 
@@ -495,6 +538,7 @@ export default function LinkPagamentoDetailPage() {
                             <LinkPagamentoResumoCard
                                 link={link}
                                 paymentSummary={link.payment_summary ?? {}}
+                                showPaymentBreakdown={false}
                                 title="Resumo do link"
                                 expirationLabel={expirationLabel}
                                 createdAtLabel={createdAtLabel}

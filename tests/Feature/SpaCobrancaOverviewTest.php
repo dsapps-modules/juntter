@@ -114,7 +114,7 @@ class SpaCobrancaOverviewTest extends TestCase
             ->assertJsonPath('rows.0.pix_customer_fee', 'R$ 1,80');
     }
 
-    public function test_cobranca_overview_returns_the_two_most_recent_card_links(): void
+    public function test_cobranca_overview_returns_all_card_links_for_the_selected_month_regardless_of_status(): void
     {
         $user = User::factory()->create([
             'name' => 'Test User',
@@ -130,9 +130,10 @@ class SpaCobrancaOverviewTest extends TestCase
             'valor_centavos' => 95000,
             'parcelas' => [1, 2, 3],
             'juros' => 'CLIENT',
-            'status' => 'ATIVO',
+            'status' => 'EXPIRADO',
             'tipo_pagamento' => 'CARTAO',
         ]);
+        $linkCardOld->forceFill(['created_at' => now()->setDate(2026, 8, 1)->setTime(10, 0)])->saveQuietly();
 
         $linkCardMid = LinkPagamento::create([
             'estabelecimento_id' => '5001',
@@ -142,9 +143,10 @@ class SpaCobrancaOverviewTest extends TestCase
             'valor_centavos' => 10300,
             'parcelas' => [1],
             'juros' => 'CLIENT',
-            'status' => 'ATIVO',
+            'status' => 'INATIVO',
             'tipo_pagamento' => 'CARTAO',
         ]);
+        $linkCardMid->forceFill(['created_at' => now()->setDate(2026, 8, 2)->setTime(10, 0)])->saveQuietly();
 
         $linkCardNew = LinkPagamento::create([
             'estabelecimento_id' => '5001',
@@ -157,6 +159,20 @@ class SpaCobrancaOverviewTest extends TestCase
             'status' => 'ATIVO',
             'tipo_pagamento' => 'CARTAO',
         ]);
+        $linkCardNew->forceFill(['created_at' => now()->setDate(2026, 8, 3)->setTime(10, 0)])->saveQuietly();
+
+        $linkCardPending = LinkPagamento::create([
+            'estabelecimento_id' => '5001',
+            'codigo_unico' => 'link_card_pending',
+            'descricao' => 'Link pendente de teste',
+            'valor' => 120.00,
+            'valor_centavos' => 12000,
+            'parcelas' => [1],
+            'juros' => 'CLIENT',
+            'status' => 'ATIVO',
+            'tipo_pagamento' => 'CARTAO',
+        ]);
+        $linkCardPending->forceFill(['created_at' => now()->setDate(2026, 8, 4)->setTime(10, 0)])->saveQuietly();
 
         LinkPagamento::create([
             'estabelecimento_id' => '5001',
@@ -170,30 +186,84 @@ class SpaCobrancaOverviewTest extends TestCase
             'tipo_pagamento' => 'PIX',
         ]);
 
-        LinkPagamento::query()->where('codigo_unico', 'link_card_old')->update([
-            'created_at' => Carbon::now()->subDays(2),
-            'updated_at' => Carbon::now()->subDays(2),
+        PaytimeTransaction::create([
+            'external_id' => 'card-link-new-transaction',
+            'establishment_id' => '5001',
+            'type' => 'CREDIT',
+            'status' => 'PAID',
+            'amount' => 150000,
+            'original_amount' => 150000,
+            'fees' => 0,
+            'customer_name' => 'Cliente Novo',
+            'metadata' => [
+                'data' => [
+                    'info_additional' => [
+                        ['key' => 'link_pagamento_id', 'value' => (string) $linkCardNew->id],
+                        ['key' => 'codigo_unico', 'value' => 'link_card_new'],
+                    ],
+                ],
+            ],
         ]);
 
-        LinkPagamento::query()->where('codigo_unico', 'link_card_mid')->update([
-            'created_at' => Carbon::now()->subDay(),
-            'updated_at' => Carbon::now()->subDay(),
+        PaytimeTransaction::create([
+            'external_id' => 'card-link-mid-transaction',
+            'establishment_id' => '5001',
+            'type' => 'CREDIT',
+            'status' => 'PENDING',
+            'amount' => 10300,
+            'original_amount' => 10300,
+            'fees' => 0,
+            'customer_name' => 'Cliente Meio',
+            'metadata' => [
+                'data' => [
+                    'info_additional' => [
+                        ['key' => 'link_pagamento_id', 'value' => (string) $linkCardMid->id],
+                        ['key' => 'codigo_unico', 'value' => 'link_card_mid'],
+                    ],
+                ],
+            ],
         ]);
 
-        LinkPagamento::query()->where('codigo_unico', 'link_card_new')->update([
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+        PaytimeTransaction::create([
+            'external_id' => 'card-link-old-transaction',
+            'establishment_id' => '5001',
+            'type' => 'CREDIT',
+            'status' => 'CANCELED',
+            'amount' => 95000,
+            'original_amount' => 95000,
+            'fees' => 0,
+            'customer_name' => 'Cliente Antigo',
+            'metadata' => [
+                'data' => [
+                    'info_additional' => [
+                        ['key' => 'link_pagamento_id', 'value' => (string) $linkCardOld->id],
+                        ['key' => 'codigo_unico', 'value' => 'link_card_old'],
+                    ],
+                ],
+            ],
         ]);
 
         $response = $this->actingAs($user)->getJson('/api/spa/cobranca');
 
         $response
             ->assertOk()
-            ->assertJsonCount(2, 'recent_card_links')
-            ->assertJsonPath('recent_card_links.0.title', 'TV 55 Polegadas')
-            ->assertJsonPath('recent_card_links.1.title', 'Teste: link de pagamento')
-            ->assertJsonPath('recent_card_links.0.detail_href', '/links-pagamento/'.$linkCardNew->id)
-            ->assertJsonPath('recent_card_links.1.detail_href', '/links-pagamento/'.$linkCardMid->id)
+            ->assertJsonCount(4, 'card_link_rows')
+            ->assertJsonPath('card_link_rows.0.title', 'Link pendente de teste')
+            ->assertJsonPath('card_link_rows.1.title', 'TV 55 Polegadas')
+            ->assertJsonPath('card_link_rows.2.title', 'Teste: link de pagamento')
+            ->assertJsonPath('card_link_rows.3.title', 'TV Antiga')
+            ->assertJsonPath('card_link_rows.0.active', true)
+            ->assertJsonPath('card_link_rows.1.active', true)
+            ->assertJsonPath('card_link_rows.2.active', false)
+            ->assertJsonPath('card_link_rows.3.active', false)
+            ->assertJsonPath('card_link_rows.0.status', 'PENDING')
+            ->assertJsonPath('card_link_rows.1.status', 'PAID')
+            ->assertJsonPath('card_link_rows.2.status', 'PENDING')
+            ->assertJsonPath('card_link_rows.3.status', 'CANCELED')
+            ->assertJsonPath('card_link_rows.0.detail_href', '/links-pagamento/'.$linkCardPending->id)
+            ->assertJsonPath('card_link_rows.1.detail_href', '/links-pagamento/'.$linkCardNew->id)
+            ->assertJsonPath('card_link_rows.2.detail_href', '/links-pagamento/'.$linkCardMid->id)
+            ->assertJsonPath('card_link_rows.3.detail_href', '/links-pagamento/'.$linkCardOld->id)
             ->assertJsonPath('link_rows.0.title', 'Pix separado')
             ->assertJsonCount(1, 'link_rows');
     }

@@ -62,6 +62,7 @@ class PagamentoClienteController extends Controller
                 'link' => $link,
                 'sellerBrand' => $this->resolveSellerBrand($link),
                 'paymentSummary' => $this->resolvePaymentSummary($link),
+                'creditCardPricing' => $this->resolveCreditCardPricing($link),
             ]);
 
         } catch (\Exception $e) {
@@ -149,6 +150,7 @@ class PagamentoClienteController extends Controller
             ]);
 
             $dados = $this->creditoService->organiza($dados);
+            $cardBrand = strtolower(trim((string) ($dados['card_brand'] ?? '')));
 
             // Forçar parcela 1 para links à vista
             if ($link->is_avista || $link->parcelas_maximas === 1) {
@@ -158,6 +160,16 @@ class PagamentoClienteController extends Controller
             // Verificar se o parcelamento é válido
             if (! $link->permiteParcelamento((int) $dados['installments'])) {
                 return response()->json(['error' => 'Parcelamento não permitido'], 400);
+            }
+
+            $installmentValidationError = $this->validateCreditCardInstallmentAmount(
+                $link,
+                $cardBrand,
+                (int) $dados['installments']
+            );
+
+            if ($installmentValidationError !== null) {
+                return response()->json(['error' => $installmentValidationError], 400);
             }
 
             // Preparar dados para a API
@@ -439,6 +451,46 @@ class PagamentoClienteController extends Controller
         ];
     }
 
+    /**
+     * @return array{interest: string, base_amount_cents: int, allowed_installments: array<int, int>, flags: array<int, array<string, mixed>>}|array{}
+     */
+    private function resolveCreditCardPricing(LinkPagamento $link): array
+    {
+        if ($link->tipo_pagamento !== 'CARTAO') {
+            return [];
+        }
+
+        $establishmentId = trim((string) $link->estabelecimento_id);
+
+        if ($establishmentId === '') {
+            return [];
+        }
+
+        $contractedPlan = $this->pricingCacheService->resolveContractedPlan($establishmentId);
+
+        if (! is_array($contractedPlan) || ! $this->contractedPlanHasCreditFees($contractedPlan)) {
+            $this->pricingCacheService->syncEstablishmentPricing($establishmentId);
+            $this->pricingCacheService->syncContractedPlanPricing($establishmentId);
+            $contractedPlan = $this->pricingCacheService->resolveContractedPlan($establishmentId);
+        }
+
+        if (! is_array($contractedPlan) || ! $this->contractedPlanHasCreditFees($contractedPlan)) {
+            return [];
+        }
+
+        $flags = data_get($contractedPlan, 'flags', []);
+
+        return [
+            'interest' => strtoupper((string) ($link->juros ?: 'ESTABLISHMENT')),
+            'base_amount_cents' => (int) $link->valor_centavos,
+            'allowed_installments' => array_values(array_map(
+                static fn (mixed $installment): int => (int) $installment,
+                $link->parcelas_permitidas ?: [1]
+            )),
+            'flags' => is_array($flags) ? array_values($flags) : [],
+        ];
+    }
+
     private function formatMoney(int $amountCents): string
     {
         return 'R$ '.number_format($amountCents / 100, 2, ',', '.');
@@ -644,6 +696,131 @@ class PagamentoClienteController extends Controller
                 'message' => 'Erro ao processar autenticação: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    private function validateCreditCardInstallmentAmount(LinkPagamento $link, string $cardBrand, int $installments): ?string
+    {
+        if ($link->tipo_pagamento !== 'CARTAO' || $installments <= 1) {
+            return null;
+        }
+
+        $pricing = $this->resolveCreditCardPricing($link);
+        $matchedFlag = $this->resolvePricingFlagForCardBrand($pricing['flags'] ?? [], $cardBrand);
+
+        if ($pricing !== [] && $cardBrand !== '' && ! is_array($matchedFlag)) {
+            return 'A bandeira identificada não possui parcelas disponíveis para este plano.';
+        }
+
+        $installmentPricing = $this->resolveCreditCardInstallmentPricing($link, $cardBrand, $installments);
+
+        if ($pricing !== [] && $cardBrand !== '' && $installmentPricing === null) {
+            return 'A quantidade de parcelas selecionada não está disponível para a bandeira identificada.';
+        }
+
+        $totalInCents = $installmentPricing['total_amount_cents'] ?? (int) $link->valor_centavos;
+        $minimumTotalInCents = $installments * self::MINIMUM_CREDIT_CARD_INSTALLMENT_AMOUNT_CENTS;
+
+        if ($totalInCents >= $minimumTotalInCents) {
+            return null;
+        }
+
+        return 'Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.';
+    }
+
+    /**
+     * @return array{rate: float, total_amount_cents: int}|null
+     */
+    private function resolveCreditCardInstallmentPricing(LinkPagamento $link, string $cardBrand, int $installments): ?array
+    {
+        $pricing = $this->resolveCreditCardPricing($link);
+
+        if ($pricing === [] || $cardBrand === '') {
+            return null;
+        }
+
+        $matchedFlag = $this->resolvePricingFlagForCardBrand($pricing['flags'], $cardBrand);
+
+        if (! is_array($matchedFlag)) {
+            return null;
+        }
+
+        $creditFees = data_get($matchedFlag, 'fees.credit', []);
+        $installmentKey = $installments.'x';
+        $rate = is_array($creditFees) && isset($creditFees[$installmentKey]) && is_numeric($creditFees[$installmentKey])
+            ? (float) $creditFees[$installmentKey]
+            : null;
+
+        if ($rate === null) {
+            return null;
+        }
+
+        $baseAmountCents = (int) ($pricing['base_amount_cents'] ?? $link->valor_centavos);
+        $interest = strtoupper((string) ($pricing['interest'] ?? 'ESTABLISHMENT'));
+        $taxAmountCents = (int) round($baseAmountCents * ($rate / 100), 0, PHP_ROUND_HALF_UP);
+        $totalAmountCents = $interest === 'CLIENT'
+            ? $baseAmountCents + $taxAmountCents
+            : $baseAmountCents;
+
+        return [
+            'rate' => $rate,
+            'total_amount_cents' => $totalAmountCents,
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $flags
+     * @return array<string, mixed>|null
+     */
+    private function resolvePricingFlagForCardBrand(array $flags, string $cardBrand): ?array
+    {
+        $normalizedCardBrand = $this->normalizeCardBrandKey($cardBrand);
+        $aliases = [
+            'visa' => ['visa'],
+            'mastercard' => ['mastercard', 'mastercardcredit'],
+            'amex' => ['amex', 'americanexpress'],
+            'discover' => ['discover'],
+            'diners' => ['diners', 'dinersclub', 'dinersclubinternational'],
+            'elo' => ['elo'],
+            'hipercard' => ['hipercard', 'hiper'],
+            'jcb' => ['jcb'],
+        ];
+
+        $cardAliases = $aliases[$normalizedCardBrand] ?? [$normalizedCardBrand];
+
+        foreach ($flags as $flag) {
+            $flagName = $this->normalizeCardBrandKey((string) data_get($flag, 'name', ''));
+
+            if ($flagName !== '' && in_array($flagName, $cardAliases, true) && is_array(data_get($flag, 'fees.credit'))) {
+                return $flag;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $contractedPlan
+     */
+    private function contractedPlanHasCreditFees(array $contractedPlan): bool
+    {
+        $flags = data_get($contractedPlan, 'flags', []);
+
+        if (! is_array($flags) || $flags === []) {
+            return false;
+        }
+
+        foreach ($flags as $flag) {
+            if (is_array(data_get($flag, 'fees.credit')) && data_get($flag, 'fees.credit') !== []) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function normalizeCardBrandKey(string $value): string
+    {
+        return preg_replace('/[^a-z0-9]+/', '', strtolower(trim($value))) ?? '';
     }
 
     /**

@@ -44,17 +44,43 @@ class CobrancaOverviewController extends Controller
         $periods = $this->buildPeriodOptions(
             (clone $transactionsQuery)->get(['created_at'])
                 ->merge((clone $linksQuery)->get(['created_at']))
+                ->merge((clone $cardLinksQuery)->get(['created_at']))
         );
         $transactions = $this->applyPeriodFilter($transactionsQuery, $selectedPeriod)
             ->orderByDesc('created_at')
             ->get();
         $linkedPaymentLinkReferences = $this->resolveLinkedPaymentLinkReferences($transactions);
+        $linkedTransactionStatuses = $this->resolveLinkedTransactionStatuses($transactions);
         $links = $this->excludeLinksWithTransactions(
             $this->applyPeriodFilter($linksQuery, $selectedPeriod),
             $linkedPaymentLinkReferences
         )
             ->orderByDesc('created_at')
             ->get();
+        $cardLinkRows = $this->applyPeriodFilter($cardLinksQuery, $selectedPeriod)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function (LinkPagamento $link) use ($linkedTransactionStatuses): array {
+                $linkKey = (string) $link->id;
+                $transactionStatus = $linkedTransactionStatuses[$linkKey] ?? $linkedTransactionStatuses[(string) $link->codigo_unico] ?? 'PENDING';
+
+                return [
+                    'id' => $link->id,
+                    'title' => $link->titulo ?? $link->descricao ?? 'Link de pagamento',
+                    'description' => $link->descricao ?? 'Link de pagamento',
+                    'active' => $link->estaAtivo(),
+                    'status' => $transactionStatus,
+                    'amount' => $link->valor_formatado,
+                    'type' => $this->formatLinkType($link->tipo_pagamento ?? 'CARTAO'),
+                    'expires_at' => $link->data_expiracao?->format('d/m/Y H:i') ?? 'Sem expiração',
+                    'code' => $link->codigo_unico,
+                    'detail_href' => '/links-pagamento/'.$link->id,
+                    'created_at_sort' => Carbon::parse($link->created_at)->getTimestamp(),
+                    'created_at' => Carbon::parse($link->created_at)->format('d/m/Y H:i'),
+                    'raw_status' => $link->status,
+                ];
+            })
+            ->values();
 
         $today = Carbon::today();
 
@@ -208,6 +234,7 @@ class CobrancaOverviewController extends Controller
             ],
             'rows' => $rows->values(),
             'link_rows' => $linkRows,
+            'card_link_rows' => $cardLinkRows,
             'selected' => $selected,
             'recent_links' => $recentLinks->values(),
             'recent_pix_links' => $recentPixLinks,
@@ -298,6 +325,42 @@ class CobrancaOverviewController extends Controller
     }
 
     /**
+     * @param  \Illuminate\Support\Collection<int, \App\Models\PaytimeTransaction>  $transactions
+     * @return array<string, string>
+     */
+    private function resolveLinkedTransactionStatuses(Collection $transactions): array
+    {
+        $statuses = [];
+
+        foreach ($transactions as $transaction) {
+            $rawStatus = (string) $transaction->status;
+
+            foreach ($this->extractInfoAdditionalItems(is_array($transaction->metadata) ? $transaction->metadata : []) as $item) {
+                $key = $item['key'] ?? null;
+                $value = $item['value'] ?? null;
+
+                if ($key === 'link_pagamento_id' && is_numeric($value)) {
+                    $resolvedKey = (string) (int) $value;
+
+                    if (! array_key_exists($resolvedKey, $statuses)) {
+                        $statuses[$resolvedKey] = $rawStatus;
+                    }
+                }
+
+                if ($key === 'codigo_unico' && is_string($value) && trim($value) !== '') {
+                    $resolvedKey = trim($value);
+
+                    if (! array_key_exists($resolvedKey, $statuses)) {
+                        $statuses[$resolvedKey] = $rawStatus;
+                    }
+                }
+            }
+        }
+
+        return $statuses;
+    }
+
+    /**
      * @param  array{ids: array<int, int>, codes: array<int, string>}  $references
      */
     private function excludeLinksWithTransactions(Builder $query, array $references): Builder
@@ -372,7 +435,7 @@ class CobrancaOverviewController extends Controller
             'FAILED' => 'Falha',
             'CANCELED' => 'Cancelado',
             'REFUNDED' => 'Estornado',
-            default => $status ?? 'Desconhecido',
+            default => 'Pendente',
         };
     }
 

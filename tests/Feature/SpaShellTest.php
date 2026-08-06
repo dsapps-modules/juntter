@@ -610,6 +610,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('<Col xs={24} xl={24}>', $pageSource);
         $this->assertStringContainsString('Gerar Cobrança', $pageSource);
         $this->assertStringContainsString('Valor da cobrança', $pageSource);
+        $this->assertStringContainsString('Máximo de Parcelas', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Dados do cartão', $pageSource);
         $this->assertStringContainsString('spa-cartao-credito-collapse', $pageSource);
@@ -638,7 +639,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('color: #ffffff', $stylesSource);
     }
 
-    public function test_the_cartao_credito_page_renders_recent_card_links_section(): void
+    public function test_the_cartao_credito_page_renders_monthly_card_links_section(): void
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/cobranca/CobrancaCartaoCreditoPage.jsx'));
 
@@ -646,9 +647,12 @@ class SpaShellTest extends TestCase
         $this->assertStringNotContainsString('async function refreshRecentLinks()', $pageSource);
         $this->assertStringNotContainsString('await refreshRecentLinks();', $pageSource);
         $this->assertStringNotContainsString('recentLinks.slice(0, 2).map((item) => (', $pageSource);
-        $this->assertStringContainsString('recent_card_links', $pageSource);
-        $this->assertStringContainsString('Links de cartão recentes', $pageSource);
-        $this->assertStringContainsString('Nenhum link de cartão criado', $pageSource);
+        $this->assertStringContainsString('card_link_rows', $pageSource);
+        $this->assertStringNotContainsString('Links de cart�o do m�s', $pageSource);
+        $this->assertStringContainsString('Nenhum link de cart', $pageSource);
+        $this->assertStringContainsString('Tag color={activeTone(Boolean(value))}', $pageSource);
+        $this->assertStringContainsString("title: 'Ativo',", $pageSource);
+        $this->assertStringContainsString("title: 'Status',", $pageSource);
     }
 
     public function test_the_pix_link_detail_page_contains_the_extended_sections(): void
@@ -680,20 +684,24 @@ class SpaShellTest extends TestCase
     {
         $pageSource = file_get_contents(base_path('resources/js/spa/pages/LinkPagamentoDetailPage.jsx'));
 
-        $this->assertStringContainsString('Detalhes do link de pagamento', $pageSource);
-        $this->assertStringContainsString('Copiar link', $pageSource);
-        $this->assertStringContainsString('Testar link', $pageSource);
+        $this->assertStringContainsString("link.descricao || 'Link de pagamento'", $pageSource);
+        $this->assertStringNotContainsString('Detalhes do link de pagamento', $pageSource);
         $this->assertStringContainsString('Editar', $pageSource);
         $this->assertStringContainsString('Desativar', $pageSource);
         $this->assertStringContainsString('Ativar', $pageSource);
         $this->assertStringContainsString('Excluir', $pageSource);
         $this->assertStringContainsString('Dados do cliente', $pageSource);
         $this->assertStringContainsString('Instruções do boleto', $pageSource);
+        $this->assertMatchesRegularExpression("/title: 'Identifica[^']*'/u", $pageSource);
+        $this->assertStringContainsString("title: 'Financeiro'", $pageSource);
+        $this->assertMatchesRegularExpression("/title: 'Opera[^']*'/u", $pageSource);
+        $this->assertMatchesRegularExpression("/title: 'T[^']*'/u", $pageSource);
         $this->assertStringContainsString('navigate(`/links-pagamento/${linkId}/editar`)', $pageSource);
         $this->assertStringContainsString("navigate('/links-pagamento')", $pageSource);
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}/status`', $pageSource);
         $this->assertStringContainsString('fetch(`/links-pagamento/${linkId}`', $pageSource);
         $this->assertStringContainsString('LinkPagamentoResumoCard', $pageSource);
+        $this->assertStringContainsString('showPaymentBreakdown={false}', $pageSource);
         $this->assertStringContainsString('payment_summary: data.payment_summary ?? {},', $pageSource);
     }
 

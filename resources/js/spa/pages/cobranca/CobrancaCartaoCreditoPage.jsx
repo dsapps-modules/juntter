@@ -136,6 +136,7 @@ const yearOptions = Array.from({ length: 10 }, (_, index) => {
 const defaultOverview = {
     rows: [],
     link_rows: [],
+    card_link_rows: [],
     periods: [],
     selected_period: 'all',
     recent_links: [],
@@ -325,7 +326,7 @@ function formatStatus(status) {
         case 'Estornado':
             return 'Estornado';
         default:
-            return status ?? 'Sem status';
+            return 'Pendente';
     }
 }
 
@@ -333,6 +334,16 @@ function linkStatusTone(status) {
     switch (status) {
         case 'Ativo':
             return 'green';
+        case 'Pendente':
+            return 'gold';
+        case 'Aprovado':
+            return 'green';
+        case 'Falha':
+            return 'volcano';
+        case 'Cancelado':
+            return 'red';
+        case 'Estornado':
+            return 'purple';
         case 'Expirado':
             return 'volcano';
         case 'Inativo':
@@ -342,6 +353,10 @@ function linkStatusTone(status) {
         default:
             return 'default';
     }
+}
+
+function activeTone(active) {
+    return active ? 'green' : 'red';
 }
 
 function statusTone(status) {
@@ -488,9 +503,9 @@ export default function CobrancaCartaoCreditoPage() {
             .sort((left, right) => (right.created_at_sort ?? 0) - (left.created_at_sort ?? 0));
     }, [overview.rows]);
 
-    const recentCardLinks = useMemo(() => {
-        return overview.recent_card_links ?? [];
-    }, [overview.recent_card_links]);
+    const cardLinkRows = useMemo(() => {
+        return overview.card_link_rows ?? [];
+    }, [overview.card_link_rows]);
 
     const tableTitle = selectedPeriod === 'all'
         ? 'Transações de cartão de todos os meses'
@@ -811,13 +826,24 @@ export default function CobrancaCartaoCreditoPage() {
         {
             title: 'Valor',
             dataIndex: 'amount',
+            render: (value) => (
+                <Typography.Text strong className="spa-pix-amount-value">
+                    {value}
+                </Typography.Text>
+            ),
             width: 140,
+        },
+        {
+            title: 'Ativo',
+            dataIndex: 'active',
+            render: (value) => <Tag color={activeTone(Boolean(value))}>{value ? 'Sim' : 'Não'}</Tag>,
+            width: 120,
         },
         {
             title: 'Status',
             dataIndex: 'status',
-            render: (value) => <Tag color={linkStatusTone(value)}>{value}</Tag>,
-            width: 130,
+            render: (value) => <Tag color={statusTone(value)}>{formatStatus(value)}</Tag>,
+            width: 140,
         },
         {
             title: 'Criado em',
@@ -1143,30 +1169,6 @@ export default function CobrancaCartaoCreditoPage() {
 
                         <Card
                             className="spa-pix-table-card"
-                            title="Links de cartão recentes"
-                        >
-                            {loading ? (
-                                <Skeleton active paragraph={{ rows: 3 }} />
-                            ) : recentCardLinks.length === 0 ? (
-                                <Empty description="Nenhum link de cartão criado" />
-                            ) : (
-                                <Table
-                                    rowKey="id"
-                                    columns={recentCardColumns}
-                                    dataSource={recentCardLinks}
-                                    pagination={false}
-                                    className="spa-table spa-pix-transactions-table"
-                                    rowClassName={() => 'spa-pix-table-row'}
-                                    onRow={(record) => ({
-                                        onClick: () => navigate(record.detail_href || `/links-pagamento/${record.id}`),
-                                        style: { cursor: 'pointer' },
-                                    })}
-                                />
-                            )}
-                        </Card>
-
-                        <Card
-                            className="spa-pix-table-card"
                             title={tableTitle}
                             extra={
                                 <Select
@@ -1182,17 +1184,40 @@ export default function CobrancaCartaoCreditoPage() {
                         >
                             {loading ? (
                                 <Skeleton active paragraph={{ rows: 6 }} />
-                            ) : creditRows.length === 0 ? (
-                                <Empty description='Nenhuma transação de cartão encontrada' />
                             ) : (
-                                <Table
-                                    rowKey="id"
-                                    columns={columns}
-                                    dataSource={creditRows}
-                                    pagination={tablePagination}
-                                    className="spa-table spa-pix-transactions-table"
-                                    rowClassName={() => 'spa-pix-table-row'}
-                                />
+                                <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                                    {cardLinkRows.length === 0 ? (
+                                        <Empty description="Nenhum link de cartão encontrado neste mês" />
+                                    ) : (
+                                        <Table
+                                            rowKey="id"
+                                            columns={recentCardColumns}
+                                            dataSource={cardLinkRows}
+                                            pagination={tablePagination}
+                                            className="spa-table spa-pix-transactions-table"
+                                            rowClassName={() => 'spa-pix-table-row'}
+                                            onRow={(record) => ({
+                                                onClick: () => navigate(record.detail_href || `/links-pagamento/${record.id}`),
+                                                style: { cursor: 'pointer' },
+                                            })}
+                                        />
+                                    )}
+
+                                    <Divider />
+
+                                    {creditRows.length === 0 ? (
+                                        <Empty description='Nenhuma transação de cartão encontrada' />
+                                    ) : (
+                                        <Table
+                                            rowKey="id"
+                                            columns={columns}
+                                            dataSource={creditRows}
+                                            pagination={tablePagination}
+                                            className="spa-table spa-pix-transactions-table"
+                                            rowClassName={() => 'spa-pix-table-row'}
+                                        />
+                                    )}
+                                </Space>
                             )}
                         </Card>
                     </Space>
@@ -1245,7 +1270,7 @@ export default function CobrancaCartaoCreditoPage() {
                     <Row gutter={[16, 16]}>
                         <Col xs={24} md={8}>
                             <Form.Item
-                                label="Parcelas"
+                                label="Máximo de Parcelas"
                                 name="parcelas"
                                 rules={[{ required: true, message: 'Informe as parcelas.' }]}
                             >

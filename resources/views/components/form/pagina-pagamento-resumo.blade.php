@@ -48,12 +48,14 @@
                 </span>
             </div>
 
-            <div class="order-total">
-                <div class="order-item">
-                    <span class="order-item-label">Total</span>
-                    <span class="order-item-value">{{ $totalAmountFormatted }}</span>
+            @if ($link->tipo_pagamento !== 'CARTAO')
+                <div class="order-total">
+                    <div class="order-item">
+                        <span class="order-item-label">Total</span>
+                        <span class="order-item-value">{{ $totalAmountFormatted }}</span>
+                    </div>
                 </div>
-            </div>
+            @endif
 
             <div class="mt-3 text-center">
                 <small class="text-muted">

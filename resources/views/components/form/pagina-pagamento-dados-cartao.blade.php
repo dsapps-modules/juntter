@@ -12,26 +12,6 @@
                     Dados do CartÃ£o
                 </h6>
 
-                <!-- Parcelamento integrado -->
-                @if ($link->parcelas_maximas > 1)
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                Parcelas <span class="text-danger">*</span>
-                            </label>
-                            <select name="installments" class="form-select" required>
-                                <option value="">Selecione...</option>
-                                @foreach ($link->parcelas_permitidas as $parcela)
-                                    <option value="{{ $parcela }}">
-                                        {{ $parcela }}x de R$
-                                        {{ number_format($link->valor / $parcela, 2, ',', '.') }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                @endif
-
                 <div class="row">
                     <div class="col-md-6 mb-4">
                         <label class="form-label">Nome do titular <span class="text-danger">*</span></label>
@@ -46,6 +26,7 @@
                         </div>
                     </div>
                 </div>
+                <input type="hidden" name="card_brand" value="">
                 <div class="row">
                     <div class="col-md-3 mb-4">
                         <label class="form-label">MÃªs <span class="text-danger">*</span></label>
@@ -74,7 +55,24 @@
                                 maxlength="4" required>
                         </div>
                     </div>
+                    <div class="col-md-3 mb-4">
+                        <label class="form-label">Bandeira</label>
+                        <div id="cardBrandPreview" class="card-brand-preview" aria-label="Bandeira do cartão" aria-live="polite"></div>
+                    </div>
                 </div>
+
+                @if ($link->parcelas_maximas > 1)
+                    <div class="row mt-1">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">
+                                Parcelas <span class="text-danger">*</span>
+                            </label>
+                            <select name="installments" class="form-select" id="installmentsSelect" required disabled>
+                                <option value="">Digite o número do cartão para carregar as parcelas</option>
+                            </select>
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -369,3 +367,4 @@
         </div>
     </div>
 </form>
+

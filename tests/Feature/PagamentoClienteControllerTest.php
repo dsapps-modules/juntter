@@ -137,6 +137,53 @@ class PagamentoClienteControllerTest extends TestCase
         $response->assertSee('R$ 60,60', false);
     }
 
+    public function test_public_payment_page_for_credit_card_hides_the_total_and_places_installments_after_card_fields(): void
+    {
+        $this->makeVendorUser('155164');
+        $this->makePricingSnapshot('155164', 1.00, [
+            [
+                'id' => 2,
+                'name' => 'VISA',
+                'active' => true,
+                'fees' => [
+                    'credit' => [
+                        '1x' => 0.00,
+                        '2x' => 2.50,
+                        '3x' => 4.00,
+                    ],
+                ],
+            ],
+        ]);
+
+        $link = LinkPagamento::query()->create([
+            'estabelecimento_id' => '155164',
+            'codigo_unico' => LinkPagamento::gerarCodigoUnico(),
+            'descricao' => 'Link cartão público',
+            'valor' => 120.00,
+            'valor_centavos' => 12000,
+            'parcelas' => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'juros' => 'CLIENT',
+            'status' => 'ATIVO',
+            'tipo_pagamento' => 'CARTAO',
+        ]);
+
+        $response = $this->get(route('pagamento.link', $link->codigo_unico));
+
+        $response->assertOk();
+        $response->assertSee('id="cardBrandPreview"', false);
+        $response->assertSee('name="card_brand"', false);
+        $response->assertSee('id="installmentsSelect"', false);
+        $response->assertSee('carregar as parcelas', false);
+        $response->assertSee('credit_card_pricing', false);
+        $response->assertDontSee('<span class="order-item-label">Total</span>', false);
+        $response->assertSeeInOrder([
+            'name="card[expiration_month]"',
+            'name="card[expiration_year]"',
+            'name="card[security_code]"',
+            'id="installmentsSelect"',
+        ], false);
+    }
+
     public function test_processar_pix_applies_customer_fee_when_link_charges_client(): void
     {
         $this->makeVendorUser('155161');
@@ -258,7 +305,61 @@ class PagamentoClienteControllerTest extends TestCase
         ]);
     }
 
-    private function makePricingSnapshot(string $establishmentId, float $pixFeePercent): PaytimeEstablishment
+    public function test_public_payment_page_syncs_contracted_plan_pricing_when_credit_fees_are_not_cached(): void
+    {
+        $this->makeVendorUser('155165');
+        $link = $this->makeLinkPagamento('155165');
+
+        $plan = [
+            'id' => 23025,
+            'name' => 'Plano Economico D1 Online',
+            'active' => true,
+            'modality' => 'ONLINE',
+            'flags' => [
+                [
+                    'id' => 2,
+                    'name' => 'VISA',
+                    'active' => true,
+                    'fees' => [
+                        'credit' => [
+                            '1x' => 0.00,
+                            '2x' => 2.50,
+                            '3x' => 4.00,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $this->mock(PaytimePricingCacheService::class, function ($mock) use ($plan): void {
+            $mock->shouldReceive('resolveContractedPlan')
+                ->twice()
+                ->andReturn(null, $plan);
+
+            $mock->shouldReceive('syncEstablishmentPricing')
+                ->once()
+                ->with('155165')
+                ->andReturnNull();
+
+            $mock->shouldReceive('syncContractedPlanPricing')
+                ->once()
+                ->with('155165')
+                ->andReturnNull();
+
+            $mock->shouldReceive('resolvePixIncomingFeeCents')
+                ->once()
+                ->with('155165', 1000)
+                ->andReturn(0);
+        });
+
+        $response = $this->get(route('pagamento.link', $link->codigo_unico));
+
+        $response->assertOk();
+        $response->assertSee('credit_card_pricing', false);
+        $response->assertSee('VISA', false);
+    }
+
+    private function makePricingSnapshot(string $establishmentId, float $pixFeePercent, array $creditFlags = []): PaytimeEstablishment
     {
         return PaytimeEstablishment::query()->create([
             'id' => (int) $establishmentId,
@@ -280,6 +381,7 @@ class PagamentoClienteControllerTest extends TestCase
                             'dynamic_pix' => $pixFeePercent,
                         ],
                     ],
+                    ...$creditFlags,
                 ],
             ],
             'fees_banking_json' => [

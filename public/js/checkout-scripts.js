@@ -108,6 +108,181 @@ function formatDocument(value) {
     return formatCpf(digits);
 }
 
+function formatCurrencyFromCents(value) {
+    const numericValue = Number(value ?? 0) / 100;
+
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+    }).format(Number.isFinite(numericValue) ? numericValue : 0);
+}
+
+function normalizeCardBrandKey(value) {
+    return String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+function getCreditCardPricingConfig() {
+    return window.JuntterRoutes?.credit_card_pricing || {};
+}
+
+function resolveCardBrandAliases(cardType) {
+    const normalizedCardType = normalizeCardBrandKey(cardType);
+
+    const aliases = {
+        visa: ['visa'],
+        mastercard: ['mastercard', 'mastercardcredit'],
+        amex: ['amex', 'americanexpress'],
+        discover: ['discover'],
+        diners: ['diners', 'dinersclub', 'dinersclubinternational'],
+        elo: ['elo'],
+        hipercard: ['hipercard', 'hiper'],
+        jcb: ['jcb'],
+    };
+
+    return aliases[normalizedCardType] || [normalizedCardType];
+}
+
+function resolvePricingFlagForCardBrand(flags, cardType) {
+    if (!Array.isArray(flags) || flags.length === 0) {
+        return null;
+    }
+
+    const aliases = resolveCardBrandAliases(cardType);
+
+    return flags.find((flag) => aliases.includes(normalizeCardBrandKey(flag?.name))) || null;
+}
+
+function resolveCreditCardInstallmentNumbers() {
+    const pricingConfig = getCreditCardPricingConfig();
+    const configuredInstallments = Array.isArray(pricingConfig.allowed_installments) ? pricingConfig.allowed_installments : [];
+    const numericInstallments = configuredInstallments
+        .map((value) => Number.parseInt(String(value), 10))
+        .filter((value) => Number.isFinite(value) && value >= 1)
+        .sort((left, right) => left - right);
+
+    if (numericInstallments.length > 0) {
+        return numericInstallments;
+    }
+
+    const maxInstallments = Number.parseInt(String(pricingConfig.max_installments || 0), 10) || 0;
+
+    if (maxInstallments > 1) {
+        return Array.from({ length: maxInstallments }, (_, index) => index + 1);
+    }
+
+    return Array.from({ length: 10 }, (_, index) => index + 1);
+}
+
+function buildInstallmentOptionLabel(installmentCount, installmentValueCents) {
+    return `${installmentCount}x ${formatCurrencyFromCents(installmentValueCents)}`;
+}
+
+function renderInstallmentsForCardBrand(cardType) {
+    const $select = $('#installmentsSelect');
+
+    if (!$select.length) {
+        return;
+    }
+
+    const pricingConfig = getCreditCardPricingConfig();
+    const flags = Array.isArray(pricingConfig.flags) ? pricingConfig.flags : [];
+    const matchedFlag = resolvePricingFlagForCardBrand(flags, cardType);
+    const baseAmountCents = Number.parseInt(String(pricingConfig.base_amount_cents || 0), 10) || 0;
+    const interestMode = String(pricingConfig.interest || 'ESTABLISHMENT').toUpperCase();
+    const allowedInstallments = resolveCreditCardInstallmentNumbers();
+
+    if (!cardType) {
+        $select
+            .prop('disabled', true)
+            .empty()
+            .append($('<option>', {
+                value: '',
+                text: 'Digite o número do cartão para carregar as parcelas',
+            }));
+        return;
+    }
+
+    const creditFees = matchedFlag?.fees?.credit || {};
+    const configuredInstallments = Object.entries(creditFees)
+        .map(([key, value]) => {
+            const installmentCount = Number.parseInt(String(key), 10);
+            const rate = Number.parseFloat(String(value));
+
+            return {
+                installmentCount,
+                rate,
+            };
+        })
+        .filter((item) => Number.isFinite(item.installmentCount) && Number.isFinite(item.rate))
+        .sort((left, right) => left.installmentCount - right.installmentCount)
+        .filter((item) => allowedInstallments.includes(item.installmentCount));
+
+    if (configuredInstallments.length === 0) {
+        $select
+            .prop('disabled', true)
+            .empty()
+            .append($('<option>', {
+                value: '',
+                text: 'Nenhuma parcela disponível para esta bandeira',
+            }));
+        return;
+    }
+
+    const options = configuredInstallments
+        .map(({ installmentCount, rate }) => {
+            const customerChargeCents = interestMode === 'CLIENT'
+                ? baseAmountCents + Math.round(baseAmountCents * (rate / 100))
+                : baseAmountCents;
+            const installmentValueCents = installmentCount > 0
+                ? Math.round(customerChargeCents / installmentCount)
+                : 0;
+
+            return {
+                label: buildInstallmentOptionLabel(installmentCount, installmentValueCents),
+                value: String(installmentCount),
+            };
+        })
+        .filter(Boolean);
+
+    const currentValue = String($select.val() || '');
+
+    $select.empty();
+
+    if (options.length === 0) {
+        $select
+            .prop('disabled', true)
+            .append($('<option>', {
+                value: '',
+                text: 'Nenhuma parcela disponível',
+            }));
+        return;
+    }
+
+    $select.prop('disabled', false);
+    $select.append($('<option>', {
+        value: '',
+        text: 'Selecione...',
+    }));
+
+    options.forEach((option) => {
+        $select.append($('<option>', {
+            value: option.value,
+            text: option.label,
+        }));
+    });
+
+    if (currentValue && options.some((option) => option.value === currentValue)) {
+        $select.val(currentValue);
+    } else {
+        $select.val(options[0].value);
+    }
+}
+
+function syncCreditCardBrand(cardType) {
+    $('input[name="card_brand"]').val(cardType || '');
+    renderInstallmentsForCardBrand(cardType);
+}
+
 function applyDocumentMask(field) {
     const $field = $(field);
 
@@ -839,25 +1014,63 @@ function showFieldValidation(field, isValid, message, type = null) {
     }
 }
 
-// Atualiza ícone do tipo de cartão
+// Atualiza a bandeira identificada do cartão
 function updateCardTypeIcon(cardType) {
-    // Remove ícone anterior do tipo de cartão
-    $('.card-type-icon').remove();
+    const $preview = $('#cardBrandPreview');
 
-    const icons = {
-        visa: 'fab fa-cc-visa',
-        mastercard: 'fab fa-cc-mastercard',
-        amex: 'fab fa-cc-amex',
-        discover: 'fab fa-cc-discover',
-        diners: 'fab fa-cc-diners-club',
-        elo: 'fas fa-credit-card',
-        hipercard: 'fas fa-credit-card',
-        jcb: 'fab fa-cc-jcb',
-        unknown: 'fas fa-credit-card'
+    if (!$preview.length) {
+        syncCreditCardBrand(cardType);
+        return;
+    }
+
+    const brands = {
+        visa: {
+            icon: 'fab fa-cc-visa',
+            label: 'Visa',
+        },
+        mastercard: {
+            icon: 'fab fa-cc-mastercard',
+            label: 'Mastercard',
+        },
+        amex: {
+            icon: 'fab fa-cc-amex',
+            label: 'Amex',
+        },
+        discover: {
+            icon: 'fab fa-cc-discover',
+            label: 'Discover',
+        },
+        diners: {
+            icon: 'fab fa-cc-diners-club',
+            label: 'Diners Club',
+        },
+        elo: {
+            icon: 'fas fa-credit-card',
+            label: 'Elo',
+        },
+        hipercard: {
+            icon: 'fas fa-credit-card',
+            label: 'Hipercard',
+        },
+        jcb: {
+            icon: 'fab fa-cc-jcb',
+            label: 'JCB',
+        },
     };
 
-    // Adiciona novo ícone
-    $('input[name="card[card_number]"]').after(`<i class="${icons[cardType] || icons.unknown} card-type-icon"></i>`);
+    const brand = brands[cardType];
+
+    if (!brand) {
+        $preview.removeClass('is-populated').empty();
+        syncCreditCardBrand('');
+        return;
+    }
+
+    $preview
+        .addClass('is-populated')
+        .html(`<i class="${brand.icon} card-brand-preview-icon" aria-hidden="true"></i><span>${brand.label}</span>`);
+
+    syncCreditCardBrand(cardType);
 }
 
 // Busca CEP via ViaCEP
@@ -908,6 +1121,7 @@ function buscarCEP(cep) {
 $(document).ready(function () {
     // Máscaras para cartão
     $('input[name="card[card_number]"]').mask('0000 0000 0000 0000');
+    updateCardTypeIcon(identifyCardType(($('input[name="card[card_number]"]').val() || '').replace(/\s/g, '')));
     $('input[name="card[holder_document]"]').on('input blur', function () {
         applyDocumentMask(this);
     });
@@ -937,6 +1151,9 @@ $(document).ready(function () {
     $('input[name="card[card_number]"]').on('input', function () {
         const value = $(this).val();
         const cleanValue = value.replace(/\s/g, '');
+        const cardType = identifyCardType(cleanValue);
+
+        updateCardTypeIcon(cardType);
 
         // Só valida se tiver pelo menos 13 dígitos
         if (cleanValue.length >= 13) {
@@ -945,7 +1162,7 @@ $(document).ready(function () {
         } else {
             // Remove validação se estiver muito curto
             $(this).removeClass('is-valid is-invalid');
-            $(this).siblings('.field-icon, .card-type-icon').remove();
+            $(this).siblings('.field-icon').remove();
         }
     });
 

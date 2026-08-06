@@ -316,7 +316,7 @@ function formatStatus(status) {
         case 'Estornado':
             return 'Estornado';
         default:
-            return status ?? 'Sem status';
+            return 'Pendente';
     }
 }
 

@@ -43,6 +43,7 @@ function getStatusColor(status) {
 export default function LinkPagamentoResumoCard({
     link,
     paymentSummary = {},
+    showPaymentBreakdown = true,
     title = 'Resumo do link',
     codeLabel = 'Codigo unico',
     statusLabel: statusLabelOverride = null,
@@ -54,7 +55,6 @@ export default function LinkPagamentoResumoCard({
     const statusColor = statusColorOverride ?? getStatusColor(link?.status);
     const baseAmountCents = Number(paymentSummary.base_amount_cents ?? 0);
     const feeAmountCents = Number(paymentSummary.fee_amount_cents ?? 0);
-    const hasPaymentBreakdown = baseAmountCents > 0 || feeAmountCents > 0;
     const baseAmountLabel = paymentSummary.base_amount_formatted || formatCurrency(link?.valor_centavos ?? Number(link?.valor) * 100);
     const feeAmountLabel = paymentSummary.fee_amount_formatted || formatCurrency(0);
     const totalAmountLabel = paymentSummary.total_amount_formatted || baseAmountLabel;
@@ -70,8 +70,8 @@ export default function LinkPagamentoResumoCard({
                 </div>
 
                 <div>
-                    <Typography.Text type="secondary">{hasPaymentBreakdown ? 'Valor, taxa e total' : 'Valor e status'}</Typography.Text>
-                    {hasPaymentBreakdown ? (
+                    <Typography.Text type="secondary">{showPaymentBreakdown ? 'Valor, taxa e total' : 'Valor'}</Typography.Text>
+                    {showPaymentBreakdown ? (
                         <Space direction="vertical" size={6} style={{ width: '100%' }}>
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                 <Tag color="green">{`Base ${baseAmountLabel}`}</Tag>
@@ -82,7 +82,6 @@ export default function LinkPagamentoResumoCard({
                     ) : (
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                             <Tag color="green">{formatCurrency(link?.valor)}</Tag>
-                            <Tag color={statusColor}>{statusLabel}</Tag>
                         </div>
                     )}
                 </div>

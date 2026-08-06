@@ -18,11 +18,21 @@ class PagamentoClienteDocumentMaskTest extends TestCase
         $this->assertStringContainsString('placeholder="CPF/CNPJ"', $viewSource);
         $this->assertStringContainsString('maxlength="18"', $viewSource);
         $this->assertStringContainsString('inputmode="numeric"', $viewSource);
+        $this->assertStringContainsString('id="cardBrandPreview"', $viewSource);
+        $this->assertStringContainsString('class="card-brand-preview"', $viewSource);
+        $this->assertStringContainsString('name="card_brand"', $viewSource);
+        $this->assertStringContainsString('id="installmentsSelect"', $viewSource);
 
         $this->assertStringContainsString('function formatDocument(value)', $scriptSource);
         $this->assertStringContainsString("$('input[name=\"client[document]\"]').on('input blur', function () {", $scriptSource);
         $this->assertStringContainsString('applyDocumentMask(this);', $scriptSource);
         $this->assertStringContainsString("$('input[name=\"client[document]\"]').each(function () {", $scriptSource);
         $this->assertStringContainsString("$('input[name=\"client[document]\"]').on('input blur', function () {", $scriptSource);
+        $this->assertStringContainsString("updateCardTypeIcon(identifyCardType(($('input[name=\"card[card_number]\"]').val() || '').replace(/\\s/g, '')));", $scriptSource);
+        $this->assertStringContainsString("const \$preview = $('#cardBrandPreview');", $scriptSource);
+        $this->assertStringContainsString('function renderInstallmentsForCardBrand(cardType)', $scriptSource);
+        $this->assertStringContainsString('function syncCreditCardBrand(cardType)', $scriptSource);
+        $this->assertStringContainsString("$('input[name=\"card_brand\"]').val(cardType || '');", $scriptSource);
+        $this->assertStringContainsString('return `${installmentCount}x ${formatCurrencyFromCents(installmentValueCents)}`;', $scriptSource);
     }
 }
