@@ -61,6 +61,7 @@ class SpaCobrancaSimularTest extends TestCase
         $this->assertStringContainsString('resolveRate(selectedFlag, installments)', $pageSource);
         $this->assertStringContainsString('buildInstallmentOptions(selectedFlag)', $pageSource);
         $this->assertStringContainsString('selectedFlagLabel', $pageSource);
+        $this->assertStringNotContainsString('label: installments', $pageSource);
         $this->assertStringContainsString('SimulationField', $pageSource);
         $this->assertStringContainsString("label = 'Plano considerado'", $planSelectorSource);
         $this->assertStringNotContainsString('Ativa', $planSelectorSource);

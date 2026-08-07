@@ -273,7 +273,6 @@ export default function CobrancaSimularPage() {
         ]
         : [
             { color: 'blue', label: selectedFlagLabel },
-            { color: 'gold', label: installments },
         ];
 
     return (

@@ -727,6 +727,7 @@ class SpaShellTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('id="app"', false);
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
     }
 
     public function test_the_checkout_link_form_page_contains_a_top_back_link_to_the_list(): void
