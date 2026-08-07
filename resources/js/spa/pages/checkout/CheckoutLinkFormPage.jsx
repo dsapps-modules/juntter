@@ -628,7 +628,7 @@ export default function CheckoutLinkFormPage() {
                                     </Form.Item>
                                 </Col>
                                 {allowCreditCard !== false ? (
-                                    <Col xs={24} md={6}>
+                                    <Col xs={24} md={4}>
                                         <Form.Item
                                             label="Parcelas máximas"
                                             name="max_credit_card_installments"
@@ -638,7 +638,7 @@ export default function CheckoutLinkFormPage() {
                                         </Form.Item>
                                     </Col>
                                 ) : null}
-                                <Col xs={24} md={4}>
+                                <Col xs={24} md={6}>
                                     <Form.Item label="Solicitar endereço do cliente" name="request_address" valuePropName="checked">
                                         <Switch />
                                     </Form.Item>

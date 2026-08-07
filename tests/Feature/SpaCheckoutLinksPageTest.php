@@ -60,8 +60,9 @@ class SpaCheckoutLinksPageTest extends TestCase
         $this->assertStringContainsString('label="Parcelas máximas"', $componentSource);
         $this->assertStringContainsString('name="max_credit_card_installments"', $componentSource);
         $this->assertStringContainsString('<Select options={creditCardInstallmentOptions} />', $componentSource);
-        $this->assertStringContainsString('Col xs={24} md={6}>', $componentSource);
         $this->assertStringContainsString('Col xs={24} md={4}>', $componentSource);
+        $this->assertStringContainsString('Col xs={24} md={4}>', $componentSource);
+        $this->assertStringContainsString('Col xs={24} md={6}>', $componentSource);
         $this->assertStringContainsString('label="Expira em"', $componentSource);
         $this->assertStringNotContainsString('md={6}>\n                                    <Form.Item label="Expira em"', $componentSource);
     }
