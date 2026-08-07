@@ -2938,7 +2938,12 @@ function CheckoutSpaApp() {
                                                     <div className="checkout-spa-essential-item-image" aria-hidden="true">
                                                         <img src={item.imageUrl} alt="" />
                                                     </div>
-                                                ) : null}
+                                                ) : (
+                                                    <div
+                                                        className="checkout-spa-essential-item-image checkout-spa-essential-item-image--placeholder"
+                                                        aria-hidden="true"
+                                                    />
+                                                )}
                                                 <div className="checkout-spa-essential-item-copy">
                                                     <div className="checkout-spa-essential-item-head">
                                                         <strong>{item.name}</strong>

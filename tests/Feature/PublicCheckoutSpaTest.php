@@ -213,6 +213,7 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('checkout-spa-step-card--payment-note', $source);
         $this->assertStringContainsString('function renderPaymentLogosStrip()', $source);
         $this->assertStringContainsString('cardMethod ? renderPaymentLogosStrip() : null', $source);
+        $this->assertStringContainsString('checkout-spa-essential-item-image--placeholder', $source);
         $this->assertStringNotContainsString('checkout-spa-payment-strip-title', $source);
         $this->assertStringContainsString("const creditCardMethod = methods.find((method) => method.value === 'credit_card');", $source);
         $this->assertStringContainsString('if (creditCardMethod) {', $source);
@@ -242,6 +243,7 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('.checkout-spa-step-card--payment-details .checkout-spa-section-title {', $styles);
         $this->assertStringContainsString('font-size: clamp(1.44rem, 2vw, 2.16rem);', $styles);
         $this->assertStringContainsString('.checkout-spa-payment-strip {', $styles);
+        $this->assertStringContainsString('.checkout-spa-theme--essential .checkout-spa-essential-item-image--placeholder {', $styles);
         $this->assertStringNotContainsString('.checkout-spa-theme--essential .checkout-spa-payment-strip {', $styles);
         $this->assertStringContainsString('padding: 12px 0 0;', $styles);
         $this->assertStringContainsString('margin-top: 12px;', $styles);
