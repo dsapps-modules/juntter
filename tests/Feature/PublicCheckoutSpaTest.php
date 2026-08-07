@@ -28,6 +28,7 @@ class PublicCheckoutSpaTest extends TestCase
             'allow_pix' => true,
             'allow_boleto' => true,
             'allow_credit_card' => true,
+            'max_credit_card_installments' => 18,
             'request_address' => true,
             'pix_discount_type' => 'none',
             'pix_discount_value' => 0,
@@ -61,6 +62,7 @@ class PublicCheckoutSpaTest extends TestCase
             'allow_pix' => true,
             'allow_boleto' => true,
             'allow_credit_card' => true,
+            'max_credit_card_installments' => 6,
             'request_address' => true,
             'visual_config' => [
                 'store_name' => 'Loja Teste',
@@ -83,6 +85,8 @@ class PublicCheckoutSpaTest extends TestCase
         $response->assertSee('allow_pix', false);
         $response->assertSee('allow_boleto', false);
         $response->assertSee('allow_credit_card', false);
+        $response->assertSee('max_credit_card_installments', false);
+        $response->assertSee('"max_credit_card_installments":6', false);
         $response->assertSee('request_address', false);
         $response->assertSee('visual_config', false);
         $response->assertSee('noir', false);
@@ -159,6 +163,10 @@ class PublicCheckoutSpaTest extends TestCase
         $this->assertStringContainsString('antifraudAuthTemplate', $source);
         $this->assertStringContainsString('threeDsEnv', $source);
         $this->assertStringContainsString('Formas de pagamento', $source);
+        $this->assertStringContainsString('const maxCreditCardInstallments = Math.max(1, Math.min(18, Number.parseInt(String(checkoutLink.max_credit_card_installments || 18), 10) || 18));', $source);
+        $this->assertStringContainsString('const creditCardInstallmentOptions = Array.from({ length: maxCreditCardInstallments }, (_, index) => index + 1);', $source);
+        $this->assertStringContainsString('<select className="checkout-spa-input" name="installments" defaultValue="1">', $source);
+        $this->assertStringContainsString('installment === 1 ? \'1x à vista\' : `${installment}x`', $source);
         $this->assertStringContainsString("{ label: 'Mastercard', variant: 'mastercard' }", $source);
         $this->assertStringContainsString("{ label: 'Elo', variant: 'elo' }", $source);
         $this->assertStringContainsString("{ label: 'Boleto', variant: 'boleto' }", $source);

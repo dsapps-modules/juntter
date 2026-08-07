@@ -48,6 +48,24 @@ class SpaCheckoutLinksPageTest extends TestCase
         $this->assertStringContainsString('loading={copyingLastStyle}', $componentSource);
     }
 
+    public function test_the_checkout_link_form_limits_credit_card_installments(): void
+    {
+        $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinkFormPage.jsx'));
+
+        $this->assertIsString($componentSource);
+        $this->assertStringContainsString('const creditCardInstallmentOptions = Array.from({ length: 18 }, (_, index) => {', $componentSource);
+        $this->assertStringContainsString("const allowCreditCard = Form.useWatch('allow_credit_card', form);", $componentSource);
+        $this->assertStringContainsString('max_credit_card_installments: checkoutLink.max_credit_card_installments ?? 18,', $componentSource);
+        $this->assertStringContainsString('max_credit_card_installments: 18,', $componentSource);
+        $this->assertStringContainsString('label="Parcelas máximas"', $componentSource);
+        $this->assertStringContainsString('name="max_credit_card_installments"', $componentSource);
+        $this->assertStringContainsString('<Select options={creditCardInstallmentOptions} />', $componentSource);
+        $this->assertStringContainsString('Col xs={24} md={6}>', $componentSource);
+        $this->assertStringContainsString('Col xs={24} md={4}>', $componentSource);
+        $this->assertStringContainsString('label="Expira em"', $componentSource);
+        $this->assertStringNotContainsString('md={6}>\n                                    <Form.Item label="Expira em"', $componentSource);
+    }
+
     public function test_the_checkout_links_page_shows_a_status_dot_inside_the_link_column(): void
     {
         $componentSource = file_get_contents(base_path('resources/js/spa/pages/checkout/CheckoutLinksPage.jsx'));

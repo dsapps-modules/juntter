@@ -114,6 +114,12 @@ class PublicCheckoutPaymentController extends Controller
             $request->integer('installments')
         );
 
+        $this->validateCreditCardInstallmentLimit(
+            $checkoutLink,
+            $paymentMethod,
+            $request->integer('installments')
+        );
+
         if (
             $paymentMethod === 'boleto'
             && ! $this->isBoletoAmountAllowed((float) $pricing['total'])
@@ -724,6 +730,23 @@ class PublicCheckoutPaymentController extends Controller
 
         throw ValidationException::withMessages([
             'installments' => 'Com duas ou mais parcelas, cada parcela deve ter valor mínimo de R$ 5,00.',
+        ]);
+    }
+
+    private function validateCreditCardInstallmentLimit(CheckoutLink $checkoutLink, string $paymentMethod, int $installments): void
+    {
+        if ($paymentMethod !== 'credit_card') {
+            return;
+        }
+
+        $maxInstallments = max(1, min(18, (int) ($checkoutLink->max_credit_card_installments ?? 18)));
+
+        if ($installments <= $maxInstallments) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'installments' => "Este link aceita no máximo {$maxInstallments} parcelas.",
         ]);
     }
 }

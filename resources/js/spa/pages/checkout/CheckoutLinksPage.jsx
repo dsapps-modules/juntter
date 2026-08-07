@@ -5,25 +5,9 @@ import {
     EyeOutlined,
     PlusOutlined,
 } from '@ant-design/icons';
-import { Button, Card, Col, Empty, Row, Space, Spin, Table, Tag, Typography, message } from 'antd';
+import { Button, Card, Col, Empty, Row, Space, Table, Typography, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const availabilityStatusLabels = {
-    active: 'ativo',
-    expired: 'expirado',
-    inactive: 'inativo',
-    product_inactive: 'produto inativo',
-    seller_inactive: 'vendedor inativo',
-};
-
-const availabilityStatusColors = {
-    active: 'green',
-    expired: 'gold',
-    inactive: 'red',
-    product_inactive: 'red',
-    seller_inactive: 'red',
-};
 
 function getCheckoutLinkThumbnailUrl(record) {
     return record.product_image_url || record.product?.image_url || '';
@@ -49,11 +33,26 @@ function resolveAvailabilityStatus(record) {
     return record.availability_status ?? 'active';
 }
 
+function resolveAvailabilityIndicatorLabel(record) {
+    return resolveAvailabilityStatus(record) === 'active' ? 'Link ativo' : 'Link inativo';
+}
+
+function resolveAvailabilityIndicatorStyle(record) {
+    return {
+        backgroundColor: resolveAvailabilityStatus(record) === 'active' ? '#22c55e' : '#ef4444',
+        borderRadius: '9999px',
+        boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.95)',
+        display: 'inline-block',
+        flexShrink: 0,
+        height: 10,
+        width: 10,
+    };
+}
+
 export default function CheckoutLinksPage() {
     const navigate = useNavigate();
     const [links, setLinks] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [statusLoadingLinkId, setStatusLoadingLinkId] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -97,53 +96,6 @@ export default function CheckoutLinksPage() {
         message.success('Link copiado.');
     }
 
-    async function updateStatus(linkId, endpoint, successMessage) {
-        setStatusLoadingLinkId(linkId);
-
-        try {
-            const response = await fetch(`/seller/checkout-links/${linkId}/${endpoint}`, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                message.error('Não foi possível atualizar o status.');
-                return;
-            }
-
-            message.success(successMessage);
-            setLinks((current) =>
-                current.map((link) => {
-                    if (link.id !== linkId) {
-                        return link;
-                    }
-
-                    const updatedLink = { ...link, status: endpoint === 'activate' ? 'active' : 'inactive' };
-
-                    return {
-                        ...updatedLink,
-                        availability_status: resolveAvailabilityStatus(updatedLink),
-                    };
-                }),
-            );
-        } finally {
-            setStatusLoadingLinkId(null);
-        }
-    }
-
-    function toggleLinkStatus(linkId, currentStatus) {
-        if (currentStatus === 'active') {
-            updateStatus(linkId, 'deactivate', 'Link desativado.');
-            return;
-        }
-
-        updateStatus(linkId, 'activate', 'Link ativado.');
-    }
-
     async function deleteLink(linkId) {
         const confirmed = window.confirm('Excluir este link?');
 
@@ -179,10 +131,6 @@ export default function CheckoutLinksPage() {
                         </Button>
                     }
                 >
-                    <Typography.Paragraph type="secondary" style={{ marginBottom: 24 }}>
-                        Gerencie os links públicos que serão usados no site do vendedor.
-                    </Typography.Paragraph>
-
                     {links.length === 0 && !loading ? (
                         <Empty description="Nenhum link cadastrado" />
                     ) : (
@@ -207,54 +155,20 @@ export default function CheckoutLinksPage() {
                                                 />
                                             ) : null}
                                             <Space direction="vertical" size={0}>
-                                                <Typography.Text strong>{value}</Typography.Text>
-                                                <Typography.Text type="secondary">{record.product?.name}</Typography.Text>
-                                                <Typography.Text type="secondary">{record.public_spa_url || `${window.location.origin}/checkout/spa/${record.public_token}`}</Typography.Text>
+                                                <Space align="center" size={8}>
+                                                    <span
+                                                        aria-label={resolveAvailabilityIndicatorLabel(record)}
+                                                        style={resolveAvailabilityIndicatorStyle(record)}
+                                                        title={resolveAvailabilityIndicatorLabel(record)}
+                                                    />
+                                                    <Typography.Text strong>{value}</Typography.Text>
+                                                </Space>
+                                                <Typography.Text type="secondary">
+                                                    {record.public_spa_url || `${window.location.origin}/checkout/spa/${record.public_token}`}
+                                                </Typography.Text>
                                             </Space>
                                         </Space>
                                     ),
-                                },
-                                {
-                                    title: 'Status',
-                                    dataIndex: 'status',
-                                    render: (value, record) => {
-                                        const availabilityStatus = resolveAvailabilityStatus(record);
-
-                                        return (
-                                            <div style={{ alignItems: 'center', display: 'flex', gap: 8, whiteSpace: 'nowrap' }}>
-                                                <Tag
-                                                    aria-busy={statusLoadingLinkId === record.id ? 'true' : undefined}
-                                                    aria-label={value === 'active' ? 'Desativar link' : 'Ativar link'}
-                                                    color={availabilityStatusColors[availabilityStatus] ?? 'red'}
-                                                    onClick={() => {
-                                                        if (statusLoadingLinkId === record.id) {
-                                                            return;
-                                                        }
-
-                                                        toggleLinkStatus(record.id, value);
-                                                    }}
-                                                    onKeyDown={(event) => {
-                                                        if (statusLoadingLinkId === record.id) {
-                                                            return;
-                                                        }
-
-                                                        if (event.key === 'Enter' || event.key === ' ') {
-                                                            event.preventDefault();
-                                                            toggleLinkStatus(record.id, value);
-                                                        }
-                                                    }}
-                                                    role="button"
-                                                    tabIndex={0}
-                                                    style={{ cursor: statusLoadingLinkId === record.id ? 'wait' : 'pointer', display: 'inline-flex' }}
-                                                >
-                                                    {availabilityStatusLabels[availabilityStatus] ?? availabilityStatus}
-                                                </Tag>
-                                                <span style={{ display: 'inline-flex', justifyContent: 'center', marginLeft: 20, width: 16, flexShrink: 0 }}>
-                                                    {statusLoadingLinkId === record.id ? <Spin size="small" /> : null}
-                                                </span>
-                                            </div>
-                                        );
-                                    },
                                 },
                                 {
                                     title: 'Preço',

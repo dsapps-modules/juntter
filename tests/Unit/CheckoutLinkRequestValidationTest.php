@@ -103,6 +103,7 @@ class CheckoutLinkRequestValidationTest extends TestCase
         $this->assertArrayHasKey('visual_config.navbar_text_color', $rules);
         $this->assertArrayHasKey('visual_config.button_text_color', $rules);
         $this->assertArrayHasKey('visual_config.theme', $rules);
+        $this->assertArrayHasKey('max_credit_card_installments', $rules);
 
         $validThemeValidator = Validator::make([
             'visual_config' => ['theme' => 'atlantic'],
@@ -117,5 +118,19 @@ class CheckoutLinkRequestValidationTest extends TestCase
 
         $this->assertFalse($validThemeValidator->fails());
         $this->assertTrue($invalidThemeValidator->fails());
+
+        $validInstallmentsValidator = Validator::make([
+            'max_credit_card_installments' => 12,
+        ], [
+            'max_credit_card_installments' => $rules['max_credit_card_installments'],
+        ]);
+        $invalidInstallmentsValidator = Validator::make([
+            'max_credit_card_installments' => 19,
+        ], [
+            'max_credit_card_installments' => $rules['max_credit_card_installments'],
+        ]);
+
+        $this->assertFalse($validInstallmentsValidator->fails());
+        $this->assertTrue($invalidInstallmentsValidator->fails());
     }
 }

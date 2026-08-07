@@ -16,6 +16,15 @@ const discountTypeOptions = [
     { value: 'percentage', label: 'Percentual' },
 ];
 
+const creditCardInstallmentOptions = Array.from({ length: 18 }, (_, index) => {
+    const installment = index + 1;
+
+    return {
+        value: installment,
+        label: installment === 1 ? '1x à vista' : `${installment}x`,
+    };
+});
+
 function formatDiscountInput(discountType, discountValue) {
     if (discountType === 'none') {
         return null;
@@ -127,6 +136,7 @@ export default function CheckoutLinkFormPage() {
     const selectedProductId = Form.useWatch('product_id', form);
     const pixDiscountType = Form.useWatch('pix_discount_type', form) ?? 'none';
     const boletoDiscountType = Form.useWatch('boleto_discount_type', form) ?? 'none';
+    const allowCreditCard = Form.useWatch('allow_credit_card', form);
     const selectedProduct = products.find((product) => product.id === selectedProductId);
 
     function applyVisualConfig(checkoutLink) {
@@ -212,6 +222,7 @@ export default function CheckoutLinkFormPage() {
                     form.setFieldsValue({
                         ...checkoutLink,
                         request_address: checkoutLink.request_address ?? true,
+                        max_credit_card_installments: checkoutLink.max_credit_card_installments ?? 18,
                         unit_price: formatCurrencyInput(checkoutLink.unit_price ?? 0),
                         pix_discount_value: formatDiscountInput(checkoutLink.pix_discount_type, checkoutLink.pix_discount_value),
                         boleto_discount_value: formatDiscountInput(checkoutLink.boleto_discount_type, checkoutLink.boleto_discount_value),
@@ -223,6 +234,7 @@ export default function CheckoutLinkFormPage() {
                         allow_pix: true,
                         allow_boleto: true,
                         allow_credit_card: true,
+                        max_credit_card_installments: 18,
                         request_address: true,
                         pix_discount_type: 'none',
                         pix_discount_value: null,
@@ -610,22 +622,33 @@ export default function CheckoutLinkFormPage() {
                             </Row>
 
                             <Row gutter={16}>
-                                <Col xs={24} md={5}>
+                                <Col xs={24} md={6}>
                                     <Form.Item label="Permitir Cartão" name="allow_credit_card" valuePropName="checked">
                                         <Switch />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} md={5}>
+                                {allowCreditCard !== false ? (
+                                    <Col xs={24} md={6}>
+                                        <Form.Item
+                                            label="Parcelas máximas"
+                                            name="max_credit_card_installments"
+                                            rules={[{ required: true, message: 'Defina o máximo de parcelas.' }]}
+                                        >
+                                            <Select options={creditCardInstallmentOptions} />
+                                        </Form.Item>
+                                    </Col>
+                                ) : null}
+                                <Col xs={24} md={4}>
                                     <Form.Item label="Solicitar endereço do cliente" name="request_address" valuePropName="checked">
                                         <Switch />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} md={6}>
+                                <Col xs={24} md={4}>
                                     <Form.Item label="Frete grátis" name="free_shipping" valuePropName="checked">
                                         <Switch />
                                     </Form.Item>
                                 </Col>
-                                <Col xs={24} md={6}>
+                                <Col xs={24} md={4}>
                                     <Form.Item label="Expira em" name="expires_at">
                                         <Input type="datetime-local" />
                                     </Form.Item>

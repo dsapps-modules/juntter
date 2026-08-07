@@ -852,6 +852,8 @@ function CheckoutSpaApp() {
 
     const [config] = useState(() => readCheckoutSpaData());
     const checkoutLink = config?.checkoutLink || {};
+    const maxCreditCardInstallments = Math.max(1, Math.min(18, Number.parseInt(String(checkoutLink.max_credit_card_installments || 18), 10) || 18));
+    const creditCardInstallmentOptions = Array.from({ length: maxCreditCardInstallments }, (_, index) => index + 1);
     const sellerBrand = config?.sellerBrand || {};
     const shippingOptions = config?.shippingOptions || [];
     const allowedMethods = resolvePaymentMethods(checkoutLink);
@@ -2684,7 +2686,13 @@ function CheckoutSpaApp() {
 
                             <label className="checkout-spa-field">
                                 <span className="checkout-spa-label">Parcelas</span>
-                                <input className="checkout-spa-input" name="installments" type="number" min="1" max="18" defaultValue="1" />
+                                <select className="checkout-spa-input" name="installments" defaultValue="1">
+                                    {creditCardInstallmentOptions.map((installment) => (
+                                        <option key={installment} value={installment}>
+                                            {installment === 1 ? '1x à vista' : `${installment}x`}
+                                        </option>
+                                    ))}
+                                </select>
                                 <p className="checkout-spa-error">{fieldErrors.installments || ''}</p>
                             </label>
                         </div>

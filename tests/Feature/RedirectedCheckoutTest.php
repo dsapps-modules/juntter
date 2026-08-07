@@ -1466,6 +1466,56 @@ class RedirectedCheckoutTest extends TestCase
             ->assertJsonValidationErrors(['installments']);
     }
 
+    public function test_credit_card_payment_rejects_installments_above_the_checkout_link_limit(): void
+    {
+        $seller = $this->makeVendorUser();
+        $link = $this->makeCheckoutLink($seller, $this->makeProduct($seller), [
+            'allow_pix' => false,
+            'allow_boleto' => false,
+            'allow_credit_card' => true,
+            'max_credit_card_installments' => 3,
+        ]);
+        $session = $this->makeCheckoutSession($link, [
+            'customer_name' => 'Maria Silva',
+            'customer_email' => 'maria@example.com',
+            'customer_document' => '12345678909',
+            'customer_document_type' => 'cpf',
+            'customer_phone' => '11999999999',
+            'zipcode' => '01001000',
+            'street' => 'Rua A',
+            'number' => '100',
+            'neighborhood' => 'Centro',
+            'city' => 'São Paulo',
+            'state' => 'SP',
+            'recipient_name' => 'Maria Silva',
+            'status' => 'delivery_completed',
+            'current_step' => 'payment',
+        ]);
+
+        $paymentService = $this->createMock(PaytimePaymentService::class);
+        $paymentService->expects($this->never())
+            ->method('createCreditCardPayment');
+        $this->app->instance(PaytimePaymentService::class, $paymentService);
+
+        $response = $this->postJson('/checkout/session/'.$session->session_token.'/payment/checkout', [
+            'payment_method' => 'credit_card',
+            'installments' => 4,
+            'card' => [
+                'holder_name' => 'Maria Silva',
+                'holder_document' => '12345678909',
+                'card_number' => '4111111111111111',
+                'expiration_month' => 12,
+                'expiration_year' => now()->year + 1,
+                'security_code' => '123',
+            ],
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['installments']);
+        $this->assertSame('Este link aceita no máximo 3 parcelas.', $response->json('errors.installments.0'));
+    }
+
     public function test_credit_card_payment_allows_a_single_installment_with_a_small_total(): void
     {
         $seller = $this->makeVendorUser();
