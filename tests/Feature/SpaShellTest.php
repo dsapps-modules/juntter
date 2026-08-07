@@ -503,7 +503,7 @@ class SpaShellTest extends TestCase
         $this->assertStringContainsString('Alterar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Cadastrar/atualizar assinatura eletrônica', $pageSource);
         $this->assertStringContainsString('Valor disponível', $pageSource);
-        $this->assertStringContainsString('Disponível para saque', $pageSource);
+        $this->assertStringNotContainsString('Disponível para saque', $pageSource);
         $this->assertStringContainsString('Taxa de Transferência:', $pageSource);
         $this->assertStringContainsString('Valor a transferir', $pageSource);
         $this->assertStringContainsString('Dados do recebedor', $pageSource);

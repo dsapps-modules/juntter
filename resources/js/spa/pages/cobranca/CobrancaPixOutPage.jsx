@@ -360,17 +360,11 @@ export default function CobrancaPixOutPage() {
             ) : (
                 <>
                     <Card bordered={false} className="spa-pix-summary-card spa-pix-summary-card-full">
-                        <Row gutter={[20, 20]}>
-                            <Col xs={24} md={8}>
+                        <Row gutter={[20, 20]} justify="center">
+                            <Col xs={24} md={10} style={{ textAlign: 'center' }}>
                                 <Typography.Text className="spa-brand-kicker">Saldo</Typography.Text>
                                 <Typography.Title level={2} style={{ marginBottom: 0 }}>
                                     {overview.balance.available_label}
-                                </Typography.Title>
-                            </Col>
-                            <Col xs={24} md={8}>
-                                <Typography.Text className="spa-brand-kicker">Disponível para saque</Typography.Text>
-                                <Typography.Title level={2} style={{ marginBottom: 0, color: '#1f2a88' }}>
-                                    {overview.available_after_fee.label}
                                 </Typography.Title>
                             </Col>
                         </Row>
