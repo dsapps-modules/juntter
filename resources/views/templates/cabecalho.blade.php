@@ -2,8 +2,7 @@
         <meta charset="utf-8">
         <meta name="_token" content="{{ csrf_token() }}">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="icon" href="{{ asset('img/logo/juntter_png_256.png') }}?v={{ filemtime(public_path('img/logo/juntter_png_256.png')) }}" type="image/png">
-        <link rel="shortcut icon" href="{{ asset('img/logo/juntter_png_256.png') }}?v={{ filemtime(public_path('img/logo/juntter_png_256.png')) }}" type="image/png">
+        <x-favicon />
         <title>Checkout Juntter</title>
         <link rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">

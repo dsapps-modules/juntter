@@ -5,19 +5,7 @@
     <meta charset="UTF-8">
     <meta name="_token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @php
-        $sellerBrand = $sellerBrand ?? [
-            'mode' => 'logo',
-            'label' => 'Juntter',
-            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
-        ];
-
-        $legacyCheckoutFavicon = filled($sellerBrand['logoUrl'] ?? null) && ($sellerBrand['mode'] ?? 'logo') === 'logo'
-            ? $sellerBrand['logoUrl']
-            : '/img/logo/juntter_webp_640_174.webp';
-    @endphp
-    <link rel="icon" href="{{ $legacyCheckoutFavicon }}" type="image/png">
-    <link rel="shortcut icon" href="{{ $legacyCheckoutFavicon }}" type="image/png">
+    <x-favicon />
     <title>Checkout Seguro - Juntter</title>
 
     <!-- Bootstrap CSS -->

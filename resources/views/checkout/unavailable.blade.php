@@ -3,20 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    @php
-        $sellerBrand = $sellerBrand ?? [
-            'mode' => 'logo',
-            'label' => 'Juntter',
-            'logoUrl' => '/img/logo/juntter_webp_640_174.webp',
-        ];
-
-        $defaultCheckoutFavicon = asset('img/logo/juntter_webp_640_174.webp');
-        $checkoutFaviconUrl = filled($sellerBrand['logoUrl'] ?? null) && ($sellerBrand['mode'] ?? 'logo') === 'logo'
-            ? $sellerBrand['logoUrl']
-            : $defaultCheckoutFavicon;
-    @endphp
-    <link rel="icon" href="{{ $checkoutFaviconUrl }}" type="image/png">
-    <link rel="shortcut icon" href="{{ $checkoutFaviconUrl }}" type="image/png">
+    <x-favicon />
     <title>Checkout indisponível</title>
     <style>
         :root {

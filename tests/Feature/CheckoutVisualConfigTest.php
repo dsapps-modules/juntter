@@ -11,24 +11,32 @@ class CheckoutVisualConfigTest extends TestCase
         $publicView = file_get_contents(base_path('resources/views/checkout/spa.blade.php'));
         $thankYouView = file_get_contents(base_path('resources/views/checkout/thank-you.blade.php'));
         $unavailableView = file_get_contents(base_path('resources/views/checkout/unavailable.blade.php'));
+        $spaShellView = file_get_contents(base_path('resources/views/spa.blade.php'));
+        $notFoundView = file_get_contents(base_path('resources/views/errors/404.blade.php'));
+        $faviconComponent = file_get_contents(base_path('resources/views/components/favicon.blade.php'));
 
         $this->assertIsString($publicView);
         $this->assertIsString($thankYouView);
         $this->assertIsString($unavailableView);
+        $this->assertIsString($spaShellView);
+        $this->assertIsString($notFoundView);
+        $this->assertIsString($faviconComponent);
 
+        $this->assertStringContainsString('<x-favicon />', $publicView);
+        $this->assertStringContainsString('<x-favicon />', $thankYouView);
+        $this->assertStringContainsString('<x-favicon />', $unavailableView);
+        $this->assertStringContainsString('<x-favicon />', $spaShellView);
+        $this->assertStringContainsString('<x-favicon />', $notFoundView);
+        $this->assertStringContainsString("asset('img/logo/juntter_png_256.png')", $faviconComponent);
         $this->assertStringContainsString('checkout-spa-data', $publicView);
         $this->assertStringContainsString('checkout-spa-root', $publicView);
         $this->assertStringContainsString('threeDsEnv', $publicView);
         $this->assertStringContainsString('paymentDetails', $publicView);
-        $this->assertStringContainsString('checkoutFaviconUrl', $publicView);
-        $this->assertStringContainsString('juntter_webp_640_174.webp', $publicView);
         $this->assertStringContainsString('$checkoutSpaAssets[\'css\']', $publicView);
         $this->assertStringContainsString('$checkoutSpaAssets[\'js\']', $publicView);
         $this->assertStringNotContainsString('checkout-public', $publicView);
         $this->assertStringNotContainsString('@vite([\'resources/js/checkout-public.js\'])', $publicView);
 
-        $this->assertStringContainsString('checkoutFaviconUrl', $thankYouView);
-        $this->assertStringContainsString('checkoutFaviconUrl', $unavailableView);
         $this->assertStringContainsString('--checkout-bg: #f7f7f9;', $thankYouView);
         $this->assertStringContainsString('--checkout-bg: #f7f7f9;', $unavailableView);
         $this->assertStringNotContainsString('radial-gradient(circle at top left', $thankYouView);

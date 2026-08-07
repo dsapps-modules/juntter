@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="_token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="shortcut icon" href="{{ asset('img/logo/juntter_png_256.png') }}" type="image/x-icon">
+    <x-favicon />
     <title>@yield('title', 'Dashboard') - Juntter</title>
 
     <!-- Google Font -->

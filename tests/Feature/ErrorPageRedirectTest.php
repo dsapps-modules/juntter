@@ -16,7 +16,7 @@ class ErrorPageRedirectTest extends TestCase
 
         $response->assertNotFound();
         $response->assertSee('content="5;url=/"', false);
-        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
+        $response->assertSee('/img/logo/juntter_png_256.png', false);
         $response->assertSee('Checkout fora da rota', false);
         $response->assertSee('window.location.href = "\/"', false);
         $response->assertSee('}, 5000);', false);
@@ -33,7 +33,7 @@ class ErrorPageRedirectTest extends TestCase
 
         $response->assertNotFound();
         $response->assertSee('content="5;url=/app/home"', false);
-        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
+        $response->assertSee('/img/logo/juntter_png_256.png', false);
         $response->assertSee('Voltar para o fluxo', false);
         $response->assertSee('window.location.href = "\/app\/home"', false);
         $response->assertSee('}, 5000);', false);

@@ -107,11 +107,11 @@ class PublicCheckoutSpaTest extends TestCase
         $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
-        $this->assertStringContainsString('<link rel="icon" href="/img/logo/juntter_webp_640_174.webp"', $response->getContent());
-        $this->assertStringContainsString('<link rel="shortcut icon" href="/img/logo/juntter_webp_640_174.webp"', $response->getContent());
+        $this->assertStringContainsString(asset('img/logo/juntter_png_256.png'), $response->getContent());
+        $this->assertStringContainsString('<link rel="shortcut icon"', $response->getContent());
     }
 
-    public function test_public_checkout_spa_page_uses_the_seller_logo_for_the_favicon_when_available(): void
+    public function test_public_checkout_spa_page_keeps_the_system_favicon_when_a_seller_logo_is_available(): void
     {
         Storage::fake('public');
         Storage::disk('public')->put('company-logos/logo-publico.png', 'fake-image-content');
@@ -127,9 +127,8 @@ class PublicCheckoutSpaTest extends TestCase
         $response = $this->get(route('checkout.public.spa.show', $link->public_token));
 
         $response->assertOk();
-        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
-        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
-        $response->assertDontSee(asset('img/logo/juntter_webp_640_174.webp'), false);
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
+        $response->assertDontSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
     }
 
     public function test_public_checkout_spa_uses_the_public_image_route_when_the_checkout_link_has_no_custom_image(): void

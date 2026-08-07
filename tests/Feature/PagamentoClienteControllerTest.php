@@ -26,9 +26,7 @@ class PagamentoClienteControllerTest extends TestCase
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
-        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
-        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
-        $response->assertSee('/company-logo?path=company-logos%2Flogo-publico.png', false);
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
         $response->assertSee("onerror=\"this.onerror=null;this.src='/img/logo/juntter_webp_640_174.webp';\"", false);
     }
 
@@ -40,9 +38,7 @@ class PagamentoClienteControllerTest extends TestCase
         $response = $this->get(route('pagamento.link', $link->codigo_unico));
 
         $response->assertOk();
-        $response->assertSee('<link rel="icon" href="/img/logo/juntter_webp_640_174.webp"', false);
-        $response->assertSee('<link rel="shortcut icon" href="/img/logo/juntter_webp_640_174.webp"', false);
-        $response->assertSee('/img/logo/juntter_webp_640_174.webp', false);
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
         $response->assertSee('Checkout', false);
         $response->assertDontSee('<span>Pagamento</span>', false);
         $response->assertDontSee('<span>Confirmação</span>', false);
@@ -63,8 +59,7 @@ class PagamentoClienteControllerTest extends TestCase
         ]));
 
         $response->assertOk();
-        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
-        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
         $response->assertSee('Pagamento confirmado', false);
         $response->assertSee('Obrigado pela compra', false);
         $response->assertSee('Voltar para o início', false);
@@ -81,6 +76,7 @@ class PagamentoClienteControllerTest extends TestCase
         ]));
 
         $response->assertOk();
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
         $response->assertSee('Pagamento não concluído', false);
         $response->assertSee('Não foi possível concluir o pagamento', false);
         $response->assertSee('Erro ao processar pagamento.', false);
@@ -97,8 +93,7 @@ class PagamentoClienteControllerTest extends TestCase
         ]));
 
         $response->assertOk();
-        $response->assertSee('<link rel="icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
-        $response->assertSee('<link rel="shortcut icon" href="/company-logo?path=company-logos%2Flogo-publico.png"', false);
+        $response->assertSee(asset('img/logo/juntter_png_256.png'), false);
     }
 
     public function test_public_payment_page_shows_customer_fee_in_the_pix_total(): void

@@ -8,7 +8,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="refresh" content="5;url={{ $redirectUrl }}">
-    <link rel="shortcut icon" href="{{ asset('img/logo/juntter_png_256.png') }}" type="image/x-icon">
+    <x-favicon />
     <title>Pagina nao encontrada | Juntter</title>
     <style>
         :root {
